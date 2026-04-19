@@ -1,8 +1,33 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Forfelast";
+  src: url("/fonts/Forfelast-Royalten-DEMO-VERSION-BF65d0c22e0fa49.otf") format("opentype");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Modamode";
+  src: url("/fonts/Modamode.ttf") format("truetype");
+  font-display: swap;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* Design tokens used across components (inline styles + Tailwind arbitrary vars). */
+  --bg: #FBF9F5;
+  --ink: #14120D;
+  --ink2: #3A3628;
+  --ink3: #7A7060;
+  --gold: #B8922A;
+  --border: rgba(20, 18, 13, 0.10);
+  --shadow-lg: 0 24px 60px rgba(20, 18, 13, 0.12);
+
+  /* Tailwind config maps `font-serif` to `var(--serif)` */
+  --serif: "Forfelast", "Cormorant Garamond", Georgia, serif;
+  --numeric: "Modamode", ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
 @theme inline {
@@ -23,4 +48,56 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Global safety: avoid tiny horizontal overflows from transforms/w-max marquees. */
+html, body {
+  overflow-x: visible;
+}
+
+img, video, canvas, svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Lenis (smooth scroll): ensure it doesn't lock scrolling once content grows. */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* Modal helper (EnquireModal) */
+body.modal-open {
+  overflow: hidden;
+}
+
+/* Ensure headings use the requested display font site-wide without touching body copy. */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--serif) !important;
+}
+
+/* Also force Tailwind's `font-serif` utility to resolve to Forfelast everywhere. */
+.font-serif {
+  font-family: var(--serif) !important;
+}
+
+/* Numeric font: apply only where we mark it, to avoid disrupting body text. */
+.font-numeric {
+  font-family: var(--numeric) !important;
+}
+
+/* Announcement Marquee Animation */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  animation: marquee 30s linear infinite;
 }
