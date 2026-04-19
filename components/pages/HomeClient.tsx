@@ -23,7 +23,7 @@ export default function HomeClient() {
   const [enquireGemName, setEnquireGemName] = useState('');
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
-  const [isLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const handleEnquireOpen = (name: string = '') => {
     setEnquireGemName(name);
@@ -43,7 +43,7 @@ export default function HomeClient() {
 
   return (
     <div className="min-h-screen bg-(--bg) text-(--ink)">
-      {isLoading && <Loader />}
+      {isLoading && <Loader onComplete={() => setIsLoading(false)} />}
 
       <TrustStrip />
       <Hero />
@@ -64,4 +64,3 @@ export default function HomeClient() {
     </div>
   );
 }
-
