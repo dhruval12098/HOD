@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/common/Navbar";
 import Footer from "@/components/common/Footer";
-import LenisProvider from "./LenisProvider";
 import FloatingWidgets from "@/components/home/FloatingWidgets";
 
 const geistSans = Geist({
@@ -39,13 +38,11 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
-        <LenisProvider>
-          <Navbar />
-          {/* Offset the fixed announcement bar (35px) + fixed navbar (76px) */}
-          <main className="flex-1 pt-[111px]">{children}</main>
-          <Footer />
-          <FloatingWidgets />
-        </LenisProvider>
+        <Navbar />
+        {/* Offset the fixed announcement bar (35px) + fixed navbar (76px) */}
+        <main className="flex-1 pt-[111px]">{children}</main>
+        <Footer />
+        <FloatingWidgets />
       </body>
     </html>
   );

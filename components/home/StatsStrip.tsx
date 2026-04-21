@@ -56,9 +56,8 @@ function CountUp({ target, suffix }: { target: number; suffix: string }) {
 export default function StatsStrip() {
   return (
     <section
-      className="py-[100px] px-[52px] grid grid-cols-4 gap-10 text-center relative overflow-hidden max-lg:grid-cols-2 max-md:grid-cols-1 max-lg:px-7 max-md:px-5 max-md:py-[70px]"
+      className="py-[100px] px-[52px] grid grid-cols-4 gap-10 text-center relative overflow-hidden max-lg:grid-cols-2 max-md:grid-cols-1 max-lg:px-7 max-md:px-5 max-md:py-[70px] bg-(--bg)"
       style={{
-        background: 'linear-gradient(135deg, #14120D 0%, #1C1A14 100%)',
       }}
     >
       {/* Background glow */}

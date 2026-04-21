@@ -72,6 +72,7 @@ function StatItem({ count, suffix, label, active }: { count: number; suffix: str
 
 export default function InstagramReels() {
   const footerRef = useRef<HTMLDivElement>(null);
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const [statsVisible, setStatsVisible] = useState(false);
 
   useEffect(() => {
@@ -213,21 +214,32 @@ export default function InstagramReels() {
                 el.style.transform = 'translateY(-6px)';
                 el.style.boxShadow = 'var(--shadow-lg)';
                 el.style.borderColor = 'var(--border-gold)';
+                const v = videoRefs.current[i];
+                if (v) v.play().catch(() => {});
               }}
               onMouseLeave={(e) => {
                 const el = e.currentTarget as HTMLElement;
                 el.style.transform = 'translateY(0)';
                 el.style.boxShadow = 'none';
                 el.style.borderColor = 'var(--border)';
+                const v = videoRefs.current[i];
+                if (v) {
+                  v.pause();
+                  v.currentTime = 0;
+                }
               }}
             >
               {/* Video Background */}
               <video
+                ref={(el) => {
+                  videoRefs.current[i] = el;
+                }}
                 src={r.video}
-                autoPlay
                 muted
                 loop
                 playsInline
+                preload="none"
+                aria-hidden="true"
                 style={{
                   position: 'absolute',
                   inset: 0,
