@@ -1,5 +1,8 @@
 'use client';
 
+import { useEffect, useMemo, useState } from 'react';
+import { supabase } from '@/lib/supabase';
+
 const SOCIAL = [
   {
     name: 'Instagram',
@@ -39,12 +42,17 @@ const SOCIAL = [
   },
 ];
 
-/* ─── column link ─── */
+type FooterCategory = {
+  id: string;
+  name: string;
+  slug: string;
+};
+
 function ColLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
     <a
       href={href}
-      className="group block py-[7px] text-[11px] font-light tracking-[0.08em] text-[#7A6F52] no-underline transition-all duration-300 hover:text-[#E8D898] hover:pl-1.5"
+      className="group block py-[7px] text-[11px] font-light tracking-[0.08em] text-[var(--theme-muted)] no-underline transition-all duration-300 hover:text-white hover:pl-1.5"
       style={{ fontFamily: "'Montserrat', sans-serif" }}
     >
       {children}
@@ -52,11 +60,10 @@ function ColLink({ href, children }: { href: string; children: React.ReactNode }
   );
 }
 
-/* ─── column title ─── */
 function ColTitle({ children }: { children: React.ReactNode }) {
   return (
     <p
-      className="text-[14px] font-medium tracking-[0.28em] uppercase text-[#E8D898] mb-[22px] m-0"
+      className="m-0 mb-[22px] text-[14px] font-medium uppercase tracking-[0.28em] text-white"
       style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
     >
       {children}
@@ -64,33 +71,52 @@ function ColTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-/* ─── bottom bar link ─── */
 function BottomLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
-    <a
-      href={href}
-      className="text-[#7A6F52] no-underline transition-colors duration-300 hover:text-[#E8D898]"
-    >
+    <a href={href} className="text-[var(--theme-muted)] no-underline transition-colors duration-300 hover:text-white">
       {children}
     </a>
   );
 }
 
 export default function Footer() {
+  const [serviceCategories, setServiceCategories] = useState<FooterCategory[]>([]);
+
+  useEffect(() => {
+    let ignore = false;
+
+    const loadCategories = async () => {
+      const { data, error } = await supabase
+        .from('catalog_categories')
+        .select('id, name, slug')
+        .eq('status', 'active')
+        .order('display_order', { ascending: true });
+
+      if (ignore || error || !data) return;
+      setServiceCategories(data);
+    };
+
+    void loadCategories();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  const visibleServiceCategories = useMemo(() => serviceCategories.filter((item) => item.slug && item.name), [serviceCategories]);
+
   return (
     <footer
-      className="relative pt-20 px-5 sm:px-7 lg:px-[52px]"
-      style={{ background: '#14120D', color: '#A09580', fontFamily: "'Montserrat', sans-serif" }}
+      className="relative px-5 pt-20 sm:px-7 lg:px-[52px]"
+      style={{ background: 'var(--theme-ink)', color: 'rgba(255,255,255,0.72)', fontFamily: "'Montserrat', sans-serif" }}
     >
-      {/* Gold gradient top border */}
       <div
-        className="absolute top-0 left-0 right-0 h-px pointer-events-none"
-        style={{ background: 'linear-gradient(90deg, transparent, #B8922A, transparent)' }}
+        className="pointer-events-none absolute top-0 left-0 right-0 h-px"
+        style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent)' }}
       />
 
-      {/* 5-column grid */}
       <div
-        className="hod-footer-grid max-w-[1400px] mx-auto pb-[60px]"
+        className="hod-footer-grid mx-auto max-w-[1400px] pb-[60px]"
         style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1.2fr', gap: '48px' }}
       >
         <style>{`
@@ -101,40 +127,36 @@ export default function Footer() {
             .hod-footer-grid { grid-template-columns: 1fr !important; }
           }
         `}</style>
-        {/* ── Brand ── */}
+
         <div>
           <p
-            className="text-[26px] font-normal tracking-[0.24em] uppercase text-[#E8D898] mb-[18px] m-0"
+            className="m-0 mb-[18px] text-[26px] font-normal uppercase tracking-[0.24em] text-white"
             style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
           >
             House of Diams
           </p>
 
-          <p
-            className="text-[11px] font-light leading-[1.9] text-[#7A6F52] tracking-[0.04em] max-w-[320px] mb-[26px] m-0 mb-[26px]"
-          >
-            Fine jewellery with natural and CVD diamonds, crafted in Surat, India — the diamond capital of the world. Ethically sourced. Globally trusted.
+          <p className="m-0 mb-[26px] max-w-[320px] text-[11px] font-light leading-[1.9] tracking-[0.04em] text-[rgba(255,255,255,0.68)]">
+            Fine jewellery with natural and CVD diamonds, crafted in Surat, India - the diamond capital of the world. Ethically sourced. Globally trusted.
           </p>
 
-          {/* Social row */}
-          <div className="flex gap-[10px] mt-2">
-            {SOCIAL.map((s) => (
+          <div className="mt-2 flex gap-[10px]">
+            {SOCIAL.map((item) => (
               <a
-                key={s.name}
-                href={s.href}
+                key={item.name}
+                href={item.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label={s.name}
-                className="w-9 h-9 rounded-full flex items-center justify-center text-[#E8D898] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#B8922A] hover:border-[#B8922A] hover:text-[#14120D]"
-                style={{ border: '1px solid rgba(184,146,42,0.3)' }}
+                aria-label={item.name}
+                className="flex h-9 w-9 items-center justify-center rounded-full text-white transition-all duration-300 hover:-translate-y-0.5 hover:border-white hover:bg-white hover:text-[var(--theme-ink)]"
+                style={{ border: '1px solid rgba(255,255,255,0.24)' }}
               >
-                {s.icon}
+                {item.icon}
               </a>
             ))}
           </div>
         </div>
 
-        {/* ── Navigate ── */}
         <div>
           <ColTitle>Navigate</ColTitle>
           <ColLink href="/">Home</ColLink>
@@ -144,27 +166,27 @@ export default function Footer() {
           <ColLink href="/contact">Contact</ColLink>
         </div>
 
-        {/* ── Services ── */}
         <div>
           <ColTitle>Services</ColTitle>
-          <ColLink href="#">Natural Diamonds</ColLink>
-          <ColLink href="#">CVD Diamonds</ColLink>
-          <ColLink href="#">Fine Jewellery</ColLink>
-          <ColLink href="/b2b">B2B Wholesale</ColLink>
-          <ColLink href="#">Custom Orders</ColLink>
-          <ColLink href="#">Hip Hop Jewellery</ColLink>
+          {visibleServiceCategories.length > 0 ? (
+            visibleServiceCategories.map((category) => (
+              <ColLink key={category.id} href={`/shop?category=${encodeURIComponent(category.slug)}`}>
+                {category.name}
+              </ColLink>
+            ))
+          ) : (
+            <ColLink href="/shop">Shop Collection</ColLink>
+          )}
         </div>
 
-        {/* ── Support ── */}
         <div>
           <ColTitle>Support</ColTitle>
-          <ColLink href="#">Shipping &amp; Returns</ColLink>
-          <ColLink href="#">Certification</ColLink>
-          <ColLink href="#">Care Guide</ColLink>
-          <ColLink href="#">FAQs</ColLink>
+          <ColLink href="/shipping">Shipping</ColLink>
+          <ColLink href="/returns">Returns</ColLink>
+          <ColLink href="/terms">Terms &amp; Conditions</ColLink>
+          <ColLink href="/privacy-policy">Privacy Policy</ColLink>
         </div>
 
-        {/* ── Contact ── */}
         <div>
           <ColTitle>Contact</ColTitle>
           <ColLink href="mailto:info@houseofdiams.com">info@houseofdiams.com</ColLink>
@@ -173,16 +195,15 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* ── Bottom bar ── */}
       <div
-        className="max-w-[1400px] mx-auto flex justify-between flex-wrap gap-3.5 py-7 text-[10px] tracking-[0.18em] uppercase text-[#5A5340]"
-        style={{ borderTop: '1px solid rgba(184,146,42,0.12)' }}
+        className="mx-auto flex max-w-[1400px] flex-wrap justify-between gap-3.5 py-7 text-[10px] uppercase tracking-[0.18em] text-[rgba(255,255,255,0.5)]"
+        style={{ borderTop: '1px solid rgba(255,255,255,0.12)' }}
       >
         <span>© 2025 House of Diams. All rights reserved.</span>
         <div className="flex items-center gap-0">
-          <BottomLink href="#">Privacy</BottomLink>
+          <BottomLink href="/privacy-policy">Privacy</BottomLink>
           <span className="mx-2">·</span>
-          <BottomLink href="#">Terms</BottomLink>
+          <BottomLink href="/terms">Terms</BottomLink>
           <span className="mx-2">·</span>
           <span>Fine Jewellery · Surat, India</span>
         </div>

@@ -1,263 +1,260 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
+
+type HeroSlide = {
+  sort_order: number;
+  image_path: string;
+  button_text: string;
+  button_link: string;
+};
+
+type HeroContent = {
+  eyebrow: string;
+  headline: string;
+  subtitle: string;
+  slider_enabled?: boolean;
+  slider_items?: HeroSlide[];
+};
 
 interface HeroProps {
   onEnquireClick?: () => void;
+  initialContent?: HeroContent;
 }
 
-export default function Hero({ onEnquireClick }: HeroProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+const defaultContent: HeroContent = {
+  eyebrow: 'Surat, India · Est. 2014 · Fine Jewellery',
+  headline: 'Crafted in Light.',
+  subtitle:
+    'Natural and CVD diamonds, precious gemstones and bespoke fine jewellery — handcrafted in the diamond capital of the world.',
+  slider_enabled: false,
+  slider_items: [],
+};
+
+const getPublicImageUrl = (path: string) => {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  const bucket = process.env.NEXT_PUBLIC_SUPABASE_COLLECTION_BUCKET ?? 'hod';
+  const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+  return data.publicUrl;
+};
+
+export default function Hero({ initialContent }: HeroProps) {
+  const [content, setContent] = useState<HeroContent>(() => ({
+    ...defaultContent,
+    ...initialContent,
+    slider_items: initialContent?.slider_items ?? [],
+  }));
+  const [activeSlide, setActiveSlide] = useState(0);
 
   useEffect(() => {
-    if (!canvasRef.current || typeof window === 'undefined') return;
+    if (initialContent) return;
 
-    let animFrameId: number;
+    const loadHero = async () => {
+      const { data: heroData } = await supabase
+        .from('homepage_hero')
+        .select('id, eyebrow, headline, subtitle, slider_enabled')
+        .eq('section_key', 'home_hero')
+        .eq('is_active', true)
+        .single();
 
-    const initDiamond = async () => {
-      const THREE = (window as any).THREE;
-      if (!THREE) return;
+      if (!heroData) return;
 
-      const canvas = canvasRef.current!;
-      const size = Math.min(canvas.clientWidth || 600, 600);
-      const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-      camera.position.z = 4;
-      const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-      renderer.setSize(size, size, false);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      let sliderItems: HeroSlide[] = [];
 
-      // Build diamond geometry
-      const v: number[] = [];
-      const tableR = 0.35, crownH = 0.3, pavilionH = 0.9, girdleR = 0.8, segments = 16;
-      const tableVerts: [number, number, number][] = [];
-      const girdleVerts: [number, number, number][] = [];
-      const tip: [number, number, number] = [0, -pavilionH, 0];
+      if (heroData.slider_enabled) {
+        const { data: itemsData } = await supabase
+          .from('homepage_hero_slider_items')
+          .select('sort_order, image_path, button_text, button_link')
+          .eq('hero_id', heroData.id)
+          .order('sort_order', { ascending: true });
 
-      for (let i = 0; i < segments; i++) {
-        const a = (i / segments) * Math.PI * 2;
-        tableVerts.push([Math.cos(a) * tableR, crownH, Math.sin(a) * tableR]);
-        girdleVerts.push([Math.cos(a) * girdleR, 0, Math.sin(a) * girdleR]);
-      }
-      for (let i = 0; i < segments; i++) {
-        const n = (i + 1) % segments;
-        v.push(0, crownH + 0.02, 0, ...tableVerts[i], ...tableVerts[n]);
-        v.push(...tableVerts[i], ...girdleVerts[i], ...girdleVerts[n]);
-        v.push(...tableVerts[i], ...girdleVerts[n], ...tableVerts[n]);
-        v.push(...girdleVerts[i], ...tip, ...girdleVerts[n]);
+        sliderItems = itemsData ?? [];
       }
 
-      const geom = new THREE.BufferGeometry();
-      geom.setAttribute('position', new THREE.Float32BufferAttribute(v, 3));
-      geom.computeVertexNormals();
-
-      const mat = new THREE.MeshPhysicalMaterial({
-        color: 0xf5edd6,
-        metalness: 0.35,
-        roughness: 0.08,
-        transmission: 0.75,
-        thickness: 0.5,
-        ior: 2.4,
-        clearcoat: 1,
-        clearcoatRoughness: 0.08,
-        envMapIntensity: 1.2,
-        side: THREE.DoubleSide,
-        emissive: 0x3a2b10,
-        emissiveIntensity: 0.1,
+      setContent({
+        eyebrow: heroData.eyebrow,
+        headline: heroData.headline,
+        subtitle: heroData.subtitle,
+        slider_enabled: heroData.slider_enabled,
+        slider_items: sliderItems,
       });
-
-      const diamond = new THREE.Mesh(geom, mat);
-      scene.add(diamond);
-
-      const edges = new THREE.EdgesGeometry(geom, 20);
-      diamond.add(
-        new THREE.LineSegments(
-          edges,
-          new THREE.LineBasicMaterial({ color: 0xb8922a, transparent: true, opacity: 0.45 })
-        )
-      );
-
-      scene.add(new THREE.AmbientLight(0xf9f6f1, 0.5));
-      const key = new THREE.DirectionalLight(0xffe8b0, 1.2);
-      key.position.set(3, 4, 5);
-      scene.add(key);
-      const fill = new THREE.DirectionalLight(0xffffff, 0.6);
-      fill.position.set(-3, 2, 4);
-      scene.add(fill);
-      const rim = new THREE.DirectionalLight(0xd4a840, 0.9);
-      rim.position.set(0, -3, -5);
-      scene.add(rim);
-      const sp1 = new THREE.PointLight(0xffffff, 0.8, 10);
-      sp1.position.set(2, 2, 2);
-      scene.add(sp1);
-      const sp2 = new THREE.PointLight(0xffe8b0, 0.5, 8);
-      sp2.position.set(-2, 1, 2);
-      scene.add(sp2);
-
-      let mx = 0, my = 0, tx = 0, ty = 0;
-      const onMouseMove = (e: MouseEvent) => {
-        mx = (e.clientX / window.innerWidth - 0.5) * 0.6;
-        my = (e.clientY / window.innerHeight - 0.5) * 0.6;
-      };
-      window.addEventListener('mousemove', onMouseMove);
-
-      setTimeout(() => {
-        if (canvas) canvas.style.opacity = '0.9';
-      }, 400);
-
-      const animate = () => {
-        animFrameId = requestAnimationFrame(animate);
-        tx += (mx - tx) * 0.04;
-        ty += (my - ty) * 0.04;
-        diamond.rotation.y += 0.004;
-        diamond.rotation.x = Math.sin(Date.now() * 0.0005) * 0.15 + ty * 0.3;
-        diamond.rotation.z = tx * 0.2;
-        sp1.position.x = Math.sin(Date.now() * 0.001) * 2.5;
-        sp1.position.y = Math.cos(Date.now() * 0.0013) * 2.5;
-        renderer.render(scene, camera);
-      };
-      animate();
-
-      const onResize = () => {
-        const s = Math.min(canvas.clientWidth || 600, 600);
-        renderer.setSize(s, s, false);
-      };
-      window.addEventListener('resize', onResize);
-
-      return () => {
-        window.removeEventListener('mousemove', onMouseMove);
-        window.removeEventListener('resize', onResize);
-        cancelAnimationFrame(animFrameId);
-        renderer.dispose();
-      };
     };
 
-    // Load Three.js if not available
-    if (!(window as any).THREE) {
-      const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-      script.onload = () => initDiamond();
-      document.head.appendChild(script);
-    } else {
-      initDiamond();
-    }
+    loadHero();
+  }, [initialContent]);
 
-    return () => {
-      cancelAnimationFrame(animFrameId);
-    };
-  }, []);
+  const slides = useMemo(
+    () =>
+      (content.slider_items ?? [])
+        .filter((item) => item.image_path.trim().length > 0)
+        .sort((a, b) => a.sort_order - b.sort_order),
+    [content.slider_items]
+  );
+
+  useEffect(() => {
+    if (!content.slider_enabled || slides.length <= 1) return;
+
+    const intervalId = window.setInterval(() => {
+      setActiveSlide((current) => (current + 1) % slides.length);
+    }, 4500);
+
+    return () => window.clearInterval(intervalId);
+  }, [content.slider_enabled, slides]);
+
+  const [line1, ...rest] = content.headline.split(' ');
+  const line2 = rest.join(' ');
+  const currentSlide = slides[activeSlide] ?? slides[0];
+  const hasImageHero = Boolean(content.slider_enabled && currentSlide);
 
   return (
-    <section className="relative min-h-[92vh] flex items-center justify-center px-[52px] py-[60px] overflow-hidden max-md:px-5 max-md:min-h-[80vh] max-md:py-10"
+    <section
+      className={[
+        'relative flex items-center justify-center overflow-hidden',
+        hasImageHero
+          ? 'min-h-0 px-0 py-0'
+          : 'min-h-[92vh] px-[52px] py-[60px] max-md:min-h-[80vh] max-md:px-5 max-md:py-10',
+      ].join(' ')}
       style={{
-        background: 'radial-gradient(ellipse 80% 50% at 50% 20%, rgba(184,146,42,0.08), transparent), radial-gradient(ellipse 60% 40% at 10% 80%, rgba(184,146,42,0.05), transparent), #FBF9F5',
+        background: hasImageHero
+          ? 'var(--theme-base)'
+          : 'radial-gradient(ellipse 80% 50% at 50% 20%, rgba(10,22,40,0.08), transparent), radial-gradient(ellipse 60% 40% at 10% 80%, rgba(10,22,40,0.05), transparent), var(--theme-base)',
       }}
     >
-      {/* Grain overlay */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-35 mix-blend-multiply"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E")`,
-        }}
-      />
+      {!hasImageHero ? (
+        <>
+          <div
+            className="absolute inset-0 pointer-events-none opacity-35 mix-blend-multiply"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E")`,
+            }}
+          />
 
-      {/* Orb 1 */}
-      <div
-        className="absolute rounded-full pointer-events-none animate-[orbFloat_12s_ease-in-out_infinite_alternate]"
-        style={{
-          width: 380,
-          height: 380,
-          top: -120,
-          right: -100,
-          background: '#B8922A',
-          filter: 'blur(60px)',
-          opacity: 0.25,
-        }}
-      />
-      {/* Orb 2 */}
-      <div
-        className="absolute rounded-full pointer-events-none animate-[orbFloat_10s_ease-in-out_infinite_alternate]"
-        style={{
-          width: 300,
-          height: 300,
-          bottom: -80,
-          left: -80,
-          background: '#D4A840',
-          filter: 'blur(60px)',
-          opacity: 0.2,
-          animationDelay: '2s',
-        }}
-      />
+          <div
+            className="absolute rounded-full pointer-events-none animate-[orbFloat_12s_ease-in-out_infinite_alternate]"
+            style={{
+              width: 380,
+              height: 380,
+              top: -120,
+              right: -100,
+              background: 'var(--theme-ink)',
+              filter: 'blur(60px)',
+              opacity: 0.25,
+            }}
+          />
+          <div
+            className="absolute rounded-full pointer-events-none animate-[orbFloat_10s_ease-in-out_infinite_alternate]"
+            style={{
+              width: 300,
+              height: 300,
+              bottom: -80,
+              left: -80,
+              background: '#20304a',
+              filter: 'blur(60px)',
+              opacity: 0.2,
+              animationDelay: '2s',
+            }}
+          />
+        </>
+      ) : null}
 
-      {/* 3D Canvas */}
-      <canvas
-        ref={canvasRef}
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-0 pointer-events-none opacity-0 transition-opacity duration-[1500ms]"
-        style={{ width: 600, height: 600, maxWidth: '90vw', maxHeight: '90vw' }}
-        aria-hidden="true"
-      />
+      {content.slider_enabled && currentSlide ? (
+        <div className="relative z-[2] w-full">
+          <div className="relative overflow-hidden rounded-none border-0 bg-transparent shadow-none backdrop-blur-0">
+            <div className="absolute inset-0 z-10 bg-gradient-to-t from-[rgba(10,22,40,0.42)] via-[rgba(10,22,40,0.1)] to-transparent" />
+            <div className="relative h-[288px] sm:h-[360px] md:h-[408px] lg:h-[456px]">
+              {slides.map((slide, index) => {
+                const imageUrl = getPublicImageUrl(slide.image_path);
+                return (
+                  <div
+                    key={`${slide.sort_order}-${slide.image_path}`}
+                    className={`absolute inset-0 transition-opacity duration-700 ${index === activeSlide ? 'opacity-100' : 'opacity-0'}`}
+                  >
+                    <Image
+                      src={imageUrl}
+                      alt={slide.button_text || `Hero slide ${index + 1}`}
+                      fill
+                      priority={index === 0}
+                      sizes="100vw"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                );
+              })}
+            </div>
 
-      {/* Content */}
-      <div className="relative z-[2] max-w-[960px] text-center">
-        {/* Eyebrow pill */}
-        <div className="inline-flex items-center gap-3.5 px-[22px] py-[9px] border border-[rgba(184,146,42,0.25)] rounded-full text-[10px] font-normal tracking-[0.32em] text-[#8A6A10] uppercase bg-[rgba(255,255,255,0.5)] backdrop-blur-[10px] mb-9 animate-[fadeUp_1s_0.2s_ease_forwards]">
-          <span className="inline-block w-1.5 h-1.5 bg-[#B8922A] rounded-full" />
-          Surat, India · Est. 2014 · Fine Jewellery
-          <span className="inline-block w-1.5 h-1.5 bg-[#B8922A] rounded-full" />
+            <div className="absolute inset-x-0 bottom-0 z-20 flex items-end justify-between gap-6 px-4 pb-4 sm:px-6 sm:pb-6 lg:px-8 lg:pb-8">
+              <div className="flex flex-col items-start gap-4">
+                <Link
+                  href={currentSlide.button_link || '#'}
+                  className="inline-flex items-center justify-center gap-2.5 bg-[var(--theme-ink)] px-[24px] py-3 text-[9px] uppercase tracking-[0.22em] text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#20304a] sm:px-[28px] sm:py-4 sm:text-[10px] sm:tracking-[0.28em]"
+                >
+                  {currentSlide.button_text || 'Explore'}
+                </Link>
+
+                {slides.length > 1 && (
+                  <div className="flex items-center gap-2">
+                    {slides.map((slide, index) => (
+                      <button
+                        key={`${slide.sort_order}-dot`}
+                        type="button"
+                        onClick={() => setActiveSlide(index)}
+                        className={`h-2.5 rounded-full transition-all ${index === activeSlide ? 'w-10 bg-white' : 'w-2.5 bg-white/45'}`}
+                        aria-label={`Go to slide ${index + 1}`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
+      ) : (
+        <div className="relative z-[2] max-w-[960px] text-center">
+          <div className="mb-9 inline-flex items-center gap-3.5 rounded-full border border-[var(--theme-border-strong)] bg-[rgba(255,255,255,0.5)] px-[22px] py-[9px] text-[10px] font-normal uppercase tracking-[0.32em] text-[var(--theme-ink)] backdrop-blur-[10px] animate-[fadeUp_1s_0.2s_ease_forwards]">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--theme-ink)]" />
+            {content.eyebrow}
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--theme-ink)]" />
+          </div>
 
-        {/* Headline */}
-        <h1 className="font-serif font-light leading-[0.95] tracking-[-0.01em] text-[#14120D] mb-8 animate-[fadeUp_1.2s_0.4s_ease_forwards] text-[clamp(56px,9vw,132px)]">
-          Crafted in
-          <br />
-          <span className="text-[#B8922A] font-normal relative inline-block">
-            <span className="relative">
-              Light.
-              <span
-                className="absolute bottom-[-8px] left-[5%] w-[90%] h-px pointer-events-none"
-                style={{
-                  background: 'linear-gradient(90deg, transparent, #B8922A, transparent)',
-                }}
-              />
+          <h1 className="mb-8 animate-[fadeUp_1.2s_0.4s_ease_forwards] font-serif text-[clamp(56px,9vw,132px)] font-light leading-[0.95] tracking-[-0.01em] text-[var(--theme-heading)]">
+            {line1}
+            <br />
+            <span className="relative inline-block font-normal text-[var(--theme-ink)]">
+              <span className="relative">
+                {line2}
+                <span
+                  className="absolute bottom-[-8px] left-[5%] w-[90%] h-px pointer-events-none"
+                  style={{ background: 'linear-gradient(90deg, transparent, var(--theme-ink), transparent)' }}
+                />
+              </span>
             </span>
-          </span>
-        </h1>
+          </h1>
 
-        {/* Subtitle */}
-        <p className="font-serif text-[13px] font-light tracking-[0.14em] leading-[2] text-[#7A7060] max-w-[620px] mx-auto mb-11 animate-[fadeUp_1.2s_0.6s_ease_forwards]">
-          Natural and CVD diamonds, precious gemstones and bespoke fine jewellery — handcrafted in
-          the diamond capital of the world.
-        </p>
+          <p className="mx-auto mb-11 max-w-[620px] animate-[fadeUp_1.2s_0.6s_ease_forwards] font-serif text-[13px] font-light leading-[2] tracking-[0.14em] text-[var(--theme-muted)]">
+            {content.subtitle}
+          </p>
 
-        {/* CTAs */}
-        <div className="flex gap-[18px] justify-center flex-wrap animate-[fadeUp_1.2s_0.8s_ease_forwards] max-md:flex-col max-md:w-full">
-          <Link
-            href="/shop"
-            className="inline-flex items-center gap-2.5 text-[10px] font-normal tracking-[0.28em] text-[#FBF9F5] bg-[#14120D] px-[34px] py-4 border-none cursor-pointer uppercase no-underline transition-all duration-400 relative overflow-hidden group max-md:justify-center hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(184,146,42,0.18)]"
-            style={{ position: 'relative' }}
-          >
-            <span
-              className="absolute inset-0 bg-[#B8922A] z-0 translate-y-full group-hover:translate-y-0 transition-transform duration-[450ms] ease-[cubic-bezier(0.77,0,0.18,1)]"
-            />
-            <span className="relative z-10">Explore Collection</span>
-          </Link>
-          <Link
-            href="/bespoke"
-            className="inline-flex items-center gap-2.5 text-[10px] font-normal tracking-[0.28em] text-[#14120D] bg-transparent px-8 py-[15px] border border-[#14120D] cursor-pointer uppercase no-underline transition-all duration-400 max-md:justify-content-center hover:bg-[#14120D] hover:text-[#FBF9F5]"
-          >
-            Commission a Piece
-          </Link>
+          <div className="flex gap-[18px] justify-center flex-wrap animate-[fadeUp_1.2s_0.8s_ease_forwards] max-md:flex-col max-md:w-full">
+            <Link
+              href="/shop"
+              className="group relative inline-flex cursor-pointer items-center gap-2.5 overflow-hidden border-none bg-[var(--theme-ink)] px-[34px] py-4 text-[10px] font-normal uppercase tracking-[0.28em] text-white no-underline transition-all duration-400 max-md:justify-center hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(10,22,40,0.18)]"
+            >
+              <span className="absolute inset-0 z-0 translate-y-full bg-[#20304a] transition-transform duration-[450ms] ease-[cubic-bezier(0.77,0,0.18,1)] group-hover:translate-y-0" />
+              <span className="relative z-10">Explore Collection</span>
+            </Link>
+            <Link
+              href="/bespoke"
+              className="inline-flex cursor-pointer items-center justify-center gap-2.5 border border-[var(--theme-ink)] bg-transparent px-8 py-[15px] text-[10px] font-normal uppercase tracking-[0.28em] text-[var(--theme-ink)] no-underline transition-all duration-400 hover:bg-[var(--theme-ink)] hover:text-white"
+            >
+              Commission a Piece
+            </Link>
+          </div>
         </div>
-      </div>
-
-      {/* Scroll indicator */}
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 text-[9px] tracking-[0.4em] uppercase text-[#7A7060] font-normal animate-[fadeUp_1s_1s_ease_forwards]">
-        <span>Scroll</span>
-        <div className="w-px h-[50px] bg-[#B0A898] relative overflow-hidden">
-          <span className="absolute top-0 left-0 w-full h-[40%] bg-[#B8922A] animate-[scrollDot_2s_ease-in-out_infinite]" />
-        </div>
-      </div>
+      )}
     </section>
   );
 }

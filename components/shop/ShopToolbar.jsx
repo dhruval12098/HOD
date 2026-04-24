@@ -22,14 +22,14 @@ export default function ShopToolbar({ count, sort, onSortChange, onToggleFilters
         gap: "16px",
       }}
     >
-      {/* Mobile filter button */}
+      {/* Filter button */}
       <button
         onClick={onToggleFilters}
         style={{
-          display: "none", // shown via media query override
+          display: "inline-flex",
           padding: "10px 20px",
-          background: "#14120D",
-          color: "#FBF9F5",
+          background: "#0A1628",
+          color: "#FAFBFD",
           border: "none",
           cursor: "pointer",
           fontSize: "10px",
@@ -38,7 +38,7 @@ export default function ShopToolbar({ count, sort, onSortChange, onToggleFilters
           alignItems: "center",
           gap: "10px",
         }}
-        className="mobile-filter-btn"
+        className="filter-btn"
       >
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
           <path d="M1 2H11M2 6H10M3 10H9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
@@ -46,15 +46,9 @@ export default function ShopToolbar({ count, sort, onSortChange, onToggleFilters
         Filters
       </button>
 
-      <style>{`
-        @media (max-width: 1024px) {
-          .mobile-filter-btn { display: inline-flex !important; }
-        }
-      `}</style>
-
       {/* Result count */}
-      <div style={{ fontSize: "11px", letterSpacing: ".08em", color: "#7A7060" }}>
-        <strong style={{ color: "#14120D", fontWeight: 500 }}>{count}</strong> pieces
+      <div style={{ fontSize: "11px", letterSpacing: ".08em", color: "#6A6A6A" }}>
+        <strong style={{ color: "#0A1628", fontWeight: 500 }}>{count}</strong> pieces
       </div>
 
       {/* Sort */}
@@ -67,9 +61,9 @@ export default function ShopToolbar({ count, sort, onSortChange, onToggleFilters
             fontFamily: "inherit",
             fontSize: "11px",
             fontWeight: 400,
-            color: "#14120D",
+            color: "#0A1628",
             background: "#fff",
-            border: "1px solid rgba(20,18,13,0.10)",
+            border: "1px solid rgba(10,22,40,0.10)",
             cursor: "pointer",
             letterSpacing: ".08em",
             appearance: "none",
@@ -78,8 +72,8 @@ export default function ShopToolbar({ count, sort, onSortChange, onToggleFilters
             backgroundPosition: "right 14px center",
             outline: "none",
           }}
-          onFocus={(e) => (e.currentTarget.style.borderColor = "#B8922A")}
-          onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(20,18,13,0.10)")}
+          onFocus={(e) => (e.currentTarget.style.borderColor = "#0A1628")}
+          onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(10,22,40,0.10)")}
         >
           {SORT_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>

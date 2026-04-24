@@ -64,7 +64,7 @@ export function Toast({ message, visible }: ToastProps) {
         maxWidth: '90%',
         textAlign: 'center',
         boxShadow: 'var(--shadow-lg)',
-        borderLeft: '3px solid var(--gold)',
+        borderLeft: '3px solid var(--theme-ink)',
         fontFamily: 'var(--sans)',
         pointerEvents: 'none',
       }}

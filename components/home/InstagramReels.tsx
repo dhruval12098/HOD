@@ -48,7 +48,7 @@ function StatItem({ count, suffix, label, active }: { count: number; suffix: str
           fontFamily: 'var(--numeric)',
           fontSize: '40px',
           fontWeight: 400,
-          color: 'var(--gold)',
+          color: 'var(--theme-ink)',
           lineHeight: 1,
         }}
       >
@@ -101,7 +101,7 @@ export default function InstagramReels() {
               fontSize: '10px',
               fontWeight: 400,
               letterSpacing: '0.32em',
-              color: 'var(--gold)',
+              color: 'var(--theme-ink)',
               textTransform: 'uppercase',
               marginBottom: '18px',
               display: 'inline-flex',
@@ -109,7 +109,7 @@ export default function InstagramReels() {
               gap: '12px',
             }}
           >
-            <span style={{ width: '24px', height: '1px', background: 'var(--gold)', display: 'inline-block' }} />
+            <span style={{ width: '24px', height: '1px', background: 'var(--theme-ink)', display: 'inline-block' }} />
             @houseofdiams
           </div>
           <h2
@@ -123,7 +123,7 @@ export default function InstagramReels() {
               marginBottom: 0,
             }}
           >
-            Follow the <em style={{ fontStyle: 'normal', color: 'var(--gold)', fontWeight: 400 }}>Craft</em>
+            Follow the <em style={{ fontStyle: 'normal', color: 'var(--theme-ink)', fontWeight: 400 }}>Craft</em>
           </h2>
           <p
             style={{
@@ -213,7 +213,7 @@ export default function InstagramReels() {
                 const el = e.currentTarget as HTMLElement;
                 el.style.transform = 'translateY(-6px)';
                 el.style.boxShadow = 'var(--shadow-lg)';
-                el.style.borderColor = 'var(--border-gold)';
+                el.style.borderColor = 'var(--theme-border-strong)';
                 const v = videoRefs.current[i];
                 if (v) v.play().catch(() => {});
               }}
@@ -254,7 +254,7 @@ export default function InstagramReels() {
                 style={{
                   position: 'absolute',
                   inset: 0,
-                  background: 'linear-gradient(to bottom, transparent 40%, rgba(20,18,13,0.7) 100%)',
+                  background: 'linear-gradient(to bottom, transparent 40%, rgba(10,22,40,0.7) 100%)',
                 }}
               />
               {/* Play Icon */}
@@ -266,7 +266,7 @@ export default function InstagramReels() {
                   width: '36px',
                   height: '36px',
                   borderRadius: '50%',
-                  background: 'var(--gold)',
+                  background: 'var(--theme-ink)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

@@ -17,25 +17,25 @@ const config: Config = {
       // ── Colors ─────────────────────────────────────────────────────────────
       colors: {
         gold: {
-          DEFAULT: '#B8922A',
-          2: '#8A6A10',
-          3: '#D4A840',
-          4: '#E8D898',
-          soft: '#F5EDD6',
+          DEFAULT: 'var(--theme-ink)',
+          2: '#08111f',
+          3: '#20304a',
+          4: '#dbe4f0',
+          soft: 'var(--theme-surface-soft)',
         },
         ink: {
-          DEFAULT: '#14120D',
-          2: '#3A3628',
-          3: '#7A7060',
-          4: '#B0A898',
+          DEFAULT: 'var(--theme-ink)',
+          2: '#253246',
+          3: 'var(--theme-muted)',
+          4: 'var(--theme-muted-2)',
         },
         bg: {
-          DEFAULT: '#FBF9F5',
-          2: '#F6F2EA',
-          3: '#EEE7DA',
-          4: '#E3D9C4',
-          dark: '#14120D',
-          dark2: '#1C1A14',
+          DEFAULT: 'var(--theme-base)',
+          2: 'var(--theme-surface-warm)',
+          3: 'var(--theme-surface-soft)',
+          4: 'var(--theme-panel-1)',
+          dark: 'var(--theme-ink)',
+          dark2: '#111f34',
         },
       },
 
@@ -86,10 +86,10 @@ const config: Config = {
 
       // ── Box Shadows ────────────────────────────────────────────────────────
       boxShadow: {
-        sm: '0 1px 3px rgba(20,18,13,0.06)',
-        DEFAULT: '0 8px 30px rgba(20,18,13,0.08)',
-        lg: '0 24px 60px rgba(20,18,13,0.12)',
-        gold: '0 12px 40px rgba(184,146,42,0.18)',
+        sm: '0 1px 3px rgba(10,22,40,0.06)',
+        DEFAULT: '0 8px 30px rgba(10,22,40,0.08)',
+        lg: '0 24px 60px rgba(10,22,40,0.12)',
+        gold: '0 12px 40px rgba(10,22,40,0.12)',
       },
     },
   },

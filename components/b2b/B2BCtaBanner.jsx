@@ -9,25 +9,25 @@ export default function B2BCtaBanner() {
     <section
       id="b2b-cta"
       className="py-[110px] px-5 sm:px-7 lg:px-[52px] max-md:py-[70px] relative overflow-hidden"
-      style={{ background: "linear-gradient(135deg, #14120D 0%, #1C1A14 100%)" }}
+      style={{ background: "linear-gradient(135deg, #0A1628 0%, #111F34 100%)" }}
     >
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
           background:
-            "radial-gradient(ellipse at 20% 30%, rgba(184,146,42,0.15), transparent 50%), radial-gradient(ellipse at 80% 70%, rgba(184,146,42,0.10), transparent 50%)",
+            "radial-gradient(ellipse at 20% 30%, rgba(10,22,40,0.15), transparent 50%), radial-gradient(ellipse at 80% 70%, rgba(10,22,40,0.10), transparent 50%)",
         }}
       />
 
       <div className="max-w-[1100px] mx-auto text-center relative z-10">
         <SectionEyebrow>Start Partnership</SectionEyebrow>
         <h2
-          className="font-serif font-light tracking-[0.02em] text-[#FBF9F5] leading-[1.05] mt-5"
+          className="font-serif font-light tracking-[0.02em] text-[#FAFBFD] leading-[1.05] mt-5"
           style={{ fontSize: "clamp(36px, 5.5vw, 72px)" }}
         >
           Ready to Source at Scale?
         </h2>
-        <p className="text-[12px] font-light tracking-[0.12em] text-[#A09580] leading-[1.9] max-w-[740px] mx-auto mt-5">
+        <p className="text-[12px] font-light tracking-[0.12em] text-[#D9E2EE] leading-[1.9] max-w-[740px] mx-auto mt-5">
           Tell us what you need and we will respond with availability, pricing, certification options,
           and timelines within 24 hours.
         </p>

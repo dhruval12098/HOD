@@ -16,7 +16,9 @@ import {
   useEffect,
   useRef,
   useCallback,
+  useState,
 } from 'react';
+import type { HomeDiamondInfoItem } from '@/lib/home-data';
 import * as THREE from 'three';
 import {
   GLTFLoader,
@@ -521,10 +523,20 @@ function addPlaceholderDiamond(
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function DiamondScroll() {
+export default function DiamondScroll({ items = [] }: { items?: HomeDiamondInfoItem[] }) {
   const wrapperRef = useRef<HTMLDivElement>(null!);
   const canvasRef  = useRef<HTMLDivElement>(null!);
   const textRefs   = useRef<(HTMLDivElement | null)[]>([]);
+  const [sections, setSections] = useState<SectionData[]>(() =>
+    items.length
+      ? SECTIONS.map((section, index) => {
+          const item = items.find((row) => row.sort_order === index + 1);
+          return item
+            ? { ...section, label: item.label, title: item.heading, body: item.paragraph }
+            : section;
+        })
+      : SECTIONS
+  );
 
   const camPosTarget       = useRef(CAMERA_KEYFRAMES[0].position.clone());
   const camLookTarget      = useRef(CAMERA_KEYFRAMES[0].target.clone());
@@ -547,6 +559,19 @@ export default function DiamondScroll() {
   });
   const metalTintTarget = useRef(new THREE.Color(SECTIONS[0].metalTint));
   const progressRef = useRef(0);
+
+  useEffect(() => {
+    if (!items.length) return;
+
+    setSections((prev) =>
+      prev.map((section, index) => {
+        const item = items.find((row) => row.sort_order === index + 1);
+        return item
+          ? { ...section, label: item.label, title: item.heading, body: item.paragraph }
+          : section;
+      })
+    );
+  }, [items]);
 
   const {
     cameraRef,
@@ -944,7 +969,7 @@ export default function DiamondScroll() {
 
           <div className="ds-text-col">
             <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-              {SECTIONS.map((s, i) => (
+              {sections.map((s, i) => (
                 <div
                   key={i}
                   className="ds-panel"
@@ -966,7 +991,7 @@ export default function DiamondScroll() {
 
           <div className="ds-edge-fade" />
 
-          <SectionDots progressRef={progressRef} count={SECTIONS.length} />
+          <SectionDots progressRef={progressRef} count={sections.length} />
           <span className="ds-scroll-hint">scroll to explore</span>
         </div>
       </div>

@@ -1,15 +1,64 @@
 "use client";
 
-const MILESTONES = [
-  { year: "2014", label: "Founded in Surat, Gujarat", future: false },
-  { year: "2016", label: "First international sale", future: false },
-  { year: "2018", label: "B2B wholesale launched", future: false },
-  { year: "2021", label: "Expansion into Middle East & Europe", future: false },
-  { year: "2024", label: "3,000+ bespoke orders delivered", future: false },
-  { year: "2025", label: "Serving 28+ countries worldwide", future: false },
-];
+import { useEffect, useState } from "react";
 
 export default function TimelineSection() {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadTimeline() {
+      try {
+        const response = await fetch("/api/public/about/timeline", { cache: "no-store" });
+        const payload = await response.json();
+        if (!active) return;
+        setItems(Array.isArray(payload?.items) ? payload.items : []);
+      } catch {
+        if (active) setItems([]);
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    loadTimeline();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (loading) {
+    return (
+      <section
+        style={{
+          padding: "110px 52px",
+          maxWidth: "1400px",
+          margin: "0 auto",
+        }}
+      >
+        <div style={{ textAlign: "center", color: "#6A6A6A" }}>Loading timeline...</div>
+      </section>
+    );
+  }
+
+  if (!items.length) {
+    return (
+      <section
+        style={{
+          padding: "110px 52px",
+          maxWidth: "1400px",
+          margin: "0 auto",
+        }}
+      >
+        <div style={{ textAlign: "center", color: "#6A6A6A" }}>
+          Timeline content is not set yet.
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section
       style={{
@@ -52,7 +101,7 @@ export default function TimelineSection() {
             fontSize: "10px",
             fontWeight: 400,
             letterSpacing: ".32em",
-            color: "#B8922A",
+            color: "#0A1628",
             textTransform: "uppercase",
             marginBottom: "18px",
             display: "inline-flex",
@@ -61,7 +110,7 @@ export default function TimelineSection() {
             gap: "12px",
           }}
         >
-          <span style={{ width: "24px", height: "1px", background: "#B8922A", display: "inline-block" }} />
+          <span style={{ width: "24px", height: "1px", background: "#0A1628", display: "inline-block" }} />
           Our Journey
         </div>
         <h2
@@ -70,11 +119,11 @@ export default function TimelineSection() {
             fontSize: "clamp(40px, 5.5vw, 72px)",
             fontWeight: 300,
             letterSpacing: ".02em",
-            color: "#14120D",
+            color: "#0A1628",
             lineHeight: 1.05,
           }}
         >
-          <em style={{ fontStyle: "normal", color: "#B8922A", fontWeight: 400 }}>Milestones</em>
+          <em style={{ fontStyle: "normal", color: "#0A1628", fontWeight: 400 }}>Milestones</em>
         </h2>
       </div>
 
@@ -96,14 +145,14 @@ export default function TimelineSection() {
             left: "40px",
             right: "40px",
             height: "1px",
-            background: "rgba(184,146,42,0.25)",
+            background: "rgba(10,22,40,0.25)",
             pointerEvents: "none",
           }}
         />
 
-        {MILESTONES.map((m, i) => (
+        {items.map((m, i) => (
           <div
-            key={i}
+            key={m.id ?? i}
             className="timeline-item"
             style={{ textAlign: "center", position: "relative", flex: 1 }}
           >
@@ -113,13 +162,13 @@ export default function TimelineSection() {
               style={{
                 width: "14px",
                 height: "14px",
-                background: m.future ? "#FBF9F5" : "#B8922A",
+                background: "#0A1628",
                 borderRadius: "50%",
                 margin: "0 auto 16px",
                 position: "relative",
                 zIndex: 1,
-                border: "3px solid #FBF9F5",
-                boxShadow: `0 0 0 1px ${m.future ? "#7A7060" : "#B8922A"}`,
+                border: "3px solid #FAFBFD",
+                boxShadow: "0 0 0 1px #0A1628",
               }}
             />
 
@@ -129,7 +178,7 @@ export default function TimelineSection() {
                 fontFamily: "var(--numeric)",
                 fontSize: "26px",
                 fontWeight: 400,
-                color: m.future ? "#7A7060" : "#14120D",
+                color: "#0A1628",
                 marginBottom: "4px",
               }}
             >
@@ -142,7 +191,7 @@ export default function TimelineSection() {
                 fontSize: "10px",
                 fontWeight: 300,
                 letterSpacing: ".14em",
-                color: "#7A7060",
+                color: "#6A6A6A",
               }}
             >
               {m.label}

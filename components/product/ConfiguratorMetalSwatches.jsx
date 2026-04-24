@@ -14,10 +14,10 @@ export default function ConfiguratorMetalSwatches({ metals, active, onChange }) 
     <div className="mb-5">
       {/* Row heading */}
       <div className="flex justify-between items-baseline mb-[10px]">
-        <span className="font-sans text-[10px] font-medium tracking-[0.28em] uppercase text-[#14120D]">
+        <span className="font-sans text-[10px] font-medium tracking-[0.28em] uppercase text-[#0A1628]">
           Metal
         </span>
-        <span className="font-serif text-[14px] font-normal italic text-[#B8922A] tracking-[0.02em]">
+        <span className="font-serif text-[14px] font-normal italic text-[#0A1628] tracking-[0.02em]">
           {METAL_META[active]?.name || active}
         </span>
       </div>
@@ -34,11 +34,11 @@ export default function ConfiguratorMetalSwatches({ metals, active, onChange }) 
               onClick={() => onChange(m)}
               className={`
                 flex flex-col items-center gap-[6px]
-                px-3 pt-[10px] pb-2 min-w-[72px]
+                min-w-[72px] rounded-[18px] px-3 pt-[10px] pb-2
                 border bg-white transition-all duration-300
                 ${isActive
-                  ? 'border-[#B8922A] bg-[#F5EDD6] shadow-[0_0_0_1px_#B8922A_inset]'
-                  : 'border-[rgba(20,18,13,0.10)] hover:border-[#B8922A]'
+                  ? 'border-[#0A1628] bg-[#F5F7FC] shadow-[0_0_0_1px_#0A1628_inset]'
+                  : 'border-[rgba(10,22,40,0.10)] hover:border-[#0A1628]'
                 }
               `}
               aria-label={meta.name}
@@ -52,7 +52,7 @@ export default function ConfiguratorMetalSwatches({ metals, active, onChange }) 
                 }}
               />
               {/* Label */}
-              <span className="font-sans text-[8px] tracking-[0.2em] uppercase text-[#3A3628] text-center leading-[1.3]">
+              <span className="font-sans text-[8px] tracking-[0.2em] uppercase text-[#253246] text-center leading-[1.3]">
                 {meta.name}
               </span>
             </button>

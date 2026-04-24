@@ -10,7 +10,7 @@ export default function B2BHero() {
     <section
       className="pt-[100px] pb-[70px] px-5 sm:px-7 lg:px-[52px] text-center relative overflow-hidden"
       style={{
-        background: "linear-gradient(180deg, #FBF9F5 0%, #F6F2EA 100%)",
+        background: "linear-gradient(180deg, #FAFBFD 0%, #FAF7F2 100%)",
       }}
     >
       <div className="max-w-[1100px] mx-auto">
@@ -25,7 +25,7 @@ export default function B2BHero() {
         </div>
 
         <h1
-          className="font-numeric font-light leading-[0.95] tracking-[-0.02em] text-[#14120D] mb-6"
+          className="font-numeric font-light leading-[0.95] tracking-[-0.02em] text-[#0A1628] mb-6"
           style={{ fontSize: "clamp(46px, 7vw, 96px)" }}
         >
           B2B Diamonds.
@@ -33,7 +33,7 @@ export default function B2BHero() {
           Jewellery Supply.
         </h1>
 
-        <p className="text-[13px] font-light leading-[2] text-[#7A7060] tracking-[0.06em] max-w-[720px] mx-auto mb-10">
+        <p className="text-[13px] font-light leading-[2] text-[#6A6A6A] tracking-[0.06em] max-w-[720px] mx-auto mb-10">
           IGI and GIA certified stones, consistent parcels, and fast global
           fulfilment from Surat. Built for retailers, designers, and wholesalers
           who need reliable quality at scale.

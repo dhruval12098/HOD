@@ -1,9 +1,9 @@
 "use client";
 
 // ── Gem SVG renderer ──────────────────────────────────────────────────────────
-export function GemSVG({ style, size = 110, color = "#D4A840" }) {
+export function GemSVG({ style, size = 110, color = "#20304A" }) {
   const c = color;
-  const cL = "#B8922A";
+  const cL = "#0A1628";
   const s = size;
 
   switch (style) {
@@ -35,8 +35,8 @@ export function GemSVG({ style, size = 110, color = "#D4A840" }) {
       return (
         <svg width={s} height={s} viewBox="0 0 110 110" fill="none">
           <polygon points="55,18 73,30 68,90 42,90 37,30" stroke={cL} strokeWidth="1" fill={`${c}33`} />
-          <polygon points="28,40 38,48 33,80 18,80 13,48" stroke={cL} strokeWidth="0.8" fill="#D4A84033" />
-          <polygon points="82,40 92,48 87,80 72,80 67,48" stroke={cL} strokeWidth="0.8" fill="#D4A84033" />
+          <polygon points="28,40 38,48 33,80 18,80 13,48" stroke={cL} strokeWidth="0.8" fill="#20304A33" />
+          <polygon points="82,40 92,48 87,80 72,80 67,48" stroke={cL} strokeWidth="0.8" fill="#20304A33" />
         </svg>
       );
     case "row":
@@ -132,10 +132,10 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
   const tag = product.isNew ? "New" : product.featured ? "Featured" : "Signature";
   const gemSize = LARGE_GEM_STYLES.includes(product.gemStyle) ? 140 : 110;
 
-  const cardBg = isDark ? "#14120D" : "#fff";
-  const cardBorder = isDark ? "rgba(184,146,42,0.18)" : "rgba(20,18,13,0.10)";
-  const namColor = isDark ? "#F9F6F1" : "#14120D";
-  const metaColor = isDark ? "#8A7E5C" : "#7A7060";
+  const cardBg = isDark ? "#0A1628" : "#fff";
+  const cardBorder = isDark ? "rgba(255,255,255,0.12)" : "rgba(10,22,40,0.10)";
+  const namColor = isDark ? "#FFFFFF" : "#0A1628";
+  const metaColor = isDark ? "#6A6A6A" : "#6A6A6A";
 
   return (
     <a
@@ -154,8 +154,8 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = "translateY(-6px)";
-        e.currentTarget.style.boxShadow = "0 24px 60px rgba(20,18,13,0.12)";
-        e.currentTarget.style.borderColor = "rgba(184,146,42,0.25)";
+        e.currentTarget.style.boxShadow = "0 24px 60px rgba(10,22,40,0.12)";
+        e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.35)" : "rgba(10,22,40,0.25)";
         const glow = e.currentTarget.querySelector(".card-glow");
         if (glow) glow.style.opacity = "1";
         const gem = e.currentTarget.querySelector(".card-gem");
@@ -176,8 +176,8 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
         style={{
           height: "300px",
           background: isDark
-            ? "linear-gradient(135deg, #14120D 0%, #1C1A14 100%)"
-            : "linear-gradient(135deg, #FBF9F5 0%, #F6F2EA 100%)",
+            ? "linear-gradient(135deg, #0A1628 0%, #111F34 100%)"
+            : "linear-gradient(135deg, #FAFBFD 0%, #FAF7F2 100%)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -191,7 +191,7 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
           style={{
             position: "absolute",
             inset: 0,
-            background: "radial-gradient(circle at 50% 50%, rgba(184,146,42,0.08), transparent 70%)",
+            background: "radial-gradient(circle at 50% 50%, rgba(10,22,40,0.08), transparent 70%)",
             opacity: 0,
             transition: "opacity .5s",
           }}
@@ -208,9 +208,9 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
             letterSpacing: ".26em",
             padding: "5px 12px",
             textTransform: "uppercase",
-            background: isDark ? "#B8922A" : "rgba(255,255,255,0.92)",
-            color: isDark ? "#14120D" : "#8A6A10",
-            border: isDark ? "1px solid #B8922A" : "1px solid rgba(184,146,42,0.25)",
+            background: isDark ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.92)",
+            color: isDark ? "#FFFFFF" : "#0A1628",
+            border: isDark ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(10,22,40,0.25)",
             backdropFilter: "blur(10px)",
             zIndex: 2,
           }}
@@ -233,9 +233,9 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
             width: "32px",
             height: "32px",
             borderRadius: "50%",
-            background: isDark ? "rgba(20,18,13,0.7)" : "rgba(255,255,255,0.92)",
+            background: isDark ? "rgba(10,22,40,0.7)" : "rgba(255,255,255,0.92)",
             backdropFilter: "blur(10px)",
-            border: isDark ? "1px solid rgba(184,146,42,0.3)" : "1px solid rgba(20,18,13,0.10)",
+            border: isDark ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(10,22,40,0.10)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -244,18 +244,18 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
             zIndex: 2,
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = "#B8922A";
-            e.currentTarget.style.borderColor = "#B8922A";
+            e.currentTarget.style.background = isDark ? "#FFFFFF" : "#0A1628";
+            e.currentTarget.style.borderColor = isDark ? "#FFFFFF" : "#0A1628";
           }}
           onMouseLeave={(e) => {
             if (!wishlisted) {
-              e.currentTarget.style.background = isDark ? "rgba(20,18,13,0.7)" : "rgba(255,255,255,0.92)";
-              e.currentTarget.style.borderColor = isDark ? "rgba(184,146,42,0.3)" : "rgba(20,18,13,0.10)";
+              e.currentTarget.style.background = isDark ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.92)";
+              e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.2)" : "rgba(10,22,40,0.10)";
             }
           }}
         >
           <svg viewBox="0 0 16 16" fill={wishlisted ? "currentColor" : "none"} width="14" height="14"
-            style={{ stroke: wishlisted ? "#fff" : isDark ? "#D4A840" : "#3A3628", color: "#fff" }}>
+            style={{ stroke: wishlisted ? (isDark ? "#0A1628" : "#fff") : isDark ? "#fff" : "#253246", color: isDark ? "#0A1628" : "#fff" }}>
             <path d="M8 14L2.5 8.5C1 7 1 4.5 2.5 3C4 1.5 6.5 1.5 8 3C9.5 1.5 12 1.5 13.5 3C15 4.5 15 7 13.5 8.5L8 14Z"
               strokeWidth="1.3" strokeLinejoin="round" />
           </svg>
@@ -270,6 +270,8 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
               width: "100%",
               height: "100%",
               objectFit: "cover",
+              objectPosition: "center",
+              transform: "scale(1.12)",
               transition: "transform .7s cubic-bezier(.2,.7,.3,1)",
             }}
             loading="lazy"
@@ -279,7 +281,7 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
             className="card-gem"
             style={{
               transition: "transform .7s cubic-bezier(.2,.7,.3,1)",
-              filter: "drop-shadow(0 8px 20px rgba(184,146,42,0.2))",
+              filter: "drop-shadow(0 8px 20px rgba(10,22,40,0.2))",
             }}
           >
             <GemSVG style={product.gemStyle} size={gemSize} color={product.gemColor} />
@@ -291,7 +293,7 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
       <div
         style={{
           padding: "22px 22px 26px",
-          borderTop: isDark ? "1px solid rgba(184,146,42,0.12)" : "1px solid rgba(20,18,13,0.10)",
+          borderTop: isDark ? "1px solid rgba(10,22,40,0.12)" : "1px solid rgba(10,22,40,0.10)",
           flex: 1,
           display: "flex",
           flexDirection: "column",
@@ -306,8 +308,8 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto", paddingTop: "12px" }}>
           <div>
-            <span style={{ fontSize: "8px", fontWeight: 400, letterSpacing: ".24em", color: "#B0A898", textTransform: "uppercase", display: "block", marginBottom: "2px", fontFamily: "var(--numeric)" }}>From</span>
-            <span style={{ fontFamily: "var(--numeric)", fontSize: "18px", fontWeight: 500, color: "#B8922A", letterSpacing: ".02em" }}>
+            <span style={{ fontSize: "8px", fontWeight: 400, letterSpacing: ".24em", color: "#7F8898", textTransform: "uppercase", display: "block", marginBottom: "2px", fontFamily: "var(--numeric)" }}>From</span>
+            <span style={{ fontFamily: "var(--numeric)", fontSize: "18px", fontWeight: 500, color: isDark ? "#FFFFFF" : "#0A1628", letterSpacing: ".02em" }}>
               ${product.priceFrom.toLocaleString()}
             </span>
           </div>
@@ -322,23 +324,23 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
               fontWeight: 400,
               letterSpacing: ".24em",
               padding: "7px 14px",
-              border: isDark ? "1px solid rgba(184,146,42,0.3)" : "1px solid rgba(20,18,13,0.10)",
+              border: isDark ? "1px solid rgba(255,255,255,0.24)" : "1px solid rgba(10,22,40,0.10)",
               background: "transparent",
-              color: isDark ? "#D4A840" : "#3A3628",
+              color: isDark ? "#FFFFFF" : "#253246",
               cursor: "pointer",
               textTransform: "uppercase",
               transition: "all .3s",
               fontFamily: "inherit",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#B8922A";
-              e.currentTarget.style.color = "#fff";
-              e.currentTarget.style.borderColor = "#B8922A";
+              e.currentTarget.style.background = isDark ? "#FFFFFF" : "#0A1628";
+              e.currentTarget.style.color = isDark ? "#0A1628" : "#fff";
+              e.currentTarget.style.borderColor = isDark ? "#FFFFFF" : "#0A1628";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = "transparent";
-              e.currentTarget.style.color = isDark ? "#D4A840" : "#3A3628";
-              e.currentTarget.style.borderColor = isDark ? "rgba(184,146,42,0.3)" : "rgba(20,18,13,0.10)";
+              e.currentTarget.style.color = isDark ? "#FFFFFF" : "#253246";
+              e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.24)" : "rgba(10,22,40,0.10)";
             }}
           >
             Enquire

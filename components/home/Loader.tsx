@@ -1,17 +1,30 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Plus_Jakarta_Sans } from 'next/font/google';
 
 interface LoaderProps {
   onComplete?: () => void;
   minDurationMs?: number;
   maxDurationMs?: number;
+  mode?: 'overlay' | 'screen'
+  ready?: boolean
 }
+
+const LOADER_COPY = 'Welcome to House of Diams';
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  weight: ['500', '600', '700'],
+  display: 'swap',
+});
 
 export default function Loader({
   onComplete,
   minDurationMs = 1200,
   maxDurationMs = 8000,
+  mode = 'overlay',
+  ready = true,
 }: LoaderProps) {
   const [progress, setProgress] = useState<number>(0);
   const [hidden, setHidden] = useState<boolean>(false);
@@ -21,6 +34,14 @@ export default function Loader({
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onCompleteTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const shellClasses = useMemo(
+    () =>
+      mode === 'screen'
+        ? 'relative min-h-screen'
+        : 'fixed inset-0 z-[10000]',
+    [mode]
+  );
 
   useEffect(() => {
     startTimeRef.current = typeof performance !== 'undefined' ? performance.now() : Date.now();
@@ -32,7 +53,7 @@ export default function Loader({
       if (onComplete) {
         onCompleteTimeoutRef.current = setTimeout(() => {
           onComplete();
-        }, 850);
+        }, 700);
       }
     };
 
@@ -45,7 +66,7 @@ export default function Loader({
 
       hideTimeoutRef.current = setTimeout(() => {
         completeOnce();
-      }, remaining + 200);
+      }, remaining + 120);
     };
 
     const markLoaded = () => {
@@ -57,20 +78,22 @@ export default function Loader({
 
     intervalRef.current = setInterval(() => {
       setProgress((prev: number) => {
-        if (prev >= 95) return 95;
-        const next = prev + Math.random() * 12;
-        return Math.min(95, next);
+        if (prev >= 94) return 94;
+        const next = prev + Math.random() * 10;
+        return Math.min(94, next);
       });
-    }, 80);
+    }, 90);
 
     const maxTimeout = setTimeout(() => {
       markLoaded();
     }, maxDurationMs);
 
-    if (document.readyState === 'complete') {
-      markLoaded();
-    } else {
-      window.addEventListener('load', markLoaded, { once: true });
+    if (mode === 'overlay' && ready) {
+      if (document.readyState === 'complete') {
+        markLoaded();
+      } else {
+        window.addEventListener('load', markLoaded, { once: true });
+      }
     }
 
     return () => {
@@ -80,38 +103,43 @@ export default function Loader({
       clearTimeout(maxTimeout);
       window.removeEventListener('load', markLoaded);
     };
-  }, [maxDurationMs, minDurationMs, onComplete]);
+  }, [maxDurationMs, minDurationMs, mode, onComplete, ready]);
 
   return (
     <div
       aria-hidden="true"
-      className={`fixed inset-0 bg-[#FBF9F5] z-[10000] flex flex-col items-center justify-center transition-[opacity,visibility] duration-[800ms] ${
+      className={`${shellClasses} flex items-center justify-center overflow-hidden bg-[linear-gradient(180deg,#fbf7f0_0%,#ffffff_55%,#f5f7fb_100%)] transition-[opacity,visibility] duration-[700ms] ${
         hidden ? 'opacity-0 invisible' : 'opacity-100 visible'
       }`}
     >
-      <div className="w-[60px] h-[60px] mb-9 animate-[rotateDiamond_3s_linear_infinite]">
-        <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
-          <polygon points="30,5 50,20 45,50 15,50 10,20" stroke="#B8922A" strokeWidth="1" fill="none" />
-          <polygon points="30,15 42,22 38,42 22,42 18,22" stroke="#B8922A" strokeWidth="0.6" fill="rgba(184,146,42,0.08)" />
-          <line x1="30" y1="5" x2="15" y2="50" stroke="#B8922A" strokeWidth="0.4" opacity=".5" />
-          <line x1="30" y1="5" x2="45" y2="50" stroke="#B8922A" strokeWidth="0.4" opacity=".5" />
-          <line x1="10" y1="20" x2="50" y2="20" stroke="#B8922A" strokeWidth="0.4" opacity=".5" />
-        </svg>
+      <div className="pointer-events-none absolute inset-0 opacity-70">
+        <div className="absolute left-[-4%] top-[10%] h-56 w-56 rounded-full bg-[rgba(212,175,55,0.12)] blur-3xl" />
+        <div className="absolute bottom-[5%] right-[-4%] h-64 w-64 rounded-full bg-[rgba(10,22,40,0.08)] blur-3xl" />
       </div>
 
-      <div className="font-serif text-2xl font-normal tracking-[0.45em] uppercase text-[#B8922A] mb-3.5 opacity-0 animate-[fadeUp_0.8s_0.3s_ease_forwards]">
-        House of Diams
-      </div>
+      <div className={`relative flex w-full max-w-[780px] flex-col items-center px-6 text-center ${plusJakartaSans.className}`}>
+        <div className="overflow-hidden">
+          <div
+            className="text-[clamp(2rem,5vw,4.2rem)] font-semibold leading-[0.98] tracking-[-0.03em] text-[#0A1628]"
+            style={{
+              clipPath: hidden ? 'inset(0 0 100% 0)' : 'inset(0 0 0 0)',
+              transition: 'clip-path 700ms cubic-bezier(0.77,0,0.18,1)',
+            }}
+          >
+            {LOADER_COPY}
+          </div>
+        </div>
 
-      <div className="text-[9px] font-light tracking-[0.35em] text-[#7A7060] uppercase opacity-0 animate-[fadeUp_0.8s_0.6s_ease_forwards]">
-        Crafted in Light
-      </div>
+        <div className="mt-4 text-[10px] uppercase tracking-[0.34em] text-[#8b94a5]">
+          Loading the collection
+        </div>
 
-      <div className="w-[140px] h-px bg-[#E3D9C4] mt-8 relative overflow-hidden">
-        <div
-          className="absolute top-0 left-0 h-full bg-[#B8922A]"
-          style={{ width: `${progress}%`, transition: 'width 50ms linear' }}
-        />
+        <div className="mt-8 h-px w-[180px] overflow-hidden bg-[#dde3ec] sm:w-[240px]">
+          <div
+            className="h-full bg-[#0A1628]"
+            style={{ width: `${progress}%`, transition: 'width 60ms linear' }}
+          />
+        </div>
       </div>
     </div>
   );

@@ -37,7 +37,7 @@ export const HIPHOP_PRODUCTS: HipHopProduct[] = [
     featured: true,
     isNew: true,
     shortMeta: 'Full Iced · 14K · 12ct',
-    gemColor: '#D4A840',
+    gemColor: '#20304A',
     gemStyle: 'chain',
   },
   {
@@ -54,7 +54,7 @@ export const HIPHOP_PRODUCTS: HipHopProduct[] = [
     featured: true,
     isNew: false,
     shortMeta: 'Baguette · 4ct · 14K',
-    gemColor: '#D4A840',
+    gemColor: '#20304A',
     gemStyle: 'grillz',
   },
   {
@@ -71,7 +71,7 @@ export const HIPHOP_PRODUCTS: HipHopProduct[] = [
     featured: true,
     isNew: false,
     shortMeta: '4-prong · 8ct · 20"',
-    gemColor: '#D4A840',
+    gemColor: '#20304A',
     gemStyle: 'tennis',
   },
   {
@@ -88,7 +88,7 @@ export const HIPHOP_PRODUCTS: HipHopProduct[] = [
     featured: false,
     isNew: true,
     shortMeta: 'Full Iced · 5ct · 14K',
-    gemColor: '#D4A840',
+    gemColor: '#20304A',
     gemStyle: 'cross',
   },
   {
@@ -105,7 +105,7 @@ export const HIPHOP_PRODUCTS: HipHopProduct[] = [
     featured: false,
     isNew: false,
     shortMeta: 'Baguette · 3.5ct · 14K',
-    gemColor: '#D4A840',
+    gemColor: '#20304A',
     gemStyle: 'signet',
   },
   {
@@ -122,7 +122,7 @@ export const HIPHOP_PRODUCTS: HipHopProduct[] = [
     featured: false,
     isNew: false,
     shortMeta: 'Baguette · 10ct · 14K',
-    gemColor: '#D4A840',
+    gemColor: '#20304A',
     gemStyle: 'row',
   },
 ]

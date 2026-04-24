@@ -11,8 +11,9 @@ import MobileDrawer from '@/components/hiphop/MobileDrawer';
 import Toast from '@/components/home/Toast';
 import EnquireModal from '@/components/home/EnquireModal';
 import FloatingWidgets from '@/components/home/FloatingWidgets';
+import type { StorefrontProduct } from '@/lib/catalog-products';
 
-export default function HipHopClient() {
+export default function HipHopClient({ products }: { products: StorefrontProduct[] }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [enquireOpen, setEnquireOpen] = useState(false);
   const [enquirePiece, setEnquirePiece] = useState('');
@@ -32,21 +33,21 @@ export default function HipHopClient() {
 
   return (
     <div className="min-h-screen bg-(--bg) text-(--ink)">
-      <TrustStrip />
+    
       <HipHopHero />
 
       <div className="max-w-[1400px] mx-auto px-[52px] pt-[36px] max-[700px]:px-5">
         <button
           type="button"
           onClick={() => setDrawerOpen(true)}
-          className="inline-flex items-center gap-2.5 text-[10px] font-normal tracking-[0.28em] uppercase text-[#14120D] border border-[#14120D] px-8 py-[15px] bg-transparent cursor-pointer transition-all duration-400 hover:bg-[#14120D] hover:text-[#FBF9F5]"
+          className="inline-flex items-center gap-2.5 text-[10px] font-normal tracking-[0.28em] uppercase text-[#0A1628] border border-[#0A1628] px-8 py-[15px] bg-transparent cursor-pointer transition-all duration-400 hover:bg-[#0A1628] hover:text-[#FAFBFD]"
           style={{ fontFamily: "'Montserrat', sans-serif" }}
         >
           Open Navigation
         </button>
       </div>
 
-      <HipHopCollection onEnquire={openEnquire} onWishlistToast={handleWishlistToast} />
+      <HipHopCollection products={products} onEnquire={openEnquire} onWishlistToast={handleWishlistToast} />
       <StatsStrip />
       
       <FloatingWidgets />

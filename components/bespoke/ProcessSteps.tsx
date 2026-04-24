@@ -1,33 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-
-const steps = [
-  {
-    num: '01',
-    eyebrow: 'Step 01',
-    title: 'Consult',
-    desc: 'Share your vision, reference images and requirements via WhatsApp or our form. We respond within 24 hours.',
-  },
-  {
-    num: '02',
-    eyebrow: 'Step 02',
-    title: 'Design',
-    desc: 'Our artisans prepare a detailed CAD rendering and stone selection for your approval before any work begins.',
-  },
-  {
-    num: '03',
-    eyebrow: 'Step 03',
-    title: 'Craft',
-    desc: "Hand-set by Surat's finest craftsmen using your chosen metal, stone and specification. Quality checked at every stage.",
-  },
-  {
-    num: '04',
-    eyebrow: 'Step 04',
-    title: 'Deliver',
-    desc: 'Insured, tracked worldwide delivery with certificate of authenticity, stone grading report and care guide.',
-  },
-];
+import { useEffect, useRef, useState } from 'react';
 
 function RevealDiv({
   children,
@@ -66,29 +39,38 @@ function RevealDiv({
 }
 
 export default function ProcessSteps() {
+  const [items, setItems] = useState<{ id?: number; sort_order: number; eyebrow: string; title: string; description: string }[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const response = await fetch('/api/public/bespoke/process', { cache: 'no-store' });
+        const payload = await response.json();
+        if (!active) return;
+        setItems(Array.isArray(payload?.items) ? payload.items : []);
+      } catch {
+        if (active) setItems([]);
+      }
+    })();
+    return () => { active = false; };
+  }, []);
+
+  if (!items.length) return null;
+
   return (
     <section className="py-[90px] px-[52px] max-w-[1400px] mx-auto grid grid-cols-4 gap-[30px] max-lg:grid-cols-2 max-md:grid-cols-1 max-lg:px-7 max-md:px-5 max-md:py-[60px]">
-      {steps.map((step, i) => (
-        <RevealDiv key={step.num} delay={i * 100}>
-          <div className="bg-white px-8 py-11 border border-[rgba(20,18,13,0.10)] relative transition-all duration-500 ease-[cubic-bezier(0.2,0.7,0.3,1)] hover:-translate-y-1.5 hover:border-[rgba(184,146,42,0.25)] hover:shadow-[0_24px_60px_rgba(20,18,13,0.12)] h-full">
-            {/* Large faded number */}
-          <div className="absolute top-[18px] right-[26px] font-serif text-[64px] font-light text-[#B8922A] opacity-20 leading-[1] not-italic select-none pointer-events-none">
-            {step.num}
-          </div>
-
-            {/* Step eyebrow */}
-            <div className="text-[9px] font-normal tracking-[0.3em] text-[#B8922A] uppercase mb-3.5">
+      {items.map((step, i) => (
+        <RevealDiv key={step.id ?? step.sort_order} delay={i * 100}>
+          <div className="bg-white px-8 py-11 border border-[rgba(10,22,40,0.10)] relative transition-all duration-500 ease-[cubic-bezier(0.2,0.7,0.3,1)] hover:-translate-y-1.5 hover:border-[rgba(10,22,40,0.25)] hover:shadow-[0_24px_60px_rgba(10,22,40,0.12)] h-full">
+            <div className="text-[9px] font-normal tracking-[0.3em] text-[#0A1628] uppercase mb-3.5">
               {step.eyebrow}
             </div>
-
-            {/* Title */}
-            <div className="font-serif text-[28px] font-normal text-[#14120D] mb-3.5 tracking-[0.02em]">
+            <div className="font-serif text-[28px] font-normal text-[#0A1628] mb-3.5 tracking-[0.02em]">
               {step.title}
             </div>
-
-            {/* Description */}
-            <p className="text-[12px] font-light leading-[1.9] text-[#7A7060] tracking-[0.02em]">
-              {step.desc}
+            <p className="text-[12px] font-light leading-[1.9] text-[#6A6A6A] tracking-[0.02em]">
+              {step.description}
             </p>
           </div>
         </RevealDiv>

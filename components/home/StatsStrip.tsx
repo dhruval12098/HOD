@@ -8,12 +8,9 @@ interface Stat {
   label: string;
 }
 
-const stats: Stat[] = [
-  { target: 2617, suffix: '+', label: 'Diamonds in Stock' },
-  { target: 28, suffix: '+', label: 'Countries Served' },
-  { target: 3075, suffix: '+', label: 'Bespoke Pieces' },
-  { target: 11, suffix: '+', label: 'Years of Craft' },
-];
+interface StatsPayload {
+  items?: Stat[];
+}
 
 function CountUp({ target, suffix }: { target: number; suffix: string }) {
   const [value, setValue] = useState(0);
@@ -48,12 +45,25 @@ function CountUp({ target, suffix }: { target: number; suffix: string }) {
   return (
     <span ref={ref}>
       {value.toLocaleString('en-US')}
-      <em className="text-[#D4A840] not-italic">{suffix}</em>
+      <em className="text-[#20304A] not-italic">{suffix}</em>
     </span>
   );
 }
 
 export default function StatsStrip() {
+  const [stats, setStats] = useState<Stat[]>([]);
+
+  useEffect(() => {
+    const load = async () => {
+      const response = await fetch('/api/public/stats', { cache: 'no-store' });
+      const payload = (await response.json().catch(() => null)) as StatsPayload | null;
+      if (!response.ok) return;
+      setStats(payload?.items ?? []);
+    };
+
+    load();
+  }, []);
+
   return (
     <section
       className="py-[100px] px-[52px] grid grid-cols-4 gap-10 text-center relative overflow-hidden max-lg:grid-cols-2 max-md:grid-cols-1 max-lg:px-7 max-md:px-5 max-md:py-[70px] bg-(--bg)"
@@ -65,19 +75,19 @@ export default function StatsStrip() {
         className="absolute inset-0 pointer-events-none"
         style={{
           background:
-            'radial-gradient(ellipse at 20% 30%, rgba(184,146,42,0.15), transparent 50%), radial-gradient(ellipse at 80% 70%, rgba(184,146,42,0.1), transparent 50%)',
+            'radial-gradient(ellipse at 20% 30%, rgba(10,22,40,0.15), transparent 50%), radial-gradient(ellipse at 80% 70%, rgba(10,22,40,0.1), transparent 50%)',
         }}
       />
 
-      {stats.map((stat, i) => (
+      {stats.map((stat) => (
         <div key={stat.label} className="relative z-10">
           <div
-            className="font-numeric font-light text-[#E8D898] leading-[1] tracking-[0.01em] mb-3"
+            className="font-numeric font-light text-[#FFFFFF] leading-[1] tracking-[0.01em] mb-3"
             style={{ fontSize: 'clamp(56px, 6vw, 88px)' }}
           >
             <CountUp target={stat.target} suffix={stat.suffix} />
           </div>
-          <div className="text-[10px] font-normal tracking-[0.3em] text-[#A09580] uppercase">
+          <div className="text-[10px] font-normal tracking-[0.3em] text-[#D9E2EE] uppercase">
             {stat.label}
           </div>
         </div>

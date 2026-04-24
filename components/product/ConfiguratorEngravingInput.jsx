@@ -3,7 +3,7 @@
 /**
  * Controlled engraving toggle + text input row for the configurator.
  */
-export default function ConfiguratorEngravingInput({ mode, text, onModeChange, onTextChange }) {
+export default function ConfiguratorEngravingInput({ label = 'Free Engraving', mode, text, onModeChange, onTextChange }) {
   const maxLength = 20;
 
   const selectedLabel =
@@ -16,13 +16,13 @@ export default function ConfiguratorEngravingInput({ mode, text, onModeChange, o
   return (
     <div className="mb-5">
       <div className="mb-[10px] flex items-baseline justify-between">
-        <span className="font-sans text-[10px] font-medium uppercase tracking-[0.28em] text-[#14120D]">
-          Free Engraving
+        <span className="font-sans text-[10px] font-medium uppercase tracking-[0.28em] text-[#0A1628]">
+          {label}
         </span>
-        <span className="font-serif text-[14px] font-normal italic tracking-[0.02em] text-[#B8922A]">
+        <span className="font-serif text-[14px] font-normal italic tracking-[0.02em] text-[#0A1628]">
           {selectedLabel}
           {mode === 'none' && (
-            <span className="ml-2 font-sans text-[10px] font-normal not-italic tracking-[0.1em] text-[#B0A898]">
+            <span className="ml-2 font-sans text-[10px] font-normal not-italic tracking-[0.1em] text-[#7F8898]">
               Complimentary
             </span>
           )}
@@ -42,8 +42,8 @@ export default function ConfiguratorEngravingInput({ mode, text, onModeChange, o
                 font-sans text-[10px] font-light uppercase tracking-[0.16em]
                 border transition-all duration-300
                 ${isActive
-                  ? 'border-[#14120D] bg-[#14120D] text-[#FBF9F5]'
-                  : 'border-[rgba(20,18,13,0.10)] bg-transparent text-[#3A3628] hover:border-[#14120D] hover:text-[#14120D]'
+                  ? 'border-[#0A1628] bg-[#0A1628] text-[#FAFBFD]'
+                  : 'border-[rgba(10,22,40,0.10)] bg-transparent text-[#253246] hover:border-[#0A1628] hover:text-[#0A1628]'
                 }
               `}
             >
@@ -63,14 +63,14 @@ export default function ConfiguratorEngravingInput({ mode, text, onModeChange, o
             placeholder="Up to 20 characters..."
             className="
               mt-[10px] w-full max-w-[340px]
-              border border-[rgba(20,18,13,0.10)] bg-[#FBF9F5]
+              border border-[rgba(10,22,40,0.10)] bg-[#FAFBFD]
               px-[14px] py-3
-              font-serif text-[16px] italic text-[#14120D]
+              font-serif text-[16px] italic text-[#0A1628]
               transition-colors duration-300
-              placeholder:text-[#B0A898] focus:border-[#B8922A] focus:outline-none
+              placeholder:text-[#7F8898] focus:border-[#0A1628] focus:outline-none
             "
           />
-          <div className="mt-2 font-sans text-[9px] uppercase tracking-[0.14em] text-[#B0A898]">
+          <div className="mt-2 font-sans text-[9px] uppercase tracking-[0.14em] text-[#7F8898]">
             {text.length}/{maxLength}
           </div>
         </div>

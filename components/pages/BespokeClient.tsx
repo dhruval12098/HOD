@@ -10,6 +10,7 @@ import BespokeHero from '@/components/bespoke/BespokeHero';
 import ProcessSteps from '@/components/bespoke/ProcessSteps';
 import BespokePortfolio from '@/components/bespoke/BespokePortfolio';
 import BespokeForm from '@/components/bespoke/BespokeForm';
+import Manufacturing from '../home/Manufacturing';
 
 function BespokeInner() {
   const { showToast } = useToast();
@@ -18,11 +19,11 @@ function BespokeInner() {
   return (
     <div className="min-h-screen bg-(--bg) text-(--ink)">
       <Loader />
-      <TrustStrip />
 
       <BespokeHero onEnquireClick={() => setEnquireOpen(true)} />
       <ProcessSteps />
       <BespokePortfolio />
+      <Manufacturing />
       <BespokeForm onSuccess={() => showToast("Enquiry sent - we'll reply within 24 hours")} />
 
       <EnquireModal open={enquireOpen} onClose={() => setEnquireOpen(false)} />

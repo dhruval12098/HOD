@@ -6,9 +6,9 @@ interface GemSVGProps {
   color?: string;
 }
 
-export default function GemSVG({ style, size = 110, color = '#D4A840' }: GemSVGProps) {
+export default function GemSVG({ style, size = 110, color = '#20304A' }: GemSVGProps) {
   const c = color;
-  const cL = '#B8922A';
+  const cL = '#0A1628';
   const s = size;
 
   switch (style) {
@@ -40,8 +40,8 @@ export default function GemSVG({ style, size = 110, color = '#D4A840' }: GemSVGP
       return (
         <svg width={s} height={s} viewBox="0 0 110 110" fill="none">
           <polygon points="55,18 73,30 68,90 42,90 37,30" stroke={cL} strokeWidth="1" fill={`${c}33`} />
-          <polygon points="28,40 38,48 33,80 18,80 13,48" stroke={cL} strokeWidth="0.8" fill="#D4A84033" />
-          <polygon points="82,40 92,48 87,80 72,80 67,48" stroke={cL} strokeWidth="0.8" fill="#D4A84033" />
+          <polygon points="28,40 38,48 33,80 18,80 13,48" stroke={cL} strokeWidth="0.8" fill="#20304A33" />
+          <polygon points="82,40 92,48 87,80 72,80 67,48" stroke={cL} strokeWidth="0.8" fill="#20304A33" />
         </svg>
       );
     case 'row':

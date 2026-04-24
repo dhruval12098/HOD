@@ -52,7 +52,7 @@ export default function EnquireModal({ open, piece = 'General Enquiry', onClose 
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(20,18,13,0.6)',
+        background: 'rgba(10,22,40,0.6)',
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
         zIndex: 10002,
@@ -119,7 +119,7 @@ export default function EnquireModal({ open, piece = 'General Enquiry', onClose 
             fontSize: '10px',
             fontWeight: 400,
             letterSpacing: '0.3em',
-            color: 'var(--gold)',
+            color: 'var(--theme-ink)',
             textTransform: 'uppercase',
             marginBottom: '12px',
           }}
@@ -139,7 +139,7 @@ export default function EnquireModal({ open, piece = 'General Enquiry', onClose 
           }}
         >
           Request a{' '}
-          <em style={{ fontStyle: 'normal', color: 'var(--gold)' }}>Quote</em>
+          <em style={{ fontStyle: 'normal', color: 'var(--theme-ink)' }}>Quote</em>
         </h3>
 
         <p
@@ -225,7 +225,7 @@ export default function EnquireModal({ open, piece = 'General Enquiry', onClose 
               fontFamily: 'var(--sans)',
               transition: 'background 0.3s',
             }}
-            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = 'var(--gold)')}
+            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = 'var(--theme-ink)')}
             onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = 'var(--ink)')}
           >
             Submit Enquiry

@@ -1,31 +1,53 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Plus_Jakarta_Sans } from 'next/font/google';
+import { supabase } from '@/lib/supabase';
 
-const faqs = [
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+});
+
+type FaqItem = {
+  id?: number;
+  sort_order: number;
+  question: string;
+  answer: string;
+  is_active: boolean;
+};
+
+type FaqSection = {
+  title: string;
+  subtitle: string;
+};
+
+const fallbackSection: FaqSection = {
+  title: 'Frequently Asked Questions',
+  subtitle: 'Everything customers usually ask before ordering.',
+};
+
+const fallbackFaqs: FaqItem[] = [
   {
-    q: "What's the difference between natural and CVD diamonds?",
-    a: "Both are real diamonds. Natural diamonds form over billions of years beneath the earth; CVD (Chemical Vapour Deposition) diamonds are grown in controlled conditions over weeks. They are chemically, physically and optically identical. The difference is origin — and price. We offer both so you can choose what feels right for you.",
+    sort_order: 1,
+    question: "What's the difference between natural and CVD diamonds?",
+    answer:
+      'Both are real diamonds. Natural diamonds form over billions of years beneath the earth, while CVD diamonds are grown in controlled conditions. They are chemically, physically and optically identical. The key difference is origin and pricing.',
+    is_active: true,
   },
   {
-    q: 'How do CVD and natural diamonds compare in price?',
-    a: 'CVD diamonds typically cost 40 to 70 percent less than natural diamonds of the same 4Cs — allowing a larger, cleaner or higher-colour stone for the same budget. Natural diamonds, however, carry rarity value and a long-term store of worth. We advise clients on both based on purpose — investment, heirloom, or everyday.',
+    sort_order: 2,
+    question: 'Do your diamonds come with certification?',
+    answer:
+      'Every diamond comes with certification details based on the selected stone. We also provide a House of Diams certificate of authenticity with each order.',
+    is_active: true,
   },
   {
-    q: 'Do your diamonds come with certification?',
-    a: 'Every diamond comes with an IGI certification as standard. GIA certification is available on request. Each piece ships with its original grading report and a House of Diams certificate of authenticity.',
-  },
-  {
-    q: 'Do you ship internationally?',
-    a: 'Yes. We ship to over 40 countries with fully insured, tracked delivery via FedEx, DHL or Brinks. Complimentary worldwide shipping is included on all orders. Customs and duties vary by country — we provide all documentation required.',
-  },
-  {
-    q: 'What is your bespoke process?',
-    a: 'Four steps — Consult (share your vision), Design (we prepare CAD renders for your approval), Craft (hand-set by master jewellers in Surat), Deliver (insured and tracked). Typical timeline is 4 to 8 weeks depending on complexity.',
-  },
-  {
-    q: 'Do you offer B2B wholesale pricing?',
-    a: 'Absolutely. We partner with jewellers, retailers and designers across 40+ countries. Please reach out via our Contact form selecting "B2B Wholesale Enquiry" and our team will share our full wholesale catalogue and pricing structure.',
+    sort_order: 3,
+    question: 'Do you ship internationally?',
+    answer:
+      'Yes. We ship worldwide with secure, tracked, and insured delivery. Customs and duties may vary by country.',
+    is_active: true,
   },
 ];
 
@@ -39,21 +61,25 @@ function RevealDiv({
   delay?: number;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (!ref.current) return;
-    const obs = new IntersectionObserver(
-      entries => {
+
+    const observer = new IntersectionObserver(
+      (entries) => {
         if (entries[0].isIntersecting) {
           entries[0].target.classList.add('opacity-100', 'translate-y-0');
           entries[0].target.classList.remove('opacity-0', 'translate-y-6');
-          obs.disconnect();
+          observer.disconnect();
         }
       },
       { threshold: 0.12, rootMargin: '0px 0px -50px' }
     );
-    obs.observe(ref.current);
-    return () => obs.disconnect();
+
+    observer.observe(ref.current);
+    return () => observer.disconnect();
   }, []);
+
   return (
     <div
       ref={ref}
@@ -66,74 +92,113 @@ function RevealDiv({
 }
 
 export default function FAQ() {
-  const [openIdx, setOpenIdx] = useState<number | null>(null);
+  const [section, setSection] = useState<FaqSection>(fallbackSection);
+  const [items, setItems] = useState<FaqItem[]>(fallbackFaqs);
+  const [openIdx, setOpenIdx] = useState<number | null>(0);
 
-  const toggle = (i: number) => setOpenIdx(prev => (prev === i ? null : i));
+  useEffect(() => {
+    let ignore = false;
+
+    const loadFaq = async () => {
+      const { data: sectionData } = await supabase
+        .from('support_faq_section')
+        .select('id, title, subtitle')
+        .eq('section_key', 'global_support_faq')
+        .maybeSingle();
+
+      if (ignore || !sectionData?.id) return;
+
+      const { data: itemData, error: itemError } = await supabase
+        .from('support_faq_items')
+        .select('id, sort_order, question, answer, is_active')
+        .eq('section_id', sectionData.id)
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true });
+
+      if (ignore || itemError) return;
+
+      setSection({
+        title: sectionData.title || fallbackSection.title,
+        subtitle: sectionData.subtitle || fallbackSection.subtitle,
+      });
+
+      if ((itemData?.length ?? 0) > 0) {
+        setItems(itemData as FaqItem[]);
+        setOpenIdx(0);
+      }
+    };
+
+    void loadFaq();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  const visibleItems = useMemo(
+    () => items.filter((item) => item.is_active).sort((a, b) => a.sort_order - b.sort_order),
+    [items]
+  );
+
+  const toggle = (index: number) => setOpenIdx((prev) => (prev === index ? null : index));
 
   return (
-    <section className="py-[110px] px-[52px] max-w-[900px] mx-auto max-lg:px-7 max-md:px-5 max-md:py-[70px]">
-      {/* Header */}
-      <div className="text-center flex flex-col items-center mb-0">
+    <section className={`${plusJakartaSans.className} mx-auto max-w-[980px] px-[52px] py-[110px] max-lg:px-7 max-md:px-5 max-md:py-[70px]`}>
+      <div className="mb-0 flex flex-col items-center text-center">
         <RevealDiv className="flex justify-center">
-          <div className="text-[10px] font-normal tracking-[0.32em] text-[#B8922A] uppercase mb-[18px] inline-flex items-center gap-3 before:content-[''] before:w-6 before:h-px before:bg-[#B8922A]">
-            Frequently Asked
+          <div className="inline-flex items-center gap-3 text-[10px] font-medium uppercase tracking-[0.32em] text-[#0A1628] before:h-px before:w-6 before:bg-[#0A1628] before:content-['']">
+            {section.subtitle || 'Frequently Asked'}
           </div>
         </RevealDiv>
         <RevealDiv delay={100}>
           <h2
-            className="font-serif font-light tracking-[0.02em] text-[#14120D] leading-[1.05] text-center"
+            className="mt-[18px] font-serif text-[#0A1628] leading-[1.05] tracking-[0.02em]"
             style={{ fontSize: 'clamp(40px, 5.5vw, 72px)' }}
           >
-            Your <em className="not-italic text-[#B8922A] font-normal">Questions</em>
+            {section.title || 'Frequently Asked Questions'}
           </h2>
         </RevealDiv>
       </div>
 
-      {/* Accordion */}
-      <div className="mt-12">
-        {faqs.map((faq, i) => {
-          const isOpen = openIdx === i;
+      <div className="mt-12 overflow-hidden rounded-[28px] border border-[rgba(10,22,40,0.10)] bg-white">
+        {visibleItems.map((faq, index) => {
+          const isOpen = openIdx === index;
+
           return (
             <div
-              key={i}
-              className={`border-b border-[rgba(20,18,13,0.10)] transition-colors duration-300 ${
-                isOpen ? 'bg-[#F6F2EA]' : 'hover:bg-[#F6F2EA]'
+              key={faq.id ?? `${faq.question}-${index}`}
+              className={`border-b border-[rgba(10,22,40,0.10)] transition-colors duration-300 last:border-b-0 ${
+                isOpen ? 'bg-[#FAF7F2]' : 'hover:bg-[#FAF7F2]'
               }`}
             >
               <button
-                onClick={() => toggle(i)}
+                type="button"
+                onClick={() => toggle(index)}
                 aria-expanded={isOpen}
-                className="w-full text-left px-6 py-7 bg-transparent border-none cursor-pointer flex items-center justify-between gap-5 font-serif text-[20px] font-normal text-[#14120D] tracking-[0.02em] transition-colors duration-300 hover:text-[#B8922A]"
+                className="flex w-full items-center justify-between gap-5 bg-transparent px-6 py-6 text-left"
               >
-                <span>{faq.q}</span>
-
-                {/* +/× toggle circle */}
+                <span className="text-[18px] font-semibold tracking-[0.01em] text-[#0A1628] max-md:text-[16px]">
+                  {faq.question}
+                </span>
                 <span
-                  className={`flex-shrink-0 w-8 h-8 border rounded-full flex items-center justify-center transition-all duration-400 ${
+                  className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border transition-all duration-300 ${
                     isOpen
-                      ? 'bg-[#B8922A] border-[#B8922A] rotate-45'
-                      : 'bg-transparent border-[rgba(20,18,13,0.10)]'
+                      ? 'rotate-45 border-[#0A1628] bg-[#0A1628] text-white'
+                      : 'border-[rgba(10,22,40,0.12)] bg-white text-[#253246]'
                   }`}
                 >
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 12 12"
-                    fill="none"
-                    className={`transition-[stroke] duration-300 ${isOpen ? 'stroke-white' : 'stroke-[#3A3628]'}`}
-                  >
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="stroke-current">
                     <path d="M6 1V11M1 6H11" strokeWidth="1.5" strokeLinecap="round" />
                   </svg>
                 </span>
               </button>
 
-              {/* Answer — animated max-height */}
               <div
                 className="overflow-hidden transition-[max-height,padding] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]"
-                style={{ maxHeight: isOpen ? '300px' : '0px', padding: isOpen ? '0 24px 28px' : '0 24px' }}
+                style={{ maxHeight: isOpen ? '320px' : '0px', padding: isOpen ? '0 24px 28px' : '0 24px' }}
               >
-                <p className="text-[13px] font-light leading-[1.9] text-[#7A7060] tracking-[0.02em] max-w-[720px]">
-                  {faq.a}
+                <p className="max-w-[760px] text-[14px] font-medium leading-[1.9] tracking-[0.01em] text-[#5E6470]">
+                  {faq.answer}
                 </p>
               </div>
             </div>

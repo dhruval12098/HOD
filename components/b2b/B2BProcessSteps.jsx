@@ -38,18 +38,18 @@ export default function B2BProcessSteps() {
   return (
     <section
       className="py-[110px] px-5 sm:px-7 lg:px-[52px] max-md:py-[70px]"
-      style={{ background: "linear-gradient(180deg, #FBF9F5 0%, #F6F2EA 100%)" }}
+      style={{ background: "linear-gradient(180deg, #FAFBFD 0%, #FAF7F2 100%)" }}
     >
       <div className="max-w-[1400px] mx-auto">
         <div className="text-center mb-12">
           <SectionEyebrow>How It Works</SectionEyebrow>
           <h2
-            className="font-serif font-light tracking-[0.02em] text-[#14120D] leading-[1.05] mt-5"
+            className="font-serif font-light tracking-[0.02em] text-[#0A1628] leading-[1.05] mt-5"
             style={{ fontSize: "clamp(36px, 5.5vw, 72px)" }}
           >
             Simple. Predictable. Repeatable.
           </h2>
-          <p className="text-[12px] font-light tracking-[0.12em] text-[#7A7060] leading-[1.9] max-w-[720px] mx-auto mt-5">
+          <p className="text-[12px] font-light tracking-[0.12em] text-[#6A6A6A] leading-[1.9] max-w-[720px] mx-auto mt-5">
             A trade-first process designed for speed and clarity from first message to delivery.
           </p>
         </div>

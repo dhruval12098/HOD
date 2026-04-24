@@ -1,17 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import type { Product } from '@/lib/data/products';
-import { PRODUCTS } from '@/lib/data/products';
-import {
-  SIZE_MAP,
-  STONE_MAP,
-  getProductDescription,
-  getProductSpecs,
-  metalCaratFromKey,
-} from '@/lib/data/product-config';
-import TrustStrip from '@/components/home/TrustStrip';
+import { useSearchParams } from 'next/navigation';
+import type { StorefrontProduct } from '@/lib/catalog-products';
+import { STONE_MAP } from '@/lib/data/product-config';
 import EnquireModal from '@/components/home/EnquireModal';
+import Loader from '@/components/home/Loader';
 import { Toast } from '@/components/home/Toast';
 import ProductBreadcrumb from '@/components/product/ProductBreadcrumb';
 import ProductGallery from '@/components/product/ProductGallery';
@@ -27,55 +21,101 @@ import ProductLayout from '@/components/product/ProductLayout';
 import RelatedProducts from '@/components/product/RelatedProducts';
 
 interface ProductClientProps {
-  product: Product;
+  product: StorefrontProduct;
+  relatedProducts: StorefrontProduct[];
 }
 
-export default function ProductClient({ product }: ProductClientProps) {
-  const [selectedProduct] = useState(product);
-  const [selectedMetal, setSelectedMetal] = useState(selectedProduct.metals[0] ?? '');
-  const [purity, setPurity] = useState(metalCaratFromKey(selectedProduct.metals[0] ?? ''));
-  const [diamondType, setDiamondType] = useState(
-    selectedProduct.stone?.startsWith('natural') ? 'Natural' : 'CVD Lab-Grown',
-  );
-  const [carat, setCarat] = useState(selectedProduct.carat);
-  const [size, setSize] = useState((SIZE_MAP[selectedProduct.type]?.opts ?? ['Made to measure'])[0]);
+export default function ProductClient({ product, relatedProducts }: ProductClientProps) {
+  const storefrontProduct = product as StorefrontProduct & {
+    hiphopCaratLabel: string;
+    hiphopCaratValues: string[];
+  };
+  const searchParams = useSearchParams();
+  const [selectedMetal, setSelectedMetal] = useState(storefrontProduct.metals[0] ?? '');
+  const [purity, setPurity] = useState(storefrontProduct.purities[0] ?? '');
+  const [selectedHiphopCarat, setSelectedHiphopCarat] = useState(storefrontProduct.hiphopCaratValues[0] ?? '');
+  const [sizeOrFit, setSizeOrFit] = useState(storefrontProduct.chainLengthOptions[0] ?? storefrontProduct.fitOptions[0] ?? storefrontProduct.ringSizeNames[0] ?? '');
+  const [selectedGemstoneValue, setSelectedGemstoneValue] = useState(storefrontProduct.gemstoneValues[0] ?? '');
   const [engravingMode, setEngravingMode] = useState<'none' | 'custom'>('none');
   const [engravingText, setEngravingText] = useState('');
-  const [wishlist, setWishlist] = useState<number[]>([]);
+  const [wishlist, setWishlist] = useState<number[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const saved = JSON.parse(localStorage.getItem('hod_wishlist') || '[]');
+      return Array.isArray(saved) ? saved : [];
+    } catch {
+      return [];
+    }
+  });
   const [isEnquireOpen, setIsEnquireOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastVisible, setToastVisible] = useState(false);
-  const [activeRelatedProducts, setActiveRelatedProducts] = useState<Product[]>([]);
+  const [pageLoading, setPageLoading] = useState(true);
+
+  const isDark = product.category === 'hiphop';
+  const inWishlist = wishlist.includes(product.id);
+  const description = useMemo(
+    () => product.descriptionText,
+    [product]
+  );
+  const collectionHref = useMemo(
+    () => `/${storefrontProduct.mainCategorySlug || 'fine-jewellery'}`,
+    [storefrontProduct.mainCategorySlug]
+  );
+  const collectionLabel = storefrontProduct.mainCategoryName || 'Collection';
 
   useEffect(() => {
+    if (typeof document === 'undefined') return;
+    document.body.classList.toggle('page-loader-active', pageLoading);
+    return () => {
+      document.body.classList.remove('page-loader-active');
+    };
+  }, [pageLoading]);
+
+  useEffect(() => {
+    const cacheKey = `hod_product_loader_${product.slug}`;
     try {
-      const saved = JSON.parse(localStorage.getItem('hod_wishlist') || '[]');
-      if (Array.isArray(saved)) setWishlist(saved);
+      const cached = window.localStorage.getItem(cacheKey);
+      if (cached) {
+        const parsed = JSON.parse(cached) as { expiresAt?: number } | null;
+        if (parsed?.expiresAt && parsed.expiresAt > Date.now()) {
+          setPageLoading(false);
+          return;
+        }
+      }
     } catch {}
-  }, []);
 
-  useEffect(() => {
-    const defaults = SIZE_MAP[selectedProduct.type]?.opts ?? ['Made to measure'];
-    setSelectedMetal(selectedProduct.metals[0] ?? '');
-    setPurity(metalCaratFromKey(selectedProduct.metals[0] ?? ''));
-    setDiamondType(selectedProduct.stone?.startsWith('natural') ? 'Natural' : 'CVD Lab-Grown');
-    setCarat(selectedProduct.carat);
-    setSize(defaults[0]);
-    setEngravingMode('none');
-    setEngravingText('');
-  }, [selectedProduct]);
+    const timer = window.setTimeout(() => setPageLoading(false), 250);
+    return () => window.clearTimeout(timer);
+  }, [product.slug]);
 
-  useEffect(() => {
-    const related = PRODUCTS.filter((item) => (
-      item.category === selectedProduct.category && item.id !== selectedProduct.id
-    )).slice(0, 4);
-    setActiveRelatedProducts(related);
-  }, [selectedProduct]);
+  const handlePageLoaderComplete = () => {
+    setPageLoading(false);
+    try {
+      window.localStorage.setItem(
+        `hod_product_loader_${product.slug}`,
+        JSON.stringify({ expiresAt: Date.now() + 1000 * 60 * 60 * 6 })
+      );
+    } catch {}
+  };
 
-  const isDark = selectedProduct.category === 'hiphop';
-  const inWishlist = wishlist.includes(selectedProduct.id);
-  const description = useMemo(() => getProductDescription(selectedProduct), [selectedProduct]);
-  const specs = useMemo(() => getProductSpecs(selectedProduct), [selectedProduct]);
+  const checkoutHref = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set('slug', product.slug);
+    params.set('name', product.name);
+    params.set('price', String(product.priceFrom));
+    if (product.imageUrl) params.set('image', product.imageUrl);
+    if (selectedMetal) params.set('metal', selectedMetal);
+    if (purity) params.set('purity', purity);
+    if (selectedHiphopCarat) params.set('carat', selectedHiphopCarat);
+    if (sizeOrFit) params.set('size', sizeOrFit);
+    if (selectedGemstoneValue) params.set('gemstone', selectedGemstoneValue);
+
+    const preserveCategory = searchParams.get('category');
+    if (preserveCategory) params.set('category', preserveCategory);
+
+    return `/checkout?${params.toString()}`;
+  }, [product.imageUrl, product.name, product.priceFrom, product.slug, purity, searchParams, selectedGemstoneValue, selectedHiphopCarat, selectedMetal, sizeOrFit]);
 
   const showToast = (message: string) => {
     setToastMessage(message);
@@ -96,7 +136,6 @@ export default function ProductClient({ product }: ProductClientProps) {
 
   const handleMetalChange = (metal: string) => {
     setSelectedMetal(metal);
-    setPurity(metalCaratFromKey(metal));
   };
 
   const handleEngravingModeChange = (mode: string) => {
@@ -112,72 +151,85 @@ export default function ProductClient({ product }: ProductClientProps) {
 
   return (
     <div className="min-h-screen bg-(--bg) text-(--ink)">
-      <TrustStrip />
-
+      {pageLoading ? <Loader ready onComplete={handlePageLoaderComplete} /> : null}
       <section className="mx-auto max-w-[1400px] px-[52px] pb-[100px] pt-10 max-[1100px]:px-7 max-[700px]:px-5 max-[700px]:pb-[70px]">
-        <ProductBreadcrumb productName={selectedProduct.name} />
+        <ProductBreadcrumb productName={product.name} collectionHref={collectionHref} collectionLabel={collectionLabel} />
 
         <ProductLayout
           gallery={(
             <ProductGallery
-              gemStyle={selectedProduct.gemStyle}
-              gemColor={selectedProduct.gemColor}
+              gemStyle={storefrontProduct.gemStyle}
+              gemColor={storefrontProduct.gemColor}
               dark={isDark}
-              imageUrl={selectedProduct.imageUrl}
-              galleryUrls={selectedProduct.galleryUrls}
-              videoUrl={selectedProduct.videoUrl}
+              imageUrl={storefrontProduct.imageUrl}
+              galleryUrls={storefrontProduct.galleryUrls}
+              videoUrl={storefrontProduct.videoUrl}
             />
           )}
           info={(
             <div>
-              <ProductTagLine isNew={selectedProduct.isNew} />
-              <ProductCategoryPill category={selectedProduct.category} carat={selectedProduct.carat} />
+              <ProductTagLine
+                isNew={storefrontProduct.isNew}
+                badges={storefrontProduct.hiphopBadges}
+                readyToShip={storefrontProduct.readyToShip}
+              />
+              <ProductCategoryPill
+                category={storefrontProduct.mainCategoryName}
+                carat={selectedHiphopCarat || storefrontProduct.gemstoneValue || storefrontProduct.optionName || storefrontProduct.subcategoryName || ''}
+              />
 
-              <h1 className="mb-[10px] font-serif text-[clamp(36px,4.5vw,56px)] font-light leading-[1.1] tracking-[0.02em] text-[#14120D]">
-                {selectedProduct.name}
+              <h1 className="mb-[10px] font-serif text-[clamp(36px,4.5vw,56px)] font-light leading-[1.1] tracking-[0.02em] text-[#0A1628]">
+                {product.name}
               </h1>
 
-              <div className="mb-6 font-sans text-[10px] font-light uppercase tracking-[0.3em] text-[#7A7060] font-numeric">
-                {selectedProduct.shortMeta}
+              <div className="mb-6 font-sans text-[10px] font-light uppercase tracking-[0.3em] text-[#6A6A6A] font-numeric">
+                {product.shortMeta}
               </div>
 
-              <ProductPriceBlock priceFrom={selectedProduct.priceFrom} />
+              <ProductPriceBlock priceFrom={product.priceFrom} />
               <ProductDescription text={description} />
 
               <ProductConfigurator
-                product={selectedProduct}
+                product={storefrontProduct}
                 metal={selectedMetal}
                 purity={purity}
-                diamondType={diamondType}
-                carat={carat}
-                size={size}
+                sizeOrFit={sizeOrFit}
+                gemstoneValue={selectedGemstoneValue}
+                hiphopCarat={selectedHiphopCarat}
                 engravingMode={engravingMode}
                 engravingText={engravingText}
                 onMetalChange={handleMetalChange}
                 onPurityChange={setPurity}
-                onDiamondTypeChange={setDiamondType}
-                onCaratChange={setCarat}
-                onSizeChange={setSize}
+                onSizeOrFitChange={setSizeOrFit}
+                onGemstoneValueChange={setSelectedGemstoneValue}
+                onHiphopCaratChange={setSelectedHiphopCarat}
                 onEngravingModeChange={handleEngravingModeChange}
                 onEngravingTextChange={setEngravingText}
               />
 
               <ProductCTAs
-                product={selectedProduct}
+                product={product}
                 onEnquire={() => setIsEnquireOpen(true)}
                 inWishlist={inWishlist}
-                onWishlist={() => handleWishlistToggle(selectedProduct.id)}
+                onWishlist={() => handleWishlistToggle(product.id)}
+                checkoutHref={checkoutHref}
               />
 
               <ProductTrustRow />
-              <ProductTabs specs={specs} />
+              <ProductTabs
+                specifications={product.specificationRows}
+                productDetails={product.productDetailRows}
+                detailSections={product.detailSections}
+                shippingContent={product.shippingContent}
+                careWarrantyContent={product.careWarrantyContent}
+              />
             </div>
           )}
         />
       </section>
 
       <RelatedProducts
-        products={activeRelatedProducts}
+        products={relatedProducts}
         wishlist={wishlist}
         onWishlist={handleWishlistToggle}
         onEnquire={handleRelatedEnquire}
@@ -185,7 +237,7 @@ export default function ProductClient({ product }: ProductClientProps) {
 
       <EnquireModal
         open={isEnquireOpen}
-        piece={`${selectedProduct.name} (${STONE_MAP[selectedProduct.stone] ?? selectedProduct.stone})`}
+        piece={`${product.name}${selectedGemstoneValue ? ` (${selectedGemstoneValue})` : ` (${STONE_MAP[product.stone] ?? product.stone})`}`}
         onClose={() => setIsEnquireOpen(false)}
       />
 

@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/common/Navbar";
-import Footer from "@/components/common/Footer";
-import FloatingWidgets from "@/components/home/FloatingWidgets";
+import LenisProvider from "@/app/LenisProvider";
+import SiteChrome from "@/components/layout/SiteChrome";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,11 +37,9 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
-        <Navbar />
-        {/* Offset the fixed announcement bar (35px) + fixed navbar (76px) */}
-        <main className="flex-1 pt-[111px]">{children}</main>
-        <Footer />
-        <FloatingWidgets />
+        <LenisProvider>
+          <SiteChrome>{children}</SiteChrome>
+        </LenisProvider>
       </body>
     </html>
   );

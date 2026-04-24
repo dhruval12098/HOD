@@ -1,6 +1,13 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+
+type ContactInfoRow = {
+  id?: number;
+  label?: string;
+  value?: string;
+  note?: string;
+};
 
 function RevealDiv({
   children,
@@ -10,21 +17,25 @@ function RevealDiv({
   className?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (!ref.current) return;
-    const obs = new IntersectionObserver(
-      entries => {
+
+    const observer = new IntersectionObserver(
+      (entries) => {
         if (entries[0].isIntersecting) {
           entries[0].target.classList.add('opacity-100', 'translate-y-0');
           entries[0].target.classList.remove('opacity-0', 'translate-y-6');
-          obs.disconnect();
+          observer.disconnect();
         }
       },
       { threshold: 0.12, rootMargin: '0px 0px -50px' }
     );
-    obs.observe(ref.current);
-    return () => obs.disconnect();
+
+    observer.observe(ref.current);
+    return () => observer.disconnect();
   }, []);
+
   return (
     <div
       ref={ref}
@@ -35,57 +46,99 @@ function RevealDiv({
   );
 }
 
+function isAddressRow(row: ContactInfoRow) {
+  const source = `${row.label ?? ''} ${row.note ?? ''}`.toLowerCase();
+  return source.includes('address') || source.includes('location') || source.includes('atelier');
+}
+
 export default function ContactMap() {
+  const [rows, setRows] = useState<ContactInfoRow[]>([]);
+
+  useEffect(() => {
+    let ignore = false;
+
+    const loadContactInfo = async () => {
+      try {
+        const response = await fetch('/api/public/contact/info', { cache: 'no-store' });
+        const payload = await response.json().catch(() => null);
+        if (ignore) return;
+        setRows(Array.isArray(payload?.items) ? payload.items : []);
+      } catch {
+        if (!ignore) setRows([]);
+      }
+    };
+
+    void loadContactInfo();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  const addressRow = useMemo(() => rows.find(isAddressRow), [rows]);
+  const mapQuery = useMemo(() => {
+    const parts = [addressRow?.value?.trim(), addressRow?.note?.trim()].filter(Boolean);
+    return parts.length ? parts.join(', ') : '';
+  }, [addressRow]);
+  const mapSrc = mapQuery
+    ? `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&z=15&output=embed`
+    : null;
+
   return (
     <RevealDiv className="mx-[52px] mb-20 max-lg:mx-7 max-md:mx-5 max-md:mb-12">
       <div
-        className="h-[320px] relative overflow-hidden border border-[rgba(20,18,13,0.10)]"
+        className="relative h-[320px] overflow-hidden border border-[rgba(10,22,40,0.10)]"
         style={{
-          background: 'linear-gradient(135deg, #F6F2EA 0%, #EEE7DA 100%)',
+          background: 'linear-gradient(135deg, #FAF7F2 0%, #F5F7FC 100%)',
         }}
       >
-        {/* Gold grid background */}
-        <div
-          className="absolute inset-0 opacity-40"
-          style={{
-            backgroundImage: `
-              linear-gradient(rgba(184,146,42,0.1) 1px, transparent 1px),
-              linear-gradient(90deg, rgba(184,146,42,0.1) 1px, transparent 1px)
-            `,
-            backgroundSize: '40px 40px',
-          }}
-        />
-
-        {/* Centered pin + label */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
-          {/* Animated pin */}
-          <div className="relative w-12 h-12 mx-auto mb-4">
-            {/* Pulse ring */}
+        {mapSrc ? (
+          <iframe
+            title={mapQuery || 'House of Diams location'}
+            src={mapSrc}
+            className="absolute inset-0 h-full w-full border-0"
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          />
+        ) : (
+          <>
             <div
-              className="absolute inset-0 rounded-full bg-[rgba(184,146,42,0.2)] animate-ping"
-              style={{ animationDuration: '2s' }}
-            />
-            {/* Pin shape: rounded top + pointed bottom via rotation trick */}
-            <div
-              className="absolute inset-0 bg-[#B8922A] shadow-[0_8px_20px_rgba(184,146,42,0.4)] animate-[mapPinPulse_2s_ease-in-out_infinite]"
+              className="absolute inset-0 opacity-40"
               style={{
-                borderRadius: '50% 50% 50% 0',
-                transform: 'rotate(-45deg)',
+                backgroundImage: `
+                  linear-gradient(rgba(10,22,40,0.1) 1px, transparent 1px),
+                  linear-gradient(90deg, rgba(10,22,40,0.1) 1px, transparent 1px)
+                `,
+                backgroundSize: '40px 40px',
               }}
-            >
-              {/* Inner white dot */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full" />
-            </div>
-          </div>
+            />
 
-          {/* Label */}
-          <div className="font-serif text-[22px] font-normal text-[#14120D] mb-1 tracking-[0.02em]">
-            House of Diams Atelier
-          </div>
-          <div className="text-[10px] tracking-[0.24em] text-[#7A7060] uppercase">
-            Surat · Gujarat · India
-          </div>
-        </div>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
+              <div className="relative mx-auto mb-4 h-12 w-12">
+                <div
+                  className="absolute inset-0 rounded-full bg-[rgba(10,22,40,0.2)] animate-ping"
+                  style={{ animationDuration: '2s' }}
+                />
+                <div
+                  className="absolute inset-0 bg-[#0A1628] shadow-[0_8px_20px_rgba(10,22,40,0.4)] animate-[mapPinPulse_2s_ease-in-out_infinite]"
+                  style={{
+                    borderRadius: '50% 50% 50% 0',
+                    transform: 'rotate(-45deg)',
+                  }}
+                >
+                  <div className="absolute top-1/2 left-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white" />
+                </div>
+              </div>
+
+              <div className="mb-1 font-serif text-[22px] font-normal tracking-[0.02em] text-[#0A1628]">
+                House of Diams Atelier
+              </div>
+              <div className="text-[10px] uppercase tracking-[0.24em] text-[#6A6A6A]">
+                Surat · Gujarat · India
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </RevealDiv>
   );

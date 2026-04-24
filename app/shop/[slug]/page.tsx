@@ -1,19 +1,15 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import ProductClient from '@/components/pages/ProductClient';
-import { PRODUCTS } from '@/lib/data/products';
+import { getStorefrontProductBySlug, getStorefrontProducts } from '@/lib/catalog-products';
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
 }
 
-export async function generateStaticParams() {
-  return PRODUCTS.map((product) => ({ slug: product.slug }));
-}
-
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const product = PRODUCTS.find((item) => item.slug === slug);
+  const product = await getStorefrontProductBySlug(slug);
 
   if (!product) {
     return {
@@ -30,11 +26,15 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 
 export default async function ProductDetailPage({ params }: ProductPageProps) {
   const { slug } = await params;
-  const product = PRODUCTS.find((item) => item.slug === slug);
+  const product = await getStorefrontProductBySlug(slug);
 
   if (!product) {
     notFound();
   }
 
-  return <ProductClient product={product} />;
+  const relatedProducts = (await getStorefrontProducts())
+    .filter((item) => item.slug !== slug && item.mainCategorySlug === product.mainCategorySlug)
+    .slice(0, 4);
+
+  return <ProductClient product={product} relatedProducts={relatedProducts} />;
 }

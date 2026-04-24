@@ -30,8 +30,8 @@ export default function TypeFilterBar({ active, onChange }: TypeFilterBarProps) 
             transition-all duration-300
             ${
               active === f.value
-                ? 'text-[#B8922A] border-[#B8922A] bg-[rgba(184,146,42,0.08)]'
-                : 'text-[#888888] border-[rgba(184,146,42,0.2)] hover:text-[#E8D898] hover:border-[rgba(184,146,42,0.5)]'
+                ? 'border-white/55 bg-white/10 text-white'
+                : 'text-white/65 border-white/20 hover:text-white hover:border-white/45'
             }
           `}
         >

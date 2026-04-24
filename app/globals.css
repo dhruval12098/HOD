@@ -13,17 +13,35 @@
 }
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fafbfd;
+  --foreground: #0a0a0a;
 
-  /* Design tokens used across components (inline styles + Tailwind arbitrary vars). */
-  --bg: #FBF9F5;
-  --ink: #14120D;
-  --ink2: #3A3628;
-  --ink3: #7A7060;
-  --gold: #B8922A;
-  --border: rgba(20, 18, 13, 0.10);
-  --shadow-lg: 0 24px 60px rgba(20, 18, 13, 0.12);
+  /* Central editorial theme based on Best Sellers / Blog / Hip Hop. */
+  --theme-base: #fafbfd;
+  --theme-surface: #ffffff;
+  --theme-surface-soft: #f5f7fc;
+  --theme-surface-warm: #faf7f2;
+  --theme-panel-1: #eef1f8;
+  --theme-panel-2: #edf3ee;
+  --theme-panel-3: #f2eff8;
+  --theme-panel-4: #f5f0ea;
+  --theme-ink: #0a1628;
+  --theme-heading: #0a0a0a;
+  --theme-muted: #6a6a6a;
+  --theme-muted-2: #7f8898;
+  --theme-border: rgba(10, 22, 40, 0.09);
+  --theme-border-strong: rgba(10, 22, 40, 0.2);
+  --theme-shadow-lg: 0 24px 60px rgba(10, 22, 40, 0.12);
+  --theme-shadow-card: 0 12px 40px rgba(10, 22, 40, 0.08);
+
+  /* Backwards-compatible aliases for existing components. */
+  --bg: var(--theme-base);
+  --bg2: var(--theme-surface-warm);
+  --ink: var(--theme-ink);
+  --ink2: #253246;
+  --ink3: var(--theme-muted);
+  --border: var(--theme-border);
+  --shadow-lg: var(--theme-shadow-lg);
 
   /* Tailwind config maps `font-serif` to `var(--serif)` */
   --serif: "Forfelast", "Cormorant Garamond", Georgia, serif;
@@ -39,8 +57,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #fafbfd;
+    --foreground: #0a0a0a;
   }
 }
 
@@ -77,6 +95,28 @@ body.modal-open {
   overflow: hidden;
 }
 
+body.home-loader-active {
+  overflow: hidden;
+}
+
+body.home-loader-active #site-navbar-shell,
+body.home-loader-active #site-footer-shell {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+body.page-loader-active {
+  overflow: hidden;
+}
+
+body.page-loader-active #site-navbar-shell,
+body.page-loader-active #site-footer-shell {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
 /* Ensure headings use the requested display font site-wide without touching body copy. */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--serif) !important;
@@ -90,6 +130,11 @@ h1, h2, h3, h4, h5, h6 {
 /* Numeric font: apply only where we mark it, to avoid disrupting body text. */
 .font-numeric {
   font-family: var(--numeric) !important;
+}
+
+::selection {
+  background: rgba(10, 22, 40, 0.14);
+  color: var(--theme-heading);
 }
 
 /* Announcement Marquee Animation */

@@ -1,35 +1,32 @@
 'use client'
 
-import { useState } from 'react'
-import {
-  HIPHOP_PRODUCTS,
-  HIPHOP_TYPES,
-  HipHopProduct,
-} from './hiphop-products'
+import { useMemo, useState } from 'react'
+import type { StorefrontProduct } from '@/lib/catalog-products'
 import { useWishlist } from './useWishlist'
 import TypeFilterBar, { FilterType } from './TypeFilterBar'
 import HipHopProductCard from './HipHopProductCard'
 
 interface HipHopCollectionProps {
+  products: StorefrontProduct[]
   onEnquire: (piece: string) => void
   onWishlistToast: (msg: string) => void
 }
 
-function getFiltered(type: FilterType): HipHopProduct[] {
-  if (type === 'all') return HIPHOP_PRODUCTS
-  if (type === 'others')
-    return HIPHOP_PRODUCTS.filter((p) => !HIPHOP_TYPES.includes(p.type))
-  return HIPHOP_PRODUCTS.filter((p) => p.type === type)
+function getFiltered(products: StorefrontProduct[], type: FilterType): StorefrontProduct[] {
+  if (type === 'all') return products
+  if (type === 'others') return products.filter((product) => !['ring', 'bracelet', 'chain', 'pendant'].includes(product.type))
+  return products.filter((product) => product.type === type)
 }
 
 export default function HipHopCollection({
+  products: sourceProducts,
   onEnquire,
   onWishlistToast,
 }: HipHopCollectionProps) {
   const [activeFilter, setActiveFilter] = useState<FilterType>('all')
   const { toggle, isWishlisted } = useWishlist()
 
-  const products = getFiltered(activeFilter)
+  const products = useMemo(() => getFiltered(sourceProducts, activeFilter), [sourceProducts, activeFilter])
 
   const handleWishlist = (id: number) => {
     const wasWishlisted = isWishlisted(id)
@@ -43,7 +40,7 @@ export default function HipHopCollection({
 
       {products.length === 0 ? (
         <div className="text-center py-20 col-span-full">
-          <h3 className="font-serif text-[28px] font-normal text-[#E8D898] mb-3">
+          <h3 className="font-serif text-[28px] font-normal text-[#FFFFFF] mb-3">
             Coming Soon
           </h3>
           <p className="text-[#888888] text-[13px] mb-6">
@@ -54,10 +51,10 @@ export default function HipHopCollection({
             onClick={() => onEnquire('Hip Hop Enquiry')}
             className="
               inline-flex items-center gap-2.5
+              px-8 py-[15px]
               text-[10px] font-normal tracking-[0.28em] uppercase
-              text-[#B8922A] border border-[#B8922A]
-              px-8 py-[15px] bg-transparent cursor-pointer
-              hover:bg-[#B8922A] hover:text-[#111111]
+              text-white border border-white/35 bg-transparent cursor-pointer
+              hover:bg-white hover:text-[#0A1628] hover:border-white
               transition-all duration-400
             "
           >
@@ -68,7 +65,7 @@ export default function HipHopCollection({
         <div className="grid grid-cols-3 gap-7 max-[1100px]:grid-cols-2 max-[700px]:grid-cols-1">
           {products.map((product) => (
             <HipHopProductCard
-              key={product.id}
+              key={product.dbId}
               product={product}
               isWishlisted={isWishlisted(product.id)}
               onWishlistToggle={handleWishlist}

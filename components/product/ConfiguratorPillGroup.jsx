@@ -22,10 +22,10 @@ export default function ConfiguratorPillGroup({
     <div className="mb-5">
       {/* Row heading */}
       <div className="flex justify-between items-baseline mb-[10px]">
-        <span className="font-sans text-[10px] font-medium tracking-[0.28em] uppercase text-[#14120D]">
+        <span className="font-sans text-[10px] font-medium tracking-[0.28em] uppercase text-[#0A1628]">
           {label}
         </span>
-        <span className="font-numeric text-[14px] font-normal italic text-[#B8922A] tracking-[0.02em]">
+        <span className="font-numeric text-[14px] font-normal italic text-[#0A1628] tracking-[0.02em]">
           {selectedLabel}
         </span>
       </div>
@@ -35,20 +35,20 @@ export default function ConfiguratorPillGroup({
         {options.map(opt => {
           const isActive = opt === active;
           const activeClass = goldActive
-            ? 'bg-[#B8922A] text-white border-[#B8922A]'
-            : 'bg-[#14120D] text-[#FBF9F5] border-[#14120D]';
+            ? 'bg-[#0A1628] text-white border-[#0A1628]'
+            : 'bg-[#0A1628] text-[#FAFBFD] border-[#0A1628]';
 
           return (
             <button
               key={opt}
               onClick={() => onChange(opt)}
               className={`
-                px-[18px] py-[10px]
+                rounded-full px-[18px] py-[10px]
                 font-sans text-[10px] font-light tracking-[0.16em] uppercase
                 border transition-all duration-300 whitespace-nowrap
                 ${isActive
                   ? activeClass
-                  : 'bg-transparent text-[#3A3628] border-[rgba(20,18,13,0.10)] hover:border-[#14120D] hover:text-[#14120D]'
+                  : 'bg-transparent text-[#253246] border-[rgba(10,22,40,0.10)] hover:border-[#0A1628] hover:text-[#0A1628]'
                 }
               `}
             >

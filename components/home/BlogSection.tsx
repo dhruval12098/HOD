@@ -19,8 +19,8 @@ const posts = [
     featured: true,
     icon: (
       <svg width="140" height="140" viewBox="0 0 140 140" fill="none">
-        <polygon points="70,15 110,35 100,115 40,115 30,35" stroke="#B8922A" strokeWidth="1.2" fill="rgba(184,146,42,0.06)" />
-        <polygon points="70,30 95,44 89,95 51,95 45,44" stroke="#B8922A" strokeWidth=".6" fill="rgba(184,146,42,0.03)" />
+        <polygon points="70,15 110,35 100,115 40,115 30,35" stroke="#0A1628" strokeWidth="1.2" fill="rgba(10,22,40,0.06)" />
+        <polygon points="70,30 95,44 89,95 51,95 45,44" stroke="#0A1628" strokeWidth=".6" fill="rgba(10,22,40,0.03)" />
       </svg>
     ),
   },
@@ -31,8 +31,8 @@ const posts = [
     date: 'Mar 28',
     icon: (
       <svg width="70" height="70" viewBox="0 0 70 70" fill="none">
-        <circle cx="35" cy="35" r="22" stroke="#B8922A" strokeWidth=".8" fill="rgba(184,146,42,0.05)" />
-        <circle cx="35" cy="35" r="14" stroke="#B8922A" strokeWidth=".4" fill="none" />
+        <circle cx="35" cy="35" r="22" stroke="#0A1628" strokeWidth=".8" fill="rgba(10,22,40,0.05)" />
+        <circle cx="35" cy="35" r="14" stroke="#0A1628" strokeWidth=".4" fill="none" />
       </svg>
     ),
   },
@@ -43,10 +43,10 @@ const posts = [
     date: 'Mar 10',
     icon: (
       <svg width="70" height="70" viewBox="0 0 70 70" fill="none">
-        <rect x="15" y="25" width="40" height="20" rx="10" stroke="#B8922A" strokeWidth=".8" fill="rgba(184,146,42,0.05)" />
-        <circle cx="25" cy="35" r="3" fill="rgba(212,168,64,0.2)" />
-        <circle cx="35" cy="35" r="3" fill="rgba(212,168,64,0.2)" />
-        <circle cx="45" cy="35" r="3" fill="rgba(212,168,64,0.2)" />
+        <rect x="15" y="25" width="40" height="20" rx="10" stroke="#0A1628" strokeWidth=".8" fill="rgba(10,22,40,0.05)" />
+        <circle cx="25" cy="35" r="3" fill="rgba(32,48,74,0.2)" />
+        <circle cx="35" cy="35" r="3" fill="rgba(32,48,74,0.2)" />
+        <circle cx="45" cy="35" r="3" fill="rgba(32,48,74,0.2)" />
       </svg>
     ),
   },
@@ -57,7 +57,7 @@ const posts = [
     date: 'Feb 22',
     icon: (
       <svg width="70" height="70" viewBox="0 0 70 70" fill="none">
-        <polygon points="35,10 55,20 50,55 20,55 15,20" stroke="#B8922A" strokeWidth=".8" fill="rgba(184,146,42,0.05)" />
+        <polygon points="35,10 55,20 50,55 20,55 15,20" stroke="#0A1628" strokeWidth=".8" fill="rgba(10,22,40,0.05)" />
       </svg>
     ),
   },
@@ -68,7 +68,7 @@ const posts = [
     date: 'Feb 10',
     icon: (
       <svg width="70" height="70" viewBox="0 0 70 70" fill="none">
-        <ellipse cx="35" cy="35" rx="14" ry="20" stroke="#B8922A" strokeWidth=".8" fill="rgba(184,146,42,0.05)" />
+        <ellipse cx="35" cy="35" rx="14" ry="20" stroke="#0A1628" strokeWidth=".8" fill="rgba(10,22,40,0.05)" />
       </svg>
     ),
   },
@@ -79,7 +79,7 @@ const posts = [
     date: 'Jan 28',
     icon: (
       <svg width="90" height="90" viewBox="0 0 90 90" fill="none">
-        <path d="M45 10Q60 25 58 50Q52 72 45 75Q38 72 32 50Q30 25 45 10Z" stroke="#B8922A" strokeWidth=".8" fill="rgba(184,146,42,0.05)" />
+        <path d="M45 10Q60 25 58 50Q52 72 45 75Q38 72 32 50Q30 25 45 10Z" stroke="#0A1628" strokeWidth=".8" fill="rgba(10,22,40,0.05)" />
       </svg>
     ),
   },
@@ -90,8 +90,8 @@ const posts = [
     date: 'Jan 15',
     icon: (
       <svg width="90" height="90" viewBox="0 0 90 90" fill="none">
-        <circle cx="45" cy="45" r="28" stroke="#B8922A" strokeWidth=".8" fill="none" />
-        <circle cx="45" cy="45" r="20" stroke="#B8922A" strokeWidth=".4" fill="rgba(184,146,42,0.04)" />
+        <circle cx="45" cy="45" r="28" stroke="#0A1628" strokeWidth=".8" fill="none" />
+        <circle cx="45" cy="45" r="20" stroke="#0A1628" strokeWidth=".4" fill="rgba(10,22,40,0.04)" />
       </svg>
     ),
   },
@@ -123,7 +123,7 @@ function BentoCard({
       className={`relative overflow-hidden cursor-pointer bg-[#0A0A0A] border border-white/[0.06] rounded-2xl
                   flex flex-col justify-end
                   transition-[transform,box-shadow] duration-[400ms] ease-[cubic-bezier(0.2,0.7,0.3,1)]
-                  hover:-translate-y-[3px] hover:shadow-[0_12px_40px_rgba(184,146,42,0.12)]
+                  hover:-translate-y-[3px] hover:shadow-[0_12px_40px_rgba(10,22,40,0.12)]
                   ${gridClass}`}
       style={
         {
@@ -166,14 +166,14 @@ function BentoCard({
 
       {/* Content */}
       <div className="relative z-[3] p-7" style={{ fontFamily: 'Manrope, sans-serif' }}>
-        <div className="font-numeric text-[8px] font-semibold tracking-[0.3em] uppercase text-[#B8922A] mb-[10px]
+        <div className="font-numeric text-[8px] font-semibold tracking-[0.3em] uppercase text-[#0A1628] mb-[10px]
                         inline-flex items-center gap-2
-                        before:content-[''] before:w-1 before:h-1 before:bg-[#B8922A] before:rounded-full">
+                        before:content-[''] before:w-1 before:h-1 before:bg-[#0A1628] before:rounded-full">
           {post.cat}
         </div>
         <h3
           className={`font-numeric font-normal text-white tracking-[0.02em] leading-[1.25] mb-2
-                      transition-colors duration-300 hover:text-[#E8D898]
+                      transition-colors duration-300 hover:text-[#FFFFFF]
                       ${post.featured ? 'text-[28px]' : 'text-[18px]'}`}
         >
           {post.title}
@@ -187,7 +187,7 @@ function BentoCard({
         </p>
         <div className="flex justify-between items-center mt-[14px] pt-3 border-t border-white/[0.06]">
           <span className="font-numeric text-[10px] text-white/30 tracking-[0.1em]">{post.date}</span>
-          <span className="font-numeric text-[9px] font-medium tracking-[0.24em] uppercase text-[#B8922A]
+          <span className="font-numeric text-[9px] font-medium tracking-[0.24em] uppercase text-[#0A1628]
                            inline-flex items-center gap-1.5 transition-[gap] duration-300 hover:gap-2.5">
             Read <ArrowIcon />
           </span>
@@ -366,24 +366,24 @@ export default function BlogSection() {
         {/* Header */}
         <div className="flex justify-between items-end mb-14 flex-wrap gap-5">
           <div>
-            <div className="text-[10px] font-medium tracking-[0.32em] uppercase text-[#B8922A] mb-[14px]
+            <div className="text-[10px] font-medium tracking-[0.32em] uppercase text-[#0A1628] mb-[14px]
                             inline-flex items-center gap-3
-                            before:content-[''] before:w-6 before:h-px before:bg-[#B8922A]">
+                            before:content-[''] before:w-6 before:h-px before:bg-[#0A1628]">
               From the Atelier
             </div>
             <h2
-              className="font-numeric font-light text-[#111] leading-[1.05]"
+              className="font-numeric font-light text-[#0A1628] leading-[1.05]"
               style={{ fontSize: 'clamp(40px, 5vw, 64px)', fontFamily: 'Manrope, sans-serif' }}
             >
-              Our Jewellery <span className="text-[#B8922A]">Blog</span>
+              Our Jewellery <span className="text-[#0A1628]">Blog</span>
             </h2>
           </div>
           <a
             href="#"
-            className="font-numeric text-[10px] font-medium tracking-[0.28em] uppercase text-[#111] no-underline cursor-pointer
-                       inline-flex items-center gap-[10px] pb-1 border-b border-[#111]
+            className="font-numeric text-[10px] font-medium tracking-[0.28em] uppercase text-[#0A1628] no-underline cursor-pointer
+                       inline-flex items-center gap-[10px] pb-1 border-b border-[#0A1628]
                        transition-[color,border-color,gap] duration-300
-                       hover:text-[#B8922A] hover:border-[#B8922A] hover:gap-4"
+                       hover:text-[#0A1628] hover:border-[#0A1628] hover:gap-4"
           >
             View All Articles →
           </a>

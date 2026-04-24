@@ -7,7 +7,7 @@
  */
 export default function ProductDescription({ text }) {
   return (
-    <p className="font-sans text-[13px] font-light leading-[1.9] text-[#3A3628] tracking-[0.02em] mb-8">
+    <p className="font-sans text-[13px] font-light leading-[1.9] text-[#253246] tracking-[0.02em] mb-8">
       {text}
     </p>
   );
