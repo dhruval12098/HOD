@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 type HeroSlide = {
   sort_order: number;
   image_path: string;
+  mobile_image_path?: string;
   button_text: string;
   button_link: string;
 };
@@ -65,12 +66,12 @@ export default function Hero({ initialContent }: HeroProps) {
 
       let sliderItems: HeroSlide[] = [];
 
-      if (heroData.slider_enabled) {
-        const { data: itemsData } = await supabase
-          .from('homepage_hero_slider_items')
-          .select('sort_order, image_path, button_text, button_link')
-          .eq('hero_id', heroData.id)
-          .order('sort_order', { ascending: true });
+        if (heroData.slider_enabled) {
+          const { data: itemsData } = await supabase
+            .from('homepage_hero_slider_items')
+            .select('sort_order, image_path, mobile_image_path, button_text, button_link')
+            .eq('hero_id', heroData.id)
+            .order('sort_order', { ascending: true });
 
         sliderItems = itemsData ?? [];
       }
@@ -166,24 +167,35 @@ export default function Hero({ initialContent }: HeroProps) {
           <div className="relative overflow-hidden rounded-none border-0 bg-transparent shadow-none backdrop-blur-0">
             <div className="absolute inset-0 z-10 bg-gradient-to-t from-[rgba(10,22,40,0.42)] via-[rgba(10,22,40,0.1)] to-transparent" />
             <div className="relative h-[288px] sm:h-[360px] md:h-[408px] lg:h-[456px]">
-              {slides.map((slide, index) => {
-                const imageUrl = getPublicImageUrl(slide.image_path);
-                return (
-                  <div
-                    key={`${slide.sort_order}-${slide.image_path}`}
-                    className={`absolute inset-0 transition-opacity duration-700 ${index === activeSlide ? 'opacity-100' : 'opacity-0'}`}
-                  >
-                    <Image
-                      src={imageUrl}
-                      alt={slide.button_text || `Hero slide ${index + 1}`}
-                      fill
-                      priority={index === 0}
-                      sizes="100vw"
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                );
-              })}
+                {slides.map((slide, index) => {
+                  const desktopImageUrl = getPublicImageUrl(slide.image_path);
+                  const mobileImageUrl = getPublicImageUrl(slide.mobile_image_path || slide.image_path);
+                  return (
+                    <div
+                      key={`${slide.sort_order}-${slide.image_path}`}
+                      className={`absolute inset-0 transition-opacity duration-700 ${index === activeSlide ? 'opacity-100' : 'opacity-0'}`}
+                    >
+                      <>
+                        <Image
+                          src={mobileImageUrl}
+                          alt={slide.button_text || `Hero slide ${index + 1}`}
+                          fill
+                          priority={index === 0}
+                          sizes="100vw"
+                          className="h-full w-full object-cover sm:hidden"
+                        />
+                        <Image
+                          src={desktopImageUrl}
+                          alt={slide.button_text || `Hero slide ${index + 1}`}
+                          fill
+                          priority={index === 0}
+                          sizes="100vw"
+                          className="hidden h-full w-full object-cover sm:block"
+                        />
+                      </>
+                    </div>
+                  );
+                })}
             </div>
 
             <div className="absolute inset-x-0 bottom-0 z-20 flex items-end justify-between gap-6 px-4 pb-4 sm:px-6 sm:pb-6 lg:px-8 lg:pb-8">

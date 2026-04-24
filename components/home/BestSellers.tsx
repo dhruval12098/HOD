@@ -129,7 +129,7 @@ function ProductCard({ product }: { product: Product }) {
             <img
               src={product.image}
               alt={product.name}
-              className="absolute inset-0 block h-full w-full object-cover object-center transition-transform duration-700 ease-[cubic-bezier(.4,0,.2,1)] group-hover:scale-105"
+              className="absolute inset-0 block h-full w-full object-cover object-center scale-[1.08] transition-transform duration-700 ease-[cubic-bezier(.4,0,.2,1)] group-hover:scale-[1.12] sm:scale-100 sm:group-hover:scale-105"
               loading="lazy"
             />
           ) : (

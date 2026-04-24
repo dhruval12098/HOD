@@ -23,6 +23,7 @@ export type HomeHeroContent = {
   slider_items?: Array<{
     sort_order: number;
     image_path: string;
+    mobile_image_path?: string;
     button_text: string;
     button_link: string;
   }>;
@@ -224,11 +225,11 @@ const loadHomePageData = unstable_cache(
     const heroData = heroResult.data;
     let sliderItems: HomeHeroContent['slider_items'] = [];
     if (heroData?.id && heroData.slider_enabled) {
-      const { data: itemsData } = await supabase
-        .from('homepage_hero_slider_items')
-        .select('sort_order, image_path, button_text, button_link')
-        .eq('hero_id', heroData.id)
-        .order('sort_order', { ascending: true });
+        const { data: itemsData } = await supabase
+          .from('homepage_hero_slider_items')
+          .select('sort_order, image_path, mobile_image_path, button_text, button_link')
+          .eq('hero_id', heroData.id)
+          .order('sort_order', { ascending: true });
       sliderItems = itemsData ?? [];
     }
 

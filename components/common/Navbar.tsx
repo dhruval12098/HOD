@@ -411,7 +411,7 @@ export default function Navbar() {
             className="flex items-center gap-[14px] pr-[112px] sm:pr-[132px] lg:pr-0 no-underline cursor-pointer transition-opacity duration-300 hover:opacity-60"
           >
             <span
-              className="text-[22px] sm:text-[28px] lg:text-[22px] font-normal tracking-[0.3em] sm:tracking-[0.38em] lg:tracking-[0.4em] uppercase text-[#0A1628]"
+              className="text-[16px] sm:text-[24px] lg:text-[22px] font-normal tracking-[0.24em] sm:tracking-[0.34em] lg:tracking-[0.4em] uppercase text-[#0A1628]"
               style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
             >
               House of Diams

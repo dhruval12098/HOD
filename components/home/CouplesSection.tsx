@@ -160,7 +160,7 @@ export default function CouplesSection({
                         <img
                           src={buildImageUrl(couple.image_path)}
                           alt={couple.names}
-                          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                          className="h-full w-full object-cover object-center scale-[1.1] transition-transform duration-700 group-hover:scale-[1.14] sm:scale-100 sm:group-hover:scale-[1.04]"
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center">
