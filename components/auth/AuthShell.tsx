@@ -47,7 +47,7 @@ export default function AuthShell({
       </div>
 
       <div className="relative mx-auto grid min-h-[calc(100vh-2rem)] max-w-[1180px] items-center gap-4 md:grid-cols-2 lg:gap-5">
-        <div className="relative overflow-hidden rounded-[30px] border border-[var(--theme-border-strong)] shadow-[0_30px_90px_rgba(10,22,40,0.18)]">
+        <div className="order-2 relative overflow-hidden rounded-[30px] border border-[var(--theme-border-strong)] shadow-[0_30px_90px_rgba(10,22,40,0.18)] md:order-2">
           {JEWELRY_IMAGES.map((image, index) => (
             <div
               key={image}
@@ -93,7 +93,7 @@ export default function AuthShell({
                     aria-label={`Show image ${index + 1}`}
                     onClick={() => setActiveImage(index)}
                     className={`h-1.5 rounded-full transition-all ${
-                      index === activeImage ? 'w-10 bg-[#d4af37]' : 'w-4 bg-white/40 hover:bg-white/70'
+                      index === activeImage ? 'w-10 bg-white' : 'w-4 bg-white/40 hover:bg-white/75'
                     }`}
                   />
                 ))}
@@ -114,7 +114,7 @@ export default function AuthShell({
           </div>
         </div>
 
-        <div className="flex items-center justify-center">
+        <div className="order-1 flex items-center justify-center md:order-1">
           <div className="w-full max-w-[560px] rounded-[26px] border border-[rgba(10,22,40,0.08)] bg-[rgba(255,255,255,0.9)] p-4 shadow-[0_24px_80px_rgba(10,22,40,0.08)] backdrop-blur-xl sm:p-5 lg:min-h-[calc(100vh-4.5rem)] lg:max-h-[calc(100vh-4.5rem)] lg:p-6">
             {children}
           </div>
