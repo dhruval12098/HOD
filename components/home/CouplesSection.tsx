@@ -63,6 +63,21 @@ export default function CouplesSection({
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
+    if (!active) return;
+
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+    };
+  }, [active]);
+
+  useEffect(() => {
     if (items.length <= 1) return;
 
     const intervalId = window.setInterval(() => {
@@ -76,7 +91,7 @@ export default function CouplesSection({
     if (typeof document === 'undefined' || !active) return null;
     return createPortal(
       <div
-        className="fixed inset-x-0 bottom-0 top-[146px] z-[1400] flex items-center justify-center bg-black/60 px-4 py-6 sm:px-5 sm:py-8"
+        className="fixed inset-x-0 bottom-0 top-[146px] z-[1400] flex items-center justify-center bg-[rgba(10,22,40,0.34)] px-4 py-6 backdrop-blur-[14px] sm:px-5 sm:py-8"
         onClick={() => setActive(null)}
       >
         <div
