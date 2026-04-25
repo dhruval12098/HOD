@@ -91,7 +91,7 @@ export default function CouplesSection({
     if (typeof document === 'undefined' || !active) return null;
     return createPortal(
       <div
-        className="fixed inset-x-0 bottom-0 top-[146px] z-[1400] flex items-center justify-center bg-[rgba(10,22,40,0.34)] px-4 py-6 backdrop-blur-[14px] sm:px-5 sm:py-8"
+        className="fixed inset-0 z-[1400] flex items-center justify-center bg-[rgba(10,22,40,0.34)] px-4 py-6 backdrop-blur-[14px] sm:px-5 sm:py-8"
         onClick={() => setActive(null)}
       >
         <div
