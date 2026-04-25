@@ -67,13 +67,20 @@ export default function CouplesSection({
 
     const previousBodyOverflow = document.body.style.overflow;
     const previousHtmlOverflow = document.documentElement.style.overflow;
+    const lenis = typeof window !== 'undefined' ? (window as any).__lenis : null;
 
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
+    if (lenis && typeof lenis.stop === 'function') {
+      lenis.stop();
+    }
 
     return () => {
       document.body.style.overflow = previousBodyOverflow;
       document.documentElement.style.overflow = previousHtmlOverflow;
+      if (lenis && typeof lenis.start === 'function') {
+        lenis.start();
+      }
     };
   }, [active]);
 

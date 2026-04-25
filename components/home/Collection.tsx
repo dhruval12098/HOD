@@ -292,7 +292,7 @@ export default function Collection({ onEnquire, items = [] }: CollectionProps & 
   };
 
   return (
-    <section className="w-[95vw] max-w-6xl py-16 px-0 mx-auto font-[Montserrat,sans-serif] font-light sm:px-4 sm:py-20">
+    <section className="mx-auto w-full max-w-6xl px-4 py-16 font-[Montserrat,sans-serif] font-light sm:px-4 sm:py-20">
 
       {/* ── Header ── */}
       <div className="text-center mb-10">
