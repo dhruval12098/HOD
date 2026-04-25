@@ -1,11 +1,10 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import type { StorefrontProduct } from '@/lib/catalog-products';
 import { STONE_MAP } from '@/lib/data/product-config';
 import EnquireModal from '@/components/home/EnquireModal';
-import Loader from '@/components/home/Loader';
 import { Toast } from '@/components/home/Toast';
 import ProductBreadcrumb from '@/components/product/ProductBreadcrumb';
 import ProductGallery from '@/components/product/ProductGallery';
@@ -50,7 +49,6 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
   const [isEnquireOpen, setIsEnquireOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastVisible, setToastVisible] = useState(false);
-  const [pageLoading, setPageLoading] = useState(true);
 
   const isDark = product.category === 'hiphop';
   const inWishlist = wishlist.includes(product.id);
@@ -63,41 +61,6 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
     [storefrontProduct.mainCategorySlug]
   );
   const collectionLabel = storefrontProduct.mainCategoryName || 'Collection';
-
-  useEffect(() => {
-    if (typeof document === 'undefined') return;
-    document.body.classList.toggle('page-loader-active', pageLoading);
-    return () => {
-      document.body.classList.remove('page-loader-active');
-    };
-  }, [pageLoading]);
-
-  useEffect(() => {
-    const cacheKey = `hod_product_loader_${product.slug}`;
-    try {
-      const cached = window.localStorage.getItem(cacheKey);
-      if (cached) {
-        const parsed = JSON.parse(cached) as { expiresAt?: number } | null;
-        if (parsed?.expiresAt && parsed.expiresAt > Date.now()) {
-          setPageLoading(false);
-          return;
-        }
-      }
-    } catch {}
-
-    const timer = window.setTimeout(() => setPageLoading(false), 250);
-    return () => window.clearTimeout(timer);
-  }, [product.slug]);
-
-  const handlePageLoaderComplete = () => {
-    setPageLoading(false);
-    try {
-      window.localStorage.setItem(
-        `hod_product_loader_${product.slug}`,
-        JSON.stringify({ expiresAt: Date.now() + 1000 * 60 * 60 * 6 })
-      );
-    } catch {}
-  };
 
   const checkoutHref = useMemo(() => {
     const params = new URLSearchParams();
@@ -149,10 +112,9 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
     setIsEnquireOpen(true);
   };
 
-  return (
-    <div className="min-h-screen bg-(--bg) text-(--ink)">
-      {pageLoading ? <Loader ready onComplete={handlePageLoaderComplete} /> : null}
-      <section className="mx-auto max-w-[1400px] px-[52px] pb-[100px] pt-10 max-[1100px]:px-7 max-[700px]:px-5 max-[700px]:pb-[70px]">
+    return (
+      <div className="min-h-screen bg-(--bg) text-(--ink)">
+        <section className="mx-auto max-w-[1400px] px-[52px] pb-[100px] pt-10 max-[1100px]:px-7 max-[700px]:px-5 max-[700px]:pb-[70px]">
         <ProductBreadcrumb productName={product.name} collectionHref={collectionHref} collectionLabel={collectionLabel} />
 
         <ProductLayout
@@ -178,7 +140,7 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
                 carat={selectedHiphopCarat || storefrontProduct.gemstoneValue || storefrontProduct.optionName || storefrontProduct.subcategoryName || ''}
               />
 
-              <h1 className="mb-[10px] font-serif text-[clamp(36px,4.5vw,56px)] font-light leading-[1.1] tracking-[0.02em] text-[#0A1628]">
+              <h1 className="font-display-title mb-[10px] text-[clamp(36px,4.5vw,56px)] font-normal leading-[1.1] tracking-[0.01em] text-[#0A1628]">
                 {product.name}
               </h1>
 

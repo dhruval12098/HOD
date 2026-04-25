@@ -24,7 +24,17 @@ export default function FoundersSection() {
   }, []);
 
   return (
-    <section style={{ padding: "110px 52px", maxWidth: "1400px", margin: "0 auto" }}>
+    <section style={{ padding: "110px 52px", maxWidth: "1400px", margin: "0 auto" }} className="founders-section">
+      <style>{`
+        @media (max-width: 1024px) {
+          .founders-section { padding: 70px 28px !important; }
+          .founders-grid { grid-template-columns: 1fr !important; }
+          .founder-card { grid-template-columns: 1fr !important; }
+        }
+        @media (max-width: 640px) {
+          .founders-section { padding: 60px 20px !important; }
+        }
+      `}</style>
       <div style={{ textAlign: "center", marginBottom: "56px" }}>
         <div style={{ fontSize: "10px", fontWeight: 400, letterSpacing: ".32em", color: "#0A1628", textTransform: "uppercase", marginBottom: "18px", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "12px" }}>
           <span style={{ width: "24px", height: "1px", background: "#0A1628", display: "inline-block" }} />
@@ -37,7 +47,7 @@ export default function FoundersSection() {
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "36px" }} className="founders-grid">
         {items.map((f) => (
-          <div key={f.name} style={{ display: "grid", gridTemplateColumns: "1fr 1.6fr", background: "#fff", border: "1px solid rgba(10,22,40,0.10)", overflow: "hidden" }}>
+          <div key={f.name} className="founder-card" style={{ display: "grid", gridTemplateColumns: "1fr 1.6fr", background: "#fff", border: "1px solid rgba(10,22,40,0.10)", overflow: "hidden" }}>
             <div style={{ background: "linear-gradient(135deg, #FAF7F2, #F5F7FC)", display: "flex", alignItems: "center", justifyContent: "center", aspectRatio: "1" }}>
               {f.image_path ? <img src={buildImageUrl(f.image_path)} alt={f.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontFamily: "var(--serif)", fontSize: "80px", fontWeight: 400, color: "#0A1628" }}>{(f.name || "FD").slice(0, 2).toUpperCase()}</span>}
             </div>

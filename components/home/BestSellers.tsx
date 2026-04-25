@@ -102,7 +102,7 @@ function ProductCard({ product }: { product: Product }) {
   return (
     <div className="group h-full overflow-hidden rounded-[22px] border border-[var(--theme-border)] bg-[var(--theme-surface)] transition-transform duration-[350ms] ease-[cubic-bezier(.4,0,.2,1)] hover:-translate-y-[3px] hover:z-[2]">
       <a href={`/shop/${product.slug}`} className="block no-underline">
-        <div className="relative aspect-square overflow-hidden bg-white">
+        <div className="relative aspect-[1.08/1] overflow-hidden bg-white sm:aspect-square">
           <div
             className={[
               'absolute top-3 left-3 z-[2] text-[6.5px] tracking-[0.16em] uppercase px-[10px] py-1 font-medium',
@@ -139,23 +139,23 @@ function ProductCard({ product }: { product: Product }) {
           )}
         </div>
 
-        <div className="px-[18px] pt-5 pb-[22px]">
-          <div className="mb-[5px] font-serif text-[19px] font-normal leading-[1.25] tracking-[0.02em] text-[var(--theme-heading)]">
+        <div className="px-[16px] pb-[18px] pt-4 sm:px-[18px] sm:pt-5 sm:pb-[22px]">
+          <div className="mb-[5px] font-serif text-[17px] font-normal leading-[1.22] tracking-[0.02em] text-[var(--theme-heading)] sm:text-[19px]">
             {product.name}
           </div>
 
-          <p className="mb-4 text-[7.5px] font-light uppercase leading-[1.8] tracking-[0.14em] text-[var(--theme-muted)]">
+          <p className="mb-3 text-[7px] font-light uppercase leading-[1.75] tracking-[0.13em] text-[var(--theme-muted)] sm:mb-4 sm:text-[7.5px] sm:tracking-[0.14em]">
             {product.meta}
           </p>
 
           <div className="flex items-center justify-between">
-            <span className="font-numeric text-[22px] font-light text-[var(--theme-heading)]">
+            <span className="font-numeric text-[20px] font-light text-[var(--theme-heading)] sm:text-[22px]">
               {product.price}
             </span>
 
             <button
               onClick={(event) => event.preventDefault()}
-              className="cursor-pointer border border-[var(--theme-ink)] bg-transparent px-[14px] py-[7px] text-[7px] font-medium uppercase tracking-[0.18em] text-[var(--theme-ink)] transition-colors duration-200 hover:bg-[var(--theme-ink)] hover:text-white"
+              className="cursor-pointer border border-[var(--theme-ink)] bg-transparent px-[12px] py-[6px] text-[6.5px] font-medium uppercase tracking-[0.16em] text-[var(--theme-ink)] transition-colors duration-200 hover:bg-[var(--theme-ink)] hover:text-white sm:px-[14px] sm:py-[7px] sm:text-[7px] sm:tracking-[0.18em]"
             >
               Enquire
             </button>

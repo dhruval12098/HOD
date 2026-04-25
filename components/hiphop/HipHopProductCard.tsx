@@ -25,16 +25,16 @@ export default function HipHopProductCard({
       : 110
 
   return (
-    <Link
-      href={`/shop/${product.slug}`}
-      className="
-        bg-[#0A1628] border border-white/12
-        overflow-hidden relative aspect-square flex flex-col rounded-[26px]
-        transition-[transform,box-shadow,border-color] duration-500 ease-[cubic-bezier(.2,.7,.3,1)]
-        hover:-translate-y-1.5 hover:shadow-[0_24px_60px_rgba(0,0,0,0.4)] hover:border-white/35
-        cursor-pointer
-      "
-    >
+      <Link
+        href={`/shop/${product.slug}`}
+        className="
+          bg-[#0A1628] border border-white/12
+          overflow-hidden relative aspect-[5/6] sm:aspect-square flex flex-col rounded-[26px]
+          transition-[transform,box-shadow,border-color] duration-500 ease-[cubic-bezier(.2,.7,.3,1)]
+          hover:-translate-y-1.5 hover:shadow-[0_24px_60px_rgba(0,0,0,0.4)] hover:border-white/35
+          cursor-pointer
+        "
+      >
       {/* Visual area */}
         <div className="relative flex-1 min-h-0 flex items-center justify-center overflow-hidden bg-gradient-to-br from-[#0A1628] to-[#111F34] group">
         {/* Hover glow */}

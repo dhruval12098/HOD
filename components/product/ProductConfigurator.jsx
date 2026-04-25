@@ -107,10 +107,10 @@ export default function ProductConfigurator({
         />
       ) : product.gemstoneValue ? (
         <div className="mb-5 rounded-[18px] border border-[rgba(10,22,40,0.10)] bg-[#FAFBFD] px-4 py-3">
-          <div className="font-sans text-[10px] font-medium uppercase tracking-[0.28em] text-[#0A1628]">
+          <div className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-[#0A1628]">
             {product.gemstoneLabel || 'Stone Type'}
           </div>
-          <div className="mt-2 font-serif text-[18px] italic text-[#0A1628]">{gemstoneValue || product.gemstoneValue}</div>
+          <div className="mt-2 font-sans text-[15px] font-medium text-[#0A1628]">{gemstoneValue || product.gemstoneValue}</div>
         </div>
       ) : null}
 

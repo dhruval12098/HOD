@@ -23,7 +23,7 @@ export default function SpecSection({ title, rows, variant = 'piece' }) {
   return (
     <div className="mb-7 rounded-[24px] border border-[rgba(10,22,40,0.10)] bg-white p-5 shadow-[0_18px_50px_rgba(10,22,40,0.04)] last:mb-0">
       {/* Section title */}
-      <div className="mb-[6px] flex items-center gap-[10px] border-b border-[rgba(10,22,40,0.25)] pb-[10px] font-serif text-[18px] font-medium tracking-[0.04em] text-[#0A1628]">
+      <div className="mb-[6px] flex items-center gap-[10px] border-b border-[rgba(10,22,40,0.25)] pb-[10px] font-sans text-[16px] font-semibold tracking-[0.01em] text-[#0A1628] sm:text-[18px]">
         {/* faint gold dot */}
         <span className="w-[14px] h-[14px] bg-[#0A1628] opacity-20 rounded-full flex-shrink-0" />
         {icon}
@@ -34,10 +34,10 @@ export default function SpecSection({ title, rows, variant = 'piece' }) {
       {rows.map(([label, value]) => (
         <div
           key={label}
-          className="flex justify-between py-3 border-b border-[rgba(10,22,40,0.10)] last:border-b-0 font-sans text-[12px]"
+          className="flex flex-col gap-1 py-3 border-b border-[rgba(10,22,40,0.10)] last:border-b-0 font-sans text-[12px] sm:flex-row sm:items-start sm:justify-between sm:gap-6"
         >
-          <span className="text-[#6A6A6A] tracking-[0.04em]">{label}</span>
-          <span className="text-[#0A1628] font-medium tracking-[0.02em] font-numeric">{value}</span>
+          <span className="max-w-full break-words text-[#6A6A6A] tracking-[0.04em]">{label}</span>
+          <span className="max-w-full break-words text-[#0A1628] font-medium tracking-[0.01em] sm:text-right">{value}</span>
         </div>
       ))}
     </div>

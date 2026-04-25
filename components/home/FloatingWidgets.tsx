@@ -2,13 +2,44 @@
 
 import { useEffect, useState } from 'react';
 
+const fallbackWhatsappNumber = '919328536178';
+
+function buildWhatsappHref(number: string) {
+  const digits = number.replace(/[^\d]/g, '') || fallbackWhatsappNumber;
+  return `https://wa.me/${digits}?text=${encodeURIComponent("Hi, I'd like to enquire about House of Diams")}`;
+}
+
 export default function FloatingWidgets() {
   const [showBackTop, setShowBackTop] = useState(false);
+  const [whatsappHref, setWhatsappHref] = useState(buildWhatsappHref(fallbackWhatsappNumber));
 
   useEffect(() => {
     const onScroll = () => setShowBackTop(window.scrollY > 400);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useEffect(() => {
+    let ignore = false;
+
+    const loadSettings = async () => {
+      try {
+        const response = await fetch('/api/public/settings');
+        const payload = await response.json().catch(() => null);
+        if (!response.ok || ignore) return;
+
+        const nextNumber = typeof payload?.item?.whatsapp_number === 'string'
+          ? payload.item.whatsapp_number
+          : fallbackWhatsappNumber;
+
+        setWhatsappHref(buildWhatsappHref(nextNumber));
+      } catch {}
+    };
+
+    void loadSettings();
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   function scrollToTop() {
@@ -64,7 +95,7 @@ export default function FloatingWidgets() {
 
       {/* WhatsApp FAB */}
       <a
-        href="https://wa.me/919328536178?text=Hi%2C%20I%27d%20like%20to%20enquire%20about%20House%20of%20Diams"
+        href={whatsappHref}
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Chat on WhatsApp"

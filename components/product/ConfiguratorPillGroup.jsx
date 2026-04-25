@@ -22,10 +22,10 @@ export default function ConfiguratorPillGroup({
     <div className="mb-5">
       {/* Row heading */}
       <div className="flex justify-between items-baseline mb-[10px]">
-        <span className="font-sans text-[10px] font-medium tracking-[0.28em] uppercase text-[#0A1628]">
+        <span className="font-sans text-[10px] font-semibold tracking-[0.22em] uppercase text-[#0A1628]">
           {label}
         </span>
-        <span className="font-numeric text-[14px] font-normal italic text-[#0A1628] tracking-[0.02em]">
+        <span className="font-sans text-[13px] font-medium text-[#0A1628] tracking-[0.01em]">
           {selectedLabel}
         </span>
       </div>

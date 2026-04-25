@@ -66,28 +66,25 @@ export default function ProductTabs({
   ];
 
   return (
-    <div className="mt-[30px]">
-      <div className="flex border-b border-[rgba(10,22,40,0.10)]">
+    <div className="mt-[30px] overflow-hidden">
+      <div className="flex flex-wrap gap-2 border-b border-[rgba(10,22,40,0.10)] pb-2 max-sm:gap-1.5">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActive(tab.id)}
             className={`
-              relative cursor-pointer border-0 bg-transparent px-5 py-[14px]
-              font-sans text-[10px] font-medium uppercase tracking-[0.24em]
+              relative cursor-pointer rounded-full border border-[rgba(10,22,40,0.10)] bg-transparent px-4 py-[11px]
+              font-sans text-[10px] font-semibold uppercase tracking-[0.18em]
               transition-colors duration-300
-              ${active === tab.id ? 'text-[#0A1628]' : 'text-[#6A6A6A] hover:text-[#0A1628]'}
+              ${active === tab.id ? 'border-[#0A1628] bg-[#0A1628] text-white' : 'text-[#6A6A6A] hover:border-[#0A1628] hover:text-[#0A1628]'}
             `}
           >
             {tab.label}
-            {active === tab.id && (
-              <span className="absolute bottom-[-1px] left-0 right-0 h-[1px] bg-[#0A1628]" />
-            )}
           </button>
         ))}
       </div>
 
-      <div className="pt-6">
+      <div className="min-w-0 pt-6">
         {active === 'specs' ? (
           <div className="animate-[fadeUp_0.4s_ease]">
             {visibleSections.length > 0 ? (

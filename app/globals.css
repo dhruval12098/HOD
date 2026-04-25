@@ -12,6 +12,12 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: "Grandiosity";
+  src: url("/fonts/Grandiosity-Regular-BF64e6b8cd436f3.ttf") format("truetype");
+  font-display: swap;
+}
+
 :root {
   --background: #fafbfd;
   --foreground: #0a0a0a;
@@ -46,6 +52,7 @@
   /* Tailwind config maps `font-serif` to `var(--serif)` */
   --serif: "Forfelast", "Cormorant Garamond", Georgia, serif;
   --numeric: "Modamode", ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --display-title: "Grandiosity", "Forfelast", "Cormorant Garamond", Georgia, serif;
 }
 
 @theme inline {
@@ -133,6 +140,10 @@ h1, h2, h3, h4, h5, h6 {
 /* Numeric font: apply only where we mark it, to avoid disrupting body text. */
 .font-numeric {
   font-family: var(--numeric) !important;
+}
+
+.font-display-title {
+  font-family: var(--display-title) !important;
 }
 
 ::selection {

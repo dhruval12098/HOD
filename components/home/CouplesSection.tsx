@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { X } from 'lucide-react';
 import type { HomeCoupleItem } from '@/lib/home-data';
 
 type CoupleItem = {
@@ -74,17 +75,25 @@ export default function CouplesSection({
   const modal = useMemo(() => {
     if (typeof document === 'undefined' || !active) return null;
     return createPortal(
-      <div className="fixed inset-0 z-[80] bg-black/60 px-5 py-8" onClick={() => setActive(null)}>
-        <div className="mx-auto max-w-3xl overflow-hidden rounded-3xl bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
+      <div className="fixed inset-0 z-[80] bg-black/60 px-4 py-5 sm:px-5 sm:py-8" onClick={() => setActive(null)}>
+        <div className="relative mx-auto max-h-[88vh] max-w-[520px] overflow-hidden rounded-[24px] bg-white shadow-2xl md:max-h-none md:max-w-3xl md:rounded-3xl" onClick={(e) => e.stopPropagation()}>
+          <button
+            type="button"
+            onClick={() => setActive(null)}
+            className="absolute right-3 top-3 z-20 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/92 text-[#0A1628] shadow-[0_10px_25px_rgba(10,22,40,0.16)] transition hover:bg-white"
+            aria-label="Close popup"
+          >
+            <X size={16} />
+          </button>
           <div className="grid grid-cols-1 md:grid-cols-2">
-            <div className="min-h-[320px] bg-[#f5f1ea] flex items-center justify-center">
+            <div className="min-h-[220px] bg-[#f5f1ea] flex items-center justify-center md:min-h-[320px]">
               {active.image_path ? <img src={buildImageUrl(active.image_path)} alt={active.names} className="h-full w-full object-cover" /> : <HeartIcon />}
             </div>
-            <div className="p-8">
-              <div className="text-[10px] uppercase tracking-[0.3em] text-[#0A1628] mb-3">{active.location}</div>
-              <h3 className="font-serif text-3xl text-[#0A1628] mb-4">{active.names}</h3>
+            <div className="max-h-[calc(88vh-220px)] overflow-y-auto p-5 pr-4 md:max-h-none md:overflow-visible md:p-8">
+              <div className="mb-3 pr-8 text-[9px] uppercase tracking-[0.24em] text-[#0A1628] md:text-[10px] md:tracking-[0.3em]">{active.location}</div>
+              <h3 className="mb-3 font-serif text-[30px] leading-none text-[#0A1628] md:mb-4 md:text-3xl">{active.names}</h3>
               <StarRating />
-              <p className="text-sm leading-8 text-[#555] mb-6">{active.story}</p>
+              <p className="mb-5 text-[13px] leading-7 text-[#555] md:mb-6 md:text-sm md:leading-8">{active.story}</p>
               <div className="border border-black/8 bg-[#fafafa] px-4 py-4">
                 <div className="font-serif text-[16px] text-[#0A1628]">{active.product_name}</div>
                 <div className="text-[9px] uppercase tracking-[0.2em] text-[#999] mt-1">{active.product_detail}</div>

@@ -1,5 +1,5 @@
 import type { Product } from '@/lib/data/products'
-import { unstable_noStore as noStore } from 'next/cache'
+import { unstable_cache } from 'next/cache'
 import { createSupabaseServerClient } from '@/lib/server-supabase'
 
 const collectionBucket = process.env.NEXT_PUBLIC_SUPABASE_COLLECTION_BUCKET || 'hod'
@@ -217,8 +217,7 @@ function buildHiphopSpecRows(product: ProductRow) {
   ].filter(Boolean) as ProductKeyValue[]
 }
 
-export async function getStorefrontProducts() {
-  noStore()
+const fetchStorefrontProducts = async () => {
   const supabase = createSupabaseServerClient()
 
   const [productsResult, categoriesResult, subcategoriesResult, optionsResult, metalsResult, certificatesResult, ringSizesResult, productContentRulesResult, metalSelectionsResult, gstSlabsResult] =
@@ -367,6 +366,14 @@ export async function getStorefrontProducts() {
 
     return storefrontProduct
   })
+}
+
+const getCachedStorefrontProducts = unstable_cache(fetchStorefrontProducts, ['storefront-products'], {
+  revalidate: 300,
+})
+
+export async function getStorefrontProducts() {
+  return getCachedStorefrontProducts()
 }
 
 export async function getStorefrontProductBySlug(slug: string) {

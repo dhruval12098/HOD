@@ -16,13 +16,13 @@ export default function ConfiguratorEngravingInput({ label = 'Free Engraving', m
   return (
     <div className="mb-5">
       <div className="mb-[10px] flex items-baseline justify-between">
-        <span className="font-sans text-[10px] font-medium uppercase tracking-[0.28em] text-[#0A1628]">
+        <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-[#0A1628]">
           {label}
         </span>
-        <span className="font-serif text-[14px] font-normal italic tracking-[0.02em] text-[#0A1628]">
+        <span className="font-sans text-[13px] font-medium tracking-[0.01em] text-[#0A1628]">
           {selectedLabel}
           {mode === 'none' && (
-            <span className="ml-2 font-sans text-[10px] font-normal not-italic tracking-[0.1em] text-[#7F8898]">
+            <span className="ml-2 font-sans text-[10px] font-normal tracking-[0.08em] text-[#7F8898]">
               Complimentary
             </span>
           )}
@@ -65,7 +65,7 @@ export default function ConfiguratorEngravingInput({ label = 'Free Engraving', m
               mt-[10px] w-full max-w-[340px]
               border border-[rgba(10,22,40,0.10)] bg-[#FAFBFD]
               px-[14px] py-3
-              font-serif text-[16px] italic text-[#0A1628]
+              font-sans text-[15px] text-[#0A1628]
               transition-colors duration-300
               placeholder:text-[#7F8898] focus:border-[#0A1628] focus:outline-none
             "
