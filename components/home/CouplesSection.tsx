@@ -75,8 +75,14 @@ export default function CouplesSection({
   const modal = useMemo(() => {
     if (typeof document === 'undefined' || !active) return null;
     return createPortal(
-      <div className="fixed inset-0 z-[80] bg-black/60 px-4 py-5 sm:px-5 sm:py-8" onClick={() => setActive(null)}>
-        <div className="relative mx-auto max-h-[88vh] max-w-[520px] overflow-hidden rounded-[24px] bg-white shadow-2xl md:max-h-none md:max-w-3xl md:rounded-3xl" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="fixed inset-x-0 bottom-0 top-[146px] z-[1400] flex items-center justify-center bg-black/60 px-4 py-6 sm:px-5 sm:py-8"
+        onClick={() => setActive(null)}
+      >
+        <div
+          className="relative mx-auto flex max-h-[78vh] w-full max-w-[440px] flex-col overflow-hidden rounded-[22px] bg-white shadow-2xl md:max-h-[88vh] md:max-w-3xl md:rounded-3xl"
+          onClick={(e) => e.stopPropagation()}
+        >
           <button
             type="button"
             onClick={() => setActive(null)}
@@ -86,14 +92,14 @@ export default function CouplesSection({
             <X size={16} />
           </button>
           <div className="grid grid-cols-1 md:grid-cols-2">
-            <div className="min-h-[220px] bg-[#f5f1ea] flex items-center justify-center md:min-h-[320px]">
+            <div className="min-h-[180px] bg-[#f5f1ea] flex items-center justify-center md:min-h-[320px]">
               {active.image_path ? <img src={buildImageUrl(active.image_path)} alt={active.names} className="h-full w-full object-cover" /> : <HeartIcon />}
             </div>
-            <div className="max-h-[calc(88vh-220px)] overflow-y-auto p-5 pr-4 md:max-h-none md:overflow-visible md:p-8">
+            <div className="max-h-[calc(78vh-180px)] overflow-y-auto p-4 pr-3 md:max-h-none md:overflow-visible md:p-8">
               <div className="mb-3 pr-8 text-[9px] uppercase tracking-[0.24em] text-[#0A1628] md:text-[10px] md:tracking-[0.3em]">{active.location}</div>
-              <h3 className="mb-3 font-serif text-[30px] leading-none text-[#0A1628] md:mb-4 md:text-3xl">{active.names}</h3>
+              <h3 className="mb-3 font-serif text-[26px] leading-none text-[#0A1628] md:mb-4 md:text-3xl">{active.names}</h3>
               <StarRating />
-              <p className="mb-5 text-[13px] leading-7 text-[#555] md:mb-6 md:text-sm md:leading-8">{active.story}</p>
+              <p className="mb-4 text-[12px] leading-6 text-[#555] md:mb-6 md:text-sm md:leading-8">{active.story}</p>
               <div className="border border-black/8 bg-[#fafafa] px-4 py-4">
                 <div className="font-serif text-[16px] text-[#0A1628]">{active.product_name}</div>
                 <div className="text-[9px] uppercase tracking-[0.2em] text-[#999] mt-1">{active.product_detail}</div>
@@ -164,7 +170,7 @@ export default function CouplesSection({
                     onClick={() => setActive(couple)}
                     className="group relative w-full overflow-hidden border border-black/8 bg-white text-left shadow-[0_20px_50px_rgba(0,0,0,0.06)]"
                   >
-                    <div className="relative h-[420px] overflow-hidden bg-gradient-to-br from-[#f5f5f5] to-[#ececec]">
+                    <div className="relative h-[310px] overflow-hidden bg-gradient-to-br from-[#f5f5f5] to-[#ececec] sm:h-[340px]">
                       {couple.image_path ? (
                         <img
                           src={buildImageUrl(couple.image_path)}
