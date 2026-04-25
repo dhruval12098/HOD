@@ -236,6 +236,13 @@ export async function POST(request: Request) {
       customerName: [order.customer_first_name, order.customer_last_name].filter(Boolean).join(' ') || 'Client',
       orderNumber: order.order_number,
       orderDate: order.created_at,
+      subtotalAmount,
+      gstAmount,
+      gstLabel,
+      gstPercentage,
+      shippingAmount: 0,
+      couponCode,
+      couponDiscountAmount,
       totalAmount: Number(order.total_amount || totalAmount),
       items: [
         {

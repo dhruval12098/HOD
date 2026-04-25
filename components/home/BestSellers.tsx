@@ -140,7 +140,7 @@ function ProductCard({ product }: { product: Product }) {
         </div>
 
         <div className="px-[16px] pb-[18px] pt-4 sm:px-[18px] sm:pt-5 sm:pb-[22px]">
-          <div className="mb-[5px] font-serif text-[17px] font-normal leading-[1.22] tracking-[0.02em] text-[var(--theme-heading)] sm:text-[19px]">
+          <div className="font-display-title mb-[5px] text-[17px] font-normal leading-[1.22] tracking-[0.02em] text-[var(--theme-heading)] sm:text-[19px]">
             {product.name}
           </div>
 

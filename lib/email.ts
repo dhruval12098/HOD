@@ -11,6 +11,13 @@ type BaseOrderEmailInput = {
   customerName: string
   orderNumber: string
   orderDate?: string | null
+  subtotalAmount?: number
+  gstAmount?: number
+  gstLabel?: string
+  gstPercentage?: number
+  shippingAmount?: number
+  couponCode?: string | null
+  couponDiscountAmount?: number
   totalAmount: number
   items: OrderEmailItem[]
 }
@@ -74,6 +81,62 @@ function renderItems(items: OrderEmailItem[]) {
     .join('')
 }
 
+function renderTotals({
+  subtotalAmount = 0,
+  gstAmount = 0,
+  gstLabel = 'Taxes',
+  gstPercentage,
+  shippingAmount = 0,
+  couponCode,
+  couponDiscountAmount = 0,
+  totalAmount,
+}: {
+  subtotalAmount?: number
+  gstAmount?: number
+  gstLabel?: string
+  gstPercentage?: number
+  shippingAmount?: number
+  couponCode?: string | null
+  couponDiscountAmount?: number
+  totalAmount: number
+}) {
+  const taxLabel =
+    gstAmount > 0 && gstPercentage
+      ? `${gstLabel} (${gstPercentage}%)`
+      : gstLabel
+
+  return `
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-top:18px;border-top:1px solid #ece7dd;border-collapse:collapse;">
+      <tr>
+        <td style="padding-top:18px;padding-bottom:10px;font-size:14px;color:#4b5563;">Subtotal</td>
+        <td style="padding-top:18px;padding-bottom:10px;text-align:right;font-size:14px;color:#1c1f26;font-weight:600;">${formatMoney(subtotalAmount)}</td>
+      </tr>
+      <tr>
+        <td style="padding-bottom:10px;font-size:14px;color:#4b5563;">Shipping</td>
+        <td style="padding-bottom:10px;text-align:right;font-size:14px;color:#1c1f26;font-weight:600;">${shippingAmount > 0 ? formatMoney(shippingAmount) : 'Free'}</td>
+      </tr>
+      <tr>
+        <td style="padding-bottom:10px;font-size:14px;color:#4b5563;">${taxLabel}</td>
+        <td style="padding-bottom:10px;text-align:right;font-size:14px;color:#1c1f26;font-weight:600;">${gstAmount > 0 ? formatMoney(gstAmount) : 'Free'}</td>
+      </tr>
+      ${
+        couponDiscountAmount > 0
+          ? `
+      <tr>
+        <td style="padding-bottom:10px;font-size:14px;color:#14804a;">Coupon${couponCode ? ` (${couponCode})` : ''}</td>
+        <td style="padding-bottom:10px;text-align:right;font-size:14px;color:#14804a;font-weight:600;">-${formatMoney(couponDiscountAmount)}</td>
+      </tr>
+      `
+          : ''
+      }
+      <tr>
+        <td style="padding-top:10px;border-top:1px solid #ece7dd;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#8b7355;">Total</td>
+        <td style="padding-top:10px;border-top:1px solid #ece7dd;text-align:right;font-size:22px;font-weight:700;color:#0f1726;">${formatMoney(totalAmount)}</td>
+      </tr>
+    </table>
+  `
+}
+
 function renderShell({
   pretitle,
   title,
@@ -83,6 +146,13 @@ function renderShell({
   ctaHref,
   orderNumber,
   orderDate,
+  subtotalAmount,
+  gstAmount,
+  gstLabel,
+  gstPercentage,
+  shippingAmount,
+  couponCode,
+  couponDiscountAmount,
   totalAmount,
   items,
 }: {
@@ -94,10 +164,27 @@ function renderShell({
   ctaHref: string
   orderNumber: string
   orderDate?: string | null
+  subtotalAmount?: number
+  gstAmount?: number
+  gstLabel?: string
+  gstPercentage?: number
+  shippingAmount?: number
+  couponCode?: string | null
+  couponDiscountAmount?: number
   totalAmount: number
   items: OrderEmailItem[]
 }) {
   const itemRows = renderItems(items)
+  const totalsMarkup = renderTotals({
+    subtotalAmount,
+    gstAmount,
+    gstLabel,
+    gstPercentage,
+    shippingAmount,
+    couponCode,
+    couponDiscountAmount,
+    totalAmount,
+  })
   const orderDateLabel = orderDate
     ? new Date(orderDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })
     : new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })
@@ -136,12 +223,7 @@ function renderShell({
               ${itemRows}
             </table>
 
-            <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-top:18px;border-top:1px solid #ece7dd;">
-              <tr>
-                <td style="padding-top:18px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#8b7355;">Total</td>
-                <td style="padding-top:18px;text-align:right;font-size:22px;font-weight:700;color:#0f1726;">${formatMoney(totalAmount)}</td>
-              </tr>
-            </table>
+            ${totalsMarkup}
 
             <div style="margin-top:28px;">
               <a href="${ctaHref}" style="display:inline-block;padding:14px 22px;border-radius:999px;background:#0f1726;color:#ffffff;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;">
@@ -173,6 +255,13 @@ export async function sendOrderConfirmationEmail(input: OrderConfirmationInput) 
     ctaHref: `${siteUrl}/profile?tab=orders`,
     orderNumber: input.orderNumber,
     orderDate: input.orderDate,
+    subtotalAmount: input.subtotalAmount,
+    gstAmount: input.gstAmount,
+    gstLabel: input.gstLabel,
+    gstPercentage: input.gstPercentage,
+    shippingAmount: input.shippingAmount,
+    couponCode: input.couponCode,
+    couponDiscountAmount: input.couponDiscountAmount,
     totalAmount: input.totalAmount,
     items: input.items,
   })
@@ -200,6 +289,13 @@ export async function sendOrderStatusUpdateEmail(input: OrderStatusUpdateInput) 
     ctaHref: `${siteUrl}/profile?tab=orders`,
     orderNumber: input.orderNumber,
     orderDate: input.orderDate,
+    subtotalAmount: input.subtotalAmount,
+    gstAmount: input.gstAmount,
+    gstLabel: input.gstLabel,
+    gstPercentage: input.gstPercentage,
+    shippingAmount: input.shippingAmount,
+    couponCode: input.couponCode,
+    couponDiscountAmount: input.couponDiscountAmount,
     totalAmount: input.totalAmount,
     items: input.items,
   })

@@ -95,7 +95,7 @@ export default function HipHopProductCard({
         <p className="mb-1.5 text-[9px] font-light uppercase tracking-[0.22em] text-white/55">
           {product.shortMeta}
         </p>
-        <h3 className="font-serif text-[20px] font-normal text-[#FFFFFF] tracking-[0.02em] leading-[1.2]">
+        <h3 className="font-display-title text-[20px] font-normal text-[#FFFFFF] tracking-[0.02em] leading-[1.2]">
           {product.name}
         </h3>
 

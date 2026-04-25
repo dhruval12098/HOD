@@ -115,7 +115,7 @@ export default function RelatedProducts({ products, wishlist = [], onWishlist, o
                 <div className={`font-sans text-[9px] font-light tracking-[0.22em] uppercase font-numeric ${isDark ? 'text-[#6A6A6A]' : 'text-[#6A6A6A]'}`}>
                   {p.shortMeta}
                 </div>
-                <div className={`font-serif text-[20px] font-normal leading-[1.2] tracking-[0.02em] ${isDark ? 'text-[#FFFFFF]' : 'text-[#0A1628]'}`}>
+                <div className={`font-display-title text-[20px] font-normal leading-[1.2] tracking-[0.02em] ${isDark ? 'text-[#FFFFFF]' : 'text-[#0A1628]'}`}>
                   {p.name}
                 </div>
 
