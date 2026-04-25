@@ -67,21 +67,26 @@ export default function ProductTabs({
 
   return (
     <div className="mt-[30px] overflow-hidden">
-      <div className="flex flex-wrap gap-2 border-b border-[rgba(10,22,40,0.10)] pb-2 max-sm:gap-1.5">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActive(tab.id)}
-            className={`
-              relative cursor-pointer rounded-full border border-[rgba(10,22,40,0.10)] bg-transparent px-4 py-[11px]
-              font-sans text-[10px] font-semibold uppercase tracking-[0.18em]
-              transition-colors duration-300
-              ${active === tab.id ? 'border-[#0A1628] bg-[#0A1628] text-white' : 'text-[#6A6A6A] hover:border-[#0A1628] hover:text-[#0A1628]'}
-            `}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="inline-flex min-w-full items-stretch gap-0 border-b border-[rgba(10,22,40,0.12)]">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActive(tab.id)}
+              className={`
+                relative flex-shrink-0 cursor-pointer border-b-2 px-4 py-[13px] text-left
+                font-sans text-[10px] font-semibold uppercase tracking-[0.2em]
+                transition-colors duration-300
+                max-sm:min-w-[170px] sm:min-w-[190px]
+                ${active === tab.id
+                  ? 'border-[#0A1628] text-[#0A1628]'
+                  : 'border-transparent text-[#6A6A6A] hover:text-[#0A1628]'}
+              `}
+            >
+              <span className="block whitespace-nowrap">{tab.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="min-w-0 pt-6">
