@@ -113,11 +113,11 @@ export default function CouplesSection({
           >
             <X size={16} />
           </button>
-          <div className="grid grid-cols-1 md:grid-cols-2">
-            <div className="min-h-[180px] bg-[#f5f1ea] flex items-center justify-center md:min-h-[320px]">
+          <div className="flex min-h-0 flex-1 flex-col md:grid md:grid-cols-2">
+            <div className="min-h-[180px] shrink-0 bg-[#f5f1ea] flex items-center justify-center md:min-h-[320px]">
               {active.image_path ? <img src={buildImageUrl(active.image_path)} alt={active.names} className="h-full w-full object-cover" /> : <HeartIcon />}
             </div>
-            <div className="max-h-[calc(78vh-180px)] overflow-y-auto p-4 pr-3 md:max-h-none md:overflow-visible md:p-8">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 pr-3 touch-pan-y md:max-h-none md:overflow-visible md:p-8">
               <div className="mb-3 pr-8 text-[9px] uppercase tracking-[0.24em] text-[#0A1628] md:text-[10px] md:tracking-[0.3em]">{active.location}</div>
               <h3 className="mb-3 font-serif text-[26px] leading-none text-[#0A1628] md:mb-4 md:text-3xl">{active.names}</h3>
               <StarRating />

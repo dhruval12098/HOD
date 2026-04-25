@@ -280,7 +280,7 @@ export default function BestSellers({
 
           <div className="overflow-hidden">
             <div
-              className="flex gap-5 transition-transform duration-500 ease-[cubic-bezier(.4,0,.2,1)]"
+              className="flex gap-0 transition-transform duration-500 ease-[cubic-bezier(.4,0,.2,1)] sm:gap-5"
               style={{ transform: `translateX(-${page * 100}%)` }}
             >
               {products.map((product) => (

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { gsap } from 'gsap';
 import type { HomeCollectionItem } from '@/lib/home-data';
 
@@ -187,6 +188,7 @@ function mapPanels(items: CollectionApiItem[]): PanelData[] {
 }
 
 export default function Collection({ onEnquire, items = [] }: CollectionProps & { items?: HomeCollectionItem[] }) {
+  const router = useRouter();
   const [current, setCurrent] = useState(0);
   const [progress, setProgress] = useState(0);
   const [panels] = useState<PanelData[]>(items.length ? mapPanels(items) : PANELS);
@@ -321,6 +323,15 @@ export default function Collection({ onEnquire, items = [] }: CollectionProps & 
             <div
               key={panel.index}
               className={`relative min-w-full overflow-hidden cursor-pointer select-none h-[clamp(360px,58vw,480px)] sm:h-[clamp(320px,50vw,480px)] ${panel.bgClass}`}
+              onClick={() => router.push(panel.ctaHref)}
+              role="link"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  router.push(panel.ctaHref);
+                }
+              }}
             >
               {/* Gem */}
               <div
@@ -337,14 +348,17 @@ export default function Collection({ onEnquire, items = [] }: CollectionProps & 
               }`} />
 
               {/* CTA */}
-              <Link
-                ref={(el) => { ctaRefs.current[panel.index] = el; }}
-                href={panel.ctaHref}
-                onClick={(e) => e.stopPropagation()}
-                className="absolute top-4 right-4 z-10 px-4 py-2 text-[8px] font-medium tracking-[0.18em] uppercase text-white no-underline border border-white/30 bg-black/25 backdrop-blur-sm rounded-[2px] transition-colors duration-200 hover:bg-[#0A1628] hover:border-[#0A1628] hover:text-white will-change-[opacity,transform] sm:top-6 sm:right-6 sm:px-5 sm:py-2.5 sm:text-[8.5px] sm:tracking-[0.22em]"
+              <button
+                ref={(el) => { ctaRefs.current[panel.index] = el as unknown as HTMLAnchorElement | null; }}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  router.push(panel.ctaHref);
+                }}
+                className="absolute top-4 right-4 z-10 rounded-[2px] border border-white/30 bg-black/25 px-4 py-2 text-[8px] font-medium uppercase tracking-[0.18em] text-white no-underline backdrop-blur-sm transition-colors duration-200 hover:border-[#0A1628] hover:bg-[#0A1628] hover:text-white will-change-[opacity,transform] sm:top-6 sm:right-6 sm:px-5 sm:py-2.5 sm:text-[8.5px] sm:tracking-[0.22em]"
               >
                 {panel.cta}
-              </Link>
+              </button>
 
               {/* Content */}
               <div className="absolute bottom-5 left-5 right-5 z-[2] sm:bottom-7 sm:left-7 sm:right-7">
