@@ -21,6 +21,18 @@ type CategoryBrowseSection = {
   options: { label: string; href: string; type?: 'default' | 'swatch' | 'icon'; iconUrl?: string | null }[]
 }
 
+function uniqueSectionOptions(
+  options: { label: string; href: string; type?: 'default' | 'swatch' | 'icon'; iconUrl?: string | null }[]
+) {
+  const seen = new Set<string>()
+  return options.filter((option) => {
+    const key = `${option.label}::${option.href}::${option.type ?? 'default'}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
 function resolveMasterFilterHref(args: {
   href: string
   currentCategorySlug: string
@@ -179,14 +191,16 @@ export default async function CategoryCollectionPage({
     const matchedItem = renderItems.find((entry) => entry.linkedCategoryId === category.id || entry.slug === category.slug)
     const filterSections = (matchedItem?.mega?.sections ?? []).filter((section) => section.showAsFilter)
 
-    return filterSections.map((section) => ({
-      id: section.id,
-      title: section.title,
-      iconUrl: section.iconUrl,
-      options: [
+    return filterSections.map((section) => {
+      const allOptions = uniqueSectionOptions([
         ...(section.metals ?? []).map((metal) => ({
           label: metal.label,
-          href: metal.href,
+          href: resolveMasterFilterHref({
+            href: metal.href,
+            currentCategorySlug: categorySlug,
+            categoryProducts,
+            allProducts: products,
+          }),
           type: 'swatch' as const,
         })),
         ...((section.links ?? []).map((link) => ({
@@ -200,8 +214,15 @@ export default async function CategoryCollectionPage({
           type: link.type ?? 'default',
           iconUrl: link.iconUrl ?? null,
         }))),
-      ],
-    }))
+      ])
+
+      return {
+        id: section.id,
+        title: section.title,
+        iconUrl: section.iconUrl,
+        options: allOptions,
+      }
+    })
   })()
 
   const certificateFilterValue =

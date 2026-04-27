@@ -392,7 +392,7 @@ export default function BlogSection() {
         {/* Bento grid */}
         <div
           ref={gridRef}
-          className="grid gap-3 select-none
+          className="hidden gap-3 select-none md:grid
                      grid-cols-4 grid-rows-[auto_auto_auto]
                      max-[1100px]:grid-cols-2
                      max-[700px]:grid-cols-1"
@@ -404,6 +404,18 @@ export default function BlogSection() {
               gridClass={cardGridClasses[i]}
               cardRef={(el) => { cardRefs.current[i] = el; }}
             />
+          ))}
+        </div>
+
+        <div className="md:hidden -mx-1 mt-2 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {posts.map((post, i) => (
+            <div key={`${post.title}-mobile`} className="min-w-[82%] snap-center">
+              <BentoCard
+                post={post}
+                gridClass={i === 0 ? 'min-h-[400px]' : 'min-h-[320px]'}
+                cardRef={(el) => { cardRefs.current[i] = el; }}
+              />
+            </div>
           ))}
         </div>
       </section>

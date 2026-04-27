@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 function FilterGroup({ group, checked, onChange }) {
   const isVisualGrid = group.id === "metal" || group.id === "shape" || group.id === "style";
+  const [mobileOpen, setMobileOpen] = useState(true);
 
   return (
     <div
@@ -13,8 +14,10 @@ function FilterGroup({ group, checked, onChange }) {
       }}
     >
       {/* Title */}
-      <div
+      <button
+        type="button"
         style={{
+          width: "100%",
           fontFamily: "'Cormorant Garamond', Georgia, serif",
           fontSize: "16px",
           fontWeight: 500,
@@ -24,14 +27,39 @@ function FilterGroup({ group, checked, onChange }) {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          background: "transparent",
+          border: "none",
+          padding: 0,
+          cursor: "pointer",
+          textAlign: "left",
         }}
+        onClick={() => setMobileOpen((current) => !current)}
       >
-        {group.title}
-        <span style={{ fontSize: "18px", color: "#0A1628" }}>{checked.length ? checked.join(", ") : "-"}</span>
-      </div>
+        <span>{group.title}</span>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: "10px" }}>
+          <span style={{ fontSize: "12px", color: "#6A6A6A", maxWidth: "160px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {checked.length ? checked.join(", ") : "-"}
+          </span>
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 14 14"
+            fill="none"
+            aria-hidden="true"
+            style={{
+              color: "#0A1628",
+              transform: mobileOpen ? "rotate(180deg)" : "rotate(0deg)",
+              transition: "transform .25s ease",
+              flexShrink: 0,
+            }}
+          >
+            <path d="M3 5L7 9L11 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
+      </button>
 
       <div
-        className={isVisualGrid ? "shop-filter-grid" : undefined}
+        className={`${isVisualGrid ? "shop-filter-grid" : ""}${mobileOpen ? " shop-filter-group-open" : " shop-filter-group-closed"}`}
         style={
           isVisualGrid
             ? {
@@ -39,7 +67,7 @@ function FilterGroup({ group, checked, onChange }) {
                 gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
                 gap: "10px",
               }
-            : { display: "flex", flexDirection: "column", gap: "10px" }
+            : { display: mobileOpen ? "flex" : "none", flexDirection: "column", gap: "10px" }
         }
       >
         {group.options.map((opt) => (
@@ -190,6 +218,12 @@ export default function ShopSidebar({ filterGroups, filters, onFiltersChange, pr
           .shop-filter-tile img {
             width: 24px !important;
             height: 24px !important;
+          }
+          .shop-filter-group-closed {
+            display: none !important;
+          }
+          .shop-filter-group-open {
+            display: grid !important;
           }
           .shop-sidebar-sticky-cta {
             position: sticky;

@@ -117,6 +117,30 @@ function MegaSection({ section }: { section: NavbarRenderSection }) {
   );
 }
 
+function getMobileSectionEntries(section: NavbarRenderSection) {
+  const metalEntries =
+    section.metals?.map((metal) => ({
+      label: metal.label,
+      href: metal.href,
+      icon: <MetalDot type={metal.type as keyof typeof METAL_COLORS} />,
+    })) ?? [];
+
+  const linkEntries =
+    section.links?.map((link) => ({
+      label: link.label,
+      href: link.href,
+      icon: link.iconUrl ? (
+        <img
+          src={link.iconUrl}
+          alt={link.label}
+          className="h-4 w-4 flex-shrink-0 object-contain"
+        />
+      ) : null,
+    })) ?? [];
+
+  return [...metalEntries, ...linkEntries];
+}
+
 function getMegaMenuColumnCount(item: NavbarRenderItem) {
   const sectionCount = item.mega?.sections.length ?? 0;
   return Math.max(1, Math.min(5, sectionCount || 1));
@@ -128,6 +152,7 @@ export default function Navbar() {
   const { count: cartCount } = useCart();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileOpenItem, setMobileOpenItem] = useState<string | null>(null);
   const [navHidden, setNavHidden] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -311,6 +336,12 @@ export default function Navbar() {
     ],
     [navItems]
   );
+
+  useEffect(() => {
+    if (!menuOpen) {
+      setMobileOpenItem(null);
+    }
+  }, [menuOpen]);
 
   const username = (() => {
     const metadata = authUser?.user_metadata;
@@ -628,7 +659,98 @@ export default function Navbar() {
           transition: 'transform 0.5s cubic-bezier(0.77,0,0.18,1)',
         }}
       >
-        {mobileLinks.map((item) => (
+        <a
+          href="/"
+          onClick={closeMenu}
+          className="block py-4 text-[26px] font-normal tracking-[0.05em] border-b border-black/[0.06] no-underline text-[#0A1628] transition-all duration-300 hover:text-[#0A1628] hover:pl-2"
+          style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+        >
+          Home
+        </a>
+
+        {navItems.map((item) => {
+          const hasMega = Boolean(item.mega?.sections?.length);
+          const isOpen = mobileOpenItem === item.label;
+
+          if (!hasMega) {
+            return (
+              <a
+                key={item.label}
+                href={item.href}
+                onClick={closeMenu}
+                className="block py-4 text-[26px] font-normal tracking-[0.05em] border-b border-black/[0.06] no-underline text-[#0A1628] transition-all duration-300 hover:text-[#0A1628] hover:pl-2"
+                style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+              >
+                {item.label}
+              </a>
+            );
+          }
+
+          return (
+            <div key={item.label} className="border-b border-black/[0.06]">
+              <button
+                type="button"
+                onClick={() => setMobileOpenItem((current) => (current === item.label ? null : item.label))}
+                className="flex w-full items-center justify-between py-4 text-left text-[26px] font-normal tracking-[0.05em] text-[#0A1628]"
+                style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+              >
+                <span>{item.label}</span>
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 18 18"
+                  fill="none"
+                  aria-hidden="true"
+                  className="flex-shrink-0 transition-transform duration-300"
+                  style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                >
+                  <path d="M4 7L9 12L14 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+
+              {isOpen ? (
+                <div className="pb-4">
+                  {item.mega?.sections.map((section) => {
+                    const entries = getMobileSectionEntries(section);
+                    if (!entries.length) return null;
+
+                    return (
+                      <div key={`${item.label}-${section.id}`} className="pb-3 last:pb-0">
+                        <div
+                          className="pb-2 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#6A6A6A]"
+                          style={{ fontFamily: "'Montserrat', sans-serif" }}
+                        >
+                          {section.title}
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          {entries.map((entry) => (
+                            <a
+                              key={`${section.id}-${entry.label}-${entry.href}`}
+                              href={entry.href}
+                              onClick={closeMenu}
+                              className="flex items-center gap-3 rounded-xl px-2 py-2 text-[14px] font-light tracking-[0.02em] text-[#253246] no-underline transition-colors duration-200 hover:bg-black/[0.03] hover:text-[#0A1628]"
+                              style={{ fontFamily: "'Montserrat', sans-serif" }}
+                            >
+                              {entry.icon}
+                              <span>{entry.label}</span>
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
+
+        {[
+          { label: 'Wishlist', href: '/wishlist' },
+          { label: 'Cart', href: '/cart' },
+          { label: 'About Us', href: '/about' },
+          { label: 'Contact Us', href: '/contact' },
+        ].map((item) => (
           <a
             key={item.label}
             href={item.href}
