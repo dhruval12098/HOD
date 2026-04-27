@@ -133,8 +133,8 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
   const tag = product.isNew ? "New" : product.featured ? "Featured" : "Signature";
   const gemSize = LARGE_GEM_STYLES.includes(product.gemStyle) ? 140 : 110;
 
-  const cardBg = isDark ? "#0A1628" : "#fff";
-  const cardBorder = isDark ? "rgba(255,255,255,0.12)" : "rgba(10,22,40,0.10)";
+  const visualBg = isDark ? "#0F1B2E" : "#FBFBFC";
+  const visualBorder = isDark ? "rgba(255,255,255,0.12)" : "rgba(10,22,40,0.06)";
   const namColor = isDark ? "#FFFFFF" : "#0A1628";
   const metaColor = isDark ? "#6A6A6A" : "#6A6A6A";
 
@@ -173,12 +173,9 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
       className="shop-product-card"
       href={`/shop/${product.slug}`}
       style={{
-        background: cardBg,
-        border: `1px solid ${cardBorder}`,
         cursor: "pointer",
-        overflow: "hidden",
         position: "relative",
-        transition: "transform .5s cubic-bezier(.2,.7,.3,1), box-shadow .5s, border-color .5s",
+        transition: "transform .5s cubic-bezier(.2,.7,.3,1)",
         textDecoration: "none",
         color: "inherit",
         display: "flex",
@@ -186,8 +183,6 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = "translateY(-6px)";
-        e.currentTarget.style.boxShadow = "0 24px 60px rgba(10,22,40,0.12)";
-        e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.35)" : "rgba(10,22,40,0.25)";
         const glow = e.currentTarget.querySelector(".card-glow");
         if (glow) glow.style.opacity = "1";
         const gem = e.currentTarget.querySelector(".card-gem");
@@ -195,8 +190,6 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.boxShadow = "none";
-        e.currentTarget.style.borderColor = cardBorder;
         const glow = e.currentTarget.querySelector(".card-glow");
         if (glow) glow.style.opacity = "0";
         const gem = e.currentTarget.querySelector(".card-gem");
@@ -210,12 +203,15 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
           height: "300px",
           background: isDark
             ? "linear-gradient(135deg, #0A1628 0%, #111F34 100%)"
-            : "linear-gradient(135deg, #FAFBFD 0%, #FAF7F2 100%)",
+            : "linear-gradient(135deg, #FFFFFF 0%, #F8F8FA 100%)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           position: "relative",
           overflow: "hidden",
+          borderRadius: "18px",
+          border: `1px solid ${visualBorder}`,
+          boxShadow: isDark ? "none" : "inset 0 0 0 1px rgba(255,255,255,0.65)",
         }}
       >
         {/* Glow overlay */}
@@ -303,8 +299,9 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
               width: "100%",
               height: "100%",
               objectFit: "cover",
-              objectPosition: "center",
-              transform: "scale(1.12)",
+              objectPosition: "center center",
+              padding: "0",
+              transform: "scale(1.04)",
               transition: "transform .7s cubic-bezier(.2,.7,.3,1)",
             }}
             loading="lazy"
@@ -326,12 +323,12 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
       <div
         className="shop-product-card-info"
         style={{
-          padding: "22px 22px 26px",
-          borderTop: isDark ? "1px solid rgba(10,22,40,0.12)" : "1px solid rgba(10,22,40,0.10)",
+          padding: "18px 12px 10px",
           flex: 1,
           display: "flex",
           flexDirection: "column",
           gap: "6px",
+          background: "transparent",
         }}
       >
         <div className="shop-product-card-meta" style={{ fontSize: "9px", fontWeight: 300, letterSpacing: ".22em", color: metaColor, textTransform: "uppercase", marginBottom: "6px", fontFamily: "var(--numeric)" }}>
