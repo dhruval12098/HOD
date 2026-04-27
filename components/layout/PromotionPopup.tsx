@@ -14,9 +14,42 @@ type PromotionPopupData = {
   image_only_mode?: boolean
   is_active: boolean
   show_once_per_session: boolean
+  updated_at?: string
 }
 
-const SESSION_KEY = 'hod_promotion_popup_dismissed_v1'
+const SESSION_KEY_PREFIX = 'hod_promotion_popup_dismissed_v2'
+const SUPABASE_PUBLIC_BASE = process.env.NEXT_PUBLIC_SUPABASE_URL
+const SUPABASE_COLLECTION_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_COLLECTION_BUCKET || 'hod'
+
+function buildVersionToken(item: PromotionPopupData) {
+  return (
+    item.updated_at ||
+    [
+      item.label,
+      item.title,
+      item.description,
+      item.cta_text,
+      item.cta_link,
+      item.image_path,
+      item.image_alt,
+      item.image_only_mode ? '1' : '0',
+      item.is_active ? '1' : '0',
+    ].join('|')
+  )
+}
+
+function toPublicUrl(path: string) {
+  if (!path) return ''
+  if (path.startsWith('http://') || path.startsWith('https://')) return path
+  if (!SUPABASE_PUBLIC_BASE) return path
+  return `${SUPABASE_PUBLIC_BASE}/storage/v1/object/public/${SUPABASE_COLLECTION_BUCKET}/${path}`
+}
+
+function appendCacheBuster(src: string, versionToken: string) {
+  if (!src) return ''
+  const separator = src.includes('?') ? '&' : '?'
+  return `${src}${separator}v=${encodeURIComponent(versionToken)}`
+}
 
 export default function PromotionPopup() {
   const [item, setItem] = useState<PromotionPopupData | null>(null)
@@ -27,14 +60,16 @@ export default function PromotionPopup() {
 
     const load = async () => {
       try {
-        const response = await fetch('/api/public/promotion-popup')
+        const response = await fetch('/api/public/promotion-popup', { cache: 'no-store' })
         const payload = await response.json().catch(() => null)
         if (!response.ok || ignore) return
 
         const nextItem = payload?.item as PromotionPopupData | null
         if (!nextItem?.is_active) return
 
-        const dismissed = typeof window !== 'undefined' && window.sessionStorage.getItem(SESSION_KEY) === '1'
+        const versionToken = buildVersionToken(nextItem)
+        const sessionKey = `${SESSION_KEY_PREFIX}:${versionToken}`
+        const dismissed = typeof window !== 'undefined' && window.sessionStorage.getItem(sessionKey) === '1'
         if (nextItem.show_once_per_session && dismissed) return
 
         setItem(nextItem)
@@ -49,8 +84,9 @@ export default function PromotionPopup() {
   }, [])
 
   const close = () => {
-    if (typeof window !== 'undefined') {
-      window.sessionStorage.setItem(SESSION_KEY, '1')
+    if (typeof window !== 'undefined' && item) {
+      const sessionKey = `${SESSION_KEY_PREFIX}:${buildVersionToken(item)}`
+      window.sessionStorage.setItem(sessionKey, '1')
       document.body.style.overflow = ''
     }
     setVisible(false)
@@ -67,7 +103,8 @@ export default function PromotionPopup() {
 
   if (!item || !visible) return null
 
-  const imageSrc = item.image_path || ''
+  const versionToken = buildVersionToken(item)
+  const imageSrc = appendCacheBuster(toPublicUrl(item.image_path || ''), versionToken)
   const imageOnlyMode = Boolean(item.image_only_mode)
 
   return (

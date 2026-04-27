@@ -164,7 +164,7 @@ export default function ProductGrid({ products, sourceProducts = products, initi
     const lenis = typeof window !== "undefined" ? window.__lenis : null;
     document.body.style.overflow = "hidden";
     document.documentElement.style.overflow = "hidden";
-    document.body.style.touchAction = "none";
+    document.body.style.touchAction = "pan-y";
     if (lenis && typeof lenis.stop === "function") {
       lenis.stop();
     }

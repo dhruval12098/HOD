@@ -63,7 +63,11 @@ function VideoModal({ item, onClose }: { item: PortfolioItem | null; onClose: ()
   if (!item) return null;
 
   return (
-    <div className="fixed inset-0 z-[1400] flex items-center justify-center bg-[rgba(10,22,40,0.34)] px-4 py-6 backdrop-blur-[14px] sm:px-5 sm:py-8" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div
+      className="fixed inset-0 z-[1400] flex items-center justify-center overflow-y-auto bg-[rgba(10,22,40,0.34)] px-4 py-6 backdrop-blur-[14px] sm:px-5 sm:py-8"
+      style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
       <div className="relative mx-auto flex max-h-[78vh] w-full max-w-[440px] flex-col overflow-hidden rounded-[22px] bg-white shadow-2xl md:max-h-[88vh] md:max-w-5xl md:rounded-3xl" onClick={(e) => e.stopPropagation()}>
         <button
           onClick={onClose}
@@ -96,7 +100,10 @@ function VideoModal({ item, onClose }: { item: PortfolioItem | null; onClose: ()
             )}
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 pr-3 touch-pan-y md:max-h-none md:overflow-visible md:p-8">
+          <div
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 pr-3 touch-pan-y md:max-h-none md:overflow-visible md:p-8"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
             <div className="mb-3 pr-8 text-[9px] uppercase tracking-[0.24em] text-[#0A1628] md:text-[10px] md:tracking-[0.3em]">
               {item.category?.name || 'Bespoke Portfolio'} · {item.media_type === 'video' ? 'Video Showcase' : 'Bespoke Creation'}
             </div>

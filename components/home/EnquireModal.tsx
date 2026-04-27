@@ -85,6 +85,10 @@ export default function EnquireModal({ open, piece = 'General Enquiry', onClose 
         alignItems: 'center',
         justifyContent: 'center',
         padding: '20px',
+        overflowY: 'auto',
+        overscrollBehavior: 'contain',
+        WebkitOverflowScrolling: 'touch',
+        touchAction: 'pan-y',
         animation: 'fadeUpModal 0.3s ease',
         fontFamily: 'var(--sans)',
       }}
@@ -101,6 +105,9 @@ export default function EnquireModal({ open, piece = 'General Enquiry', onClose 
           position: 'relative',
           maxHeight: '90vh',
           overflowY: 'auto',
+          overscrollBehavior: 'contain',
+          WebkitOverflowScrolling: 'touch',
+          touchAction: 'pan-y',
           border: '1px solid var(--border)',
           boxShadow: 'var(--shadow-lg)',
         }}

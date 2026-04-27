@@ -116,7 +116,8 @@ export default function CouplesSection({
     if (typeof document === 'undefined' || !active) return null;
     return createPortal(
       <div
-        className="fixed inset-0 z-[1400] flex items-center justify-center bg-[rgba(10,22,40,0.34)] px-4 py-6 backdrop-blur-[14px] sm:px-5 sm:py-8"
+        className="fixed inset-0 z-[1400] flex items-center justify-center overflow-y-auto bg-[rgba(10,22,40,0.34)] px-4 py-6 backdrop-blur-[14px] sm:px-5 sm:py-8"
+        style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
         onClick={() => setActive(null)}
       >
         <div
@@ -135,7 +136,10 @@ export default function CouplesSection({
             <div className="min-h-[180px] shrink-0 bg-[#f5f1ea] flex items-center justify-center md:min-h-[320px]">
               {active.image_path ? <img src={buildImageUrl(active.image_path)} alt={active.names} className="h-full w-full object-cover" /> : <HeartIcon />}
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 pr-3 touch-pan-y md:max-h-none md:overflow-visible md:p-8">
+            <div
+              className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 pr-3 touch-pan-y md:max-h-none md:overflow-visible md:p-8"
+              style={{ WebkitOverflowScrolling: 'touch' }}
+            >
               <div className="mb-3 pr-8 text-[9px] uppercase tracking-[0.24em] text-[#0A1628] md:text-[10px] md:tracking-[0.3em]">{active.location}</div>
               <h3 className="mb-3 font-serif text-[26px] leading-none text-[#0A1628] md:mb-4 md:text-3xl">{active.names}</h3>
               <StarRating />
