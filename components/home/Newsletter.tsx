@@ -8,11 +8,33 @@ interface NewsletterProps {
 
 export default function Newsletter({ onToast }: NewsletterProps) {
   const [email, setEmail] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setEmail('');
-    onToast?.('✓ Welcome to the inner circle');
+    if (submitting) return;
+
+    setSubmitting(true);
+
+    try {
+      const response = await fetch('/api/public/newsletter/submit', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(payload?.error ?? 'Unable to subscribe right now.');
+      }
+
+      setEmail('');
+      onToast?.('Welcome to the inner circle');
+    } catch (error) {
+      onToast?.(error instanceof Error ? error.message : 'Unable to subscribe right now.');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -25,7 +47,6 @@ export default function Newsletter({ onToast }: NewsletterProps) {
         fontFamily: 'var(--sans)',
       }}
     >
-      {/* Radial glows */}
       <div
         style={{
           position: 'absolute',
@@ -37,7 +58,6 @@ export default function Newsletter({ onToast }: NewsletterProps) {
       />
 
       <div className="relative z-[1] mx-auto max-w-[560px]">
-        {/* Eyebrow */}
         <div
           style={{
             fontSize: '10px',
@@ -56,7 +76,6 @@ export default function Newsletter({ onToast }: NewsletterProps) {
           The Inner Circle
         </div>
 
-        {/* Headline */}
         <h3
           style={{
             fontFamily: 'var(--serif)',
@@ -85,7 +104,6 @@ export default function Newsletter({ onToast }: NewsletterProps) {
           Join our private list for exclusive previews, bespoke releases and jeweller&apos;s notes from the Surat workshop.
         </p>
 
-        {/* Form */}
         <form
           onSubmit={handleSubmit}
           className="mx-auto flex max-w-[440px] flex-col overflow-hidden border border-[var(--border)] bg-white sm:flex-row"
@@ -102,12 +120,15 @@ export default function Newsletter({ onToast }: NewsletterProps) {
           />
           <button
             type="submit"
+            disabled={submitting}
             className="min-h-[54px] border-none bg-[var(--ink)] px-6 text-[10px] uppercase tracking-[0.28em] text-[var(--bg)] transition sm:px-6"
-            style={{ fontFamily: 'var(--sans)', cursor: 'pointer' }}
-            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = 'var(--theme-ink)')}
+            style={{ fontFamily: 'var(--sans)', cursor: submitting ? 'wait' : 'pointer', opacity: submitting ? 0.7 : 1 }}
+            onMouseEnter={(e) => {
+              if (!submitting) (e.currentTarget as HTMLElement).style.background = 'var(--theme-ink)';
+            }}
             onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = 'var(--ink)')}
           >
-            Subscribe
+            {submitting ? 'Joining...' : 'Subscribe'}
           </button>
         </form>
       </div>

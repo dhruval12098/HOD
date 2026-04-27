@@ -48,6 +48,13 @@ type FooterCategory = {
   slug: string;
 };
 
+type CollectionPageConfigRow = {
+  page_enabled?: boolean | null;
+  show_in_footer?: boolean | null;
+  showcase_cta_href?: string | null;
+  showcase_cta_label?: string | null;
+};
+
 function ColLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
     <a
@@ -81,19 +88,28 @@ function BottomLink({ href, children }: { href: string; children: React.ReactNod
 
 export default function Footer() {
   const [serviceCategories, setServiceCategories] = useState<FooterCategory[]>([]);
+  const [collectionConfig, setCollectionConfig] = useState<CollectionPageConfigRow | null>(null);
 
   useEffect(() => {
     let ignore = false;
 
     const loadCategories = async () => {
-      const { data, error } = await supabase
-        .from('catalog_categories')
-        .select('id, name, slug')
-        .eq('status', 'active')
-        .order('display_order', { ascending: true });
+      const [{ data, error }, { data: configData }] = await Promise.all([
+        supabase
+          .from('catalog_categories')
+          .select('id, name, slug')
+          .eq('status', 'active')
+          .order('display_order', { ascending: true }),
+        supabase
+          .from('collection_page_config')
+          .select('page_enabled, show_in_footer, showcase_cta_href, showcase_cta_label')
+          .eq('section_key', 'main_collection_page')
+          .maybeSingle(),
+      ]);
 
-      if (ignore || error || !data) return;
-      setServiceCategories(data);
+      if (ignore) return;
+      if (!error && data) setServiceCategories(data);
+      setCollectionConfig(configData ?? null);
     };
 
     void loadCategories();
@@ -104,6 +120,9 @@ export default function Footer() {
   }, []);
 
   const visibleServiceCategories = useMemo(() => serviceCategories.filter((item) => item.slug && item.name), [serviceCategories]);
+  const showCollectionLink = Boolean(collectionConfig?.page_enabled && collectionConfig?.show_in_footer);
+  const collectionHref = collectionConfig?.showcase_cta_href || '/collection';
+  const collectionLabel = collectionConfig?.showcase_cta_label || 'Collection';
 
   return (
     <footer
@@ -160,7 +179,7 @@ export default function Footer() {
         <div>
           <ColTitle>Navigate</ColTitle>
           <ColLink href="/">Home</ColLink>
-          <ColLink href="/shop">Shop</ColLink>
+          {showCollectionLink ? <ColLink href={collectionHref}>{collectionLabel}</ColLink> : null}
           <ColLink href="/about">About Us</ColLink>
           <ColLink href="/bespoke">Bespoke</ColLink>
           <ColLink href="/contact">Contact</ColLink>
@@ -170,7 +189,7 @@ export default function Footer() {
           <ColTitle>Services</ColTitle>
           {visibleServiceCategories.length > 0 ? (
             visibleServiceCategories.map((category) => (
-              <ColLink key={category.id} href={`/shop?category=${encodeURIComponent(category.slug)}`}>
+              <ColLink key={category.id} href={`/${encodeURIComponent(category.slug)}`}>
                 {category.name}
               </ColLink>
             ))

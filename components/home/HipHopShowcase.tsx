@@ -73,7 +73,7 @@ export default function HipHopSection({ initialSection }: { initialSection?: Hom
             <br />
             {section.heading_line_2}
             <br />
-            <em className="block italic text-[var(--theme-ink)]">{section.heading_emphasis}</em>
+            <span className="block text-[var(--theme-ink)]">{section.heading_emphasis}</span>
           </h2>
 
           <Link
@@ -85,24 +85,24 @@ export default function HipHopSection({ initialSection }: { initialSection?: Hom
           </Link>
         </div>
 
-        <div className="hh-right relative flex items-center justify-center overflow-hidden bg-[var(--theme-surface-soft)] max-[960px]:min-h-[320px]">
-          <div className="absolute top-0 left-0 bottom-0 z-10 w-20 bg-gradient-to-r from-[var(--theme-base)] to-transparent pointer-events-none" />
-
-          {section.image_path ? (
-            <img
-              src={buildImageUrl(section.image_path)}
-              alt={section.image_alt}
-              className="hh-placeholder absolute inset-0 h-full w-full object-cover transition-transform duration-[800ms] ease-[cubic-bezier(.4,0,.2,1)]"
-              loading="lazy"
-            />
-          ) : (
-            <div className="hh-placeholder absolute inset-0 flex flex-col items-center justify-center gap-4 transition-transform duration-[800ms] ease-[cubic-bezier(.4,0,.2,1)]">
-              <DiamondPlaceholder />
-              <span className="mt-2 font-sans text-[8px] uppercase tracking-[.2em] text-[var(--theme-ink)] opacity-30">
-                Add your hip hop image here
-              </span>
-            </div>
-          )}
+        <div className="hh-right relative flex items-center justify-center bg-[var(--theme-surface-soft)] px-8 py-10 max-[960px]:min-h-[320px] max-[960px]:px-6 max-[960px]:py-8">
+          <div className="relative aspect-square w-full max-w-[520px] overflow-hidden rounded-[22px] border border-[rgba(10,22,40,0.14)] bg-[linear-gradient(180deg,#faf7f0_0%,#f0eadf_100%)] shadow-[0_18px_48px_rgba(10,22,40,0.08)]">
+            {section.image_path ? (
+              <img
+                src={buildImageUrl(section.image_path)}
+                alt={section.image_alt}
+                className="hh-placeholder h-full w-full object-contain object-center transition-transform duration-[800ms] ease-[cubic-bezier(.4,0,.2,1)]"
+                loading="lazy"
+              />
+            ) : (
+              <div className="hh-placeholder absolute inset-0 flex flex-col items-center justify-center gap-4 transition-transform duration-[800ms] ease-[cubic-bezier(.4,0,.2,1)]">
+                <DiamondPlaceholder />
+                <span className="mt-2 font-sans text-[8px] uppercase tracking-[.2em] text-[var(--theme-ink)] opacity-30">
+                  Add your hip hop image here
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       </section>
     </>

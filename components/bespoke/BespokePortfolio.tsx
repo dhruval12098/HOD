@@ -63,45 +63,58 @@ function VideoModal({ item, onClose }: { item: PortfolioItem | null; onClose: ()
   if (!item) return null;
 
   return (
-    <div className="fixed inset-0 bg-[rgba(0,0,0,0.95)] z-[10003] flex items-center justify-center p-10 animate-[fadeUp_0.3s_ease]" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="relative w-full max-w-[900px] aspect-video bg-black border border-[rgba(10,22,40,0.3)]">
-        <button onClick={onClose} aria-label="Close" className="absolute -top-11 right-0 bg-transparent border-none cursor-pointer text-white text-[14px] tracking-[0.24em] uppercase flex items-center gap-2.5 font-sans font-light hover:text-[#0A1628] transition-colors duration-300">
-          Close
+    <div className="fixed inset-0 z-[1400] flex items-center justify-center bg-[rgba(10,22,40,0.34)] px-4 py-6 backdrop-blur-[14px] sm:px-5 sm:py-8" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="relative mx-auto flex max-h-[78vh] w-full max-w-[440px] flex-col overflow-hidden rounded-[22px] bg-white shadow-2xl md:max-h-[88vh] md:max-w-5xl md:rounded-3xl" onClick={(e) => e.stopPropagation()}>
+        <button
+          onClick={onClose}
+          aria-label="Close"
+          className="absolute right-3 top-3 z-20 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/92 text-[#0A1628] shadow-[0_10px_25px_rgba(10,22,40,0.16)] transition hover:bg-white"
+        >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor">
             <path d="M1 1L13 13M13 1L1 13" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
         </button>
 
-        <div className="w-full h-full flex flex-col items-center justify-center text-[#FFFFFF] text-center p-10">
-          {item.media_type === 'video' ? (
-            item.media_url ? (
-              <video src={item.media_url} className="h-full w-full object-contain" controls autoPlay playsInline />
-            ) : (
-              <>
-                <div className="w-20 h-20 mb-5 border-2 border-[#0A1628] rounded-full flex items-center justify-center">
-                  <div className="w-0 h-0 ml-1.5" style={{ borderLeft: '22px solid #0A1628', borderTop: '14px solid transparent', borderBottom: '14px solid transparent' }} />
-                </div>
-                <div className="font-serif text-[28px] tracking-[0.04em] mb-2.5">{item.title}</div>
-                <p className="text-[11px] text-[#6A6A6A] tracking-[0.14em] leading-[1.8] max-w-[440px]">
-                  {item.short_description || 'Bespoke video showcase.'}
-                </p>
-              </>
-            )
-          ) : (
-            <>
-              {item.media_url ? (
-                <img src={item.media_url} alt={item.title} className="max-h-[70vh] w-auto max-w-full object-contain" />
+        <div className="flex min-h-0 flex-1 flex-col md:grid md:grid-cols-[1.15fr_0.85fr]">
+          <div className={`min-h-[220px] shrink-0 flex items-center justify-center overflow-hidden md:min-h-[420px] ${item.dark_theme ? 'bg-gradient-to-br from-[#0A1628] to-[#111F34]' : 'bg-[#f5f1ea]'}`}>
+            {item.media_type === 'video' ? (
+              item.media_url ? (
+                <video src={item.media_url} className="h-full w-full object-cover" controls autoPlay playsInline />
               ) : (
-                <div className="w-[200px] h-[200px] flex items-center justify-center">
-                  <GemSVG style={item.gem_style ?? 'round'} size={180} color={item.gem_color ?? '#20304A'} />
+                <div className="flex h-full w-full items-center justify-center">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-[#0A1628] bg-white/90">
+                    <div className="ml-1.5 h-0 w-0" style={{ borderLeft: '22px solid #0A1628', borderTop: '14px solid transparent', borderBottom: '14px solid transparent' }} />
+                  </div>
                 </div>
-              )}
-              <div className="font-serif text-[28px] tracking-[0.04em] mt-5 mb-2.5">{item.title}</div>
-              <p className="text-[11px] text-[#6A6A6A] tracking-[0.14em] leading-[1.8] max-w-[440px]">
-                {item.short_description || 'A bespoke creation from the House of Diams atelier.'}
-              </p>
-            </>
-          )}
+              )
+            ) : item.media_url ? (
+              <img src={item.media_url} alt={item.title} className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center">
+                <GemSVG style={item.gem_style ?? 'round'} size={180} color={item.gem_color ?? '#20304A'} />
+              </div>
+            )}
+          </div>
+
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 pr-3 touch-pan-y md:max-h-none md:overflow-visible md:p-8">
+            <div className="mb-3 pr-8 text-[9px] uppercase tracking-[0.24em] text-[#0A1628] md:text-[10px] md:tracking-[0.3em]">
+              {item.category?.name || 'Bespoke Portfolio'} · {item.media_type === 'video' ? 'Video Showcase' : 'Bespoke Creation'}
+            </div>
+            <h3 className="mb-3 font-serif text-[26px] leading-none text-[#0A1628] md:mb-4 md:text-3xl">{item.title}</h3>
+            <div className="mb-4 inline-flex items-center gap-2 border border-black/8 bg-[#fafafa] px-3 py-2 text-[9px] uppercase tracking-[0.22em] text-[#0A1628]">
+              <span className="h-1 w-1 rounded-full bg-[#0A1628]" />
+              {item.tag}
+            </div>
+            <p className="mb-4 text-[12px] leading-6 text-[#555] md:mb-6 md:text-sm md:leading-8">
+              {item.short_description || 'A bespoke creation from the House of Diams atelier.'}
+            </p>
+            <div className="border border-black/8 bg-[#fafafa] px-4 py-4">
+              <div className="font-serif text-[16px] text-[#0A1628]">{item.category?.name || 'House of Diams'}</div>
+              <div className="mt-1 text-[9px] uppercase tracking-[0.2em] text-[#999]">
+                {item.media_type === 'video' ? 'Craftsmanship Story' : 'Design Details'}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -144,13 +157,20 @@ function RevealDiv({
   );
 }
 
-export default function BespokePortfolio() {
-  const [categories, setCategories] = useState<PortfolioCategory[]>([]);
-  const [items, setItems] = useState<PortfolioItem[]>([]);
+export default function BespokePortfolio({
+  initialCategories = [],
+  initialItems = [],
+}: {
+  initialCategories?: PortfolioCategory[];
+  initialItems?: PortfolioItem[];
+}) {
+  const [categories, setCategories] = useState<PortfolioCategory[]>(initialCategories);
+  const [items, setItems] = useState<PortfolioItem[]>(initialItems);
   const [activeFilter, setActiveFilter] = useState('all');
   const [activeItem, setActiveItem] = useState<PortfolioItem | null>(null);
 
   useEffect(() => {
+    if (initialCategories.length || initialItems.length) return;
     let active = true;
     (async () => {
       try {
@@ -168,7 +188,7 @@ export default function BespokePortfolio() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [initialCategories, initialItems]);
 
   const filters = [
     { key: 'all', label: 'All' },

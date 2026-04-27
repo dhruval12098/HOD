@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer'
+import { formatUsd } from '@/lib/money'
 
 type OrderEmailItem = {
   product_name: string
@@ -38,11 +39,7 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || 'htt
 let cachedTransporter: nodemailer.Transporter | null = null
 
 function formatMoney(amount: number) {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0,
-  }).format(Number(amount || 0))
+  return formatUsd(amount)
 }
 
 function getTransporter() {

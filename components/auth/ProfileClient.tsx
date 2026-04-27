@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { Box, ChevronLeft, ChevronRight, LogOut, Package, UserRound } from 'lucide-react';
 import { getCollectionHref } from '@/lib/browse-context';
+import { formatUsd } from '@/lib/money';
 import { supabase } from '@/lib/supabase';
 
 type ProfileState =
@@ -185,12 +186,7 @@ export default function ProfileClient() {
     router.replace(nextTab === 'profile' ? '/profile' : '/profile?tab=orders');
   };
 
-  const formatMoney = (amount: number | null | undefined) =>
-    new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      maximumFractionDigits: 0,
-    }).format(Number(amount || 0));
+  const formatMoney = (amount: number | null | undefined) => formatUsd(amount);
 
   if (state.status === 'loading') {
     return (

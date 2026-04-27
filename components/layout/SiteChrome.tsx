@@ -27,30 +27,30 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
     }
   }, [pathname]);
 
-  if (isMinimalChromeRoute) {
-    return <main className="flex-1">{children}</main>;
-  }
-
   return (
     <HomeLoaderProvider value={{ isHomeLoading, setIsHomeLoading }}>
-      <>
-        <div
-          id="site-navbar-shell"
-          className={isHomeLoading ? 'pointer-events-none opacity-0' : 'pointer-events-auto opacity-100'}
-        >
-          <Navbar />
-        </div>
-        <main className="flex-1 pt-[146px]">{children}</main>
-        <div
-          id="site-footer-shell"
-          className={isHomeLoading ? 'pointer-events-none opacity-0' : 'pointer-events-auto opacity-100'}
-        >
-          <Footer />
-        </div>
-        {!isMinimalChromeRoute ? <PromotionPopup /> : null}
-        {!isHomeLoading ? <FloatingWidgets /> : null}
-        {pathname === '/' && isHomeLoading ? <Loader ready onComplete={() => setIsHomeLoading(false)} /> : null}
-      </>
+      {isMinimalChromeRoute ? (
+        <main className="flex-1">{children}</main>
+      ) : (
+        <>
+          <div
+            id="site-navbar-shell"
+            className={isHomeLoading ? 'pointer-events-none opacity-0' : 'pointer-events-auto opacity-100'}
+          >
+            <Navbar />
+          </div>
+          <main className="flex-1 pt-[146px]">{children}</main>
+          <div
+            id="site-footer-shell"
+            className={isHomeLoading ? 'pointer-events-none opacity-0' : 'pointer-events-auto opacity-100'}
+          >
+            <Footer />
+          </div>
+          <PromotionPopup />
+          {!isHomeLoading ? <FloatingWidgets /> : null}
+          {pathname === '/' && isHomeLoading ? <Loader ready onComplete={() => setIsHomeLoading(false)} /> : null}
+        </>
+      )}
     </HomeLoaderProvider>
   );
 }

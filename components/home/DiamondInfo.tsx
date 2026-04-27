@@ -18,7 +18,7 @@ import {
   useCallback,
   useState,
 } from 'react';
-import type { HomeDiamondInfoItem } from '@/lib/home-data';
+import type { HomeDiamondInfoConfig, HomeDiamondInfoItem } from '@/lib/home-data';
 import * as THREE from 'three';
 import {
   GLTFLoader,
@@ -523,7 +523,13 @@ function addPlaceholderDiamond(
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function DiamondScroll({ items = [] }: { items?: HomeDiamondInfoItem[] }) {
+export default function DiamondScroll({
+  items = [],
+  config,
+}: {
+  items?: HomeDiamondInfoItem[]
+  config?: HomeDiamondInfoConfig
+}) {
   const wrapperRef = useRef<HTMLDivElement>(null!);
   const canvasRef  = useRef<HTMLDivElement>(null!);
   const textRefs   = useRef<(HTMLDivElement | null)[]>([]);
@@ -559,6 +565,7 @@ export default function DiamondScroll({ items = [] }: { items?: HomeDiamondInfoI
   });
   const metalTintTarget = useRef(new THREE.Color(SECTIONS[0].metalTint));
   const progressRef = useRef(0);
+  const useVideoMode = Boolean(config?.videoEnabled && config?.videoUrl);
 
   useEffect(() => {
     if (!items.length) return;
@@ -832,6 +839,35 @@ export default function DiamondScroll({ items = [] }: { items?: HomeDiamondInfoI
           height: 100% !important;
         }
 
+        .ds-video-shell {
+          position: relative;
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+          background:
+            radial-gradient(circle at 20% 20%, rgba(255,255,255,0.32), transparent 28%),
+            linear-gradient(135deg, rgba(17,17,17,0.92), rgba(36,32,26,0.96));
+        }
+
+        .ds-video-shell::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background:
+            linear-gradient(180deg, rgba(255,255,255,0.1), transparent 18%, transparent 82%, rgba(0,0,0,0.2)),
+            radial-gradient(circle at center, transparent 46%, rgba(15, 12, 10, 0.18) 100%);
+          pointer-events: none;
+          z-index: 2;
+        }
+
+        .ds-video {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          transform: scale(1.06);
+          filter: saturate(0.98) contrast(1.04);
+        }
+
         .ds-panel {
           position: absolute;
           inset: 0;
@@ -986,7 +1022,22 @@ export default function DiamondScroll({ items = [] }: { items?: HomeDiamondInfoI
 
           <div className="ds-canvas-col">
             <div className="ds-vignette" />
-            <div ref={canvasRef} style={{ width: '100%', height: '100%' }} />
+            {useVideoMode ? (
+              <div className="ds-video-shell">
+                <video
+                  className="ds-video"
+                  src={config?.videoUrl}
+                  poster={config?.videoPosterUrl}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="metadata"
+                />
+              </div>
+            ) : (
+              <div ref={canvasRef} style={{ width: '100%', height: '100%' }} />
+            )}
           </div>
 
           <div className="ds-edge-fade" />

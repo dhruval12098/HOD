@@ -38,10 +38,11 @@ function RevealDiv({
   );
 }
 
-export default function ProcessSteps() {
-  const [items, setItems] = useState<{ id?: number; sort_order: number; eyebrow: string; title: string; description: string }[]>([]);
+export default function ProcessSteps({ initialItems = [] }: { initialItems?: { id?: number; sort_order: number; eyebrow: string; title: string; description: string }[] }) {
+  const [items, setItems] = useState<{ id?: number; sort_order: number; eyebrow: string; title: string; description: string }[]>(initialItems);
 
   useEffect(() => {
+    if (initialItems.length) return;
     let active = true;
     (async () => {
       try {
@@ -54,7 +55,7 @@ export default function ProcessSteps() {
       }
     })();
     return () => { active = false; };
-  }, []);
+  }, [initialItems]);
 
   if (!items.length) return null;
 

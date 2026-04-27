@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
@@ -10,6 +11,7 @@ type CoupleItem = {
   location: string;
   story: string;
   product_name: string;
+  product_link?: string;
   product_detail: string;
   image_path: string;
 };
@@ -47,6 +49,22 @@ function HeartIcon() {
     <svg className="opacity-[0.12]" width="80" height="80" viewBox="0 0 80 80" fill="none">
       <path d="M40 70L10 40C3 33 3 21 10 14C17 7 29 7 40 17C51 7 63 7 70 14C77 21 77 33 70 40L40 70Z" stroke="#0A1628" strokeWidth="1.5" fill="rgba(10,22,40,0.05)" />
     </svg>
+  );
+}
+
+function ProductNameLink({ name, href }: { name: string; href?: string }) {
+  if (!href) {
+    return <div className="font-serif text-[16px] text-[#0A1628]">{name}</div>;
+  }
+
+  return (
+    <Link
+      href={href}
+      className="font-serif text-[16px] text-[#0A1628] underline underline-offset-4 transition-opacity hover:opacity-70"
+      onClick={(event) => event.stopPropagation()}
+    >
+      {name}
+    </Link>
   );
 }
 
@@ -123,7 +141,7 @@ export default function CouplesSection({
               <StarRating />
               <p className="mb-4 text-[12px] leading-6 text-[#555] md:mb-6 md:text-sm md:leading-8">{active.story}</p>
               <div className="border border-black/8 bg-[#fafafa] px-4 py-4">
-                <div className="font-serif text-[16px] text-[#0A1628]">{active.product_name}</div>
+                <ProductNameLink name={active.product_name} href={active.product_link} />
                 <div className="text-[9px] uppercase tracking-[0.2em] text-[#999] mt-1">{active.product_detail}</div>
               </div>
             </div>
@@ -171,7 +189,7 @@ export default function CouplesSection({
                 <p className="text-[13px] font-light leading-[1.9] text-[#777] tracking-[0.02em] mb-5 line-clamp-4">{couple.story}</p>
                 <div className="flex items-center gap-3.5 px-4.5 py-4 bg-[#F5F7FC] border border-black/8 transition-colors duration-300 group-hover:border-[rgba(10,22,40,0.2)]">
                   <div>
-                    <div className="font-serif text-[15px] font-normal text-[#0A1628] tracking-[0.02em]">{couple.product_name}</div>
+                    <ProductNameLink name={couple.product_name} href={couple.product_link} />
                     <div className="text-[9px] font-normal tracking-[0.2em] text-[#aaa] uppercase mt-0.5">{couple.product_detail}</div>
                   </div>
                 </div>
@@ -223,7 +241,7 @@ export default function CouplesSection({
                       <p className="mb-5 line-clamp-4 text-[13px] font-light leading-[1.9] tracking-[0.02em] text-[#777]">{couple.story}</p>
                       <div className="flex items-center gap-3.5 border border-black/8 bg-[#F5F7FC] px-4.5 py-4">
                         <div>
-                          <div className="font-serif text-[15px] font-normal tracking-[0.02em] text-[#0A1628]">{couple.product_name}</div>
+                          <ProductNameLink name={couple.product_name} href={couple.product_link} />
                           <div className="mt-0.5 text-[9px] font-normal uppercase tracking-[0.2em] text-[#aaa]">{couple.product_detail}</div>
                         </div>
                       </div>

@@ -127,13 +127,6 @@ const steps: Step[] = [
   },
 ];
 
-const proof = [
-  { num: '5+', label: 'Hands per Piece' },
-  { num: '60+', label: 'Hours per Tennis Bracelet' },
-  { num: '20x', label: 'Loupe Inspection' },
-  { num: '0', label: 'Compromises' },
-];
-
 function useReveal() {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -169,10 +162,11 @@ function RevealDiv({ children, className = '', delay = 0 }: { children: React.Re
   );
 }
 
-export default function Manufacturing() {
-  const [items, setItems] = useState<CmsManufacturingItem[]>([]);
+export default function Manufacturing({ initialItems = [] }: { initialItems?: CmsManufacturingItem[] }) {
+  const [items, setItems] = useState<CmsManufacturingItem[]>(initialItems);
 
   useEffect(() => {
+    if (initialItems.length) return;
     let active = true;
     (async () => {
       try {
@@ -185,7 +179,7 @@ export default function Manufacturing() {
       }
     })();
     return () => { active = false; };
-  }, []);
+  }, [initialItems]);
 
   const hasCmsItems = items.length > 0;
   const entries: ManufacturingEntry[] = hasCmsItems
@@ -291,9 +285,6 @@ export default function Manufacturing() {
 
                 {/* Content */}
                 <div className={`py-5 ${step.kind === 'cms' && step.alt ? 'lg:order-1' : ''}`}>
-                  <div className="font-numeric text-[11px] font-medium not-italic tracking-[0.28em] text-[#0A1628] uppercase mb-3.5 inline-flex items-center gap-2.5 before:content-[''] before:w-6 before:h-px before:bg-[#0A1628]">
-                    {step.kind === 'cms' ? step.step : step.num}
-                  </div>
                   <h3 className="font-serif font-light text-[#0A1628] tracking-[0.02em] leading-[1.1] mb-[18px] text-[clamp(30px,3.4vw,44px)]">
                     {step.title}
                   </h3>
@@ -306,31 +297,6 @@ export default function Manufacturing() {
           ))}
         </div>
 
-        {/* Proof strip */}
-        <RevealDiv delay={200} className="mt-[90px]">
-          <div className="px-12 py-10 bg-[#0A1628] text-[#FFFFFF] flex justify-around items-center gap-5 relative overflow-hidden flex-wrap max-lg:gap-5 max-lg:px-5 max-lg:py-7">
-            {/* Top gold line */}
-            <div
-              className="absolute top-0 left-0 right-0 h-px"
-              style={{ background: 'linear-gradient(90deg, transparent, #0A1628, transparent)' }}
-            />
-            {proof.map((item, i) => (
-              <div key={item.label} className="flex items-center gap-5 max-lg:flex-wrap max-lg:justify-center">
-                <div className="text-center">
-                  <div className="font-numeric font-normal text-[#20304A] leading-[1] tracking-[0.01em] text-[clamp(32px,4vw,52px)]">
-                    {item.num}
-                  </div>
-                  <div className="text-[9px] font-normal tracking-[0.28em] text-[#D9E2EE] uppercase mt-2.5">
-                    {item.label}
-                  </div>
-                </div>
-                {i < proof.length - 1 && (
-                  <div className="w-px h-10 bg-[rgba(10,22,40,0.25)] max-lg:hidden" />
-                )}
-              </div>
-            ))}
-          </div>
-        </RevealDiv>
       </div>
     </section>
   );

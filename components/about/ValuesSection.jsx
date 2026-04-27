@@ -2,6 +2,15 @@
 
 import { useEffect, useState } from "react";
 
+/**
+ * @typedef {Object} ValueItem
+ * @property {string | number | undefined} [id]
+ * @property {number | undefined} [sort_order]
+ * @property {string | null | undefined} [icon_path]
+ * @property {string} title
+ * @property {string} description
+ */
+
 function ValueCard({ iconPath, title, desc }) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const bucket = process.env.NEXT_PUBLIC_SUPABASE_COLLECTION_BUCKET || 'hod';
@@ -59,11 +68,18 @@ function ValueCard({ iconPath, title, desc }) {
   );
 }
 
-export default function ValuesSection() {
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+/**
+ * @param {{ initialItems?: ValueItem[] }} props
+ */
+export default function ValuesSection({ initialItems = [] }) {
+  const [items, setItems] = useState(initialItems);
+  const [loading, setLoading] = useState(initialItems.length === 0);
 
   useEffect(() => {
+    if (initialItems.length) {
+      setLoading(false);
+      return;
+    }
     let active = true;
 
     async function loadValues() {
@@ -83,7 +99,7 @@ export default function ValuesSection() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [initialItems]);
 
   if (loading) {
     return (

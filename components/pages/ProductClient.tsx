@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import type { StorefrontProduct } from '@/lib/catalog-products';
 import { STONE_MAP } from '@/lib/data/product-config';
@@ -18,6 +18,9 @@ import ProductTrustRow from '@/components/product/ProductTrustRow';
 import ProductTabs from '@/components/product/ProductTabs';
 import ProductLayout from '@/components/product/ProductLayout';
 import RelatedProducts from '@/components/product/RelatedProducts';
+import { useWishlistStore } from '@/lib/hooks/useWishlistStore';
+import { useCart } from '@/lib/hooks/useCart';
+import { getProductKey } from '@/lib/product-keys';
 
 interface ProductClientProps {
   product: StorefrontProduct;
@@ -33,25 +36,45 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
   const [selectedMetal, setSelectedMetal] = useState(storefrontProduct.metals[0] ?? '');
   const [purity, setPurity] = useState(storefrontProduct.purities[0] ?? '');
   const [selectedHiphopCarat, setSelectedHiphopCarat] = useState(storefrontProduct.hiphopCaratValues[0] ?? '');
+  const [selectedRingCategoryId, setSelectedRingCategoryId] = useState(storefrontProduct.ringCategoryId || storefrontProduct.ringCategoryOptions?.[0]?.id || '');
+  const activeRingCategory = storefrontProduct.ringCategoryOptions?.find((entry) => entry.id === selectedRingCategoryId) || storefrontProduct.ringCategoryOptions?.[0];
   const [sizeOrFit, setSizeOrFit] = useState(storefrontProduct.chainLengthOptions[0] ?? storefrontProduct.fitOptions[0] ?? storefrontProduct.ringSizeNames[0] ?? '');
+  const [selectedRingSize, setSelectedRingSize] = useState(activeRingCategory?.sizes?.[0] ?? storefrontProduct.ringSizeNames[0] ?? '');
   const [selectedGemstoneValue, setSelectedGemstoneValue] = useState(storefrontProduct.gemstoneValues[0] ?? '');
+  const [selectedShapeSlug, setSelectedShapeSlug] = useState(storefrontProduct.primaryShapeSlug || storefrontProduct.shapeOptions[0]?.slug || '');
   const [engravingMode, setEngravingMode] = useState<'none' | 'custom'>('none');
   const [engravingText, setEngravingText] = useState('');
-  const [wishlist, setWishlist] = useState<number[]>(() => {
-    if (typeof window === 'undefined') return [];
-    try {
-      const saved = JSON.parse(localStorage.getItem('hod_wishlist') || '[]');
-      return Array.isArray(saved) ? saved : [];
-    } catch {
-      return [];
-    }
-  });
+  const { wishlist, contains, toggle } = useWishlistStore();
+  const { addItem } = useCart();
   const [isEnquireOpen, setIsEnquireOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastVisible, setToastVisible] = useState(false);
 
   const isDark = product.category === 'hiphop';
-  const inWishlist = wishlist.includes(product.id);
+  const wishlistKey = getProductKey(product);
+  const inWishlist = contains(wishlistKey);
+  const configuredProduct = useMemo(
+    () => ({
+      ...storefrontProduct,
+      ringCategoryId: activeRingCategory?.id || storefrontProduct.ringCategoryId,
+      ringCategoryName: activeRingCategory?.name || storefrontProduct.ringCategoryName,
+      ringSizeNames: storefrontProduct.ringEnabled ? (activeRingCategory?.sizes || storefrontProduct.ringSizeNames) : storefrontProduct.ringSizeNames,
+    }),
+    [activeRingCategory, storefrontProduct]
+  );
+
+  useEffect(() => {
+    const nextDefaultRingSize = activeRingCategory?.sizes?.[0] ?? storefrontProduct.ringSizeNames[0] ?? '';
+    if (!nextDefaultRingSize) {
+      setSelectedRingSize('');
+      return;
+    }
+
+    if (!activeRingCategory?.sizes?.includes(selectedRingSize)) {
+      setSelectedRingSize(nextDefaultRingSize);
+    }
+  }, [activeRingCategory, selectedRingSize, storefrontProduct.ringSizeNames]);
+
   const description = useMemo(
     () => product.descriptionText,
     [product]
@@ -72,13 +95,15 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
     if (purity) params.set('purity', purity);
     if (selectedHiphopCarat) params.set('carat', selectedHiphopCarat);
     if (sizeOrFit) params.set('size', sizeOrFit);
+    if (selectedRingSize) params.set('ring_size', selectedRingSize);
     if (selectedGemstoneValue) params.set('gemstone', selectedGemstoneValue);
+    if (selectedShapeSlug) params.set('shape', selectedShapeSlug);
 
     const preserveCategory = searchParams.get('category');
     if (preserveCategory) params.set('category', preserveCategory);
 
     return `/checkout?${params.toString()}`;
-  }, [product.imageUrl, product.name, product.priceFrom, product.slug, purity, searchParams, selectedGemstoneValue, selectedHiphopCarat, selectedMetal, sizeOrFit]);
+  }, [product.imageUrl, product.name, product.priceFrom, product.slug, purity, searchParams, selectedGemstoneValue, selectedHiphopCarat, selectedMetal, selectedRingSize, selectedShapeSlug, sizeOrFit]);
 
   const showToast = (message: string) => {
     setToastMessage(message);
@@ -86,15 +111,25 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
     window.setTimeout(() => setToastVisible(false), 2800);
   };
 
-  const handleWishlistToggle = (id: number) => {
-    setWishlist((prev) => {
-      const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
-      try {
-        localStorage.setItem('hod_wishlist', JSON.stringify(next));
-      } catch {}
-      showToast(prev.includes(id) ? 'Removed from wishlist' : 'Saved to wishlist');
-      return next;
+  const handleWishlistToggle = (item = product) => {
+    const result = toggle(getProductKey(item));
+    showToast(result === 'removed' ? 'Removed from wishlist' : 'Saved to wishlist');
+  };
+
+  const handleAddToCart = () => {
+    addItem(product, {
+      metal: selectedMetal,
+      purity,
+      sizeOrFit,
+      ringSize: selectedRingSize,
+      ringCategoryId: selectedRingCategoryId,
+      gemstone: selectedGemstoneValue,
+      shape: selectedShapeSlug,
+      hiphopCarat: selectedHiphopCarat,
+      engravingMode,
+      engravingText,
     });
+    showToast('Added to cart');
   };
 
   const handleMetalChange = (metal: string) => {
@@ -152,28 +187,38 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
               <ProductDescription text={description} />
 
               <ProductConfigurator
-                product={storefrontProduct}
+                product={configuredProduct}
                 metal={selectedMetal}
                 purity={purity}
                 sizeOrFit={sizeOrFit}
+                ringSize={selectedRingSize}
                 gemstoneValue={selectedGemstoneValue}
+                shapeSlug={selectedShapeSlug}
                 hiphopCarat={selectedHiphopCarat}
                 engravingMode={engravingMode}
                 engravingText={engravingText}
                 onMetalChange={handleMetalChange}
                 onPurityChange={setPurity}
                 onSizeOrFitChange={setSizeOrFit}
+                onRingSizeChange={setSelectedRingSize}
                 onGemstoneValueChange={setSelectedGemstoneValue}
+                onShapeChange={setSelectedShapeSlug}
                 onHiphopCaratChange={setSelectedHiphopCarat}
                 onEngravingModeChange={handleEngravingModeChange}
                 onEngravingTextChange={setEngravingText}
+                onRingCategoryChange={(value: string) => {
+                  setSelectedRingCategoryId(value);
+                  const nextCategory = storefrontProduct.ringCategoryOptions?.find((entry) => entry.id === value);
+                  if (nextCategory?.sizes?.length) setSelectedRingSize(nextCategory.sizes[0]);
+                }}
               />
 
               <ProductCTAs
                 product={product}
                 onEnquire={() => setIsEnquireOpen(true)}
                 inWishlist={inWishlist}
-                onWishlist={() => handleWishlistToggle(product.id)}
+                onWishlist={() => handleWishlistToggle(product)}
+                onAddToCart={handleAddToCart}
                 checkoutHref={checkoutHref}
               />
 
@@ -193,7 +238,7 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
       <RelatedProducts
         products={relatedProducts}
         wishlist={wishlist}
-        onWishlist={handleWishlistToggle}
+        onWishlist={(relatedProduct: StorefrontProduct) => handleWishlistToggle(relatedProduct)}
         onEnquire={handleRelatedEnquire}
       />
 

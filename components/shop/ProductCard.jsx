@@ -1,4 +1,5 @@
 "use client";
+import { formatUsdNumber } from "@/lib/money";
 
 // ── Gem SVG renderer ──────────────────────────────────────────────────────────
 export function GemSVG({ style, size = 110, color = "#20304A" }) {
@@ -138,7 +139,38 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
   const metaColor = isDark ? "#6A6A6A" : "#6A6A6A";
 
   return (
+    <>
+    <style>{`
+      @media (max-width: 768px) {
+        .shop-product-card-visual {
+          height: 208px !important;
+        }
+        .shop-product-card-info {
+          padding: 14px 12px 16px !important;
+          gap: 4px !important;
+        }
+        .shop-product-card-meta {
+          font-size: 8px !important;
+          margin-bottom: 2px !important;
+          letter-spacing: .16em !important;
+        }
+        .shop-product-card-title {
+          font-size: 15px !important;
+          line-height: 1.22 !important;
+          letter-spacing: 0 !important;
+        }
+        .shop-product-card-price {
+          font-size: 14px !important;
+        }
+        .shop-product-card-enquire {
+          padding: 6px 10px !important;
+          font-size: 7px !important;
+          letter-spacing: .18em !important;
+        }
+      }
+    `}</style>
     <a
+      className="shop-product-card"
       href={`/shop/${product.slug}`}
       style={{
         background: cardBg,
@@ -173,6 +205,7 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
     >
       {/* Visual */}
       <div
+        className="shop-product-card-visual"
         style={{
           height: "300px",
           background: isDark
@@ -223,7 +256,7 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            onWishlist(product.id);
+            onWishlist(product);
           }}
           aria-label="Add to wishlist"
           style={{
@@ -291,6 +324,7 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
 
       {/* Info */}
       <div
+        className="shop-product-card-info"
         style={{
           padding: "22px 22px 26px",
           borderTop: isDark ? "1px solid rgba(10,22,40,0.12)" : "1px solid rgba(10,22,40,0.10)",
@@ -300,20 +334,21 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
           gap: "6px",
         }}
       >
-        <div style={{ fontSize: "9px", fontWeight: 300, letterSpacing: ".22em", color: metaColor, textTransform: "uppercase", marginBottom: "6px", fontFamily: "var(--numeric)" }}>
+        <div className="shop-product-card-meta" style={{ fontSize: "9px", fontWeight: 300, letterSpacing: ".22em", color: metaColor, textTransform: "uppercase", marginBottom: "6px", fontFamily: "var(--numeric)" }}>
           {product.shortMeta}
         </div>
-        <div style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: "20px", fontWeight: 400, color: namColor, letterSpacing: ".02em", lineHeight: 1.2 }}>
+        <div className="shop-product-card-title" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: "20px", fontWeight: 400, color: namColor, letterSpacing: ".02em", lineHeight: 1.2 }}>
           {product.name}
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto", paddingTop: "12px" }}>
           <div>
             <span style={{ fontSize: "8px", fontWeight: 400, letterSpacing: ".24em", color: "#7F8898", textTransform: "uppercase", display: "block", marginBottom: "2px", fontFamily: "var(--numeric)" }}>From</span>
-            <span style={{ fontFamily: "var(--numeric)", fontSize: "18px", fontWeight: 500, color: isDark ? "#FFFFFF" : "#0A1628", letterSpacing: ".02em" }}>
-              ${product.priceFrom.toLocaleString()}
+            <span className="shop-product-card-price" style={{ fontFamily: "var(--numeric)", fontSize: "18px", fontWeight: 500, color: isDark ? "#FFFFFF" : "#0A1628", letterSpacing: ".02em" }}>
+              ${formatUsdNumber(product.priceFrom)}
             </span>
           </div>
           <button
+            className="shop-product-card-enquire"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -348,5 +383,6 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
         </div>
       </div>
     </a>
+    </>
   );
 }

@@ -33,7 +33,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
   }
 
   const relatedProducts = (await getStorefrontProducts())
-    .filter((item) => item.slug !== slug && item.mainCategorySlug === product.mainCategorySlug)
+    .filter((item) => item.slug !== slug && item.mainCategorySlug === product.mainCategorySlug && item.productLane === product.productLane)
     .slice(0, 4);
 
   return <ProductClient product={product} relatedProducts={relatedProducts} />;

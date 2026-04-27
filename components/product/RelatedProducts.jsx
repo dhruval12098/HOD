@@ -1,13 +1,15 @@
 // components/product/RelatedProducts.jsx — House of Diams
 
 import GemSVG from '../common/GemSVG';
+import { formatUsdNumber } from '@/lib/money';
+import { getProductKey } from '@/lib/product-keys';
 
 /**
  * "You May Also Love" related products grid.
  * @param {object}   props
  * @param {object[]} props.products   - Array of related product objects
- * @param {number[]} props.wishlist   - Array of wishlisted product IDs
- * @param {function} props.onWishlist - (id) => void
+ * @param {string[]} props.wishlist   - Array of wishlisted product keys
+ * @param {function} props.onWishlist - (product) => void
  * @param {function} props.onEnquire  - (name) => void
  */
 export default function RelatedProducts({ products, wishlist = [], onWishlist, onEnquire }) {
@@ -20,7 +22,7 @@ export default function RelatedProducts({ products, wishlist = [], onWishlist, o
       <div className="grid gap-7 grid-cols-[repeat(auto-fill,minmax(280px,1fr))] max-[700px]:grid-cols-1">
         {products.map(p => {
           const isDark    = p.category === 'hiphop';
-          const isWished  = wishlist.includes(p.id);
+          const isWished  = wishlist.includes(getProductKey(p));
           const tag       = p.isNew ? 'New' : p.featured ? 'Featured' : 'Signature';
           const tagClass  = p.category === 'hiphop'
             ? 'border-white/20 bg-white/10 text-white'
@@ -66,7 +68,7 @@ export default function RelatedProducts({ products, wishlist = [], onWishlist, o
 
                 {/* Wishlist */}
                 <button
-                  onClick={e => { e.preventDefault(); e.stopPropagation(); onWishlist?.(p.id); }}
+                  onClick={e => { e.preventDefault(); e.stopPropagation(); onWishlist?.(p); }}
                   aria-label="Add to wishlist"
                   className={`
                     absolute top-[14px] right-[14px] z-[2]
@@ -126,7 +128,7 @@ export default function RelatedProducts({ products, wishlist = [], onWishlist, o
                       From
                     </span>
                     <span className={`font-serif text-[18px] font-medium tracking-[0.02em] font-numeric ${isDark ? 'text-white' : 'text-[#0A1628]'}`}>
-                      ${p.priceFrom.toLocaleString()}
+                      ${formatUsdNumber(p.priceFrom)}
                     </span>
                   </div>
                   <button

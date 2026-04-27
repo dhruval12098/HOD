@@ -12,7 +12,7 @@ export async function GET() {
   const supabase = createClient(supabaseUrl, supabaseAnonKey)
   const { data, error } = await supabase
     .from('promotion_popup')
-    .select('label, title, description, cta_text, cta_link, is_active, show_once_per_session')
+    .select('*')
     .eq('section_key', 'global_promotion_popup')
     .maybeSingle()
 

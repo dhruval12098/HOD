@@ -7,7 +7,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 type CheckoutPayload = {
-  item: {
+  item?: {
     name: string
     slug: string
     imageUrl?: string
@@ -20,7 +20,21 @@ type CheckoutPayload = {
     quantity: number
     gstLabel?: string
     gstPercentage?: number
-  }
+  } | null
+  items?: Array<{
+    name: string
+    slug: string
+    imageUrl?: string
+    priceFrom: number
+    metal?: string
+    purity?: string
+    sizeOrFit?: string
+    gemstone?: string
+    carat?: string
+    quantity: number
+    gstLabel?: string
+    gstPercentage?: number
+  }>
   customer?: {
     first_name?: string
     last_name?: string
@@ -62,7 +76,8 @@ export async function POST(request: Request) {
   }
 
   const payload = (await request.json().catch(() => null)) as CheckoutPayload | null
-  if (!payload?.item?.name || !payload.item.slug || !payload.item.priceFrom) {
+  const checkoutItems = (payload?.items?.length ? payload.items : payload?.item ? [payload.item] : []).filter(Boolean)
+  if (!checkoutItems.length || checkoutItems.some((entry) => !entry?.name || !entry.slug || !entry.priceFrom)) {
     return NextResponse.json({ error: 'Invalid checkout payload.' }, { status: 400 })
   }
 
@@ -76,44 +91,98 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: profileError.message }, { status: 500 })
   }
 
-  const { data: product } = await adminClient
+  const slugs = checkoutItems.map((entry) => entry.slug)
+  const { data: productRows, error: productRowsError } = await adminClient
     .from('products')
-    .select('id, sku, gst_slab_id')
-    .eq('slug', payload.item.slug)
-    .maybeSingle()
+    .select('id, slug, sku, gst_slab_id')
+    .in('slug', slugs)
 
-  const quantity = payload.item.quantity || 1
-  const unitPrice = Number(payload.item.priceFrom || 0)
-  const subtotalAmount = unitPrice * quantity
-  let gstPercentage = Number(payload.item.gstPercentage || 0)
-  let gstLabel = payload.item.gstLabel || 'Taxes'
-  let gstSlabId: string | null = product?.gst_slab_id ?? null
-
-  if (product?.gst_slab_id) {
-    const { data: gstSlab } = await adminClient
-      .from('catalog_gst_slabs')
-      .select('id, name, percentage')
-      .eq('id', product.gst_slab_id)
-      .maybeSingle()
-
-    if (gstSlab) {
-      gstPercentage = Number(gstSlab.percentage || 0)
-      gstLabel = gstSlab.name || gstLabel
-      gstSlabId = gstSlab.id
-    }
+  if (productRowsError) {
+    return NextResponse.json({ error: productRowsError.message }, { status: 500 })
   }
 
-  const gstAmount = Number((subtotalAmount * (gstPercentage / 100)).toFixed(2))
+  const { data: settingsRow } = await adminClient
+    .from('site_settings')
+    .select('*')
+    .eq('settings_key', 'global_site_settings')
+    .maybeSingle()
+
+  const productBySlug = new Map((productRows || []).map((product) => [product.slug, product]))
+  const defaultGstSlabId = settingsRow?.default_gst_slab_id ?? null
+  const gstSlabIds = Array.from(
+    new Set(
+      [
+        ...(productRows || []).map((product) => product.gst_slab_id).filter(Boolean),
+        defaultGstSlabId,
+      ].filter(Boolean)
+    )
+  )
+  const { data: gstSlabs, error: gstSlabsError } = gstSlabIds.length
+    ? await adminClient.from('catalog_gst_slabs').select('id, name, percentage').in('id', gstSlabIds)
+    : { data: [], error: null as { message?: string } | null }
+
+  if (gstSlabsError) {
+    return NextResponse.json({ error: gstSlabsError.message || 'Unable to load tax slabs.' }, { status: 500 })
+  }
+
+  const fallbackGstSlabResponse =
+    gstSlabs && gstSlabs.length > 0
+      ? null
+      : await adminClient
+          .from('catalog_gst_slabs')
+          .select('id, name, percentage')
+          .neq('status', 'hidden')
+          .order('display_order', { ascending: true })
+          .limit(1)
+          .maybeSingle()
+
+  if (fallbackGstSlabResponse?.error) {
+    return NextResponse.json({ error: fallbackGstSlabResponse.error.message }, { status: 500 })
+  }
+
+  const gstById = new Map((gstSlabs || []).map((slab) => [slab.id, slab]))
+  const fallbackGstSlab = (gstSlabs || [])[0] ?? fallbackGstSlabResponse?.data ?? null
+  const normalizedItems = checkoutItems.map((entry) => {
+    const product = productBySlug.get(entry.slug) || null
+    const gstSlab =
+      (product?.gst_slab_id ? gstById.get(product.gst_slab_id) : null) ||
+      (defaultGstSlabId ? gstById.get(defaultGstSlabId) : null) ||
+      fallbackGstSlab
+    const quantity = entry.quantity || 1
+    const unitPrice = Number(entry.priceFrom || 0)
+    const subtotalAmount = Number((unitPrice * quantity).toFixed(2))
+    const gstPercentage = Number(gstSlab?.percentage ?? entry.gstPercentage ?? 0)
+    const gstLabel = gstSlab?.name || entry.gstLabel || 'Taxes'
+    const gstAmount = Number((subtotalAmount * (gstPercentage / 100)).toFixed(2))
+
+    return {
+      entry,
+      product,
+      quantity,
+      unitPrice,
+      subtotalAmount,
+      gstPercentage,
+      gstLabel,
+      gstAmount,
+      gstSlabId: product?.gst_slab_id ?? null,
+    }
+  })
+
+  const subtotalAmount = Number(normalizedItems.reduce((sum, entry) => sum + entry.subtotalAmount, 0).toFixed(2))
+  const gstAmount = Number(normalizedItems.reduce((sum, entry) => sum + entry.gstAmount, 0).toFixed(2))
+  const gstLabel = normalizedItems.length === 1 ? normalizedItems[0]?.gstLabel || 'Taxes' : 'Taxes'
   let couponId: number | null = null
   let couponCode: string | null = null
   let couponDiscountAmount = 0
 
-  if (payload.coupon?.id && payload.coupon?.code) {
+  const couponPayload = payload?.coupon ?? null
+
+  if (couponPayload?.id && couponPayload?.code) {
     const { data: coupon, error: couponError } = await adminClient
       .from('coupons')
       .select('id, code, discount_type, discount_value, usage_limit, usage_count, is_active')
-      .eq('id', payload.coupon.id)
-      .eq('code', payload.coupon.code.trim().toUpperCase())
+      .eq('id', couponPayload.id)
+      .eq('code', couponPayload.code.trim().toUpperCase())
       .maybeSingle()
 
     if (couponError) {
@@ -139,7 +208,11 @@ export async function POST(request: Request) {
   }
 
   const totalAmount = subtotalAmount + gstAmount - couponDiscountAmount
-  const customer = payload.customer ?? {}
+  const customer = payload?.customer ?? {}
+  const gstPercentage =
+    normalizedItems.length === 1
+      ? normalizedItems[0]?.gstPercentage ?? 0
+      : normalizedItems.reduce((highest, item) => Math.max(highest, item.gstPercentage), 0)
 
   const { data: order, error: orderError } = await adminClient
     .from('orders')
@@ -172,25 +245,27 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: orderError?.message || 'Unable to create order.' }, { status: 500 })
   }
 
-  const { error: itemError } = await adminClient.from('order_items').insert({
-    order_id: order.id,
-    product_id: product?.id || null,
-    product_name: payload.item.name,
-    product_slug: payload.item.slug,
-    sku: product?.sku || null,
-    quantity,
-    unit_price: unitPrice,
-    line_total: subtotalAmount,
-    selected_metal: payload.item.metal || null,
-    selected_purity: payload.item.purity || null,
-    selected_size_or_fit: payload.item.sizeOrFit || null,
-    selected_gemstone: payload.item.gemstone || null,
-    selected_carat: payload.item.carat || null,
-    gst_slab_id: gstSlabId,
-    gst_percentage: gstPercentage,
-    gst_amount: gstAmount,
-    image_url: payload.item.imageUrl || null,
-  })
+  const { error: itemError } = await adminClient.from('order_items').insert(
+    normalizedItems.map(({ entry, product, quantity, unitPrice, subtotalAmount, gstSlabId, gstPercentage, gstAmount }) => ({
+      order_id: order.id,
+      product_id: product?.id || null,
+      product_name: entry.name,
+      product_slug: entry.slug,
+      sku: product?.sku || null,
+      quantity,
+      unit_price: unitPrice,
+      line_total: subtotalAmount,
+      selected_metal: entry.metal || null,
+      selected_purity: entry.purity || null,
+      selected_size_or_fit: entry.sizeOrFit || null,
+      selected_gemstone: entry.gemstone || null,
+      selected_carat: entry.carat || null,
+      gst_slab_id: gstSlabId,
+      gst_percentage: gstPercentage,
+      gst_amount: gstAmount,
+      image_url: entry.imageUrl || null,
+    }))
+  )
 
   if (itemError) {
     return NextResponse.json({ error: itemError.message }, { status: 500 })
@@ -244,13 +319,11 @@ export async function POST(request: Request) {
       couponCode,
       couponDiscountAmount,
       totalAmount: Number(order.total_amount || totalAmount),
-      items: [
-        {
-          product_name: payload.item.name,
-          quantity,
-          line_total: subtotalAmount,
-        },
-      ],
+      items: normalizedItems.map(({ entry, quantity, subtotalAmount }) => ({
+        product_name: entry.name,
+        quantity,
+        line_total: subtotalAmount,
+      })),
     })
   } catch (emailError) {
     console.error('Order confirmation email failed:', emailError)

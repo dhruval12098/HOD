@@ -3,8 +3,8 @@ export type NavbarSectionType =
   | 'manual_links'
   | 'metal_swatches'
   | 'stone_shapes'
-  | 'ring_sizes'
   | 'certificates'
+  | 'styles'
   | 'category_link'
 
 export type PublicNavbarItemRow = {
@@ -22,6 +22,7 @@ export type PublicNavbarSectionRow = {
   id: string
   navbar_item_id: string
   title: string
+  icon_svg_path?: string | null
   section_type: NavbarSectionType
   source_subcategory_id: string | null
   source_category_slug?: string | null
@@ -35,7 +36,7 @@ export type PublicNavbarSectionRow = {
 
 export type PublicNavbarSectionSourceItemRow = {
   section_id: string
-  source_kind: 'subcategory_option' | 'metal' | 'stone_shape' | 'ring_size' | 'certificate'
+  source_kind: 'subcategory_option' | 'metal' | 'stone_shape' | 'certificate' | 'style'
   source_item_id: string
   sort_order: number
   is_active: boolean
@@ -102,14 +103,6 @@ export type PublicStoneShapeRow = {
   status: 'active' | 'hidden'
 }
 
-export type PublicRingSizeRow = {
-  id: string
-  name: string
-  slug: string
-  display_order: number
-  status: 'active' | 'hidden'
-}
-
 export type PublicCertificateRow = {
   id: string
   name: string
@@ -119,20 +112,35 @@ export type PublicCertificateRow = {
   status?: 'active' | 'hidden'
 }
 
+export type PublicStyleRow = {
+  id: string
+  name: string
+  slug: string
+  display_order: number
+  status: 'active' | 'hidden'
+}
+
 export type NavbarRenderLink = {
   label: string
   href: string
+  iconUrl?: string | null
+  type?: 'default' | 'swatch' | 'icon'
 }
 
 export type NavbarRenderSection = {
+  id: string
   title: string
+  iconUrl?: string | null
   type: NavbarSectionType
+  showAsFilter?: boolean
   twoCol?: boolean
   links?: NavbarRenderLink[]
   metals?: readonly ({ type: 'yellow' | 'rose' | 'white' | 'platinum' | 'default'; label: string; href: string })[]
 }
 
 export type NavbarRenderItem = {
+  slug?: string
+  linkedCategoryId?: string | null
   label: string
   href?: string
   mega?: {
@@ -145,6 +153,16 @@ export type NavbarRenderItem = {
       buttonUrl: string
     } | null
   }
+}
+
+const SUPABASE_PUBLIC_BASE = process.env.NEXT_PUBLIC_SUPABASE_URL
+const SUPABASE_COLLECTION_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_COLLECTION_BUCKET || 'hod'
+
+function resolveStoragePublicUrl(path: string | null | undefined) {
+  if (!path) return null
+  if (/^https?:\/\//i.test(path)) return path
+  if (!SUPABASE_PUBLIC_BASE) return path
+  return `${SUPABASE_PUBLIC_BASE}/storage/v1/object/public/${SUPABASE_COLLECTION_BUCKET}/${path}`
 }
 
 const METAL_TYPE_MAP: Record<string, 'yellow' | 'rose' | 'white' | 'platinum'> = {
@@ -190,6 +208,10 @@ function buildItemBaseHref(slug: string) {
   return `/${slug}`
 }
 
+function buildCategoryFilterHref(itemHref: string, filterKey: 'shape' | 'style' | 'certificate' | 'metal', value: string) {
+  return `${itemHref}?${filterKey}=${encodeURIComponent(value)}`
+}
+
 function slugifyValue(value: string) {
   return value
     .toLowerCase()
@@ -220,7 +242,9 @@ function buildStoneShapeLinks(itemHref: string, stoneShapes: PublicStoneShapeRow
     .sort((left, right) => left.display_order - right.display_order)
     .map((entry) => ({
       label: entry.name,
-      href: `${itemHref}?shape=${entry.slug}`,
+      href: buildCategoryFilterHref(itemHref, 'shape', entry.slug || slugifyValue(entry.name)),
+      iconUrl: resolveStoragePublicUrl(entry.svg_asset_url),
+      type: resolveStoragePublicUrl(entry.svg_asset_url) ? 'icon' : 'default',
     }))
 }
 
@@ -229,23 +253,23 @@ function filterBySelectedIds<T extends { id: string }>(items: T[], selectedIds: 
   return items.filter((entry) => selectedIds.has(entry.id))
 }
 
-function buildRingSizeLinks(itemHref: string, ringSizes: PublicRingSizeRow[]) {
-  return ringSizes
-    .filter((entry) => entry.status === 'active')
-    .sort((left, right) => left.display_order - right.display_order)
-    .map((entry) => ({
-      label: entry.name,
-      href: `${itemHref}?size=${entry.slug}`,
-    }))
-}
-
 function buildCertificateLinks(itemHref: string, certificates: PublicCertificateRow[]) {
   return certificates
     .filter((entry) => !entry.status || entry.status === 'active')
     .sort((left, right) => (left.display_order ?? 0) - (right.display_order ?? 0))
     .map((entry) => ({
       label: entry.name,
-      href: `${itemHref}?certificate=${slugifyValue(entry.slug || entry.name)}`,
+      href: buildCategoryFilterHref(itemHref, 'certificate', slugifyValue(entry.slug || entry.name)),
+    }))
+}
+
+function buildStyleLinks(itemHref: string, styles: PublicStyleRow[]) {
+  return styles
+    .filter((entry) => entry.status === 'active')
+    .sort((left, right) => left.display_order - right.display_order)
+    .map((entry) => ({
+      label: entry.name,
+      href: buildCategoryFilterHref(itemHref, 'style', entry.slug || slugifyValue(entry.name)),
     }))
 }
 
@@ -258,7 +282,7 @@ function buildMetalLinks(itemHref: string, metals: PublicMetalRow[]) {
     metals: activeMetals.map((entry) => ({
       type: getMetalType(entry),
       label: entry.name,
-      href: `${itemHref}?metal=${entry.slug}`,
+      href: buildCategoryFilterHref(itemHref, 'metal', entry.slug || slugifyValue(entry.name)),
     })),
   }
 }
@@ -274,8 +298,8 @@ export function buildNavbarRenderItems(args: {
   options: PublicOptionRow[]
   metals: PublicMetalRow[]
   stoneShapes: PublicStoneShapeRow[]
-  ringSizes?: PublicRingSizeRow[]
   certificates?: PublicCertificateRow[]
+  styles?: PublicStyleRow[]
 }): NavbarRenderItem[] {
   const {
     items,
@@ -288,8 +312,8 @@ export function buildNavbarRenderItems(args: {
     options,
     metals,
     stoneShapes,
-    ringSizes = [],
     certificates = [],
+    styles = [],
   } = args
   const categoriesById = new Map(categories.map((entry) => [entry.id, entry]))
   const subcategoriesById = new Map(subcategories.map((entry) => [entry.id, entry]))
@@ -327,10 +351,12 @@ export function buildNavbarRenderItems(args: {
         })
 
       if (item.item_type !== 'mega_menu') {
-        return {
-          label: item.label,
-          href: item.direct_link_url ?? buildItemBaseHref(item.slug),
-        }
+      return {
+        slug: item.slug,
+        linkedCategoryId: item.linked_category_id,
+        label: item.label,
+        href: item.direct_link_url ?? buildItemBaseHref(item.slug),
+      }
       }
 
       const itemSections = visibleSections
@@ -353,8 +379,11 @@ export function buildNavbarRenderItems(args: {
 
           if (section.section_type === 'manual_links') {
             return {
+              id: section.id,
               title: section.title,
+              iconUrl: resolveStoragePublicUrl(section.icon_svg_path),
               type: section.section_type,
+              showAsFilter: section.show_as_filter ?? false,
               links: sectionLinks
                 .filter((entry) => entry.section_id === section.id && entry.status === 'active')
                 .sort((left, right) => left.display_order - right.display_order)
@@ -366,30 +395,43 @@ export function buildNavbarRenderItems(args: {
           }
 
           if (section.section_type === 'stone_shapes') {
-            const shapeLinks = buildStoneShapeLinks(itemHref, filterBySelectedIds(stoneShapes, selectedIds))
+            const selectedStoneShapes = filterBySelectedIds(stoneShapes, selectedIds)
+            const shapeLinks = buildStoneShapeLinks(
+              itemHref,
+              selectedStoneShapes.length > 0 ? selectedStoneShapes : stoneShapes
+            )
             return {
+              id: section.id,
               title: section.title,
+              iconUrl: resolveStoragePublicUrl(section.icon_svg_path),
               type: section.section_type,
+              showAsFilter: section.show_as_filter ?? false,
               twoCol: true,
               links: [...shapeLinks, ...categoryLink],
-            } satisfies NavbarRenderSection
-          }
-
-          if (section.section_type === 'ring_sizes') {
-            const ringLinks = buildRingSizeLinks(itemHref, filterBySelectedIds(ringSizes, selectedIds))
-            return {
-              title: section.title,
-              type: section.section_type,
-              links: [...ringLinks, ...categoryLink],
             } satisfies NavbarRenderSection
           }
 
           if (section.section_type === 'certificates') {
             const certificateLinks = buildCertificateLinks(itemHref, filterBySelectedIds(certificates, selectedIds))
             return {
+              id: section.id,
               title: section.title,
+              iconUrl: resolveStoragePublicUrl(section.icon_svg_path),
               type: section.section_type,
+              showAsFilter: section.show_as_filter ?? false,
               links: [...certificateLinks, ...categoryLink],
+            } satisfies NavbarRenderSection
+          }
+
+          if (section.section_type === 'styles') {
+            const styleLinks = buildStyleLinks(itemHref, filterBySelectedIds(styles, selectedIds))
+            return {
+              id: section.id,
+              title: section.title,
+              iconUrl: resolveStoragePublicUrl(section.icon_svg_path),
+              type: section.section_type,
+              showAsFilter: section.show_as_filter ?? false,
+              links: [...styleLinks, ...categoryLink],
             } satisfies NavbarRenderSection
           }
 
@@ -399,8 +441,11 @@ export function buildNavbarRenderItems(args: {
               metals.filter((entry) => selectedIds.size === 0 || selectedIds.has(entry.id))
             )
             return {
+              id: section.id,
               title: section.title,
+              iconUrl: resolveStoragePublicUrl(section.icon_svg_path),
               type: section.section_type,
+              showAsFilter: section.show_as_filter ?? false,
               metals: metalData.metals,
               links: categoryLink,
             } satisfies NavbarRenderSection
@@ -408,8 +453,11 @@ export function buildNavbarRenderItems(args: {
 
           if (section.section_type === 'category_link' && section.source_category_slug) {
             return {
+              id: section.id,
               title: section.title,
+              iconUrl: resolveStoragePublicUrl(section.icon_svg_path),
               type: section.section_type,
+              showAsFilter: section.show_as_filter ?? false,
               links: [
                 {
                   label: section.title,
@@ -434,12 +482,16 @@ export function buildNavbarRenderItems(args: {
             : []
 
           return {
+            id: section.id,
             title: section.title,
+            iconUrl: resolveStoragePublicUrl(section.icon_svg_path),
             type: section.section_type,
+            showAsFilter: section.show_as_filter ?? false,
             links: [...links, ...categoryLink],
           } satisfies NavbarRenderSection
         })
         .filter((section) => {
+          if (section.showAsFilter) return true
           if (section.type === 'metal_swatches') return (section.metals?.length ?? 0) > 0 || (section.links?.length ?? 0) > 0
           return (section.links?.length ?? 0) > 0
         })
@@ -447,6 +499,8 @@ export function buildNavbarRenderItems(args: {
       const featuredCard = featuredCards.find((entry) => entry.navbar_item_id === item.id && entry.enabled)
 
       return {
+        slug: item.slug,
+        linkedCategoryId: item.linked_category_id,
         label: item.label,
         href: itemHref,
         mega: {

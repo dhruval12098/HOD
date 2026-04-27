@@ -3,11 +3,12 @@
 import Link from 'next/link'
 import type { StorefrontProduct } from '@/lib/catalog-products'
 import GemSVG from '@/components/common/GemSVG'
+import { formatUsdNumber } from '@/lib/money'
 
 interface HipHopProductCardProps {
   product: StorefrontProduct
   isWishlisted: boolean
-  onWishlistToggle: (id: number) => void
+  onWishlistToggle: (product: StorefrontProduct) => void
   onEnquire: (name: string) => void
 }
 
@@ -56,7 +57,7 @@ export default function HipHopProductCard({
           aria-label={`${isWishlisted ? 'Remove' : 'Add'} ${product.name} ${isWishlisted ? 'from' : 'to'} wishlist`}
           onClick={(e) => {
             e.preventDefault()
-            onWishlistToggle(product.id)
+            onWishlistToggle(product)
           }}
           className={`
             absolute top-[14px] right-[14px] z-10
@@ -105,7 +106,7 @@ export default function HipHopProductCard({
               From
             </span>
             <span className="font-numeric text-[18px] font-medium tracking-[0.02em] text-white">
-              ${product.priceFrom.toLocaleString()}
+              ${formatUsdNumber(product.priceFrom)}
             </span>
           </div>
           <button

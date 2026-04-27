@@ -17,8 +17,11 @@ export default async function ShopPage({
   const params = await searchParams
   const products = await getStorefrontProducts()
   const filteredProducts = filterStorefrontProducts(products, {
+    productLane: 'standard',
     subcategorySlug: typeof params.subcategory === 'string' ? params.subcategory : null,
     optionSlug: typeof params.option === 'string' ? params.option : null,
+    shapeSlug: typeof params.shape === 'string' ? params.shape : null,
+    styleSlug: typeof params.style === 'string' ? params.style : null,
     metalSlug: typeof params.metal === 'string' ? params.metal : null,
     purity: typeof params.purity === 'string' ? params.purity : null,
     certificate: typeof params.certificate === 'string' ? params.certificate : null,
@@ -27,11 +30,15 @@ export default async function ShopPage({
   return (
     <ShopClient
       products={filteredProducts}
-      sourceProducts={products}
+      sourceProducts={products.filter((product) => product.productLane === 'standard')}
       heroTitle="Our Collection"
       heroSubtitle="Browse our curated selection of fine jewellery, engagement rings, and wedding bands."
       initialFilters={{
         ...(typeof params.category === 'string' ? { category: [params.category] } : {}),
+        ...(typeof params.shape === 'string' ? { shape: [params.shape] } : {}),
+        ...(typeof params.style === 'string' ? { style: [params.style] } : {}),
+        ...(typeof params.metal === 'string' ? { metal: [params.metal] } : {}),
+        ...(typeof params.certificate === 'string' ? { certificate: [params.certificate] } : {}),
       }}
     />
   );

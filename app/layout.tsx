@@ -3,6 +3,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import LenisProvider from "@/app/LenisProvider";
 import SiteChrome from "@/components/layout/SiteChrome";
+import { houseOfDiamsWordmarkFont, loaderWordmarkFont } from "@/app/fonts";
+import { CartProvider } from "@/lib/hooks/useCart";
+import { WishlistProvider } from "@/lib/hooks/useWishlistStore";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,12 +36,16 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${houseOfDiamsWordmarkFont.variable} ${loaderWordmarkFont.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <LenisProvider>
-          <SiteChrome>{children}</SiteChrome>
+          <WishlistProvider>
+            <CartProvider>
+              <SiteChrome>{children}</SiteChrome>
+            </CartProvider>
+          </WishlistProvider>
         </LenisProvider>
       </body>
     </html>

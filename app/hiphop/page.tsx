@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default async function HipHopPage() {
   const products = await getStorefrontProducts()
-  const hiphopProducts = products.filter((product) => product.category === 'hiphop' || product.detailTemplate === 'hiphop')
+  const hiphopProducts = products.filter((product) => product.productLane === 'hiphop')
 
   return <HipHopClient products={hiphopProducts} />;
 }

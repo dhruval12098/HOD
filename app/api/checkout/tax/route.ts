@@ -17,16 +17,38 @@ export async function GET(request: Request) {
 
   const supabase = createClient(supabaseUrl, supabaseAnonKey)
   const { data: product } = await supabase.from('products').select('gst_slab_id').eq('slug', slug).maybeSingle()
+  let gstSlabId = product?.gst_slab_id ?? null
 
-  if (!product?.gst_slab_id) {
-    return NextResponse.json({ gstLabel: 'Taxes', gstPercentage: 0 })
+  if (!gstSlabId) {
+    const { data: settings } = await supabase
+      .from('site_settings')
+      .select('*')
+      .eq('settings_key', 'global_site_settings')
+      .maybeSingle()
+
+    gstSlabId = settings?.default_gst_slab_id ?? null
   }
 
-  const { data: slab } = await supabase
-    .from('catalog_gst_slabs')
-    .select('name, percentage')
-    .eq('id', product.gst_slab_id)
-    .maybeSingle()
+  let slab = null
+  if (gstSlabId) {
+    const response = await supabase
+      .from('catalog_gst_slabs')
+      .select('name, percentage')
+      .eq('id', gstSlabId)
+      .maybeSingle()
+    slab = response.data ?? null
+  }
+
+  if (!slab) {
+    const fallbackResponse = await supabase
+      .from('catalog_gst_slabs')
+      .select('name, percentage')
+      .neq('status', 'hidden')
+      .order('display_order', { ascending: true })
+      .limit(1)
+      .maybeSingle()
+    slab = fallbackResponse.data ?? null
+  }
 
   return NextResponse.json({
     gstLabel: slab?.name || 'Taxes',

@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import TrustStrip from '@/components/home/TrustStrip';
-import Loader from '@/components/home/Loader';
 import EnquireModal from '@/components/home/EnquireModal';
 import { ToastProvider, useToast } from '@/components/home/Toast';
+import Loader from '@/components/home/Loader';
+import { usePageLoaderCache } from '@/lib/hooks/usePageLoaderCache';
 
 import BespokeHero from '@/components/bespoke/BespokeHero';
 import ProcessSteps from '@/components/bespoke/ProcessSteps';
@@ -12,30 +12,57 @@ import BespokePortfolio from '@/components/bespoke/BespokePortfolio';
 import BespokeForm from '@/components/bespoke/BespokeForm';
 import Manufacturing from '../home/Manufacturing';
 
-function BespokeInner() {
+function BespokeInner({
+  hero,
+  slides,
+  processItems,
+  portfolioCategories,
+  portfolioItems,
+  manufacturingItems,
+  formConfig,
+}: {
+  hero?: any;
+  slides?: any[];
+  processItems?: any[];
+  portfolioCategories?: any[];
+  portfolioItems?: any[];
+  manufacturingItems?: any[];
+  formConfig?: any;
+}) {
   const { showToast } = useToast();
   const [enquireOpen, setEnquireOpen] = useState(false);
+  const { pageLoading, handleLoaderComplete } = usePageLoaderCache({
+    cacheKey: 'hod_bespoke_loader_v2',
+    ttlMs: 1000 * 60 * 60 * 12,
+    fallbackDelayMs: 260,
+  });
 
   return (
     <div className="min-h-screen bg-(--bg) text-(--ink)">
-      <Loader />
-
-      <BespokeHero onEnquireClick={() => setEnquireOpen(true)} />
-      <ProcessSteps />
-      <BespokePortfolio />
-      <Manufacturing />
-      <BespokeForm onSuccess={() => showToast("Enquiry sent - we'll reply within 24 hours")} />
+      {pageLoading ? <Loader ready onComplete={handleLoaderComplete} /> : null}
+      <BespokeHero onEnquireClick={() => setEnquireOpen(true)} initialHero={hero} initialSlides={slides} />
+      <ProcessSteps initialItems={processItems} />
+      <BespokePortfolio initialCategories={portfolioCategories} initialItems={portfolioItems} />
+      <Manufacturing initialItems={manufacturingItems} />
+      <BespokeForm initialConfig={formConfig} onSuccess={() => showToast("Enquiry sent - we'll reply within 24 hours")} />
 
       <EnquireModal open={enquireOpen} onClose={() => setEnquireOpen(false)} />
     </div>
   );
 }
 
-export default function BespokeClient() {
+export default function BespokeClient(props: {
+  hero?: any;
+  slides?: any[];
+  processItems?: any[];
+  portfolioCategories?: any[];
+  portfolioItems?: any[];
+  manufacturingItems?: any[];
+  formConfig?: any;
+}) {
   return (
     <ToastProvider>
-      <BespokeInner />
+      <BespokeInner {...props} />
     </ToastProvider>
   );
 }
-

@@ -7,17 +7,22 @@ declare module '@/components/product/ProductConfigurator' {
     metal: string
     purity: string
     sizeOrFit: string
+    ringSize: string
     gemstoneValue: string
+    shapeSlug: string
     hiphopCarat: string
     engravingMode: 'none' | 'custom'
     engravingText: string
     onMetalChange: (value: string) => void
     onPurityChange: (value: string) => void
     onSizeOrFitChange: (value: string) => void
+    onRingSizeChange?: (value: string) => void
     onGemstoneValueChange: (value: string) => void
+    onShapeChange?: (value: string) => void
     onHiphopCaratChange: (value: string) => void
     onEngravingModeChange: (value: string) => void
     onEngravingTextChange: (value: string) => void
+    onRingCategoryChange?: (value: string) => void
   }
 
   const ProductConfigurator: ComponentType<ProductConfiguratorProps>

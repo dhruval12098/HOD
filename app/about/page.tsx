@@ -1,9 +1,5 @@
 import type { Metadata } from 'next';
-import TrustStrip from '@/components/home/TrustStrip';
-import AboutHero from '@/components/about/AboutHero';
-import FoundersSection from '@/components/about/FoundersSection';
-import TimelineSection from '@/components/about/TimelineSection';
-import ValuesSection from '@/components/about/ValuesSection';
+import AboutClient from '@/components/pages/AboutClient';
 import { createClient } from '@supabase/supabase-js';
 
 export const metadata: Metadata = {
@@ -18,21 +14,22 @@ export default async function AboutPage() {
 
   if (supabaseUrl && supabaseServiceRoleKey) {
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
-    const { data } = await supabase
-      .from('about_hero')
-      .select('eyebrow, heading, subtitle')
-      .eq('section_key', 'about_hero')
-      .maybeSingle();
-    hero = data ?? null;
+    const [heroResult, foundersResult, timelineResult, valuesResult] = await Promise.all([
+      supabase.from('about_hero').select('eyebrow, heading, subtitle').eq('section_key', 'about_hero').maybeSingle(),
+      supabase.from('about_founders').select('sort_order, name, designation, bio, image_path').order('sort_order', { ascending: true }),
+      supabase.from('about_timeline').select('id, sort_order, year, label').order('sort_order', { ascending: true }),
+      supabase.from('about_values').select('id, sort_order, icon_path, title, description').order('sort_order', { ascending: true }),
+    ]);
+    hero = heroResult.data ?? null;
+    return (
+      <AboutClient
+        hero={hero}
+        founders={foundersResult.data ?? []}
+        timeline={timelineResult.data ?? []}
+        values={valuesResult.data ?? []}
+      />
+    );
   }
 
-  return (
-    <div className="min-h-screen bg-(--bg) text-(--ink)">
-      <TrustStrip />
-      <AboutHero content={hero ?? undefined} />
-      <FoundersSection />
-      <TimelineSection />
-      <ValuesSection />
-    </div>
-  );
+  return <AboutClient hero={hero} founders={[]} timeline={[]} values={[]} />;
 }

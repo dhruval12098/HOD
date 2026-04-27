@@ -11,6 +11,10 @@ export type CheckoutDisplayItem = {
   quantity: number
   gstLabel?: string
   gstPercentage?: number
+}
+
+export type CheckoutSummaryData = {
+  items: CheckoutDisplayItem[]
   couponCode?: string
   couponDiscount?: number
 }

@@ -1,3 +1,5 @@
+import Loader from '@/components/home/Loader';
+
 export default function Loading() {
-  return null;
+  return <Loader ready={false} minDurationMs={500} maxDurationMs={12000} />;
 }

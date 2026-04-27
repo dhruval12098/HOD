@@ -2,6 +2,15 @@
 
 import { useEffect, useState } from "react";
 
+/**
+ * @typedef {Object} FounderItem
+ * @property {number | undefined} [sort_order]
+ * @property {string} name
+ * @property {string} designation
+ * @property {string} bio
+ * @property {string | null | undefined} [image_path]
+ */
+
 function buildImageUrl(path) {
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const bucket = process.env.NEXT_PUBLIC_SUPABASE_COLLECTION_BUCKET ?? "hod";
@@ -10,10 +19,14 @@ function buildImageUrl(path) {
   return base ? `${base}/storage/v1/object/public/${bucket}/${path}` : path;
 }
 
-export default function FoundersSection() {
-  const [items, setItems] = useState([]);
+/**
+ * @param {{ initialItems?: FounderItem[] }} props
+ */
+export default function FoundersSection({ initialItems = [] }) {
+  const [items, setItems] = useState(initialItems);
 
   useEffect(() => {
+    if (initialItems.length) return;
     const load = async () => {
       const response = await fetch("/api/public/about/founders", { cache: "no-store" });
       const payload = await response.json().catch(() => null);
@@ -21,7 +34,7 @@ export default function FoundersSection() {
       setItems(payload?.items ?? []);
     };
     load();
-  }, []);
+  }, [initialItems]);
 
   return (
     <section style={{ padding: "110px 52px", maxWidth: "1400px", margin: "0 auto" }} className="founders-section">

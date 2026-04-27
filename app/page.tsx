@@ -35,10 +35,12 @@ export default async function Home() {
     collectionItems,
     materialItems,
     hiphopSection,
+    collectionPageConfig,
     certificationsSection,
     certificationItems,
     couplesData,
     diamondInfoItems,
+    diamondInfoConfig,
     testimonialsData,
     marqueeData,
     bestSellerSection,
@@ -63,10 +65,12 @@ export default async function Home() {
       collectionItems={collectionItems}
       materialItems={materialItems}
       hiphopSection={hiphopSection}
+      collectionPageConfig={collectionPageConfig}
       certificationsSection={certificationsSection}
       certificationItems={certificationItems}
       couplesData={couplesData}
       diamondInfoItems={diamondInfoItems}
+      diamondInfoConfig={diamondInfoConfig}
       testimonialsData={testimonialsData}
       marqueeData={marqueeData}
       bestSellerSection={bestSellerSection}

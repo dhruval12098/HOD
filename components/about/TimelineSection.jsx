@@ -2,11 +2,26 @@
 
 import { useEffect, useState } from "react";
 
-export default function TimelineSection() {
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+/**
+ * @typedef {Object} TimelineItem
+ * @property {string | number | undefined} [id]
+ * @property {number | undefined} [sort_order]
+ * @property {string} year
+ * @property {string} label
+ */
+
+/**
+ * @param {{ initialItems?: TimelineItem[] }} props
+ */
+export default function TimelineSection({ initialItems = [] }) {
+  const [items, setItems] = useState(initialItems);
+  const [loading, setLoading] = useState(initialItems.length === 0);
 
   useEffect(() => {
+    if (initialItems.length) {
+      setLoading(false);
+      return;
+    }
     let active = true;
 
     async function loadTimeline() {
@@ -27,7 +42,7 @@ export default function TimelineSection() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [initialItems]);
 
   if (loading) {
     return (

@@ -12,6 +12,7 @@ import DiamondInfo from '@/components/home/DiamondInfo';
 import Collection from '@/components/home/Collection';
 import MaterialStrip from '@/components/home/MaterialStrip';
 import HipHopShowcase from '@/components/home/HipHopShowcase';
+import CollectionShowcase from '@/components/home/CollectionShowcase';
 import Certifications from '@/components/home/Certifications';
 import Testimonials from '@/components/home/Testimonials';
 import CouplesSection from '@/components/home/CouplesSection';
@@ -27,12 +28,25 @@ import type {
   HomeCertificationSection,
   HomeCollectionItem,
   HomeCoupleItem,
+  HomeDiamondInfoConfig,
   HomeDiamondInfoItem,
   HomeHipHopSection,
   HomeMarqueeData,
   HomeMaterialItem,
   HomeTestimonialsData,
 } from '@/lib/home-data';
+
+type CollectionPageConfig = {
+  pageEnabled: boolean
+  showInFooter: boolean
+  showHomeShowcase: boolean
+  showcaseHeading: string
+  showcaseSubtitle: string
+  showcaseCtaLabel: string
+  showcaseCtaHref: string
+  showcaseImageUrl?: string
+  showcaseMobileImageUrl?: string
+}
 
 type HeroContent = {
   eyebrow: string;
@@ -56,10 +70,12 @@ export default function HomeClient({
   collectionItems = [],
   materialItems = [],
   hiphopSection,
+  collectionPageConfig,
   certificationsSection,
   certificationItems = [],
   couplesData,
   diamondInfoItems = [],
+  diamondInfoConfig,
   testimonialsData,
   marqueeData,
   bestSellerSection,
@@ -70,10 +86,12 @@ export default function HomeClient({
   collectionItems?: HomeCollectionItem[]
   materialItems?: HomeMaterialItem[]
   hiphopSection: HomeHipHopSection
+  collectionPageConfig: CollectionPageConfig
   certificationsSection: HomeCertificationSection
   certificationItems?: HomeCertificationItem[]
   couplesData: { eyebrow: string; heading: string; subtitle: string; items: HomeCoupleItem[] }
   diamondInfoItems?: HomeDiamondInfoItem[]
+  diamondInfoConfig?: HomeDiamondInfoConfig
   testimonialsData: HomeTestimonialsData
   marqueeData: HomeMarqueeData
   bestSellerSection: HomeBestSellerSection
@@ -131,10 +149,11 @@ export default function HomeClient({
       <Hero initialContent={heroContent} />
       <TestimonialMarquee initialData={marqueeData} />
       <Collection items={collectionItems} />
-      <DiamondInfo items={diamondInfoItems} />
-      <MaterialStrip items={materialItems} />
+      <DiamondInfo items={diamondInfoItems} config={diamondInfoConfig} />
+      {/* <MaterialStrip items={materialItems} /> */}
       <HipHopShowcase initialSection={hiphopSection} />
       <BestSellers initialSection={bestSellerSection} initialProducts={bestSellerProducts} />
+      {collectionPageConfig.pageEnabled && collectionPageConfig.showHomeShowcase ? <CollectionShowcase config={collectionPageConfig} /> : null}
       <Certifications initialSection={certificationsSection} initialItems={certificationItems} />
       <Testimonials initialData={testimonialsData} />
       <CouplesSection initialData={couplesData} />

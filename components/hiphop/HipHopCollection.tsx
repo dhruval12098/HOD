@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from 'react'
 import type { StorefrontProduct } from '@/lib/catalog-products'
-import { useWishlist } from './useWishlist'
+import { useWishlistStore } from '@/lib/hooks/useWishlistStore'
+import { getProductKey } from '@/lib/product-keys'
 import TypeFilterBar, { FilterType } from './TypeFilterBar'
 import HipHopProductCard from './HipHopProductCard'
 
@@ -24,13 +25,14 @@ export default function HipHopCollection({
   onWishlistToast,
 }: HipHopCollectionProps) {
   const [activeFilter, setActiveFilter] = useState<FilterType>('all')
-  const { toggle, isWishlisted } = useWishlist()
+  const { toggle, contains } = useWishlistStore()
 
   const products = useMemo(() => getFiltered(sourceProducts, activeFilter), [sourceProducts, activeFilter])
 
-  const handleWishlist = (id: number) => {
-    const wasWishlisted = isWishlisted(id)
-    toggle(id)
+  const handleWishlist = (product: StorefrontProduct) => {
+    const productKey = getProductKey(product)
+    const wasWishlisted = contains(productKey)
+    toggle(productKey)
     onWishlistToast(wasWishlisted ? 'Removed from wishlist' : 'Saved to wishlist')
   }
 
@@ -67,7 +69,7 @@ export default function HipHopCollection({
             <HipHopProductCard
               key={product.dbId}
               product={product}
-              isWishlisted={isWishlisted(product.id)}
+              isWishlisted={contains(getProductKey(product))}
               onWishlistToggle={handleWishlist}
               onEnquire={onEnquire}
             />

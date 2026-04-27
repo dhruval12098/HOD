@@ -2,14 +2,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { loaderWordmarkFont } from '@/app/fonts';
 import { supabase } from '@/lib/supabase';
 import {
-  buildNavbarRenderItems,
   type NavbarRenderItem,
   type NavbarRenderSection,
 } from '@/lib/navbar';
-import { getCollectionHref } from '@/lib/browse-context';
 import type { User } from '@supabase/supabase-js';
+import { useWishlistStore } from '@/lib/hooks/useWishlistStore';
+import { useCart } from '@/lib/hooks/useCart';
 
 const METAL_COLORS: Record<string, string> = {
   yellow: 'linear-gradient(135deg,#F5D76E,#20304A)',
@@ -75,9 +76,16 @@ function MegaSection({ section }: { section: NavbarRenderSection }) {
             <a
               key={`${section.title}-${link.label}`}
               href={link.href}
-              className="block py-[10px] text-[13.5px] font-light tracking-[0.02em] text-[#555] no-underline transition-all duration-250 hover:text-[#0A1628] hover:pl-1.5"
+              className="flex items-center gap-[12px] py-[10px] text-[13.5px] font-light tracking-[0.02em] text-[#555] no-underline transition-all duration-250 hover:text-[#0A1628] hover:pl-1.5"
               style={{ fontFamily: "'Montserrat', sans-serif" }}
             >
+              {link.iconUrl ? (
+                <img
+                  src={link.iconUrl}
+                  alt={link.label}
+                  className="h-4 w-4 flex-shrink-0 object-contain"
+                />
+              ) : null}
               {link.label}
             </a>
           ))}
@@ -90,9 +98,16 @@ function MegaSection({ section }: { section: NavbarRenderSection }) {
             <a
               key={`${section.title}-${link.label}`}
               href={link.href}
-              className="block py-[10px] text-[13.5px] font-light tracking-[0.02em] text-[#555] no-underline transition-all duration-250 hover:text-[#0A1628] hover:pl-1.5"
+              className="flex items-center gap-[12px] py-[10px] text-[13.5px] font-light tracking-[0.02em] text-[#555] no-underline transition-all duration-250 hover:text-[#0A1628] hover:pl-1.5"
               style={{ fontFamily: "'Montserrat', sans-serif" }}
             >
+              {link.iconUrl ? (
+                <img
+                  src={link.iconUrl}
+                  alt={link.label}
+                  className="h-4 w-4 flex-shrink-0 object-contain"
+                />
+              ) : null}
               {link.label}
             </a>
           ))}
@@ -102,11 +117,21 @@ function MegaSection({ section }: { section: NavbarRenderSection }) {
   );
 }
 
+function getMegaMenuColumnCount(item: NavbarRenderItem) {
+  const sectionCount = item.mega?.sections.length ?? 0;
+  return Math.max(1, Math.min(5, sectionCount || 1));
+}
+
 export default function Navbar() {
   const router = useRouter();
+  const { count: wishlistCount } = useWishlistStore();
+  const { count: cartCount } = useCart();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [navHidden, setNavHidden] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchItems, setSearchItems] = useState<Array<{ dbId?: string; slug: string; name: string; shortMeta: string; imageUrl?: string; priceFrom: number }>>([]);
   const [navItems, setNavItems] = useState<NavbarRenderItem[]>([]);
   const [announcementItems, setAnnouncementItems] = useState<
     Array<{ message: string; link_url: string; open_in_new_tab: boolean }>
@@ -120,6 +145,7 @@ export default function Navbar() {
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
   const lastScrollY = useRef(0);
+  const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const onScroll = () => {
@@ -155,69 +181,42 @@ export default function Navbar() {
 
   useEffect(() => {
     let ignore = false;
+    const loadProducts = async () => {
+      const response = await fetch('/api/public/products', { cache: 'no-store' });
+      const payload = await response.json().catch(() => null);
+      if (!ignore && response.ok && Array.isArray(payload?.items)) {
+        setSearchItems(payload.items);
+      }
+    };
+    void loadProducts();
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!searchOpen) return;
+    const onPointerDown = (event: MouseEvent) => {
+      if (!searchRef.current?.contains(event.target as Node)) {
+        setSearchOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    return () => document.removeEventListener('mousedown', onPointerDown);
+  }, [searchOpen]);
+
+  useEffect(() => {
+    let ignore = false;
 
     const loadNavbar = async () => {
-      const [
-        itemsResult,
-        sectionsResult,
-        linksResult,
-        sourceItemsResult,
-        featuredResult,
-        categoriesResult,
-        subcategoriesResult,
-        optionsResult,
-        metalsResult,
-        stoneShapesResult,
-        ringSizesResult,
-        certificatesResult,
-      ] =
-        await Promise.all([
-          supabase.from('navbar_items').select('*').eq('status', 'active').order('display_order', { ascending: true }),
-          supabase.from('navbar_sections').select('*').eq('status', 'active').order('column_number', { ascending: true }).order('display_order', { ascending: true }),
-          supabase.from('navbar_section_links').select('*').eq('status', 'active').order('display_order', { ascending: true }),
-          supabase.from('navbar_section_source_items').select('*').eq('is_active', true).order('sort_order', { ascending: true }),
-          supabase.from('navbar_featured_cards').select('*'),
-          supabase.from('catalog_categories').select('id, name, slug, display_order, status').eq('status', 'active').order('display_order', { ascending: true }),
-          supabase.from('catalog_subcategories').select('*').eq('status', 'active').order('display_order', { ascending: true }),
-          supabase.from('catalog_options').select('*').eq('status', 'active').order('display_order', { ascending: true }),
-          supabase.from('catalog_metals').select('*').eq('status', 'active').order('display_order', { ascending: true }),
-          supabase.from('catalog_stone_shapes').select('*').eq('status', 'active').order('display_order', { ascending: true }),
-          supabase.from('catalog_ring_sizes').select('*').eq('status', 'active').order('display_order', { ascending: true }),
-          supabase.from('catalog_certificates').select('*').order('display_order', { ascending: true }),
-        ]);
+      const response = await fetch('/api/public/navbar', { cache: 'no-store' });
+      const payload = await response.json().catch(() => null);
 
-      const error =
-        itemsResult.error ||
-        sectionsResult.error ||
-        linksResult.error ||
-        sourceItemsResult.error ||
-        featuredResult.error ||
-        categoriesResult.error ||
-        subcategoriesResult.error ||
-        optionsResult.error ||
-        metalsResult.error ||
-        stoneShapesResult.error;
-
-      if (ignore || error || (itemsResult.data?.length ?? 0) === 0) {
+      if (ignore || !response.ok || !Array.isArray(payload?.items)) {
         return;
       }
 
-      setNavItems(
-        buildNavbarRenderItems({
-          items: itemsResult.data ?? [],
-          sections: sectionsResult.data ?? [],
-          sectionLinks: linksResult.data ?? [],
-          sectionSourceItems: sourceItemsResult.data ?? [],
-          featuredCards: featuredResult.data ?? [],
-          categories: categoriesResult.data ?? [],
-          subcategories: subcategoriesResult.data ?? [],
-          options: optionsResult.data ?? [],
-          metals: metalsResult.data ?? [],
-          stoneShapes: stoneShapesResult.data ?? [],
-          ringSizes: ringSizesResult.error ? [] : ringSizesResult.data ?? [],
-          certificates: certificatesResult.error ? [] : certificatesResult.data ?? [],
-        })
-      );
+      setNavItems(payload.items as NavbarRenderItem[]);
     };
 
     void loadNavbar();
@@ -304,6 +303,8 @@ export default function Navbar() {
   const mobileLinks = useMemo(
     () => [
       { label: 'Home', href: '/' },
+      { label: 'Wishlist', href: '/wishlist' },
+      { label: 'Cart', href: '/cart' },
       ...navItems.map((item) => ({ label: item.label, href: item.href ?? '#' })),
       { label: 'About Us', href: '/about' },
       { label: 'Contact Us', href: '/contact' },
@@ -324,6 +325,25 @@ export default function Navbar() {
 
     return authUser?.email?.split('@')[0] ?? 'Profile';
   })();
+  const filteredSearchItems = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return [];
+    const queryTokens = query.split(/\s+/).filter(Boolean);
+    return searchItems
+      .filter((item) => {
+        const haystack = [
+          item.name,
+          item.shortMeta,
+          item.slug,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+
+        return queryTokens.every((token) => haystack.includes(token));
+      })
+      .slice(0, 6);
+  }, [searchItems, searchQuery]);
 
   return (
     <>
@@ -406,38 +426,97 @@ export default function Navbar() {
         }}
       >
         <div className="flex items-center justify-start lg:justify-center relative px-5 sm:px-7 lg:px-[52px] pt-[22px] pb-[14px] border-b border-black/[0.04]">
+          <div ref={searchRef} className="absolute left-5 top-1/2 z-[30] hidden -translate-y-1/2 lg:block sm:left-7 lg:left-[52px]">
+            <div className="relative">
+            <div className={`flex h-[42px] items-center overflow-hidden rounded-full border border-black/10 bg-white transition-all duration-300 ${searchOpen ? 'w-[360px] shadow-[0_18px_48px_rgba(10,22,40,0.12)]' : 'w-[42px]'}`}>
+              <button
+                type="button"
+                onClick={() => setSearchOpen((prev) => !prev)}
+                aria-label="Search"
+                className="flex h-[42px] w-[42px] flex-shrink-0 items-center justify-center"
+              >
+                <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="#333" strokeWidth="1.4">
+                  <circle cx="7.5" cy="7.5" r="5.5" />
+                  <path d="M12 12L16 16" strokeLinecap="round" />
+                </svg>
+              </button>
+              {searchOpen ? (
+                <input
+                  autoFocus
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Search products..."
+                  className="h-[42px] w-full border-0 bg-transparent pr-4 text-[13px] text-[#0A1628] outline-none placeholder:text-[#8B94A5]"
+                />
+              ) : null}
+            </div>
+
+            {searchOpen && searchQuery.trim() ? (
+              <div className="absolute left-0 top-full mt-3 w-[360px] overflow-hidden rounded-[22px] border border-black/8 bg-white shadow-[0_24px_56px_rgba(10,22,40,0.14)]">
+                {filteredSearchItems.length ? (
+                  <div className="max-h-[420px] overflow-y-auto py-2">
+                    {filteredSearchItems.map((item) => (
+                      <Link
+                        key={item.dbId || item.slug}
+                        href={`/shop/${item.slug}`}
+                        onClick={() => {
+                          setSearchOpen(false);
+                          setSearchQuery('');
+                        }}
+                        className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-[#F7F8FA]"
+                      >
+                        <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-[14px] bg-[#F5F1E8]">
+                          {item.imageUrl ? <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" /> : null}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-[13px] font-medium text-[#0A1628]">{item.name}</div>
+                          <div className="mt-1 truncate text-[10px] uppercase tracking-[0.18em] text-[#8B94A5]">{item.shortMeta}</div>
+                          <div className="mt-1 text-[12px] text-[#253246]">${item.priceFrom.toLocaleString('en-US')}</div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="px-4 py-5 text-[12px] text-[#6A6A6A]">No products found.</div>
+                )}
+              </div>
+            ) : null}
+            </div>
+          </div>
           <Link
             href="/"
             className="flex items-center gap-[14px] pr-[112px] sm:pr-[132px] lg:pr-0 no-underline cursor-pointer transition-opacity duration-300 hover:opacity-60"
           >
             <span
-              className="text-[16px] sm:text-[24px] lg:text-[22px] font-normal tracking-[0.24em] sm:tracking-[0.34em] lg:tracking-[0.4em] uppercase text-[#0A1628]"
-              style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+              className={`${loaderWordmarkFont.className} text-[16px] sm:text-[24px] lg:text-[22px] font-normal tracking-[0.24em] sm:tracking-[0.34em] lg:tracking-[0.4em] uppercase text-[#0A1628]`}
             >
               House of Diams
             </span>
           </Link>
 
           <div className="absolute right-5 sm:right-7 lg:right-[52px] top-1/2 -translate-y-1/2 flex items-center gap-3 sm:gap-4">
-            <button
-              onClick={() => router.push(getCollectionHref())}
-              aria-label="Search"
-              className="w-[38px] h-[38px] rounded-full border border-black/10 bg-transparent flex items-center justify-center cursor-pointer transition-all duration-300 hover:border-[#0A1628] hover:bg-[#0A1628]/[0.06] group"
-            >
-              <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="#333" strokeWidth="1.4" className="group-hover:stroke-[#0A1628] transition-colors">
-                <circle cx="7.5" cy="7.5" r="5.5" />
-                <path d="M12 12L16 16" strokeLinecap="round" />
-              </svg>
-            </button>
-
-            <button
+            <Link
+              href="/wishlist"
               aria-label="Wishlist"
-              className="w-[38px] h-[38px] rounded-full border border-black/10 bg-transparent flex items-center justify-center cursor-pointer transition-all duration-300 hover:border-[#0A1628] hover:bg-[#0A1628]/[0.06] group"
+              className="relative w-[38px] h-[38px] rounded-full border border-black/10 bg-transparent flex items-center justify-center cursor-pointer transition-all duration-300 hover:border-[#0A1628] hover:bg-[#0A1628]/[0.06] group"
             >
               <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="#333" strokeWidth="1.4" strokeLinejoin="round" className="group-hover:stroke-[#0A1628] transition-colors">
                 <path d="M9 16L3 10C1.5 8.5 1.5 5.5 3 4C4.5 2.5 7 2.5 9 4C11 2.5 13.5 2.5 15 4C16.5 5.5 16.5 8.5 15 10L9 16Z" />
               </svg>
-            </button>
+              {wishlistCount ? <span className="absolute -right-1 -top-1 inline-flex min-w-[18px] items-center justify-center rounded-full bg-[#0A1628] px-1 text-[10px] text-white">{wishlistCount}</span> : null}
+            </Link>
+            <Link
+              href="/cart"
+              aria-label="Cart"
+              className="relative w-[38px] h-[38px] rounded-full border border-black/10 bg-transparent flex items-center justify-center cursor-pointer transition-all duration-300 hover:border-[#0A1628] hover:bg-[#0A1628]/[0.06] group"
+            >
+              <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="#333" strokeWidth="1.4" className="group-hover:stroke-[#0A1628] transition-colors">
+                <path d="M2.5 3.5H4.2L5.5 11.2H13.2L15.2 6H6.2" strokeLinecap="round" strokeLinejoin="round" />
+                <circle cx="7" cy="14" r="1.1" />
+                <circle cx="12.5" cy="14" r="1.1" />
+              </svg>
+              {cartCount ? <span className="absolute -right-1 -top-1 inline-flex min-w-[18px] items-center justify-center rounded-full bg-[#0A1628] px-1 text-[10px] text-white">{cartCount}</span> : null}
+            </Link>
 
             {authReady && authUser ? (
               <Link
@@ -502,12 +581,17 @@ export default function Navbar() {
                     }}
                   >
                     <div className="max-w-[1280px] mx-auto px-[100px] py-[56px]">
-                      <div className={`grid gap-0 ${item.mega.cols === 4 ? 'grid-cols-4' : 'grid-cols-3'}`}>
+                      <div
+                        className="grid gap-0"
+                        style={{
+                          gridTemplateColumns: `repeat(${getMegaMenuColumnCount(item)}, minmax(0, 1fr))`,
+                        }}
+                      >
                         {item.mega.sections.map((section, idx) => (
                           <div
                             key={`${item.label}-${section.title}-${idx}`}
                             className={[
-                              'px-[52px]',
+                              getMegaMenuColumnCount(item) >= 5 ? 'px-[24px]' : getMegaMenuColumnCount(item) === 4 ? 'px-[34px]' : 'px-[52px]',
                               idx === 0 ? 'pl-0' : '',
                               idx === item.mega!.sections.length - 1 ? 'pr-0' : 'border-r border-black/[0.05]',
                             ].join(' ')}

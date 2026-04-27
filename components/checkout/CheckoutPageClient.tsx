@@ -12,9 +12,11 @@ import CheckoutShippingStep from '@/components/checkout/CheckoutShippingStep';
 import CheckoutStepper from '@/components/checkout/CheckoutStepper';
 import CheckoutSummary from '@/components/checkout/CheckoutSummary';
 import type { CheckoutDisplayItem, CheckoutProfileForm } from '@/components/checkout/types';
-import Loader from '@/components/home/Loader';
 import { getCollectionHref } from '@/lib/browse-context';
 import { supabase } from '@/lib/supabase';
+import { useCart } from '@/lib/hooks/useCart';
+import { getProductKey } from '@/lib/product-keys';
+import type { StorefrontProduct } from '@/lib/catalog-products';
 
 function parseCurrency(value: string | null) {
   const parsed = Number(value ?? '0');
@@ -45,13 +47,13 @@ const EMPTY_PROFILE_FORM: CheckoutProfileForm = {
 export default function CheckoutPageClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { items: cartItems, clearCart } = useCart();
   const [currentStep, setCurrentStep] = useState(0);
   const [sessionLoading, setSessionLoading] = useState(true);
   const [sessionReady, setSessionReady] = useState(false);
   const [customerForm, setCustomerForm] = useState<CheckoutProfileForm>(EMPTY_PROFILE_FORM);
   const [placingOrder, setPlacingOrder] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [pageLoading, setPageLoading] = useState(true);
   const [taxInfo, setTaxInfo] = useState<{ gstLabel: string; gstPercentage: number } | null>(null);
   const [couponCodeInput, setCouponCodeInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<{
@@ -63,8 +65,11 @@ export default function CheckoutPageClient() {
     discountAmount: number
   } | null>(null);
   const [couponLoading, setCouponLoading] = useState(false);
+  const [cartProducts, setCartProducts] = useState<Array<Pick<StorefrontProduct, 'id' | 'dbId' | 'slug' | 'name' | 'imageUrl' | 'priceFrom'>>>([]);
+  const [taxMap, setTaxMap] = useState<Record<string, { gstLabel: string; gstPercentage: number }>>({});
+  const cartMode = searchParams.get('mode') === 'cart';
 
-  const item = useMemo<CheckoutDisplayItem>(() => ({
+  const singleItem = useMemo<CheckoutDisplayItem>(() => ({
     name: searchParams.get('name') ?? 'Selected Piece',
     slug: searchParams.get('slug') ?? '',
     imageUrl: searchParams.get('image') ?? undefined,
@@ -77,14 +82,71 @@ export default function CheckoutPageClient() {
     quantity: 1,
     gstLabel: taxInfo?.gstLabel ?? '',
     gstPercentage: taxInfo?.gstPercentage ?? 0,
-    couponCode: appliedCoupon?.code,
-    couponDiscount: appliedCoupon?.discountAmount ?? 0,
-  }), [searchParams, taxInfo, appliedCoupon]);
+  }), [searchParams, taxInfo]);
 
   useEffect(() => {
-    if (!item.slug) return;
+    if (!cartMode) return;
+    let ignore = false;
     void (async () => {
-      const response = await fetch(`/api/checkout/tax?slug=${encodeURIComponent(item.slug)}`);
+      const response = await fetch('/api/public/products', { cache: 'no-store' });
+      const payload = await response.json().catch(() => null);
+      if (!ignore && response.ok && Array.isArray(payload?.items)) {
+        setCartProducts(payload.items);
+      }
+    })();
+    return () => {
+      ignore = true;
+    };
+  }, [cartMode]);
+
+  const resolvedCartItems = useMemo(() => {
+    if (!cartMode) return [];
+    return cartItems
+      .map((entry) => {
+        const product = cartProducts.find((candidate) => getProductKey(candidate) === entry.productKey || candidate.slug === entry.productSlug);
+        if (!product) return null;
+        return { entry, product };
+      })
+      .filter(Boolean) as Array<{ entry: typeof cartItems[number]; product: typeof cartProducts[number] }>;
+  }, [cartItems, cartMode, cartProducts]);
+
+  const cartCheckoutItems = useMemo<CheckoutDisplayItem[]>(() => {
+    if (!cartMode) return [];
+    return resolvedCartItems
+      .map(({ entry, product }) => {
+        const tax = taxMap[product.slug];
+        return {
+          name: product.name,
+          slug: product.slug,
+          imageUrl: product.imageUrl ?? undefined,
+          priceFrom: product.priceFrom,
+          metal: entry.selection.metal ?? '',
+          purity: entry.selection.purity ?? '',
+          sizeOrFit: entry.selection.ringSize || entry.selection.sizeOrFit || '',
+          gemstone: entry.selection.gemstone ?? '',
+          carat: entry.selection.hiphopCarat ?? '',
+          quantity: entry.quantity,
+          gstLabel: tax?.gstLabel ?? 'Taxes',
+          gstPercentage: tax?.gstPercentage ?? 0,
+        };
+      })
+      .filter(Boolean) as CheckoutDisplayItem[];
+  }, [cartMode, resolvedCartItems, taxMap]);
+
+  const checkoutItems = useMemo(
+    () => (cartMode ? cartCheckoutItems : singleItem.slug ? [singleItem] : []),
+    [cartMode, cartCheckoutItems, singleItem]
+  );
+
+  const subtotal = useMemo(
+    () => checkoutItems.reduce((sum, item) => sum + (item.priceFrom * item.quantity), 0),
+    [checkoutItems]
+  );
+
+  useEffect(() => {
+    if (cartMode || !singleItem.slug) return;
+    void (async () => {
+      const response = await fetch(`/api/checkout/tax?slug=${encodeURIComponent(singleItem.slug)}`);
       const payload = await response.json().catch(() => null);
       if (response.ok) {
         setTaxInfo({
@@ -93,7 +155,33 @@ export default function CheckoutPageClient() {
         });
       }
     })();
-  }, [item.slug]);
+  }, [cartMode, singleItem.slug]);
+
+  useEffect(() => {
+    if (!cartMode || !resolvedCartItems.length) return;
+    let ignore = false;
+    void (async () => {
+      const entries = await Promise.all(
+        resolvedCartItems.map(async ({ product }) => {
+          const response = await fetch(`/api/checkout/tax?slug=${encodeURIComponent(product.slug)}`);
+          const payload = await response.json().catch(() => null);
+          return [
+            product.slug,
+            {
+              gstLabel: payload?.gstLabel ?? 'Taxes',
+              gstPercentage: Number(payload?.gstPercentage ?? 0),
+            },
+          ] as const;
+        })
+      );
+      if (!ignore) {
+        setTaxMap(Object.fromEntries(entries));
+      }
+    })();
+    return () => {
+      ignore = true;
+    };
+  }, [cartMode, resolvedCartItems]);
 
   useEffect(() => {
     void (async () => {
@@ -141,18 +229,6 @@ export default function CheckoutPageClient() {
       setSessionLoading(false);
     })();
   }, []);
-  useEffect(() => {
-    if (typeof document === 'undefined') return;
-    document.body.classList.toggle('page-loader-active', pageLoading);
-    return () => {
-      document.body.classList.remove('page-loader-active');
-    };
-  }, [pageLoading]);
-  useEffect(() => {
-    if (sessionLoading) return;
-    const timer = window.setTimeout(() => setPageLoading(false), 150);
-    return () => window.clearTimeout(timer);
-  }, [sessionLoading]);
   const isFirstStep = currentStep === 0;
   const isLastStep = currentStep === CHECKOUT_STEPS.length - 1;
   const continueHref = getCollectionHref(searchParams.get('category'));
@@ -179,7 +255,8 @@ export default function CheckoutPageClient() {
           authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
-          item,
+          item: cartMode ? null : singleItem,
+          items: cartMode ? checkoutItems : undefined,
           customer: customerForm,
           coupon: appliedCoupon
             ? {
@@ -197,6 +274,9 @@ export default function CheckoutPageClient() {
         return;
       }
 
+      if (cartMode) {
+        clearCart();
+      }
       router.push(`/checkout/success?order=${encodeURIComponent(payload.orderNumber)}`);
     } finally {
       setPlacingOrder(false);
@@ -214,7 +294,7 @@ export default function CheckoutPageClient() {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           code: normalizedCode,
-          subtotal: item.priceFrom * item.quantity,
+          subtotal,
         }),
       })
 
@@ -270,14 +350,39 @@ export default function CheckoutPageClient() {
     )
   }
 
+  if (cartMode && cartItems.length > 0 && resolvedCartItems.length === 0) {
+    return (
+      <section className="min-h-[calc(100vh-111px)] bg-[#f7f8fa] px-4 py-8 sm:px-6 lg:px-10">
+        <div className="mx-auto max-w-[1240px] rounded-[24px] border border-[#e7ebf0] bg-white p-6 text-sm text-[#667085] shadow-[0_18px_50px_rgba(15,23,42,0.04)]">
+          Loading checkout...
+        </div>
+      </section>
+    )
+  }
+
+  if (!checkoutItems.length) {
+    return (
+      <section className="min-h-[calc(100vh-111px)] bg-[#f7f8fa] px-4 py-8 sm:px-6 lg:px-10">
+        <div className="mx-auto max-w-[720px] rounded-[24px] border border-[#e7ebf0] bg-white p-8 text-center shadow-[0_18px_50px_rgba(15,23,42,0.04)]">
+          <h1 className="text-[32px] font-semibold tracking-[-0.04em] text-[#101828]">Nothing ready for checkout</h1>
+          <p className="mt-3 text-sm leading-7 text-[#667085]">Add a product to cart or start checkout from a product page first.</p>
+          <div className="mt-6">
+            <Link href="/shop" className="inline-flex h-11 items-center justify-center rounded-full bg-[#101828] px-6 text-sm font-medium text-white transition hover:bg-[#1d2939]">
+              Explore Products
+            </Link>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="min-h-[calc(100vh-111px)] bg-[#f7f8fa] px-4 py-8 sm:px-6 lg:px-10">
-      {pageLoading ? <Loader ready onComplete={() => setPageLoading(false)} /> : null}
       <div className="mx-auto max-w-[1240px]">
         <div className="mb-6">
           <div className="text-[11px] font-medium uppercase tracking-[0.24em] text-[#98a2b3]">Checkout</div>
           <h1 className="mt-2 text-[32px] font-semibold tracking-[-0.04em] text-[#101828]">Secure your piece</h1>
-          <p className="mt-2 text-sm text-[#667085]">Static checkout preview for normal product purchases.</p>
+          <p className="mt-2 text-sm text-[#667085]">{cartMode ? 'Checkout synced to the products currently saved in your cart.' : 'Checkout preview for your selected product.'}</p>
         </div>
 
         <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
@@ -401,7 +506,13 @@ export default function CheckoutPageClient() {
                   </div>
                 ) : null}
               </div>
-              <CheckoutSummary item={item} />
+              <CheckoutSummary
+                summary={{
+                  items: checkoutItems,
+                  couponCode: appliedCoupon?.code,
+                  couponDiscount: appliedCoupon?.discountAmount ?? 0,
+                }}
+              />
             </div>
           </div>
         </div>

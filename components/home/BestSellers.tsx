@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { HomeBestSellerProduct, HomeBestSellerSection } from '@/lib/home-data'
+import { useWishlistStore } from '@/lib/hooks/useWishlistStore'
+import { getProductKey } from '@/lib/product-keys'
 
 type Product = {
   id: string
@@ -11,6 +13,7 @@ type Product = {
   price: string
   badge: string
   badgeVariant: 'navy' | 'outline'
+  detailTemplate?: 'standard' | 'hiphop'
   image?: string
   placeholder: React.ReactNode
 }
@@ -97,16 +100,27 @@ function Chevron({ direction }: { direction: 'left' | 'right' }) {
 }
 
 function ProductCard({ product }: { product: Product }) {
-  const [wishlisted, setWishlisted] = useState(false)
+  const { contains, toggle } = useWishlistStore()
+  const isHipHop = product.detailTemplate === 'hiphop'
+  const wishlisted = contains(getProductKey(product))
 
   return (
-    <div className="group h-full overflow-hidden rounded-[22px] border border-[var(--theme-border)] bg-[var(--theme-surface)] transition-transform duration-[350ms] ease-[cubic-bezier(.4,0,.2,1)] hover:-translate-y-[3px] hover:z-[2]">
+    <div
+      className={[
+        'group h-full overflow-hidden rounded-[22px] transition-transform duration-[350ms] ease-[cubic-bezier(.4,0,.2,1)] hover:-translate-y-[3px] hover:z-[2]',
+        isHipHop
+          ? 'border border-white/12 bg-[#0A1628] text-white'
+          : 'border border-[var(--theme-border)] bg-[var(--theme-surface)]',
+      ].join(' ')}
+    >
       <a href={`/shop/${product.slug}`} className="block no-underline">
-        <div className="relative aspect-[1.08/1] overflow-hidden bg-white sm:aspect-square">
+        <div className={`relative aspect-[1.08/1] overflow-hidden sm:aspect-square ${isHipHop ? 'bg-gradient-to-br from-[#0A1628] to-[#111F34]' : 'bg-white'}`}>
           <div
             className={[
               'absolute top-3 left-3 z-[2] text-[6.5px] tracking-[0.16em] uppercase px-[10px] py-1 font-medium',
-              product.badgeVariant === 'navy'
+              isHipHop
+                ? 'border border-white/20 bg-white/10 text-white'
+                : product.badgeVariant === 'navy'
                 ? 'bg-[var(--theme-ink)] text-white'
                 : 'border border-[var(--theme-border-strong)] bg-[var(--theme-surface)] text-[var(--theme-ink)]',
             ].join(' ')}
@@ -117,9 +131,16 @@ function ProductCard({ product }: { product: Product }) {
           <button
             onClick={(event) => {
               event.preventDefault()
-              setWishlisted((value) => !value)
+              toggle(getProductKey(product))
             }}
-            className="absolute top-3 right-3 z-[2] flex h-[30px] w-[30px] cursor-pointer items-center justify-center rounded-full border-[0.5px] border-[var(--theme-border-strong)] bg-[color:rgba(255,255,255,0.9)] transition-colors duration-200 hover:bg-[var(--theme-ink)]"
+            className={[
+              'absolute top-3 right-3 z-[2] flex h-[30px] w-[30px] cursor-pointer items-center justify-center rounded-full transition-colors duration-200',
+              isHipHop
+                ? wishlisted
+                  ? 'border border-white bg-white text-[#0A1628]'
+                  : 'border border-white/20 bg-black/40 text-white hover:bg-white hover:text-[#0A1628]'
+                : 'border-[0.5px] border-[var(--theme-border-strong)] bg-[color:rgba(255,255,255,0.9)] hover:bg-[var(--theme-ink)]',
+            ].join(' ')}
             aria-label="Toggle wishlist"
           >
             <HeartIcon filled={wishlisted} />
@@ -139,23 +160,28 @@ function ProductCard({ product }: { product: Product }) {
           )}
         </div>
 
-        <div className="px-[16px] pb-[18px] pt-4 sm:px-[18px] sm:pt-5 sm:pb-[22px]">
-          <div className="font-display-title mb-[5px] text-[17px] font-normal leading-[1.22] tracking-[0.02em] text-[var(--theme-heading)] sm:text-[19px]">
+        <div className={`px-[16px] pb-[18px] pt-4 sm:px-[18px] sm:pt-5 sm:pb-[22px] ${isHipHop ? 'border-t border-white/12' : ''}`}>
+          <div className={`font-display-title mb-[5px] text-[17px] font-normal leading-[1.22] tracking-[0.02em] sm:text-[19px] ${isHipHop ? 'text-white' : 'text-[var(--theme-heading)]'}`}>
             {product.name}
           </div>
 
-          <p className="mb-3 text-[7px] font-light uppercase leading-[1.75] tracking-[0.13em] text-[var(--theme-muted)] sm:mb-4 sm:text-[7.5px] sm:tracking-[0.14em]">
+          <p className={`mb-3 text-[7px] font-light uppercase leading-[1.75] tracking-[0.13em] sm:mb-4 sm:text-[7.5px] sm:tracking-[0.14em] ${isHipHop ? 'text-white/55' : 'text-[var(--theme-muted)]'}`}>
             {product.meta}
           </p>
 
           <div className="flex items-center justify-between">
-            <span className="font-numeric text-[20px] font-light text-[var(--theme-heading)] sm:text-[22px]">
+            <span className={`font-numeric text-[20px] font-light sm:text-[22px] ${isHipHop ? 'text-white' : 'text-[var(--theme-heading)]'}`}>
               {product.price}
             </span>
 
             <button
               onClick={(event) => event.preventDefault()}
-              className="cursor-pointer border border-[var(--theme-ink)] bg-transparent px-[12px] py-[6px] text-[6.5px] font-medium uppercase tracking-[0.16em] text-[var(--theme-ink)] transition-colors duration-200 hover:bg-[var(--theme-ink)] hover:text-white sm:px-[14px] sm:py-[7px] sm:text-[7px] sm:tracking-[0.18em]"
+              className={[
+                'cursor-pointer px-[12px] py-[6px] text-[6.5px] font-medium uppercase tracking-[0.16em] transition-colors duration-200 sm:px-[14px] sm:py-[7px] sm:text-[7px] sm:tracking-[0.18em]',
+                isHipHop
+                  ? 'border border-white/24 bg-transparent text-white hover:border-white hover:bg-white hover:text-[#0A1628]'
+                  : 'border border-[var(--theme-ink)] bg-transparent text-[var(--theme-ink)] hover:bg-[var(--theme-ink)] hover:text-white',
+              ].join(' ')}
             >
               Enquire
             </button>

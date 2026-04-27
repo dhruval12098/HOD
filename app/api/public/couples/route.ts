@@ -26,7 +26,7 @@ export async function GET() {
 
   const { data: items, error: itemsError } = await supabase
     .from('couples_items')
-    .select('sort_order, names, location, story, product_name, product_detail, image_path')
+    .select('sort_order, names, location, story, product_name, product_link, product_detail, image_path')
     .eq('section_id', section.id)
     .order('sort_order', { ascending: true })
   if (itemsError) return NextResponse.json({ error: itemsError.message }, { status: 500 })

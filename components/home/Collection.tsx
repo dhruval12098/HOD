@@ -1,14 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { gsap } from 'gsap';
 import type { HomeCollectionItem } from '@/lib/home-data';
 
-// ── Types ─────────────────────────────────────────────────────────────────────
 interface CollectionProps {
   onEnquire?: (name: string) => void;
+  items?: HomeCollectionItem[];
 }
 
 interface PanelData {
@@ -18,9 +16,8 @@ interface PanelData {
   desc: string;
   cta: string;
   ctaHref: string;
-  gem: React.ReactNode;
+  imageSrc?: string | null;
   bgClass: string;
-  darkVignette?: boolean;
 }
 
 interface CollectionApiItem {
@@ -32,107 +29,32 @@ interface CollectionApiItem {
   link: string;
 }
 
-// ── SVG Gems ──────────────────────────────────────────────────────────────────
-const FineJewelleryGem = () => (
-  <svg width="200" height="200" viewBox="0 0 110 110" fill="none">
-    <path d="M55 15 Q75 38 72 68 Q65 92 55 94 Q45 92 38 68 Q35 38 55 15Z" stroke="#0A1628" strokeWidth="1" fill="rgba(10,22,40,0.14)" />
-    <path d="M55 25 Q68 42 65 65 Q60 82 55 84 Q50 82 45 65 Q42 42 55 25Z" stroke="#0A1628" strokeWidth=".5" fill="rgba(10,22,40,0.07)" />
-    <line x1="55" y1="15" x2="38" y2="68" stroke="#0A1628" strokeWidth=".3" opacity=".5" />
-    <line x1="55" y1="15" x2="72" y2="68" stroke="#0A1628" strokeWidth=".3" opacity=".5" />
-    <line x1="38" y1="68" x2="72" y2="68" stroke="#0A1628" strokeWidth=".3" opacity=".5" />
-    <circle cx="48" cy="42" r="3.5" fill="#fff" opacity=".45" />
-  </svg>
-);
-
-const EngagementRingsGem = () => (
-  <svg width="200" height="200" viewBox="0 0 110 110" fill="none">
-    <polygon points="55,15 85,35 77,85 33,85 25,35" stroke="#0A1628" strokeWidth="1" fill="rgba(10,22,40,0.13)" />
-    <polygon points="55,25 75,40 69,75 41,75 35,40" stroke="#0A1628" strokeWidth=".5" fill="rgba(10,22,40,0.06)" />
-    <line x1="55" y1="15" x2="33" y2="85" stroke="#0A1628" strokeWidth=".3" opacity=".4" />
-    <line x1="55" y1="15" x2="77" y2="85" stroke="#0A1628" strokeWidth=".3" opacity=".4" />
-    <line x1="25" y1="35" x2="85" y2="35" stroke="#0A1628" strokeWidth=".3" opacity=".35" />
-    <circle cx="48" cy="33" r="3.5" fill="#fff" opacity=".45" />
-  </svg>
-);
-
-const WeddingBandsGem = () => (
-  <svg width="200" height="200" viewBox="0 0 110 110" fill="none">
-    <circle cx="55" cy="55" r="38" stroke="#0A1628" strokeWidth="1" fill="none" />
-    <circle cx="55" cy="55" r="28" stroke="#0A1628" strokeWidth=".5" fill="none" opacity=".4" />
-    <circle cx="55" cy="55" r="18" stroke="#0A1628" strokeWidth=".3" fill="rgba(10,22,40,0.05)" opacity=".5" />
-    {([[55,17],[89,47],[76,88],[34,88],[21,47]] as [number,number][]).map(([cx,cy],i) => (
-      <circle key={i} cx={cx} cy={cy} r="4.5" fill="rgba(32,48,74,0.35)" stroke="#0A1628" strokeWidth=".5" />
-    ))}
-  </svg>
-);
-
-const HipHopGem = () => (
-  <svg width="180" height="180" viewBox="0 0 110 110" fill="none">
-    {([22,42,62,82] as number[]).map((cy, i) => (
-      <g key={i}>
-        <ellipse cx="55" cy={cy} rx="22" ry="8" stroke="#0A1628" strokeWidth="1" fill="rgba(32,48,74,0.15)" />
-        <rect x="44" y={cy - 2.5} width="22" height="5" fill="#20304A" opacity=".6" />
-      </g>
-    ))}
-    <line x1="33" y1="22" x2="33" y2="82" stroke="#0A1628" strokeWidth=".4" opacity=".3" />
-    <line x1="77" y1="22" x2="77" y2="82" stroke="#0A1628" strokeWidth=".4" opacity=".3" />
-  </svg>
-);
-
-const BespokeGem = () => (
-  <svg width="200" height="200" viewBox="0 0 110 110" fill="none">
-    <polygon points="55,15 73,30 68,90 42,90 37,30" stroke="#0A1628" strokeWidth="1" fill="rgba(10,22,40,0.14)" />
-    <polygon points="28,40 38,48 33,80 18,80 13,48" stroke="#0A1628" strokeWidth=".8" fill="rgba(10,22,40,0.08)" />
-    <polygon points="82,40 92,48 87,80 72,80 67,48" stroke="#0A1628" strokeWidth=".8" fill="rgba(10,22,40,0.08)" />
-    <line x1="37" y1="30" x2="28" y2="40" stroke="#0A1628" strokeWidth=".4" opacity=".4" />
-    <line x1="73" y1="30" x2="82" y2="40" stroke="#0A1628" strokeWidth=".4" opacity=".4" />
-    <circle cx="55" cy="44" r="4" fill="rgba(255,255,255,0.4)" />
-  </svg>
-);
-
-// ── Chevron SVGs ───────────────────────────────────────────────────────────────
-const ChevronLeft = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="15 18 9 12 15 6" />
-  </svg>
-);
-
-const ChevronRight = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="9 6 15 12 9 18" />
-  </svg>
-);
-
-// ── Panel data ────────────────────────────────────────────────────────────────
 const PANELS: PanelData[] = [
   {
     index: 0,
     name: 'Fine Jewellery',
     label: 'Collection 01',
     desc: 'Necklaces, earrings, bracelets & pendants',
-    cta: 'Shop Collection',
-    ctaHref: '/shop?category=fine',
-    gem: <FineJewelleryGem />,
+    cta: 'Shop Now',
+    ctaHref: '/fine-jewellery',
     bgClass: 'bg-[linear-gradient(145deg,#f8f6f0,#ddd5be)]',
   },
   {
     index: 1,
     name: 'Engagement Rings',
     label: 'Collection 02',
-    desc: 'Solitaire, halo, pavé & three stone',
-    cta: 'Shop Collection',
-    ctaHref: '/shop?category=engagement',
-    gem: <EngagementRingsGem />,
+    desc: 'Solitaire, halo, pave & three stone',
+    cta: 'Shop Now',
+    ctaHref: '/engagement-rings',
     bgClass: 'bg-[linear-gradient(145deg,#f0ece4,#d8cebb)]',
   },
   {
     index: 2,
     name: 'Wedding Bands',
     label: 'Collection 03',
-    desc: 'For her & for him — classic to diamond-set',
-    cta: 'Shop Collection',
-    ctaHref: '/shop?category=wedding',
-    gem: <WeddingBandsGem />,
+    desc: 'For her & for him, classic to diamond-set',
+    cta: 'Shop Now',
+    ctaHref: '/wedding-bands',
     bgClass: 'bg-[linear-gradient(145deg,#faf8f4,#e8e0d0)]',
   },
   {
@@ -140,291 +62,93 @@ const PANELS: PanelData[] = [
     name: 'Hip Hop',
     label: 'Collection 04',
     desc: 'Iced chains, grillz & statement pieces',
-    cta: 'Shop Collection',
-    ctaHref: '/shop?category=hiphop',
-    gem: <HipHopGem />,
-    bgClass: 'bg-[#0A0A0A]',
-    darkVignette: true,
-  },
-  {
-    index: 4,
-    name: 'Bespoke',
-    label: 'Collection 05',
-    desc: 'Design your dream piece from scratch',
-    cta: 'Start Designing',
-    ctaHref: '/bespoke',
-    gem: <BespokeGem />,
-    bgClass: 'bg-[linear-gradient(145deg,#f5f2ec,#e0d8c8)]',
+    cta: 'Shop Now',
+    ctaHref: '/hiphop',
+    bgClass: 'bg-[linear-gradient(145deg,#f3eee5,#d9cfbf)]',
   },
 ];
 
-const AUTO_DELAY = 4000;
 const COLLECTION_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_COLLECTION_BUCKET ?? 'hod';
 const COLLECTION_BUCKET_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
   ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${COLLECTION_BUCKET}`
   : '';
 
-// ── Component ─────────────────────────────────────────────────────────────────
 function mapPanels(items: CollectionApiItem[]): PanelData[] {
-  return items.map((item, index) => ({
+  return items.slice(0, 4).map((item, index) => ({
     index,
     name: item.title,
-    label: item.label,
+    label: item.label || `Collection ${String(index + 1).padStart(2, '0')}`,
     desc: item.description,
-    cta: 'Shop Collection',
+    cta: 'Shop Now',
     ctaHref: item.link,
-    gem: item.image_path ? (
-      <div className="relative h-full w-full">
-        <img
-          src={`${COLLECTION_BUCKET_URL}/${item.image_path}`}
-          alt={item.title}
-          className="h-full w-full object-cover"
-          loading={index === 0 ? 'eager' : 'lazy'}
-        />
-      </div>
-    ) : null,
+    imageSrc: item.image_path ? `${COLLECTION_BUCKET_URL}/${item.image_path}` : null,
     bgClass: index % 2 === 0 ? 'bg-[linear-gradient(145deg,#f8f6f0,#ddd5be)]' : 'bg-[linear-gradient(145deg,#f0ece4,#d8cebb)]',
   }));
 }
 
-export default function Collection({ onEnquire, items = [] }: CollectionProps & { items?: HomeCollectionItem[] }) {
+export default function Collection({ items = [] }: CollectionProps) {
   const router = useRouter();
-  const [current, setCurrent] = useState(0);
-  const [progress, setProgress] = useState(0);
-  const [panels] = useState<PanelData[]>(items.length ? mapPanels(items) : PANELS);
-
-  const trackRef      = useRef<HTMLDivElement>(null);
-  const progressRef   = useRef<HTMLDivElement>(null);
-  const labelRefs     = useRef<(HTMLDivElement | null)[]>([]);
-  const titleRefs     = useRef<(HTMLDivElement | null)[]>([]);
-  const descRefs      = useRef<(HTMLDivElement | null)[]>([]);
-  const ctaRefs       = useRef<(HTMLAnchorElement | null)[]>([]);
-  const gemRefs       = useRef<(HTMLDivElement | null)[]>([]);
-
-  const autoTimerRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const progRafRef    = useRef<number | null>(null);
-  const progStartRef  = useRef<number>(0);
-  const touchStartX   = useRef<number>(0);
-  const currentRef    = useRef(0);
-
-  // ── Text animation helpers ────────────────────────────────────────────────
-  const hideSlideContent = (i: number, instant = false) => {
-    const dur = instant ? 0 : 0.15;
-    gsap.to(labelRefs.current[i], { opacity: 0, y: 8, duration: dur, ease: 'power1.in' });
-    gsap.to(titleRefs.current[i], { opacity: 0, y: 10, duration: dur, ease: 'power1.in' });
-    gsap.to(descRefs.current[i],  { opacity: 0, y: 8, duration: dur, ease: 'power1.in' });
-    gsap.to(ctaRefs.current[i],   { opacity: 0, y: -8, duration: dur, ease: 'power1.in' });
-    gsap.to(gemRefs.current[i],   { scale: 1, opacity: 0.7, duration: instant ? 0 : 0.3 });
-  };
-
-  const showSlideContent = (i: number) => {
-    gsap.fromTo(labelRefs.current[i], { opacity: 0, y: 8 },  { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out', delay: 0.1 });
-    gsap.fromTo(titleRefs.current[i], { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out', delay: 0.18 });
-    gsap.fromTo(descRefs.current[i],  { opacity: 0, y: 8 },  { opacity: 1, y: 0, duration: 0.35, ease: 'power2.out', delay: 0.26 });
-    gsap.fromTo(ctaRefs.current[i],   { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.32, ease: 'back.out(1.6)', delay: 0.32 });
-    gsap.to(gemRefs.current[i],       { scale: 1.1, opacity: 0.95, duration: 0.5, ease: 'power2.out' });
-  };
-
-  // ── Slide transition ──────────────────────────────────────────────────────
-  const goTo = (idx: number, resetAuto = true) => {
-    const next = ((idx % panels.length) + panels.length) % panels.length;
-    const prev = currentRef.current;
-    if (next === prev) return;
-
-    hideSlideContent(prev);
-
-    gsap.to(trackRef.current, {
-      x: `-${next * 100}%`,
-      duration: 0.65,
-      ease: 'power3.inOut',
-      onComplete: () => showSlideContent(next),
-    });
-
-    currentRef.current = next;
-    setCurrent(next);
-    if (resetAuto) startAuto(next);
-  };
-
-  // ── Progress bar ──────────────────────────────────────────────────────────
-  const startAuto = (fromIndex?: number) => {
-    if (autoTimerRef.current) clearTimeout(autoTimerRef.current);
-    if (progRafRef.current) cancelAnimationFrame(progRafRef.current);
-
-    setProgress(0);
-    progStartRef.current = 0;
-
-    const tick = (now: number) => {
-      if (progStartRef.current === 0) {
-        progStartRef.current = now;
-      }
-      const pct = Math.min(((now - progStartRef.current) / AUTO_DELAY) * 100, 100);
-      setProgress(pct);
-      if (pct < 100) progRafRef.current = requestAnimationFrame(tick);
-    };
-    progRafRef.current = requestAnimationFrame(tick);
-
-    autoTimerRef.current = setTimeout(() => {
-      const next = (currentRef.current + 1) % panels.length;
-      goTo(next, false);
-      startAuto(next);
-    }, AUTO_DELAY);
-  };
-
-  // ── Mount ─────────────────────────────────────────────────────────────────
-  useEffect(() => {
-    // Set initial positions
-    gsap.set(trackRef.current, { x: '0%' });
-    panels.forEach((_, i) => {
-      hideSlideContent(i, true);
-    });
-    showSlideContent(0);
-    startAuto(0);
-
-    return () => {
-      if (autoTimerRef.current) clearTimeout(autoTimerRef.current);
-      if (progRafRef.current) cancelAnimationFrame(progRafRef.current);
-    };
-  }, [panels]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ── Swipe ─────────────────────────────────────────────────────────────────
-  const handleTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
-  const handleTouchEnd   = (e: React.TouchEvent) => {
-    const dx = e.changedTouches[0].clientX - touchStartX.current;
-    if (Math.abs(dx) > 40) goTo(dx < 0 ? currentRef.current + 1 : currentRef.current - 1);
-  };
+  const panels = items.length ? mapPanels(items) : PANELS;
 
   return (
-    <section className="mx-auto w-full max-w-6xl px-4 py-16 font-[Montserrat,sans-serif] font-light sm:px-4 sm:py-20">
-
-      {/* ── Header ── */}
-      <div className="text-center mb-10">
-        <div className="inline-flex items-center gap-3 mb-4 text-[10px] font-medium tracking-[0.32em] uppercase text-[#0A1628]">
-          <span className="w-6 h-px bg-[#0A1628] inline-block" />
+    <section className="mx-auto w-full max-w-[1440px] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+      <div className="mb-10 text-center sm:mb-14">
+        <div className="inline-flex items-center gap-3 text-[10px] font-medium uppercase tracking-[0.32em] text-[#0A1628]">
+          <span className="inline-block h-px w-6 bg-[#0A1628]" />
           Explore
-          <span className="w-6 h-px bg-[#0A1628] inline-block" />
+          <span className="inline-block h-px w-6 bg-[#0A1628]" />
         </div>
-        <h2 className="font-[Cormorant_Garamond,Georgia,serif] font-light text-[clamp(36px,5vw,60px)] leading-[1.05] mb-3">
-          Our{' '}
-          <em className="not-italic text-[#0A1628] italic">Collections</em>
+        <h2 className="mt-4 font-serif text-[clamp(34px,5vw,60px)] font-light leading-[1.02] text-[#0A1628]">
+          Our <em className="not-italic italic">Collections</em>
         </h2>
-        <p className="text-[12px] font-light tracking-[0.12em] leading-[1.9] text-gray-400 max-w-lg mx-auto">
-          Swipe or use the arrows to explore each collection.
+        <p className="mx-auto mt-3 max-w-xl text-[12px] font-light tracking-[0.1em] text-[#6A6A6A] sm:text-[13px]">
+          Discover the signature worlds of House of Diams through a refined card-based selection.
         </p>
       </div>
 
-      {/* ── Carousel ── */}
-      <div className="relative rounded-xl overflow-hidden"
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-      >
-        {/* Track */}
-        <div ref={trackRef} className="flex will-change-transform">
-          {panels.map((panel) => (
-            <div
-              key={panel.index}
-              className={`relative min-w-full overflow-hidden cursor-pointer select-none h-[clamp(360px,58vw,480px)] sm:h-[clamp(320px,50vw,480px)] ${panel.bgClass}`}
+      <div className="grid grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-4 lg:gap-6">
+        {panels.map((panel, index) => (
+          <article
+            key={`${panel.name}-${index}`}
+            className="group overflow-hidden rounded-[24px] border border-white/30 bg-white shadow-[0_18px_48px_rgba(10,22,40,0.08)] transition duration-500 hover:-translate-y-1 hover:shadow-[0_24px_56px_rgba(10,22,40,0.14)]"
+          >
+            <button
+              type="button"
               onClick={() => router.push(panel.ctaHref)}
-              role="link"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  router.push(panel.ctaHref);
-                }
-              }}
+              className="block w-full text-left"
             >
-              {/* Gem */}
-              <div
-                ref={(el) => { gemRefs.current[panel.index] = el; }}
-                className="absolute inset-0 pointer-events-none will-change-transform"
-              >
-                {panel.gem}
-              </div>
+              <div className={`relative aspect-[0.9] overflow-hidden ${panel.bgClass}`}>
+                {panel.imageSrc ? (
+                  <img
+                    src={panel.imageSrc}
+                    alt={panel.name}
+                    className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]"
+                    loading={index < 2 ? 'eager' : 'lazy'}
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,#fff7e4_0%,#efe6d5_42%,#dfd3bf_100%)]" />
+                )}
 
-              {/* Vignette */}
-              <div className={`absolute inset-0 pointer-events-none ${panel.darkVignette
-                ? 'bg-[linear-gradient(to_top,rgba(0,0,0,0.88)_0%,rgba(0,0,0,0)_55%)]'
-                : 'bg-[linear-gradient(to_top,rgba(0,0,0,0.72)_0%,rgba(0,0,0,0)_55%)]'
-              }`} />
+                <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,22,40,0.06)_0%,rgba(10,22,40,0.18)_48%,rgba(10,22,40,0.76)_100%)]" />
 
-              {/* CTA */}
-              <button
-                ref={(el) => { ctaRefs.current[panel.index] = el as unknown as HTMLAnchorElement | null; }}
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  router.push(panel.ctaHref);
-                }}
-                className="absolute top-4 right-4 z-10 rounded-[2px] border border-white/30 bg-black/25 px-4 py-2 text-[8px] font-medium uppercase tracking-[0.18em] text-white no-underline backdrop-blur-sm transition-colors duration-200 hover:border-[#0A1628] hover:bg-[#0A1628] hover:text-white will-change-[opacity,transform] sm:top-6 sm:right-6 sm:px-5 sm:py-2.5 sm:text-[8.5px] sm:tracking-[0.22em]"
-              >
-                {panel.cta}
-              </button>
-
-              {/* Content */}
-              <div className="absolute bottom-5 left-5 right-5 z-[2] sm:bottom-7 sm:left-7 sm:right-7">
-                <div
-                  ref={(el) => { labelRefs.current[panel.index] = el; }}
-                  className="mb-1.5 text-[8px] font-medium tracking-[0.22em] uppercase text-[#0A1628] will-change-[opacity,transform] sm:text-[9px] sm:tracking-[0.28em]"
-                >
-                  {panel.label}
-                </div>
-                <div
-                  ref={(el) => { titleRefs.current[panel.index] = el; }}
-                  className="font-[Cormorant_Garamond,Georgia,serif] text-[clamp(24px,6vw,42px)] font-normal text-white leading-[1.02] will-change-[opacity,transform]"
-                >
-                  {panel.name}
-                </div>
-                <div
-                  ref={(el) => { descRefs.current[panel.index] = el; }}
-                  className="mt-1.5 text-[10px] font-light tracking-[0.06em] text-white/70 will-change-[opacity,transform] sm:text-[11px] sm:tracking-[0.1em] sm:text-white/60"
-                >
-                  {panel.desc}
+                <div className="absolute inset-x-0 bottom-0 z-[1] p-4 sm:p-5">
+                  <div className="text-[7px] font-medium uppercase tracking-[0.22em] text-white/70 sm:text-[8px]">
+                    {panel.label}
+                  </div>
+                  <h3 className="mt-2 font-sans text-[17px] font-medium leading-[1.08] text-white sm:text-[21px]">
+                    {panel.name}
+                  </h3>
+                  <div className="mt-3 inline-flex items-center gap-2.5 text-[9px] font-medium uppercase tracking-[0.22em] text-white sm:text-[10px]">
+                    <span>{panel.cta}</span>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                      <path d="M4 3L9 7L4 11" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Progress bar */}
-        <div
-          className="absolute bottom-0 left-0 h-[3px] bg-[#0A1628] z-10 pointer-events-none"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
-
-      {/* ── Nav ── */}
-      <div className="flex items-center justify-center gap-2.5 mt-5">
-        {/* Prev */}
-        <button
-          onClick={() => goTo(currentRef.current - 1)}
-          aria-label="Previous"
-          className="w-10 h-10 rounded-full border border-black/15 bg-white dark:bg-zinc-900 dark:border-white/10 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
-        >
-          <ChevronLeft />
-        </button>
-
-        {/* Dots */}
-        {panels.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => goTo(i)}
-            aria-label={`Go to slide ${i + 1}`}
-            className="h-1.5 rounded-full bg-[#0A1628] transition-all duration-[450ms] ease-[cubic-bezier(0.77,0,0.18,1)] cursor-pointer"
-            style={{
-              width: i === current ? '28px' : '6px',
-              opacity: i === current ? 1 : 0.3,
-            }}
-          />
+            </button>
+          </article>
         ))}
-
-        {/* Next */}
-        <button
-          onClick={() => goTo(currentRef.current + 1)}
-          aria-label="Next"
-          className="w-10 h-10 rounded-full border border-black/15 bg-white dark:bg-zinc-900 dark:border-white/10 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
-        >
-          <ChevronRight />
-        </button>
       </div>
     </section>
   );

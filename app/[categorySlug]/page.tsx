@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import ShopClient from '@/components/pages/ShopClient'
+import { buildNavbarRenderItems } from '@/lib/navbar'
 import { createSupabaseServerClient } from '@/lib/server-supabase'
 import { filterStorefrontProducts, getStorefrontProducts } from '@/lib/catalog-products'
 
@@ -11,6 +12,60 @@ function slugifyValue(value: string) {
     .replace(/[^\w\s-]/g, '')
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
+}
+
+type CategoryBrowseSection = {
+  id: string
+  title: string
+  iconUrl?: string | null
+  options: { label: string; href: string; type?: 'default' | 'swatch' | 'icon'; iconUrl?: string | null }[]
+}
+
+function resolveMasterFilterHref(args: {
+  href: string
+  currentCategorySlug: string
+  categoryProducts: Awaited<ReturnType<typeof getStorefrontProducts>>
+  allProducts: Awaited<ReturnType<typeof getStorefrontProducts>>
+}) {
+  const { href, currentCategorySlug, categoryProducts, allProducts } = args
+
+  if (!href.startsWith('/shop?')) return href
+
+  const search = href.split('?')[1] ?? ''
+  const params = new URLSearchParams(search)
+  const optionSlug = params.get('option')
+  const shapeSlug = params.get('shape')
+  const styleSlug = params.get('style')
+  const metalSlug = params.get('metal')
+  const certificate = params.get('certificate')
+
+  const currentMatches = filterStorefrontProducts(categoryProducts, {
+    categorySlug: currentCategorySlug,
+    optionSlug,
+    shapeSlug,
+    styleSlug,
+    metalSlug,
+    certificate,
+  })
+
+  if (currentMatches.length > 0) {
+    return `/${currentCategorySlug}?${params.toString()}`
+  }
+
+  const globalMatches = filterStorefrontProducts(allProducts, {
+    optionSlug,
+    shapeSlug,
+    styleSlug,
+    metalSlug,
+    certificate,
+  })
+
+  const nextCategorySlug = globalMatches[0]?.mainCategorySlug
+  if (nextCategorySlug) {
+    return `/${nextCategorySlug}?${params.toString()}`
+  }
+
+  return href
 }
 
 export async function generateMetadata({
@@ -63,103 +118,90 @@ export default async function CategoryCollectionPage({
   const query = await searchParams
   const products = await getStorefrontProducts()
   const categoryProducts = filterStorefrontProducts(products, {
+    productLane: 'standard',
     categorySlug,
   })
-  const [navbarItemResult, navbarSectionsResult, categorySubcategoriesResult, categoryOptionsResult, ringSizesResult, certificatesResult, metalsResult] =
+  const [
+    navbarItemsResult,
+    navbarSectionsResult,
+    navbarLinksResult,
+    navbarSourceItemsResult,
+    navbarFeaturedResult,
+    categorySubcategoriesResult,
+    categoryOptionsResult,
+    certificatesResult,
+    metalsResult,
+    stoneShapesResult,
+    stylesResult,
+  ] =
     await Promise.all([
-      supabase.from('navbar_items').select('id, slug, status').eq('slug', categorySlug).eq('status', 'active').maybeSingle(),
-      supabase.from('navbar_sections').select('id, navbar_item_id, title, section_type, source_subcategory_id, source_category_slug, show_as_filter, status, display_order, column_number').eq('status', 'active').order('column_number', { ascending: true }).order('display_order', { ascending: true }),
-      supabase.from('catalog_subcategories').select('id, name, slug').eq('category_id', category.id).eq('status', 'active').order('display_order', { ascending: true }),
-      supabase.from('catalog_options').select('id, subcategory_id, name, slug').eq('status', 'active').order('display_order', { ascending: true }),
-      supabase.from('catalog_ring_sizes').select('name').eq('status', 'active').order('display_order', { ascending: true }),
+      supabase.from('navbar_items').select('*').eq('status', 'active').order('display_order', { ascending: true }),
+      supabase.from('navbar_sections').select('*').eq('status', 'active').order('column_number', { ascending: true }).order('display_order', { ascending: true }),
+      supabase.from('navbar_section_links').select('*').eq('status', 'active').order('display_order', { ascending: true }),
+      supabase.from('navbar_section_source_items').select('*').eq('is_active', true).order('sort_order', { ascending: true }),
+      supabase.from('navbar_featured_cards').select('*'),
+      supabase.from('catalog_subcategories').select('id, category_id, name, slug, display_order, status').eq('status', 'active').order('display_order', { ascending: true }),
+      supabase.from('catalog_options').select('id, subcategory_id, name, slug, display_order, status').eq('status', 'active').order('display_order', { ascending: true }),
       supabase.from('catalog_certificates').select('name').order('display_order', { ascending: true }),
       supabase.from('catalog_metals').select('name, slug').eq('status', 'active').order('display_order', { ascending: true }),
+      supabase.from('catalog_stone_shapes').select('name, slug, svg_asset_url').eq('status', 'active').order('display_order', { ascending: true }),
+      supabase.from('catalog_styles').select('id, name, slug, display_order, status').eq('status', 'active').order('display_order', { ascending: true }),
     ])
 
   const headerBrowseSections = (() => {
-    const navbarItem = navbarItemResult.data
-    if (!navbarItem?.id) return []
-
-    const relevantSections = (navbarSectionsResult.data ?? []).filter(
-      (section) => section.navbar_item_id === navbarItem.id && section.show_as_filter
-    )
-
+    const navbarItems = navbarItemsResult.data ?? []
+    const navbarSections = navbarSectionsResult.data ?? []
+    const navbarLinks = navbarLinksResult.data ?? []
+    const navbarSourceItems = navbarSourceItemsResult.data ?? []
+    const navbarFeatured = navbarFeaturedResult.data ?? []
     const subcategories = categorySubcategoriesResult.data ?? []
     const options = categoryOptionsResult.data ?? []
-    const ringSizes = ringSizesResult.error ? [] : ringSizesResult.data ?? []
-    const certificates = certificatesResult.error ? [] : certificatesResult.data ?? []
-    const metals = metalsResult.error ? [] : metalsResult.data ?? []
+    const certificates = certificatesResult.error ? [] : (certificatesResult.data ?? []).map((entry, index) => ({ id: `${index}-${entry.name}`, name: entry.name, status: 'active' as const }))
+    const metals = metalsResult.error ? [] : (metalsResult.data ?? []).map((entry, index) => ({ id: `${index}-${entry.slug}`, ...entry, display_order: index, status: 'active' as const }))
+    const stoneShapes = stoneShapesResult.error ? [] : (stoneShapesResult.data ?? []).map((entry, index) => ({ id: `${index}-${entry.slug}`, ...entry, display_order: index, status: 'active' as const }))
+    const styles = stylesResult.error ? [] : stylesResult.data ?? []
 
-    const groups = relevantSections.map((section) => {
-      if (section.section_type === 'category_list' && section.source_subcategory_id) {
-        const subcategory = subcategories.find((entry) => entry.id === section.source_subcategory_id)
-        const sectionOptions = options
-          .filter((entry) => entry.subcategory_id === section.source_subcategory_id)
-          .filter((entry) => categoryProducts.some((product) => product.optionSlug === entry.slug))
-          .map((entry) => ({
-            label: entry.name,
-            href: `/${categorySlug}?subcategory=${subcategory?.slug ?? ''}&option=${entry.slug}`,
-            type: 'default' as const,
-          }))
-
-        return sectionOptions.length
-          ? { id: section.id, title: section.title || subcategory?.name || 'Options', options: sectionOptions }
-          : null
-      }
-
-      if (section.section_type === 'metal_swatches') {
-        const sectionOptions = metals
-          .filter((entry) => categoryProducts.some((product) => product.metalsFull.some((metal) => metal.slug === entry.slug)))
-          .map((entry) => ({
-            label: entry.name,
-            href: `/${categorySlug}?metal=${entry.slug}`,
-            type: 'swatch' as const,
-          }))
-        return sectionOptions.length ? { id: section.id, title: section.title || 'Metal', options: sectionOptions } : null
-      }
-
-      if (section.section_type === 'stone_shapes') {
-        const sectionOptions = [
-          ...new Set(
-            categoryProducts
-              .map((product) => product.optionName || product.gemstoneValue || '')
-              .filter(Boolean)
-          ),
-        ].map((value) => ({
-          label: value,
-          href: `/${categorySlug}`,
-          type: 'default' as const,
-        }))
-
-        return sectionOptions.length ? { id: section.id, title: section.title || 'Stone Shapes', options: sectionOptions } : null
-      }
-
-      if (section.section_type === 'certificates') {
-        const sectionOptions = certificates
-          .filter((entry) => categoryProducts.some((product) => (product.certificateNames || []).includes(entry.name)))
-          .map((entry) => ({
-            label: entry.name,
-            href: `/${categorySlug}?certificate=${slugifyValue(entry.name)}`,
-            type: 'default' as const,
-          }))
-        return sectionOptions.length ? { id: section.id, title: section.title || 'Certificate', options: sectionOptions } : null
-      }
-
-      if (section.section_type === 'ring_sizes') {
-        const sectionOptions = ringSizes
-          .filter((entry) => categoryProducts.some((product) => (product.ringSizeNames || []).includes(entry.name)))
-          .map((entry) => ({
-            label: entry.name,
-            href: `/${categorySlug}?size=${slugifyValue(entry.name)}`,
-            type: 'default' as const,
-          }))
-        return sectionOptions.length ? { id: section.id, title: section.title || 'Ring Size', options: sectionOptions } : null
-      }
-
-      return null
+    const renderItems = buildNavbarRenderItems({
+      items: navbarItems,
+      sections: navbarSections,
+      sectionLinks: navbarLinks,
+      sectionSourceItems: navbarSourceItems,
+      featuredCards: navbarFeatured,
+      categories: [{ ...category, display_order: 0 }],
+      subcategories,
+      options,
+      metals,
+      stoneShapes,
+      certificates,
+      styles,
     })
 
-    return groups.filter(Boolean) as { id: string; title: string; options: { label: string; href: string; type?: 'default' | 'swatch' }[] }[]
+    const matchedItem = renderItems.find((entry) => entry.linkedCategoryId === category.id || entry.slug === category.slug)
+    const filterSections = (matchedItem?.mega?.sections ?? []).filter((section) => section.showAsFilter)
+
+    return filterSections.map((section) => ({
+      id: section.id,
+      title: section.title,
+      iconUrl: section.iconUrl,
+      options: [
+        ...(section.metals ?? []).map((metal) => ({
+          label: metal.label,
+          href: metal.href,
+          type: 'swatch' as const,
+        })),
+        ...((section.links ?? []).map((link) => ({
+          label: link.label,
+          href: resolveMasterFilterHref({
+            href: link.href,
+            currentCategorySlug: categorySlug,
+            categoryProducts,
+            allProducts: products,
+          }),
+          type: link.type ?? 'default',
+          iconUrl: link.iconUrl ?? null,
+        }))),
+      ],
+    }))
   })()
 
   const certificateFilterValue =
@@ -168,9 +210,12 @@ export default async function CategoryCollectionPage({
       : null
 
   const filteredProducts = filterStorefrontProducts(categoryProducts, {
+    productLane: 'standard',
     categorySlug,
     subcategorySlug: typeof query.subcategory === 'string' ? query.subcategory : null,
     optionSlug: typeof query.option === 'string' ? query.option : null,
+    shapeSlug: typeof query.shape === 'string' ? query.shape : null,
+    styleSlug: typeof query.style === 'string' ? query.style : null,
     metalSlug: typeof query.metal === 'string' ? query.metal : null,
     purity: typeof query.purity === 'string' ? query.purity : null,
     certificate: typeof query.certificate === 'string' ? query.certificate : null,
@@ -185,9 +230,10 @@ export default async function CategoryCollectionPage({
       headerBrowseSections={headerBrowseSections}
       initialFilters={{
         ...(typeof query.option === 'string' ? { option: [query.option] } : {}),
+        ...(typeof query.shape === 'string' ? { shape: [query.shape] } : {}),
+        ...(typeof query.style === 'string' ? { style: [query.style] } : {}),
         ...(typeof query.metal === 'string' ? { metal: [query.metal] } : {}),
         ...(certificateFilterValue ? { certificate: [certificateFilterValue] } : {}),
-        ...(typeof query.size === 'string' ? { size: [query.size] } : {}),
       }}
     />
   )

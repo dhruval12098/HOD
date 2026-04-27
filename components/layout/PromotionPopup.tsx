@@ -9,6 +9,9 @@ type PromotionPopupData = {
   description: string
   cta_text: string
   cta_link: string
+  image_path?: string
+  image_alt?: string
+  image_only_mode?: boolean
   is_active: boolean
   show_once_per_session: boolean
 }
@@ -64,46 +67,81 @@ export default function PromotionPopup() {
 
   if (!item || !visible) return null
 
+  const imageSrc = item.image_path || ''
+  const imageOnlyMode = Boolean(item.image_only_mode)
+
   return (
     <div className="fixed inset-0 z-[1300] flex items-center justify-center bg-[rgba(10,22,40,0.48)] p-4 backdrop-blur-[6px]">
-      <div className="relative w-full max-w-[560px] overflow-hidden rounded-[32px] border border-[rgba(184,149,74,0.2)] bg-[linear-gradient(180deg,#fffdf9_0%,#f8f4ec_100%)] p-6 shadow-[0_30px_90px_rgba(10,22,40,0.26)] sm:p-8">
+      <div className="relative w-full max-w-[420px] overflow-hidden rounded-[28px] border border-[rgba(184,149,74,0.2)] bg-[linear-gradient(180deg,#fffdf9_0%,#f8f4ec_100%)] shadow-[0_24px_64px_rgba(10,22,40,0.22)]">
         <button
           type="button"
           onClick={close}
           aria-label="Close promotion popup"
-          className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full border border-[rgba(10,22,40,0.1)] bg-white/70 text-[var(--theme-ink)] transition hover:bg-white"
+          className="absolute right-4 top-4 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full border border-[rgba(10,22,40,0.14)] bg-white text-[var(--theme-ink)] shadow-[0_8px_24px_rgba(10,22,40,0.16)] transition hover:bg-[#f8f4ec]"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <path d="M3 3L13 13M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
         </button>
 
-        {item.label ? (
-          <div className="mb-4 inline-flex items-center gap-3 text-[10px] font-medium uppercase tracking-[0.3em] text-[var(--theme-muted-2)]">
-            <span className="inline-block h-px w-8 bg-[rgba(184,149,74,0.72)]" />
-            {item.label}
+        {imageOnlyMode && imageSrc ? (
+          <div className="flex min-h-[340px] flex-col">
+            <div className="relative h-[210px] w-full shrink-0 overflow-hidden bg-[radial-gradient(circle_at_top,#f5e7c4_0%,#ebd8ad_42%,#dcc18d_100%)]">
+              <img
+                src={imageSrc}
+                alt={item.image_alt || item.title || 'Promotion image'}
+                className="h-full w-full object-contain object-center"
+                loading="eager"
+              />
+            </div>
+            <div className="flex flex-1 items-end p-5 sm:p-6">
+              {item.cta_text && item.cta_link ? (
+                <Link
+                  href={item.cta_link}
+                  onClick={close}
+                  className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-[var(--theme-ink)] px-6 text-[10px] font-medium uppercase tracking-[0.24em] text-white transition hover:bg-[#13233b]"
+                >
+                  {item.cta_text}
+                </Link>
+              ) : null}
+            </div>
           </div>
-        ) : null}
+        ) : (
+          <div className="flex min-h-[340px] flex-col p-5 sm:p-6">
+            <div className="flex-1">
+              {item.cta_text && item.cta_link ? (
+                <div className="sr-only">{item.cta_text}</div>
+              ) : null}
 
-        <h2 className="max-w-[14ch] text-[clamp(2rem,4vw,3.2rem)] leading-[0.96] text-[var(--theme-ink)]">
-          {item.title}
-        </h2>
+              {item.label ? (
+                <div className="mb-3 inline-flex items-center gap-3 text-[9px] font-medium uppercase tracking-[0.26em] text-[var(--theme-muted-2)]">
+                  <span className="inline-block h-px w-8 bg-[rgba(184,149,74,0.72)]" />
+                  {item.label}
+                </div>
+              ) : null}
 
-        <p className="mt-4 max-w-[44ch] text-[14px] leading-7 text-[var(--theme-muted)]">
-          {item.description}
-        </p>
+              <h2 className="max-w-[14ch] text-[clamp(1.5rem,4vw,2.3rem)] leading-[0.98] text-[var(--theme-ink)]">
+                {item.title}
+              </h2>
 
-        {item.cta_text && item.cta_link ? (
-          <div className="mt-8">
-            <Link
-              href={item.cta_link}
-              onClick={close}
-              className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-[var(--theme-ink)] px-7 text-[10px] font-medium uppercase tracking-[0.28em] text-white transition hover:bg-[#13233b]"
-            >
-              {item.cta_text}
-            </Link>
+              <p className="mt-3 max-w-[34ch] text-[13px] leading-6 text-[var(--theme-muted)]">
+                {item.description}
+              </p>
+            </div>
+
+            <div className="pt-6">
+              {item.cta_text && item.cta_link ? (
+                <Link
+                  href={item.cta_link}
+                  onClick={close}
+                  className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-[var(--theme-ink)] px-6 text-[10px] font-medium uppercase tracking-[0.24em] text-white transition hover:bg-[#13233b]"
+                >
+                  {item.cta_text}
+                </Link>
+              ) : null}
+            </div>
           </div>
-        ) : null}
+        )}
       </div>
     </div>
   )

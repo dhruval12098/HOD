@@ -4,9 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import ProductCard from "./ProductCard";
 import ShopSidebar from "./ShopSidebar";
 import ShopToolbar from "./ShopToolbar";
+import { useWishlistStore } from "@/lib/hooks/useWishlistStore";
+import { getProductKey } from "@/lib/product-keys";
 
 /**
- * @typedef {{ id: string; title: string; options: { value: string; label: string }[] }} ProductGridFilterGroup
+ * @typedef {{ id: string; title: string; options: { value: string; label: string, iconUrl?: string | null }[] }} ProductGridFilterGroup
  */
 
 /**
@@ -19,16 +21,16 @@ import ShopToolbar from "./ShopToolbar";
  * }} props
  */
 export default function ProductGrid({ products, sourceProducts = products, initialFilters = {}, filterGroups: externalFilterGroups = [], onEnquire }) {
+  const { wishlist, toggle } = useWishlistStore();
   const [filters, setFilters] = useState(initialFilters);
   const [priceMin, setPriceMin] = useState("");
   const [priceMax, setPriceMax] = useState("");
   const [sort, setSort] = useState("featured");
-  const [wishlist, setWishlist] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const sidebarTopOffset = 146;
 
-  const handleWishlist = (id) => {
-    setWishlist((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]));
+  const handleWishlist = (product) => {
+    toggle(getProductKey(product));
   };
 
   const handleClear = () => {
@@ -62,6 +64,14 @@ export default function ProductGrid({ products, sourceProducts = products, initi
         options: unique(sourceProducts.map((product) => product.type)).map((value) => ({ value, label: titleCase(value) })),
       },
       {
+        id: "shape",
+        title: "Shape",
+        options: unique(sourceProducts.flatMap((product) => product.shapeOptions?.map((shape) => shape.slug) || [])).map((value) => {
+          const match = sourceProducts.flatMap((product) => product.shapeOptions || []).find((shape) => shape.slug === value);
+          return { value, label: match?.name || titleCase(value) };
+        }),
+      },
+      {
         id: "metal",
         title: "Metal",
         options: unique(sourceProducts.flatMap((product) => product.metalsFull?.map((metal) => metal.slug) || [])).map((value) => {
@@ -78,6 +88,14 @@ export default function ProductGrid({ products, sourceProducts = products, initi
         id: "certificate",
         title: "Certificate",
         options: unique(sourceProducts.flatMap((product) => product.certificateNames || [])).map((value) => ({ value, label: value })),
+      },
+      {
+        id: "style",
+        title: "Style",
+        options: unique(sourceProducts.map((product) => product.styleSlug)).map((value) => {
+          const match = sourceProducts.find((product) => product.styleSlug === value);
+          return { value, label: match?.styleName || titleCase(value) };
+        }),
       },
     ].filter((group) => group.options.length > 0);
   }, [sourceProducts]);
@@ -102,6 +120,8 @@ export default function ProductGrid({ products, sourceProducts = products, initi
       if (filters.category?.length && !filters.category.includes(productCategoryValue)) return false;
       if (filters.subcategory?.length && !filters.subcategory.includes(product.subcategorySlug)) return false;
       if (filters.option?.length && !filters.option.includes(product.optionSlug)) return false;
+      if (filters.shape?.length && !(product.shapeOptions || []).some((shape) => filters.shape.includes(shape.slug))) return false;
+      if (filters.style?.length && !filters.style.includes(product.styleSlug)) return false;
       if (filters.type?.length && !filters.type.includes(product.type)) return false;
       if (filters.metal?.length && !product.metalsFull.some((metal) => filters.metal.includes(metal.slug))) return false;
       if (filters.purity?.length && !(product.purities || []).some((purity) => filters.purity.includes(purity))) return false;
@@ -141,14 +161,21 @@ export default function ProductGrid({ products, sourceProducts = products, initi
       return;
     }
 
+    const lenis = typeof window !== "undefined" ? window.__lenis : null;
     document.body.style.overflow = "hidden";
     document.documentElement.style.overflow = "hidden";
     document.body.style.touchAction = "none";
+    if (lenis && typeof lenis.stop === "function") {
+      lenis.stop();
+    }
 
     return () => {
       document.body.style.overflow = "";
       document.documentElement.style.overflow = "";
       document.body.style.touchAction = "";
+      if (lenis && typeof lenis.start === "function") {
+        lenis.start();
+      }
     };
   }, [sidebarOpen]);
 
@@ -166,16 +193,19 @@ export default function ProductGrid({ products, sourceProducts = products, initi
             padding: 40px 28px 70px !important;
           }
         }
-        @media (max-width: 640px) {
-          .shop-grid-layout { padding: 40px 20px 70px !important; }
+        @media (max-width: 768px) {
+          .shop-grid-layout { padding: 28px 16px 56px !important; }
         }
         .product-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
           gap: 24px;
         }
-        @media (max-width: 480px) {
-          .product-grid { grid-template-columns: 1fr !important; }
+        @media (max-width: 768px) {
+          .product-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 12px !important;
+          }
         }
       `}</style>
 
@@ -185,12 +215,12 @@ export default function ProductGrid({ products, sourceProducts = products, initi
           aria-hidden="true"
           style={{
             position: "fixed",
-            top: `${sidebarTopOffset}px`,
+            top: 0,
             left: 0,
             right: 0,
             bottom: 0,
             background: "rgba(10,22,40,0.45)",
-            zIndex: 940,
+            zIndex: 1090,
           }}
         />
       )}
@@ -206,7 +236,7 @@ export default function ProductGrid({ products, sourceProducts = products, initi
           onClear={handleClear}
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
-          topOffset={sidebarTopOffset}
+          topOffset={sidebarOpen ? 0 : sidebarTopOffset}
         />
 
         <div>
@@ -260,7 +290,7 @@ export default function ProductGrid({ products, sourceProducts = products, initi
                 <ProductCard
                   key={product.id}
                   product={product}
-                  wishlisted={wishlist.includes(product.id)}
+                  wishlisted={wishlist.includes(getProductKey(product))}
                   onWishlist={handleWishlist}
                   onEnquire={onEnquire}
                 />

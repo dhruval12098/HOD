@@ -1,5 +1,6 @@
 import { unstable_cache } from 'next/cache';
 import { createClient } from '@supabase/supabase-js';
+import { formatUsd } from '@/lib/money';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -61,6 +62,18 @@ export type HomeHipHopSection = {
   image_alt: string;
 };
 
+export type CollectionPageConfig = {
+  pageEnabled: boolean;
+  showInFooter: boolean;
+  showHomeShowcase: boolean;
+  showcaseHeading: string;
+  showcaseSubtitle: string;
+  showcaseCtaLabel: string;
+  showcaseCtaHref: string;
+  showcaseImageUrl?: string;
+  showcaseMobileImageUrl?: string;
+};
+
 export type HomeCertificationSection = {
   eyebrow: string;
   heading: string;
@@ -80,6 +93,7 @@ export type HomeCoupleItem = {
   location: string;
   story: string;
   product_name: string;
+  product_link?: string;
   product_detail: string;
   image_path: string;
 };
@@ -97,6 +111,12 @@ export type HomeDiamondInfoItem = {
   paragraph: string;
 };
 
+export type HomeDiamondInfoConfig = {
+  videoEnabled: boolean;
+  videoUrl?: string;
+  videoPosterUrl?: string;
+};
+
 export type HomeBestSellerSection = {
   eyebrow: string;
   heading: string;
@@ -112,6 +132,7 @@ export type HomeBestSellerProduct = {
   price: string;
   badge: string;
   badgeVariant: 'navy' | 'outline';
+  detailTemplate?: 'standard' | 'hiphop';
   image?: string;
 };
 
@@ -133,11 +154,7 @@ function buildBestSellerMeta(product: any) {
 
 function buildBestSellerPrice(value: number | null | undefined) {
   if (!value) return 'Price on Request';
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0,
-  }).format(value);
+  return formatUsd(value);
 }
 
 const loadHomePageData = unstable_cache(
@@ -150,10 +167,12 @@ const loadHomePageData = unstable_cache(
       collectionResult,
       materialResult,
       hiphopResult,
+      collectionPageConfigResult,
       certificationsSectionResult,
       certificationsItemsResult,
       couplesSectionResult,
       diamondInfoResult,
+      diamondInfoConfigResult,
       testimonialsSectionResult,
       marqueeSectionResult,
       bestSellerSectionResult,
@@ -184,6 +203,11 @@ const loadHomePageData = unstable_cache(
         .eq('section_key', 'home_hiphop_showcase')
         .maybeSingle(),
       supabase
+        .from('collection_page_config')
+        .select('page_enabled, show_in_footer, show_home_showcase, showcase_heading, showcase_subtitle, showcase_cta_label, showcase_cta_href, showcase_image_path, showcase_mobile_image_path')
+        .eq('section_key', 'main_collection_page')
+        .maybeSingle(),
+      supabase
         .from('certifications_section')
         .select('eyebrow, heading')
         .eq('section_key', 'home_certifications')
@@ -201,6 +225,11 @@ const loadHomePageData = unstable_cache(
         .from('diamond_info_sections')
         .select('sort_order, label, heading, paragraph')
         .order('sort_order', { ascending: true }),
+      supabase
+        .from('diamond_info_config')
+        .select('video_enabled, video_path, video_poster_path')
+        .eq('section_key', 'home_diamond_info')
+        .maybeSingle(),
       supabase
         .from('testimonials_section')
         .select('id, eyebrow, heading')
@@ -237,7 +266,7 @@ const loadHomePageData = unstable_cache(
     if (couplesSectionResult.data?.id) {
       const { data } = await supabase
         .from('couples_items')
-        .select('sort_order, names, location, story, product_name, product_detail, image_path')
+        .select('sort_order, names, location, story, product_name, product_link, product_detail, image_path')
         .eq('section_id', couplesSectionResult.data.id)
         .order('sort_order', { ascending: true });
       couplesItems = data ?? [];
@@ -277,6 +306,7 @@ const loadHomePageData = unstable_cache(
             slug,
             name,
             base_price,
+            detail_template,
             featured,
             image_1_path,
             gemstone_label,
@@ -301,9 +331,26 @@ const loadHomePageData = unstable_cache(
             price: buildBestSellerPrice(product.base_price),
             badge: index === 0 ? 'Bestseller' : product.featured ? 'Featured' : 'Selected',
             badgeVariant: index === 0 || product.featured ? 'navy' : 'outline',
+            detailTemplate: product.detail_template === 'hiphop' ? 'hiphop' : 'standard',
             image: toPublicUrl(product.image_1_path),
           }));
       }
+    }
+
+    const diamondInfoConfigError = diamondInfoConfigResult.error
+    const collectionPageConfigError = collectionPageConfigResult.error
+    const isMissingDiamondInfoConfigTable =
+      diamondInfoConfigError?.code === 'PGRST205' ||
+      diamondInfoConfigError?.message?.includes("Could not find the table 'public.diamond_info_config'")
+    const isMissingCollectionPageConfigTable =
+      collectionPageConfigError?.code === 'PGRST205' ||
+      collectionPageConfigError?.message?.includes("Could not find the table 'public.collection_page_config'")
+
+    if (diamondInfoConfigError && !isMissingDiamondInfoConfigTable) {
+      throw diamondInfoConfigError
+    }
+    if (collectionPageConfigError && !isMissingCollectionPageConfigTable) {
+      throw collectionPageConfigError
     }
 
     return {
@@ -322,6 +369,17 @@ const loadHomePageData = unstable_cache(
           image_path: '',
           image_alt: 'House of Diams Hip Hop Collection',
         },
+      collectionPageConfig: {
+        pageEnabled: isMissingCollectionPageConfigTable ? false : (collectionPageConfigResult.data?.page_enabled ?? false),
+        showInFooter: isMissingCollectionPageConfigTable ? false : (collectionPageConfigResult.data?.show_in_footer ?? false),
+        showHomeShowcase: isMissingCollectionPageConfigTable ? false : (collectionPageConfigResult.data?.show_home_showcase ?? false),
+        showcaseHeading: collectionPageConfigResult.data?.showcase_heading ?? 'Collection',
+        showcaseSubtitle: collectionPageConfigResult.data?.showcase_subtitle ?? 'Browse House of Diams collection pieces in a dedicated enquiry-first showcase.',
+        showcaseCtaLabel: collectionPageConfigResult.data?.showcase_cta_label ?? 'Explore Collection',
+        showcaseCtaHref: collectionPageConfigResult.data?.showcase_cta_href ?? '/collection',
+        showcaseImageUrl: toPublicUrl(collectionPageConfigResult.data?.showcase_image_path),
+        showcaseMobileImageUrl: toPublicUrl(collectionPageConfigResult.data?.showcase_mobile_image_path),
+      },
       certificationsSection:
         certificationsSectionResult.data ?? {
           eyebrow: 'Our Promise',
@@ -337,6 +395,11 @@ const loadHomePageData = unstable_cache(
         items: couplesItems,
       },
       diamondInfoItems: diamondInfoResult.data ?? [],
+      diamondInfoConfig: {
+        videoEnabled: isMissingDiamondInfoConfigTable ? false : (diamondInfoConfigResult.data?.video_enabled ?? false),
+        videoUrl: isMissingDiamondInfoConfigTable ? undefined : toPublicUrl(diamondInfoConfigResult.data?.video_path),
+        videoPosterUrl: isMissingDiamondInfoConfigTable ? undefined : toPublicUrl(diamondInfoConfigResult.data?.video_poster_path),
+      },
       testimonialsData: {
         eyebrow: testimonialsSectionResult.data?.eyebrow ?? 'Client Stories',
         heading: testimonialsSectionResult.data?.heading ?? 'What Our Clients Say',

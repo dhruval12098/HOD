@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { Select } from '@/components/ui/select';
 
 function RevealDiv({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -103,7 +104,24 @@ export default function ContactBody({ onSuccess }: ContactBodyProps) {
               <div><label className="block text-[9px] font-normal tracking-[0.28em] text-[#6A6A6A] uppercase mb-2">Full Name</label><input required value={form.name} onChange={set('name')} className={inputCls} /></div>
               <div><label className="block text-[9px] font-normal tracking-[0.28em] text-[#6A6A6A] uppercase mb-2">Email</label><input required type="email" value={form.email} onChange={set('email')} className={inputCls} /></div>
               <div><label className="block text-[9px] font-normal tracking-[0.28em] text-[#6A6A6A] uppercase mb-2">Phone / WhatsApp</label><input value={form.phone} onChange={set('phone')} className={`${inputCls} font-numeric`} /></div>
-              <div><label className="block text-[9px] font-normal tracking-[0.28em] text-[#6A6A6A] uppercase mb-2">Enquiry Topic</label><select required value={form.topic} onChange={set('topic')} className={`${inputCls} appearance-none pr-10 cursor-pointer`}><option value="">Select topic...</option><option>Product Enquiry</option><option>Bespoke Order</option><option>B2B Wholesale</option><option>Press / Media</option><option>General Enquiry</option></select></div>
+              <div>
+                <label className="block text-[9px] font-normal tracking-[0.28em] text-[#6A6A6A] uppercase mb-2">Enquiry Topic</label>
+                <Select
+                  required
+                  validationLabel="Enquiry topic"
+                  value={form.topic}
+                  onValueChange={(value) => setForm((prev) => ({ ...prev, topic: value }))}
+                  placeholder="Select topic..."
+                  options={[
+                    { value: 'Product Enquiry', label: 'Product Enquiry' },
+                    { value: 'Bespoke Order', label: 'Bespoke Order' },
+                    { value: 'B2B Wholesale', label: 'B2B Wholesale' },
+                    { value: 'Press / Media', label: 'Press / Media' },
+                    { value: 'General Enquiry', label: 'General Enquiry' },
+                  ]}
+                  triggerClassName={`${inputCls} justify-between bg-[#FAFBFD] pr-3 shadow-none`}
+                />
+              </div>
               <div className="col-span-2 max-md:col-span-1"><label className="block text-[9px] font-normal tracking-[0.28em] text-[#6A6A6A] uppercase mb-2">Your Message</label><textarea required rows={4} value={form.message} onChange={set('message')} className={`${inputCls} resize-y min-h-[100px]`} /></div>
             </div>
             <div className="flex justify-between items-center mt-6 pt-6 border-t border-[rgba(10,22,40,0.10)] flex-wrap gap-4">

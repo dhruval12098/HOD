@@ -11,6 +11,7 @@ interface EnquireModalProps {
 
 export default function EnquireModal({ open, piece = 'General Enquiry', onClose }: EnquireModalProps) {
   const { showToast } = useToast();
+  const [submitting, setSubmitting] = useState(false);
 
   const [form, setForm] = useState({
     name: '',
@@ -19,15 +20,15 @@ export default function EnquireModal({ open, piece = 'General Enquiry', onClose 
     message: '',
   });
 
-  // Lock body scroll when open
   useEffect(() => {
     document.body.classList.toggle('modal-open', open);
     return () => document.body.classList.remove('modal-open');
   }, [open]);
 
-  // Close on Escape
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
   }, [onClose]);
@@ -36,13 +37,37 @@ export default function EnquireModal({ open, piece = 'General Enquiry', onClose 
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const text = `Hi, new enquiry from the website:\n\nPiece: ${piece}\nName: ${form.name}\nEmail: ${form.email}\nPhone: ${form.phone}\nMessage: ${form.message}`;
-    window.open(`https://wa.me/919328536178?text=${encodeURIComponent(text)}`, '_blank');
-    showToast("✓ Enquiry sent — we'll reply within 24 hours");
-    setForm({ name: '', email: '', phone: '', message: '' });
-    setTimeout(onClose, 800);
+    setSubmitting(true);
+
+    try {
+      const response = await fetch('/api/public/contact/submit', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          full_name: form.name,
+          email: form.email,
+          phone: form.phone,
+          topic: `Product Enquiry: ${piece}`,
+          message: form.message,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error((await response.json().catch(() => null))?.error ?? 'Unable to submit enquiry.');
+      }
+
+      const text = `Hi, new enquiry from the website:\n\nPiece: ${piece}\nName: ${form.name}\nEmail: ${form.email}\nPhone: ${form.phone}\nMessage: ${form.message}`;
+      window.open(`https://wa.me/919328536178?text=${encodeURIComponent(text)}`, '_blank');
+      showToast("Enquiry sent — we'll reply within 24 hours");
+      setForm({ name: '', email: '', phone: '', message: '' });
+      setTimeout(onClose, 800);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Unable to submit enquiry right now.');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (!open) return null;
@@ -63,7 +88,9 @@ export default function EnquireModal({ open, piece = 'General Enquiry', onClose 
         animation: 'fadeUpModal 0.3s ease',
         fontFamily: 'var(--sans)',
       }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div
         style={{
@@ -78,7 +105,6 @@ export default function EnquireModal({ open, piece = 'General Enquiry', onClose 
           boxShadow: 'var(--shadow-lg)',
         }}
       >
-        {/* Close button */}
         <button
           onClick={onClose}
           aria-label="Close"
@@ -113,7 +139,6 @@ export default function EnquireModal({ open, piece = 'General Enquiry', onClose 
           </svg>
         </button>
 
-        {/* Eyebrow */}
         <div
           style={{
             fontSize: '10px',
@@ -127,7 +152,6 @@ export default function EnquireModal({ open, piece = 'General Enquiry', onClose 
           {piece}
         </div>
 
-        {/* Title */}
         <h3
           style={{
             fontFamily: 'var(--serif)',
@@ -138,8 +162,7 @@ export default function EnquireModal({ open, piece = 'General Enquiry', onClose 
             letterSpacing: '0.02em',
           }}
         >
-          Request a{' '}
-          <em style={{ fontStyle: 'normal', color: 'var(--theme-ink)' }}>Quote</em>
+          Request a <em style={{ fontStyle: 'normal', color: 'var(--theme-ink)' }}>Quote</em>
         </h3>
 
         <p
@@ -155,7 +178,6 @@ export default function EnquireModal({ open, piece = 'General Enquiry', onClose 
         </p>
 
         <form onSubmit={handleSubmit}>
-          {/* Name */}
           <FormGroup label="Full Name">
             <input
               className="form-input"
@@ -168,30 +190,14 @@ export default function EnquireModal({ open, piece = 'General Enquiry', onClose 
             />
           </FormGroup>
 
-          {/* Email */}
           <FormGroup label="Email">
-            <input
-              type="email"
-              name="email"
-              value={form.email}
-              onChange={handleChange}
-              required
-              style={inputStyle}
-            />
+            <input type="email" name="email" value={form.email} onChange={handleChange} required style={inputStyle} />
           </FormGroup>
 
-          {/* Phone */}
           <FormGroup label="Phone / WhatsApp (Optional)">
-            <input
-              type="tel"
-              name="phone"
-              value={form.phone}
-              onChange={handleChange}
-              style={inputStyle}
-            />
+            <input type="tel" name="phone" value={form.phone} onChange={handleChange} style={inputStyle} />
           </FormGroup>
 
-          {/* Message */}
           <FormGroup label="Your Message">
             <textarea
               name="message"
@@ -203,9 +209,9 @@ export default function EnquireModal({ open, piece = 'General Enquiry', onClose 
             />
           </FormGroup>
 
-          {/* Submit */}
           <button
             type="submit"
+            disabled={submitting}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -218,17 +224,22 @@ export default function EnquireModal({ open, piece = 'General Enquiry', onClose 
               background: 'var(--ink)',
               padding: '16px 34px',
               border: 'none',
-              cursor: 'pointer',
+              cursor: submitting ? 'wait' : 'pointer',
               textTransform: 'uppercase',
               width: '100%',
               marginTop: '10px',
               fontFamily: 'var(--sans)',
               transition: 'background 0.3s',
+              opacity: submitting ? 0.72 : 1,
             }}
-            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = 'var(--theme-ink)')}
-            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = 'var(--ink)')}
+            onMouseEnter={(e) => {
+              if (!submitting) (e.currentTarget as HTMLElement).style.background = 'var(--theme-ink)';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.background = 'var(--ink)';
+            }}
           >
-            Submit Enquiry
+            {submitting ? 'Submitting…' : 'Submit Enquiry'}
           </button>
         </form>
       </div>

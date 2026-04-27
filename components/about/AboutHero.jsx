@@ -15,7 +15,7 @@ export default function AboutHero({ content }) {
         <div className="min-w-0">
           <div className="mb-6 h-px w-[60px] bg-[#0A1628]" />
 
-          <div className="mb-[18px] inline-flex items-center gap-3 text-[10px] font-medium uppercase tracking-[0.26em] text-[#0A1628] sm:tracking-[0.32em]">
+          <div className="mb-[28px] inline-flex items-center gap-3 text-[10px] font-medium uppercase tracking-[0.26em] text-[#0A1628] sm:tracking-[0.32em]">
             <span className="inline-block h-px w-6 bg-[#0A1628]" />
             {eyebrow}
           </div>

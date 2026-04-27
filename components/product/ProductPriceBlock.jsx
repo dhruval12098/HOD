@@ -1,5 +1,7 @@
 // components/product/ProductPriceBlock.jsx — House of Diams
 
+import { formatUsdNumber } from '@/lib/money';
+
 /**
  * Price block showing "From" label, price, and note.
  * @param {object} props
@@ -14,7 +16,7 @@ export default function ProductPriceBlock({ priceFrom }) {
 
       <div className="font-serif text-[42px] font-medium text-[#0A1628] leading-none font-numeric">
         <span className="text-2xl text-[#6A6A6A] font-normal mr-1 font-numeric">USD</span>
-        ${priceFrom.toLocaleString()}
+        ${formatUsdNumber(priceFrom)}
       </div>
 
       <p className="text-[11px] text-[#6A6A6A] mt-[10px] tracking-[0.02em] font-numeric">

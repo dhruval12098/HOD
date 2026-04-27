@@ -1,6 +1,7 @@
 // components/product/ProductCTAs.jsx — House of Diams
 'use client';
 import Link from 'next/link';
+import { formatUsdNumber } from '@/lib/money';
 
 /**
  * CTA button row: Request Quote, WhatsApp, Wishlist heart.
@@ -10,16 +11,50 @@ import Link from 'next/link';
  * @param {boolean}  props.inWishlist   - Whether this product is currently wishlisted
  * @param {function} props.onWishlist   - Toggles wishlist state
  * @param {string}   props.checkoutHref - Static checkout route for standard products
+ * @param {function} props.onAddToCart  - Adds the configured product to cart
  */
-export default function ProductCTAs({ product, onEnquire, inWishlist, onWishlist, checkoutHref }) {
+export default function ProductCTAs({ product, onEnquire, inWishlist, onWishlist, checkoutHref, onAddToCart }) {
   const waText = encodeURIComponent(
-    `Hi, I'd like to enquire about the ${product.name} (from $${product.priceFrom.toLocaleString()})`
+    `Hi, I'd like to enquire about the ${product.name} (from $${formatUsdNumber(product.priceFrom)})`
   );
-  const isStaticCheckoutProduct = product.category !== 'hiphop';
+  const isCollectionProduct = product.productLane === 'collection';
+  const canCheckoutDirectly = !isCollectionProduct && (product.category !== 'hiphop' || Boolean(product.allowCheckout));
 
   return (
     <div className="flex gap-3 mb-8 max-[1100px]:flex-col">
-      {isStaticCheckoutProduct ? (
+      {isCollectionProduct ? (
+        <button
+          onClick={() => onEnquire(product.name)}
+          className="
+            flex-1 flex items-center justify-center gap-[10px]
+            font-sans text-[10px] font-medium tracking-[0.28em] uppercase
+            py-[18px] px-5
+            bg-gradient-to-br from-[#0A1628] to-[#20304A] text-white
+            border-0 cursor-pointer
+            transition-all duration-300 ease-out
+            shadow-[0_8px_30px_rgba(10,22,40,0.08)]
+            hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(10,22,40,0.18)]
+          "
+        >
+          <span>Request Quote</span>
+        </button>
+      ) : (
+        <button
+          onClick={onAddToCart}
+          className="
+            flex-1 flex items-center justify-center gap-[10px]
+            font-sans text-[10px] font-light tracking-[0.28em] uppercase
+            py-[18px] px-8
+            text-[#0A1628] bg-transparent
+            border border-[#0A1628] cursor-pointer
+            transition-all duration-300
+            hover:bg-[#0A1628] hover:text-[#FAFBFD]
+          "
+        >
+          Add To Cart
+        </button>
+      )}
+      {canCheckoutDirectly ? (
         <Link
           href={checkoutHref}
           className="
@@ -49,7 +84,7 @@ export default function ProductCTAs({ product, onEnquire, inWishlist, onWishlist
             hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(10,22,40,0.18)]
           "
         >
-          <span>Request Quote</span>
+          <span>{isCollectionProduct ? 'Enquire Now' : 'Request Quote'}</span>
         </button>
       )}
 
