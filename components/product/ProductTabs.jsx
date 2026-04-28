@@ -113,6 +113,7 @@ export default function ProductTabs({
               .filter(Boolean)
               .map((entry, index) => [`Point ${index + 1}`, entry])}
             variant="piece"
+            leftAlignValues
           />
         ) : null}
 
@@ -125,6 +126,7 @@ export default function ProductTabs({
               .filter(Boolean)
               .map((entry, index) => [`Point ${index + 1}`, entry])}
             variant="piece"
+            leftAlignValues
           />
         ) : null}
       </div>

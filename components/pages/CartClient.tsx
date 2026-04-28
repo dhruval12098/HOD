@@ -27,10 +27,16 @@ export default function CartClient() {
     }
   }, [])
 
-  const resolvedItems = useMemo(() => items.map((item) => ({
-    item,
-    product: products.find((product) => getProductKey(product) === item.productKey || product.slug === item.productSlug),
-  })).filter((entry) => entry.product), [items, products])
+  const resolvedItems = useMemo(
+    () =>
+      items
+        .map((item) => ({
+          item,
+          product: products.find((product) => getProductKey(product) === item.productKey || product.slug === item.productSlug),
+        }))
+        .filter((entry): entry is { item: typeof items[number]; product: SearchProduct } => Boolean(entry.product)),
+    [items, products]
+  )
 
   const total = resolvedItems.reduce((sum, entry) => sum + ((entry.product?.priceFrom || 0) * entry.item.quantity), 0)
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0)
@@ -57,7 +63,7 @@ export default function CartClient() {
           <div className="space-y-4">
             {resolvedItems.map(({ item, product }) => (
               <article key={item.key} className="flex flex-col gap-4 rounded-[24px] border border-[rgba(10,22,40,0.08)] bg-white p-4 shadow-[0_16px_42px_rgba(10,22,40,0.04)] sm:flex-row sm:items-start">
-                <div className="h-28 w-full overflow-hidden rounded-[18px] bg-[#F7F3EB] sm:w-28 sm:min-w-28">{product?.imageUrl ? <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover" /> : null}</div>
+                <div className="h-28 w-full overflow-hidden rounded-[18px] bg-[#F7F3EB] sm:w-28 sm:min-w-28">{(item.selection.resolvedImageUrl || product?.imageUrl) ? <img src={item.selection.resolvedImageUrl || product?.imageUrl} alt={product.name} className="h-full w-full object-cover" /> : null}</div>
                 <div className="min-w-0 flex-1">
                   <div className="text-[9px] uppercase tracking-[0.22em] text-[#8B94A5]">{product?.shortMeta}</div>
                   <Link
@@ -76,7 +82,7 @@ export default function CartClient() {
                   <div className="mt-4 flex flex-wrap items-center justify-between gap-4 border-t border-[rgba(10,22,40,0.08)] pt-4">
                     <div>
                       <span className="block text-[8px] uppercase tracking-[0.24em] text-[#7F8898]">Price</span>
-                      <span className="mt-1 block text-[18px] font-medium text-[#0A1628]">${product?.priceFrom.toLocaleString('en-US')}</span>
+                      <span className="mt-1 block text-[18px] font-medium text-[#0A1628]">${(item.selection.resolvedPrice ?? product?.priceFrom ?? 0).toLocaleString('en-US')}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <button onClick={() => updateQuantity(item.key, item.quantity - 1)} className="h-9 w-9 rounded-full border border-[rgba(10,22,40,0.12)] text-[#0A1628] transition-colors hover:bg-[#0A1628] hover:text-white">-</button>

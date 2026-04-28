@@ -52,6 +52,18 @@ function HeartIcon() {
   );
 }
 
+function Chevron({ direction }: { direction: 'left' | 'right' }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+      {direction === 'left' ? (
+        <path d="M15 6L9 12L15 18" strokeLinecap="round" strokeLinejoin="round" />
+      ) : (
+        <path d="M9 6L15 12L9 18" strokeLinecap="round" strokeLinejoin="round" />
+      )}
+    </svg>
+  );
+}
+
 function ProductNameLink({ name, href }: { name: string; href?: string }) {
   if (!href) {
     return <div className="font-serif text-[16px] text-[#0A1628]">{name}</div>;
@@ -258,6 +270,15 @@ export default function CouplesSection({
 
           {items.length > 1 ? (
             <div className="mt-5 flex items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => setActiveIndex((current) => Math.max(0, current - 1))}
+                disabled={activeIndex === 0}
+                aria-label="Previous couple"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-[rgba(10,22,40,0.12)] bg-white text-[#0A1628] shadow-[0_14px_30px_rgba(10,22,40,0.08)] disabled:opacity-35"
+              >
+                <Chevron direction="left" />
+              </button>
               {items.map((item, index) => (
                 <button
                   key={`${item.names}-${index}-dot`}
@@ -269,6 +290,15 @@ export default function CouplesSection({
                   }`}
                 />
               ))}
+              <button
+                type="button"
+                onClick={() => setActiveIndex((current) => Math.min(items.length - 1, current + 1))}
+                disabled={activeIndex >= items.length - 1}
+                aria-label="Next couple"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-[rgba(10,22,40,0.12)] bg-white text-[#0A1628] shadow-[0_14px_30px_rgba(10,22,40,0.08)] disabled:opacity-35"
+              >
+                <Chevron direction="right" />
+              </button>
             </div>
           ) : null}
         </div>

@@ -14,10 +14,15 @@ type SearchProduct = {
   shortMeta: string
   imageUrl?: string
   priceFrom: number
+  category?: string
+  featured?: boolean
+  isNew?: boolean
+  gemColor?: string
+  gemStyle?: string
 }
 
 export default function WishlistClient() {
-  const { wishlist, toggle } = useWishlistStore()
+  const { wishlist, toggle, ready } = useWishlistStore()
   const [products, setProducts] = useState<SearchProduct[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
@@ -41,7 +46,7 @@ export default function WishlistClient() {
     <section className="mx-auto max-w-[1280px] px-5 py-16 sm:px-7 lg:px-[52px]">
       <h1 className="font-serif text-[clamp(34px,5vw,58px)] font-light text-[#0A1628]">Wishlist</h1>
       <p className="mt-3 text-[13px] text-[#6A6A6A]">Saved pieces you may want to come back to.</p>
-      {isLoading ? (
+      {isLoading || !ready ? (
         <div className="mt-10 rounded-[24px] border border-[rgba(10,22,40,0.08)] bg-white px-6 py-12 text-center">
           <p className="text-[14px] text-[#6A6A6A]">Loading your saved pieces...</p>
         </div>
@@ -54,6 +59,7 @@ export default function WishlistClient() {
               wishlisted={wishlist.includes(getProductKey(item))}
               onWishlist={() => toggle(getProductKey(item))}
               onEnquire={() => {}}
+              forceLight
             />
           ))}
         </div>

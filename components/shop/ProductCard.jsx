@@ -128,8 +128,8 @@ export function GemSVG({ style, size = 110, color = "#20304A" }) {
 // ── ProductCard ───────────────────────────────────────────────────────────────
 const LARGE_GEM_STYLES = ["chain", "tennis", "grillz", "cross"];
 
-export default function ProductCard({ product, wishlisted, onWishlist, onEnquire }) {
-  const isDark = product.category === "hiphop";
+export default function ProductCard({ product, wishlisted, onWishlist, onEnquire, forceLight = false }) {
+  const isDark = !forceLight && product.category === "hiphop";
   const tag = product.isNew ? "New" : product.featured ? "Featured" : "Signature";
   const gemSize = LARGE_GEM_STYLES.includes(product.gemStyle) ? 140 : 110;
 
@@ -146,13 +146,8 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
           height: 208px !important;
         }
         .shop-product-card-info {
-          padding: 14px 12px 16px !important;
+          padding: 12px 12px 16px !important;
           gap: 4px !important;
-        }
-        .shop-product-card-meta {
-          font-size: 8px !important;
-          margin-bottom: 2px !important;
-          letter-spacing: .16em !important;
         }
         .shop-product-card-title {
           font-size: 15px !important;
@@ -323,21 +318,19 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
       <div
         className="shop-product-card-info"
         style={{
-          padding: "18px 12px 10px",
+          padding: "14px 12px 10px",
           flex: 1,
           display: "flex",
           flexDirection: "column",
           gap: "6px",
           background: "transparent",
+          minHeight: "170px",
         }}
       >
-        <div className="shop-product-card-meta" style={{ fontSize: "9px", fontWeight: 300, letterSpacing: ".22em", color: metaColor, textTransform: "uppercase", marginBottom: "6px", fontFamily: "var(--numeric)" }}>
-          {product.shortMeta}
-        </div>
         <div className="shop-product-card-title" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: "20px", fontWeight: 400, color: namColor, letterSpacing: ".02em", lineHeight: 1.2 }}>
           {product.name}
         </div>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto", paddingTop: "12px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto", paddingTop: "16px" }}>
           <div>
             <span style={{ fontSize: "8px", fontWeight: 400, letterSpacing: ".24em", color: "#7F8898", textTransform: "uppercase", display: "block", marginBottom: "2px", fontFamily: "var(--numeric)" }}>From</span>
             <span className="shop-product-card-price" style={{ fontFamily: "var(--numeric)", fontSize: "18px", fontWeight: 500, color: isDark ? "#FFFFFF" : "#0A1628", letterSpacing: ".02em" }}>

@@ -5,7 +5,7 @@ import type { StorefrontProduct } from '@/lib/catalog-products'
 import { useWishlistStore } from '@/lib/hooks/useWishlistStore'
 import { getProductKey } from '@/lib/product-keys'
 import TypeFilterBar, { FilterType } from './TypeFilterBar'
-import HipHopProductCard from './HipHopProductCard'
+import ProductCard from '@/components/shop/ProductCard'
 
 interface HipHopCollectionProps {
   products: StorefrontProduct[]
@@ -64,14 +64,15 @@ export default function HipHopCollection({
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-3 gap-7 max-[1100px]:grid-cols-2 max-[700px]:grid-cols-1">
+        <div className="grid grid-cols-3 gap-7 max-[1100px]:grid-cols-2 max-[700px]:grid-cols-2 max-[700px]:gap-3">
           {products.map((product) => (
-            <HipHopProductCard
+            <ProductCard
               key={product.dbId}
               product={product}
-              isWishlisted={contains(getProductKey(product))}
-              onWishlistToggle={handleWishlist}
+              wishlisted={contains(getProductKey(product))}
+              onWishlist={() => handleWishlist(product)}
               onEnquire={onEnquire}
+              forceLight
             />
           ))}
         </div>

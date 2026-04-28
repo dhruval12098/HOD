@@ -106,6 +106,7 @@ type ProductRow = {
   name: string
   product_lane?: 'standard' | 'hiphop' | 'collection' | null
   detail_template?: 'standard' | 'hiphop' | null
+  default_purity_price_id?: string | null
   main_category_id: string
   subcategory_id: string | null
   option_id: string | null
@@ -165,6 +166,27 @@ type ProductRow = {
   detail_sections?: ProductDetailSection[] | null
 }
 
+type ProductPurityPriceRow = {
+  id: string
+  product_id: string
+  purity_label: string
+  price: number | null
+  compare_at_price?: number | null
+  sort_order?: number | null
+}
+
+type ProductMetalMediaRow = {
+  id: string
+  product_id: string
+  metal_id: string
+  image_1_path?: string | null
+  image_2_path?: string | null
+  image_3_path?: string | null
+  image_4_path?: string | null
+  video_path?: string | null
+  is_default_fallback?: boolean | null
+}
+
 export type StorefrontProduct = Product & {
   dbId: string
   productLane: 'standard' | 'hiphop' | 'collection'
@@ -218,6 +240,11 @@ export type StorefrontProduct = Product & {
   gstPercentage: number
   stockQuantity: number
   allowCheckout: boolean
+  defaultPurityPriceId: string | null
+  purityPriceRows: ProductPurityPriceRow[]
+  selectedPrice: number
+  metalMediaRows: ProductMetalMediaRow[]
+  defaultMetalMedia: ProductMetalMediaRow | null
 }
 
 function toPublicUrl(path: string | null | undefined) {
@@ -265,10 +292,38 @@ function buildHiphopSpecRows(product: ProductRow) {
   ].filter(Boolean) as ProductKeyValue[]
 }
 
+function resolveMetalMediaDefaults(
+  product: ProductRow,
+  metalMediaRows: ProductMetalMediaRow[]
+) {
+  const fallbackMedia =
+    metalMediaRows.find((entry) => entry.is_default_fallback) ??
+    metalMediaRows.find((entry) => entry.image_1_path || entry.image_2_path || entry.image_3_path || entry.image_4_path || entry.video_path) ??
+    null
+
+  const source = fallbackMedia
+    ? {
+        image_1_path: fallbackMedia.image_1_path ?? null,
+        image_2_path: fallbackMedia.image_2_path ?? null,
+        image_3_path: fallbackMedia.image_3_path ?? null,
+        image_4_path: fallbackMedia.image_4_path ?? null,
+        video_path: fallbackMedia.video_path ?? null,
+      }
+    : {
+        image_1_path: product.image_1_path,
+        image_2_path: product.image_2_path,
+        image_3_path: product.image_3_path,
+        image_4_path: product.image_4_path,
+        video_path: product.video_path,
+      }
+
+  return { fallbackMedia, source }
+}
+
 const fetchStorefrontProducts = async () => {
   const supabase = createSupabaseServerClient()
 
-  const [productsResult, categoriesResult, subcategoriesResult, optionsResult, metalsResult, certificatesResult, stylesResult, ringCategoriesResult, ringCategorySizesResult, productContentRulesResult, metalSelectionsResult, shapeSelectionsResult, gstSlabsResult] =
+  const [productsResult, categoriesResult, subcategoriesResult, optionsResult, metalsResult, certificatesResult, stylesResult, ringCategoriesResult, ringCategorySizesResult, productContentRulesResult, metalSelectionsResult, shapeSelectionsResult, gstSlabsResult, purityPricesResult, metalMediaResult] =
     await Promise.all([
       supabase.from('products').select('*').eq('status', 'active').order('created_at', { ascending: false }),
       supabase.from('catalog_categories').select('id, code, name, slug, category_lane'),
@@ -283,6 +338,8 @@ const fetchStorefrontProducts = async () => {
       supabase.from('product_metal_selections').select('product_id, metal_id, sort_order').order('sort_order', { ascending: true }),
       supabase.from('product_stone_shapes').select('product_id, shape_id, shape:catalog_stone_shapes(id, name, slug, svg_asset_url)'),
       supabase.from('catalog_gst_slabs').select('id, name, code, percentage').neq('status', 'hidden'),
+      supabase.from('product_purity_prices').select('*').order('sort_order', { ascending: true }),
+      supabase.from('product_metal_media').select('*'),
     ])
 
   const error =
@@ -307,6 +364,8 @@ const fetchStorefrontProducts = async () => {
   const ringCategorySizes = ringCategorySizesResult.error ? ([] as CatalogRingCategorySize[]) : ((ringCategorySizesResult.data || []) as CatalogRingCategorySize[])
   const productContentRules = productContentRulesResult.error ? ([] as ProductContentRule[]) : ((productContentRulesResult.data || []) as ProductContentRule[])
   const gstSlabs = gstSlabsResult.error ? ([] as CatalogGstSlab[]) : ((gstSlabsResult.data || []) as CatalogGstSlab[])
+  const purityPriceRows = purityPricesResult.error ? ([] as ProductPurityPriceRow[]) : ((purityPricesResult.data || []) as ProductPurityPriceRow[])
+  const metalMediaRows = metalMediaResult.error ? ([] as ProductMetalMediaRow[]) : ((metalMediaResult.data || []) as ProductMetalMediaRow[])
   const products = (productsResult.data || []) as ProductRow[]
 
   return products.map((product, index) => {
@@ -341,14 +400,31 @@ const fetchStorefrontProducts = async () => {
     const gstSlab = gstSlabs.find((entry) => entry.id === product.gst_slab_id)
     const shippingRule = productContentRules.find((entry) => entry.id === product.shipping_rule_id && entry.kind === 'shipping')
     const careWarrantyRule = productContentRules.find((entry) => entry.id === product.care_warranty_rule_id && entry.kind === 'care_warranty')
+    const productPurityPrices = purityPriceRows.filter((entry) => entry.product_id === product.id)
+    const productMetalMediaRows = metalMediaRows
+      .filter((entry) => entry.product_id === product.id)
+      .map((entry) => ({
+        ...entry,
+        image_1_path: toPublicUrl(entry.image_1_path) ?? null,
+        image_2_path: toPublicUrl(entry.image_2_path) ?? null,
+        image_3_path: toPublicUrl(entry.image_3_path) ?? null,
+        image_4_path: toPublicUrl(entry.image_4_path) ?? null,
+        video_path: toPublicUrl(entry.video_path) ?? null,
+      }))
+    const defaultPurityPrice =
+      productPurityPrices.find((entry) => entry.id === product.default_purity_price_id) ??
+      productPurityPrices[0] ??
+      null
+    const resolvedPrice = Number(defaultPurityPrice?.price ?? product.base_price ?? 0)
+    const { fallbackMedia, source: resolvedMediaSource } = resolveMetalMediaDefaults(product, productMetalMediaRows)
 
     const visibleImages = [
-      product.show_image_1 === false ? null : toPublicUrl(product.image_1_path),
-      product.show_image_2 === false ? null : toPublicUrl(product.image_2_path),
-      product.show_image_3 === false ? null : toPublicUrl(product.image_3_path),
-      product.show_image_4 === false ? null : toPublicUrl(product.image_4_path),
+      product.show_image_1 === false ? null : toPublicUrl(resolvedMediaSource.image_1_path),
+      product.show_image_2 === false ? null : toPublicUrl(resolvedMediaSource.image_2_path),
+      product.show_image_3 === false ? null : toPublicUrl(resolvedMediaSource.image_3_path),
+      product.show_image_4 === false ? null : toPublicUrl(resolvedMediaSource.image_4_path),
     ].filter(Boolean) as string[]
-    const visibleVideoUrl = product.show_video === false ? undefined : toPublicUrl(product.video_path)
+    const visibleVideoUrl = product.show_video === false ? undefined : toPublicUrl(resolvedMediaSource.video_path)
 
     const typeSource = option?.name || subcategory?.name || category?.name
 
@@ -367,7 +443,7 @@ const fetchStorefrontProducts = async () => {
       stone: 'natural-colourless',
       cut: 'round',
       metals: selectedMetals.map((entry) => entry.slug),
-      priceFrom: Number(product.base_price || 0),
+      priceFrom: resolvedPrice,
       carat: product.gemstone_value || option?.name || category?.name || 'Signature',
       featured: Boolean(product.featured),
       isNew: false,
@@ -391,7 +467,7 @@ const fetchStorefrontProducts = async () => {
       styleName: style?.name ?? null,
       styleSlug: style?.slug ?? null,
       metalsFull: selectedMetals,
-      purities: product.purity_values ?? [],
+      purities: productPurityPrices.length > 0 ? productPurityPrices.map((entry) => entry.purity_label) : (product.purity_values ?? []),
       certificateNames: selectedCertificates,
       ringSizeNames: product.ring_enabled ? selectedRingSizes : [],
       ringEnabled: Boolean(product.ring_enabled),
@@ -445,6 +521,11 @@ const fetchStorefrontProducts = async () => {
       gstPercentage: Number(gstSlab?.percentage || 0),
       stockQuantity: Number(product.stock_quantity || 0),
       allowCheckout: Boolean(product.allow_checkout),
+      defaultPurityPriceId: defaultPurityPrice?.id ?? null,
+      purityPriceRows: productPurityPrices,
+      selectedPrice: resolvedPrice,
+      metalMediaRows: productMetalMediaRows,
+      defaultMetalMedia: fallbackMedia,
     }
 
     return storefrontProduct

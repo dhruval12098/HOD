@@ -48,6 +48,18 @@ function RevealDiv({
   );
 }
 
+function Chevron({ direction }: { direction: 'left' | 'right' }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+      {direction === 'left' ? (
+        <path d="M15 6L9 12L15 18" strokeLinecap="round" strokeLinejoin="round" />
+      ) : (
+        <path d="M9 6L15 12L9 18" strokeLinecap="round" strokeLinejoin="round" />
+      )}
+    </svg>
+  );
+}
+
 export default function Testimonials({ initialData }: { initialData?: HomeTestimonialsData }) {
   const [eyebrow] = useState(initialData?.eyebrow || 'Client Stories');
   const [heading] = useState(initialData?.heading || 'What Our Clients Say');
@@ -160,6 +172,15 @@ export default function Testimonials({ initialData }: { initialData?: HomeTestim
 
         {testimonials.length > 1 ? (
           <div className="mt-5 flex items-center justify-center gap-2">
+            <button
+              type="button"
+              onClick={() => setActiveIndex((current) => Math.max(0, current - 1))}
+              disabled={activeIndex === 0}
+              aria-label="Previous testimonial"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--theme-border-strong)] bg-white text-[var(--theme-ink)] disabled:opacity-35"
+            >
+              <Chevron direction="left" />
+            </button>
             {testimonials.map((item, index) => (
               <button
                 key={`${item.author}-${index}-dot`}
@@ -171,6 +192,15 @@ export default function Testimonials({ initialData }: { initialData?: HomeTestim
                 }`}
               />
             ))}
+            <button
+              type="button"
+              onClick={() => setActiveIndex((current) => Math.min(testimonials.length - 1, current + 1))}
+              disabled={activeIndex >= testimonials.length - 1}
+              aria-label="Next testimonial"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--theme-border-strong)] bg-white text-[var(--theme-ink)] disabled:opacity-35"
+            >
+              <Chevron direction="right" />
+            </button>
           </div>
         ) : null}
       </div>

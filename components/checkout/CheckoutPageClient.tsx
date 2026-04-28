@@ -54,6 +54,7 @@ export default function CheckoutPageClient() {
   const [customerForm, setCustomerForm] = useState<CheckoutProfileForm>(EMPTY_PROFILE_FORM);
   const [placingOrder, setPlacingOrder] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof CheckoutProfileForm, string>>>({});
   const [taxInfo, setTaxInfo] = useState<{ gstLabel: string; gstPercentage: number } | null>(null);
   const [couponCodeInput, setCouponCodeInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<{
@@ -118,8 +119,8 @@ export default function CheckoutPageClient() {
         return {
           name: product.name,
           slug: product.slug,
-          imageUrl: product.imageUrl ?? undefined,
-          priceFrom: product.priceFrom,
+          imageUrl: entry.selection.resolvedImageUrl || product.imageUrl || undefined,
+          priceFrom: entry.selection.resolvedPrice ?? product.priceFrom,
           metal: entry.selection.metal ?? '',
           purity: entry.selection.purity ?? '',
           sizeOrFit: entry.selection.ringSize || entry.selection.sizeOrFit || '',
@@ -134,8 +135,19 @@ export default function CheckoutPageClient() {
   }, [cartMode, resolvedCartItems, taxMap]);
 
   const checkoutItems = useMemo(
-    () => (cartMode ? cartCheckoutItems : singleItem.slug ? [singleItem] : []),
-    [cartMode, cartCheckoutItems, singleItem]
+    () =>
+      cartMode
+        ? cartCheckoutItems
+        : singleItem.slug
+          ? [
+              {
+                ...singleItem,
+                gstLabel: taxInfo?.gstLabel ?? singleItem.gstLabel ?? 'Taxes',
+                gstPercentage: taxInfo?.gstPercentage ?? singleItem.gstPercentage ?? 0,
+              },
+            ]
+          : [],
+    [cartMode, cartCheckoutItems, singleItem, taxInfo]
   );
 
   const subtotal = useMemo(
@@ -235,9 +247,94 @@ export default function CheckoutPageClient() {
 
   const updateCustomerForm = (field: keyof CheckoutProfileForm, value: string) => {
     setCustomerForm((current) => ({ ...current, [field]: value }));
+    setFieldErrors((current) => {
+      if (!current[field]) return current
+      const next = { ...current }
+      delete next[field]
+      return next
+    })
   };
 
+  const validateCheckoutForm = () => {
+    const nextErrors: Partial<Record<keyof CheckoutProfileForm, string>> = {}
+    const trimmed = {
+      first_name: customerForm.first_name.trim(),
+      last_name: customerForm.last_name.trim(),
+      email: customerForm.email.trim(),
+      phone: customerForm.phone.trim(),
+      country: customerForm.country.trim(),
+      state: customerForm.state.trim(),
+      city: customerForm.city.trim(),
+      postal_code: customerForm.postal_code.trim(),
+      address_line_1: customerForm.address_line_1.trim(),
+      address_line_2: customerForm.address_line_2.trim(),
+    }
+
+    if (!trimmed.first_name) nextErrors.first_name = 'First name is required.'
+    if (!trimmed.last_name) nextErrors.last_name = 'Last name is required.'
+    if (!trimmed.email) {
+      nextErrors.email = 'Email is required.'
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed.email)) {
+      nextErrors.email = 'Enter a valid email address.'
+    }
+
+    const digitsOnlyPhone = trimmed.phone.replace(/[^\d+]/g, '')
+    if (!trimmed.phone) {
+      nextErrors.phone = 'Mobile number is required.'
+    } else if (!/^\+?[0-9][0-9\s\-()]{7,19}$/.test(trimmed.phone) || digitsOnlyPhone.replace(/\D/g, '').length < 8) {
+      nextErrors.phone = 'Enter a valid mobile number with country code.'
+    }
+
+    if (!trimmed.country) nextErrors.country = 'Country is required.'
+    if (!trimmed.state) nextErrors.state = 'State, province, or region is required.'
+    if (!trimmed.city) nextErrors.city = 'City is required.'
+    if (!trimmed.postal_code) {
+      nextErrors.postal_code = 'Postal code or pincode is required.'
+    } else if (!/^[A-Za-z0-9][A-Za-z0-9\s-]{2,11}$/.test(trimmed.postal_code)) {
+      nextErrors.postal_code = 'Enter a valid postal code or pincode.'
+    }
+    if (!trimmed.address_line_1) nextErrors.address_line_1 = 'Address line 1 is required.'
+
+    return nextErrors
+  }
+
+  const validateFieldsForStep = (stepIndex: number) => {
+    const allErrors = validateCheckoutForm()
+    const keysForStep: Array<keyof CheckoutProfileForm> =
+      stepIndex === 0
+        ? ['first_name', 'last_name', 'email', 'phone']
+        : stepIndex === 1
+          ? ['country', 'state', 'city', 'postal_code', 'address_line_1']
+          : []
+
+    const stepErrors = keysForStep.reduce<Partial<Record<keyof CheckoutProfileForm, string>>>((acc, key) => {
+      if (allErrors[key]) acc[key] = allErrors[key]
+      return acc
+    }, {})
+
+    setFieldErrors((current) => ({ ...current, ...stepErrors }))
+    return stepErrors
+  }
+
+  const handleNextStep = () => {
+    const stepErrors = validateFieldsForStep(currentStep)
+    if (Object.keys(stepErrors).length > 0) {
+      setErrorMessage('Please complete the required checkout details before continuing.')
+      return
+    }
+
+    setErrorMessage('')
+    setCurrentStep((step) => Math.min(CHECKOUT_STEPS.length - 1, step + 1))
+  }
+
   const handlePlaceOrder = async () => {
+    const allErrors = validateCheckoutForm()
+    setFieldErrors(allErrors)
+    if (Object.keys(allErrors).length > 0) {
+      setErrorMessage('Please complete all required customer and shipping details before placing the order.')
+      return
+    }
+
     setPlacingOrder(true);
     setErrorMessage('');
     try {
@@ -415,12 +512,12 @@ export default function CheckoutPageClient() {
               </div>
             ) : null}
 
-            <div className="animate-[fadeUp_0.35s_ease]">
-              {currentStep === 0 ? <CheckoutCustomerStep form={customerForm} onChange={updateCustomerForm} /> : null}
-              {currentStep === 1 ? <CheckoutShippingStep form={customerForm} onChange={updateCustomerForm} /> : null}
-              {currentStep === 2 ? <CheckoutDeliveryStep /> : null}
-              {currentStep === 3 ? <CheckoutPaymentStep /> : null}
-              {currentStep === 4 ? <CheckoutReviewStep onPlaceOrder={handlePlaceOrder} isPlacingOrder={placingOrder} continueHref={continueHref} /> : null}
+              <div className="animate-[fadeUp_0.35s_ease]">
+                {currentStep === 0 ? <CheckoutCustomerStep form={customerForm} onChange={updateCustomerForm} errors={fieldErrors} /> : null}
+               {currentStep === 1 ? <CheckoutShippingStep form={customerForm} onChange={updateCustomerForm} errors={fieldErrors} /> : null}
+                {currentStep === 2 ? <CheckoutDeliveryStep /> : null}
+                {currentStep === 3 ? <CheckoutPaymentStep /> : null}
+                {currentStep === 4 ? <CheckoutReviewStep onPlaceOrder={handlePlaceOrder} isPlacingOrder={placingOrder} continueHref={continueHref} /> : null}
             </div>
 
             {!isLastStep ? (
@@ -439,11 +536,11 @@ export default function CheckoutPageClient() {
                     Back
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setCurrentStep((step) => Math.min(CHECKOUT_STEPS.length - 1, step + 1))}
-                    className="inline-flex h-11 items-center justify-center rounded-full bg-[#101828] px-6 text-sm font-medium text-white transition hover:bg-[#1d2939]"
-                  >
+                    <button
+                      type="button"
+                      onClick={handleNextStep}
+                      className="inline-flex h-11 items-center justify-center rounded-full bg-[#101828] px-6 text-sm font-medium text-white transition hover:bg-[#1d2939]"
+                    >
                     Next Step
                   </button>
                 </div>

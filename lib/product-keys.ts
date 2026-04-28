@@ -7,6 +7,8 @@ export function getProductKey(product: { dbId?: string | null; id?: string | num
 export type CartItemSelection = {
   metal?: string
   purity?: string
+  resolvedPrice?: number
+  resolvedImageUrl?: string
   sizeOrFit?: string
   ringSize?: string
   ringCategoryId?: string
@@ -47,8 +49,8 @@ export function buildCheckoutHrefFromCartItem(product: StorefrontProduct, item: 
   const params = new URLSearchParams()
   params.set('slug', product.slug)
   params.set('name', product.name)
-  params.set('price', String(product.priceFrom))
-  if (product.imageUrl) params.set('image', product.imageUrl)
+  params.set('price', String(item.selection.resolvedPrice ?? product.priceFrom))
+  if (item.selection.resolvedImageUrl || product.imageUrl) params.set('image', item.selection.resolvedImageUrl || product.imageUrl || '')
   if (item.selection.metal) params.set('metal', item.selection.metal)
   if (item.selection.purity) params.set('purity', item.selection.purity)
   if (item.selection.hiphopCarat) params.set('carat', item.selection.hiphopCarat)

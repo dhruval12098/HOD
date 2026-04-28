@@ -166,7 +166,7 @@ export default function Hero({ initialContent }: HeroProps) {
         <div className="relative z-[2] w-full">
           <div className="relative overflow-hidden rounded-none border-0 bg-transparent shadow-none backdrop-blur-0">
             <div className="absolute inset-0 z-10 bg-gradient-to-t from-[rgba(10,22,40,0.42)] via-[rgba(10,22,40,0.1)] to-transparent" />
-            <div className="relative h-[288px] sm:h-[360px] md:h-[408px] lg:h-[456px]">
+            <div className="relative h-[360px] sm:h-[440px] md:h-[520px] lg:h-[620px]">
                 {slides.map((slide, index) => {
                   const desktopImageUrl = getPublicImageUrl(slide.image_path);
                   const mobileImageUrl = getPublicImageUrl(slide.mobile_image_path || slide.image_path);

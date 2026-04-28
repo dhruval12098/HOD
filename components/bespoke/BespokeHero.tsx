@@ -152,21 +152,23 @@ export default function BespokeHero({ onEnquireClick, initialHero = null, initia
 
   return (
     <section
-      className={hasImageHero ? 'relative overflow-hidden' : 'pt-[100px] pb-[80px] px-[52px] text-center relative max-lg:px-7 max-md:px-5 max-md:pt-[70px] max-md:pb-[60px]'}
+      className={hasImageHero ? 'relative flex min-h-0 items-center justify-center overflow-hidden px-0 py-0' : 'pt-[100px] pb-[80px] px-[52px] text-center relative max-lg:px-7 max-md:px-5 max-md:pt-[70px] max-md:pb-[60px]'}
       style={{
-        background: hasImageHero ? '#0A1628' : 'linear-gradient(180deg, #FAFBFD 0%, #FAF7F2 100%)',
+        background: hasImageHero ? 'var(--theme-base)' : 'linear-gradient(180deg, #FAFBFD 0%, #FAF7F2 100%)',
       }}
     >
       {hasImageHero && currentSlide ? (
         <div className="relative z-[2] w-full">
-          <div className="relative h-[300px] sm:h-[380px] md:h-[430px] lg:h-[480px]">
-            {sortedSlides.map((slide, index) => (
-              <div key={`${slide.sort_order}-${slide.image_path}`} className={`absolute inset-0 transition-opacity duration-700 ${index === activeSlide ? 'opacity-100' : 'opacity-0'}`}>
-                <Image src={getPublicImageUrl(slide.mobile_image_path || slide.image_path)} alt={slide.button_text || `Bespoke slide ${index + 1}`} fill priority={index === 0} sizes="100vw" className="object-cover sm:hidden" />
-                <Image src={getPublicImageUrl(slide.image_path)} alt={slide.button_text || `Bespoke slide ${index + 1}`} fill priority={index === 0} sizes="100vw" className="hidden object-cover sm:block" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[rgba(10,22,40,0.48)] via-[rgba(10,22,40,0.12)] to-transparent" />
-              </div>
-            ))}
+          <div className="relative overflow-hidden rounded-none border-0 bg-transparent shadow-none backdrop-blur-0">
+            <div className="absolute inset-0 z-10 bg-gradient-to-t from-[rgba(10,22,40,0.42)] via-[rgba(10,22,40,0.1)] to-transparent" />
+            <div className="relative h-[360px] sm:h-[440px] md:h-[520px] lg:h-[620px]">
+              {sortedSlides.map((slide, index) => (
+                <div key={`${slide.sort_order}-${slide.image_path}`} className={`absolute inset-0 transition-opacity duration-700 ${index === activeSlide ? 'opacity-100' : 'opacity-0'}`}>
+                  <Image src={getPublicImageUrl(slide.mobile_image_path || slide.image_path)} alt={slide.button_text || `Bespoke slide ${index + 1}`} fill priority={index === 0} sizes="100vw" className="h-full w-full object-cover sm:hidden" />
+                  <Image src={getPublicImageUrl(slide.image_path)} alt={slide.button_text || `Bespoke slide ${index + 1}`} fill priority={index === 0} sizes="100vw" className="hidden h-full w-full object-cover sm:block" />
+                </div>
+              ))}
+            </div>
             <div className="absolute inset-x-0 bottom-0 z-20 flex items-end justify-between gap-6 px-4 pb-4 sm:px-6 sm:pb-6 lg:px-8 lg:pb-8">
               <div className="flex flex-col items-start gap-4">
                 {currentSlideLink ? (

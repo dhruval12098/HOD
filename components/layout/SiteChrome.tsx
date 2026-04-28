@@ -11,10 +11,12 @@ import { HomeLoaderProvider } from '@/components/layout/HomeLoaderContext';
 import PromotionPopup from '@/components/layout/PromotionPopup';
 
 const AUTH_ROUTES = new Set(['/login', '/signup']);
+const OVERLAY_NAVBAR_ROUTES = new Set(['/', '/hiphop', '/bespoke']);
 
 export default function SiteChrome({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [isHomeLoading, setIsHomeLoading] = useState(pathname === '/');
+  const usesDesktopOverlayNavbar = pathname ? OVERLAY_NAVBAR_ROUTES.has(pathname) : false;
   const isMinimalChromeRoute = pathname
     ? AUTH_ROUTES.has(pathname) || pathname.startsWith('/checkout')
     : false;
@@ -39,7 +41,7 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
           >
             <Navbar />
           </div>
-          <main className="flex-1 pt-[146px]">{children}</main>
+          <main className={`flex-1 ${usesDesktopOverlayNavbar ? 'pt-[99px] lg:pt-[35px]' : 'pt-[146px]'}`}>{children}</main>
           <div
             id="site-footer-shell"
             className={isHomeLoading ? 'pointer-events-none opacity-0' : 'pointer-events-auto opacity-100'}

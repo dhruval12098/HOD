@@ -85,13 +85,13 @@ export default function HipHopSection({ initialSection }: { initialSection?: Hom
           </Link>
         </div>
 
-        <div className="hh-right relative flex items-center justify-center bg-[var(--theme-surface-soft)] px-8 py-10 max-[960px]:min-h-[320px] max-[960px]:px-6 max-[960px]:py-8">
+        <div className="hh-right relative flex items-center justify-center px-8 py-10 max-[960px]:min-h-[320px] max-[960px]:px-6 max-[960px]:py-8">
           <div className="relative aspect-square w-full max-w-[520px] overflow-hidden rounded-[22px] border border-[rgba(10,22,40,0.14)] bg-[linear-gradient(180deg,#faf7f0_0%,#f0eadf_100%)] shadow-[0_18px_48px_rgba(10,22,40,0.08)]">
             {section.image_path ? (
               <img
                 src={buildImageUrl(section.image_path)}
                 alt={section.image_alt}
-                className="hh-placeholder h-full w-full object-contain object-center transition-transform duration-[800ms] ease-[cubic-bezier(.4,0,.2,1)]"
+                className="hh-placeholder h-full w-full object-cover object-center transition-transform duration-[800ms] ease-[cubic-bezier(.4,0,.2,1)]"
                 loading="lazy"
               />
             ) : (

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { createClient } from '@supabase/supabase-js'
 import ShopClient from '@/components/pages/ShopClient'
 import { buildNavbarRenderItems } from '@/lib/navbar'
 import { createSupabaseServerClient } from '@/lib/server-supabase'
@@ -19,6 +20,24 @@ type CategoryBrowseSection = {
   title: string
   iconUrl?: string | null
   options: { label: string; href: string; type?: 'default' | 'swatch' | 'icon'; iconUrl?: string | null }[]
+}
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+function getPublicNavbarDataClient() {
+  if (!supabaseUrl) return null
+
+  if (supabaseServiceRoleKey) {
+    return createClient(supabaseUrl, supabaseServiceRoleKey)
+  }
+
+  if (supabaseAnonKey) {
+    return createClient(supabaseUrl, supabaseAnonKey)
+  }
+
+  return null
 }
 
 function uniqueSectionOptions(
@@ -133,12 +152,14 @@ export default async function CategoryCollectionPage({
     productLane: 'standard',
     categorySlug,
   })
+  const publicNavbarClient = getPublicNavbarDataClient() ?? supabase
   const [
     navbarItemsResult,
     navbarSectionsResult,
     navbarLinksResult,
     navbarSourceItemsResult,
     navbarFeaturedResult,
+    categoriesResult,
     categorySubcategoriesResult,
     categoryOptionsResult,
     certificatesResult,
@@ -147,17 +168,18 @@ export default async function CategoryCollectionPage({
     stylesResult,
   ] =
     await Promise.all([
-      supabase.from('navbar_items').select('*').eq('status', 'active').order('display_order', { ascending: true }),
-      supabase.from('navbar_sections').select('*').eq('status', 'active').order('column_number', { ascending: true }).order('display_order', { ascending: true }),
-      supabase.from('navbar_section_links').select('*').eq('status', 'active').order('display_order', { ascending: true }),
-      supabase.from('navbar_section_source_items').select('*').eq('is_active', true).order('sort_order', { ascending: true }),
-      supabase.from('navbar_featured_cards').select('*'),
-      supabase.from('catalog_subcategories').select('id, category_id, name, slug, display_order, status').eq('status', 'active').order('display_order', { ascending: true }),
-      supabase.from('catalog_options').select('id, subcategory_id, name, slug, display_order, status').eq('status', 'active').order('display_order', { ascending: true }),
-      supabase.from('catalog_certificates').select('name').order('display_order', { ascending: true }),
-      supabase.from('catalog_metals').select('name, slug').eq('status', 'active').order('display_order', { ascending: true }),
-      supabase.from('catalog_stone_shapes').select('name, slug, svg_asset_url').eq('status', 'active').order('display_order', { ascending: true }),
-      supabase.from('catalog_styles').select('id, name, slug, display_order, status').eq('status', 'active').order('display_order', { ascending: true }),
+      publicNavbarClient.from('navbar_items').select('*').eq('status', 'active').order('display_order', { ascending: true }),
+      publicNavbarClient.from('navbar_sections').select('*').eq('status', 'active').order('column_number', { ascending: true }).order('display_order', { ascending: true }),
+      publicNavbarClient.from('navbar_section_links').select('*').eq('status', 'active').order('display_order', { ascending: true }),
+      publicNavbarClient.from('navbar_section_source_items').select('*').eq('is_active', true).order('sort_order', { ascending: true }),
+      publicNavbarClient.from('navbar_featured_cards').select('*'),
+      publicNavbarClient.from('catalog_categories').select('id, name, slug, display_order, status').eq('status', 'active').order('display_order', { ascending: true }),
+      publicNavbarClient.from('catalog_subcategories').select('id, category_id, name, slug, display_order, status').eq('status', 'active').order('display_order', { ascending: true }),
+      publicNavbarClient.from('catalog_options').select('id, subcategory_id, name, slug, display_order, status').eq('status', 'active').order('display_order', { ascending: true }),
+      publicNavbarClient.from('catalog_certificates').select('*').order('display_order', { ascending: true }),
+      publicNavbarClient.from('catalog_metals').select('*').eq('status', 'active').order('display_order', { ascending: true }),
+      publicNavbarClient.from('catalog_stone_shapes').select('*').eq('status', 'active').order('display_order', { ascending: true }),
+      publicNavbarClient.from('catalog_styles').select('*').eq('status', 'active').order('display_order', { ascending: true }),
     ])
 
   const headerBrowseSections = (() => {
@@ -179,7 +201,7 @@ export default async function CategoryCollectionPage({
       sectionLinks: navbarLinks,
       sectionSourceItems: navbarSourceItems,
       featuredCards: navbarFeatured,
-      categories: [{ ...category, display_order: 0 }],
+      categories: categoriesResult.error ? [{ ...category, display_order: 0 }] : categoriesResult.data ?? [{ ...category, display_order: 0 }],
       subcategories,
       options,
       metals,

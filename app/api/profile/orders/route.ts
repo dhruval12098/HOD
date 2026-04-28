@@ -52,7 +52,7 @@ export async function GET(request: Request) {
   if (orderIds.length > 0) {
     const { data: items, error: itemsError } = await adminClient
       .from('order_items')
-      .select('order_id, product_name, quantity, unit_price, line_total, image_url')
+      .select('order_id, product_name, quantity, unit_price, line_total, image_url, selected_metal, selected_purity, selected_size_or_fit, selected_gemstone, selected_carat')
       .in('order_id', orderIds)
 
     if (itemsError) {

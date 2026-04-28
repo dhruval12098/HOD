@@ -7,6 +7,7 @@ const STORAGE_KEY = 'hod_wishlist'
 type WishlistContextValue = {
   wishlist: string[]
   count: number
+  ready: boolean
   toggle: (key: string) => 'added' | 'removed'
   contains: (key: string) => boolean
 }
@@ -15,6 +16,7 @@ const WishlistContext = createContext<WishlistContextValue | null>(null)
 
 export function WishlistProvider({ children }: { children: React.ReactNode }) {
   const [wishlist, setWishlist] = useState<string[]>([])
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
     try {
@@ -24,6 +26,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
         if (Array.isArray(parsed)) setWishlist(parsed.map(String))
       }
     } catch {}
+    setReady(true)
   }, [])
 
   const persist = (next: string[]) => {
@@ -36,13 +39,14 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<WishlistContextValue>(() => ({
     wishlist,
     count: wishlist.length,
+    ready,
     toggle: (key) => {
       const exists = wishlist.includes(key)
       persist(exists ? wishlist.filter((entry) => entry !== key) : [...wishlist, key])
       return exists ? 'removed' : 'added'
     },
     contains: (key) => wishlist.includes(key),
-  }), [wishlist])
+  }), [ready, wishlist])
 
   return <WishlistContext.Provider value={value}>{children}</WishlistContext.Provider>
 }

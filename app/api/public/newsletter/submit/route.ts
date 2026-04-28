@@ -1,15 +1,14 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createSupabaseServerClient } from '@/lib/server-supabase'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 function isMissingRelationError(error: { code?: string; message?: string } | null) {
   return error?.code === 'PGRST205' || error?.message?.includes('schema cache') || error?.message?.includes('does not exist')
 }
 
 export async function POST(request: Request) {
-  if (!supabaseUrl || !supabaseAnonKey) {
+  if (!supabaseUrl) {
     return NextResponse.json({ error: 'Missing Supabase env vars.' }, { status: 500 })
   }
 
@@ -23,7 +22,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Email is required.' }, { status: 400 })
   }
 
-  const supabase = createClient(supabaseUrl, supabaseAnonKey)
+  const supabase = createSupabaseServerClient()
   const { error } = await supabase.from('newsletter_submissions').insert({
     email,
     source: 'homepage_newsletter',

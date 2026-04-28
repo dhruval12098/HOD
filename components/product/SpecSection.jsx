@@ -6,8 +6,9 @@
  * @param {string}     props.title  - Section heading
  * @param {[string, string][]} props.rows  - Array of [label, value] pairs
  * @param {'piece'|'diamond'} [props.variant] - Icon variant
+ * @param {boolean} [props.leftAlignValues] - Left align value column when content is prose/policy style
  */
-export default function SpecSection({ title, rows, variant = 'piece' }) {
+export default function SpecSection({ title, rows, variant = 'piece', leftAlignValues = false }) {
   const icon =
     variant === 'diamond' ? (
       <svg className="w-[14px] h-[14px] flex-shrink-0" viewBox="0 0 14 14" fill="none">
@@ -37,7 +38,13 @@ export default function SpecSection({ title, rows, variant = 'piece' }) {
           className="flex flex-col gap-1 py-3 border-b border-[rgba(10,22,40,0.10)] last:border-b-0 font-sans text-[12px] sm:flex-row sm:items-start sm:justify-between sm:gap-6"
         >
           <span className="max-w-full break-words text-[#6A6A6A] tracking-[0.04em]">{label}</span>
-          <span className="max-w-full break-words text-[#0A1628] font-medium tracking-[0.01em] sm:text-right">{value}</span>
+          <span
+            className={`max-w-full break-words text-[#0A1628] font-medium tracking-[0.01em] ${
+              leftAlignValues ? 'sm:text-left' : 'sm:text-right'
+            }`}
+          >
+            {value}
+          </span>
         </div>
       ))}
     </div>

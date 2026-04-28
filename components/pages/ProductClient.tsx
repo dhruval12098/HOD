@@ -53,14 +53,42 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
   const isDark = product.category === 'hiphop';
   const wishlistKey = getProductKey(product);
   const inWishlist = contains(wishlistKey);
-  const configuredProduct = useMemo(
+  const selectedMetalMeta = storefrontProduct.metalsFull.find((entry) => entry.slug === selectedMetal) || storefrontProduct.metalsFull[0];
+  const selectedPurityPriceRow = storefrontProduct.purityPriceRows.find((entry) => entry.purity_label === purity) || storefrontProduct.purityPriceRows[0] || null;
+  const selectedMetalMedia = storefrontProduct.metalMediaRows.find((entry) => entry.metal_id === selectedMetalMeta?.id) || storefrontProduct.defaultMetalMedia || null;
+  const activeImageUrls = useMemo<string[]>(() => {
+    const metalImages = selectedMetalMedia
+      ? [
+          selectedMetalMedia.image_1_path,
+          selectedMetalMedia.image_2_path,
+          selectedMetalMedia.image_3_path,
+          selectedMetalMedia.image_4_path,
+        ].filter((entry): entry is string => typeof entry === 'string' && entry.length > 0)
+      : [];
+    return metalImages.length > 0
+      ? metalImages
+      : [storefrontProduct.imageUrl, ...(storefrontProduct.galleryUrls || [])].filter((entry): entry is string => typeof entry === 'string' && entry.length > 0);
+  }, [selectedMetalMedia, storefrontProduct.galleryUrls, storefrontProduct.imageUrl]);
+  const activeVideoUrl = selectedMetalMedia?.video_path || storefrontProduct.videoUrl;
+  const activePrice = Number(selectedPurityPriceRow?.price ?? storefrontProduct.priceFrom ?? 0);
+  const activeProduct = useMemo(
     () => ({
       ...storefrontProduct,
+      priceFrom: activePrice,
+      imageUrl: activeImageUrls[0] || storefrontProduct.imageUrl,
+      galleryUrls: activeImageUrls.length > 1 ? activeImageUrls.slice(1) : [],
+      videoUrl: activeVideoUrl,
+    }),
+    [activeImageUrls, activePrice, activeVideoUrl, storefrontProduct]
+  );
+  const configuredProduct = useMemo(
+    () => ({
+      ...activeProduct,
       ringCategoryId: activeRingCategory?.id || storefrontProduct.ringCategoryId,
       ringCategoryName: activeRingCategory?.name || storefrontProduct.ringCategoryName,
       ringSizeNames: storefrontProduct.ringEnabled ? (activeRingCategory?.sizes || storefrontProduct.ringSizeNames) : storefrontProduct.ringSizeNames,
     }),
-    [activeRingCategory, storefrontProduct]
+    [activeProduct, activeRingCategory, storefrontProduct]
   );
 
   useEffect(() => {
@@ -89,8 +117,8 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
     const params = new URLSearchParams();
     params.set('slug', product.slug);
     params.set('name', product.name);
-    params.set('price', String(product.priceFrom));
-    if (product.imageUrl) params.set('image', product.imageUrl);
+    params.set('price', String(activePrice));
+    if (activeProduct.imageUrl) params.set('image', activeProduct.imageUrl);
     if (selectedMetal) params.set('metal', selectedMetal);
     if (purity) params.set('purity', purity);
     if (selectedHiphopCarat) params.set('carat', selectedHiphopCarat);
@@ -103,7 +131,7 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
     if (preserveCategory) params.set('category', preserveCategory);
 
     return `/checkout?${params.toString()}`;
-  }, [product.imageUrl, product.name, product.priceFrom, product.slug, purity, searchParams, selectedGemstoneValue, selectedHiphopCarat, selectedMetal, selectedRingSize, selectedShapeSlug, sizeOrFit]);
+  }, [activePrice, activeProduct.imageUrl, product.name, product.slug, purity, searchParams, selectedGemstoneValue, selectedHiphopCarat, selectedMetal, selectedRingSize, selectedShapeSlug, sizeOrFit]);
 
   const showToast = (message: string) => {
     setToastMessage(message);
@@ -120,6 +148,8 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
     addItem(product, {
       metal: selectedMetal,
       purity,
+      resolvedPrice: activePrice,
+      resolvedImageUrl: activeProduct.imageUrl || undefined,
       sizeOrFit,
       ringSize: selectedRingSize,
       ringCategoryId: selectedRingCategoryId,
@@ -153,14 +183,14 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
         <ProductBreadcrumb productName={product.name} collectionHref={collectionHref} collectionLabel={collectionLabel} />
 
         <ProductLayout
-          gallery={(
+              gallery={(
             <ProductGallery
               gemStyle={storefrontProduct.gemStyle}
               gemColor={storefrontProduct.gemColor}
               dark={isDark}
-              imageUrl={storefrontProduct.imageUrl}
-              galleryUrls={storefrontProduct.galleryUrls}
-              videoUrl={storefrontProduct.videoUrl}
+              imageUrl={activeProduct.imageUrl}
+              galleryUrls={activeProduct.galleryUrls}
+              videoUrl={activeProduct.videoUrl}
             />
           )}
           info={(
@@ -183,7 +213,7 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
                 {product.shortMeta}
               </div>
 
-              <ProductPriceBlock priceFrom={product.priceFrom} />
+              <ProductPriceBlock priceFrom={activePrice} />
               <ProductDescription text={description} />
 
               <ProductConfigurator
@@ -214,7 +244,7 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
               />
 
               <ProductCTAs
-                product={product}
+                product={activeProduct}
                 onEnquire={() => setIsEnquireOpen(true)}
                 inWishlist={inWishlist}
                 onWishlist={() => handleWishlistToggle(product)}

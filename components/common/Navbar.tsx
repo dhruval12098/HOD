@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { loaderWordmarkFont } from '@/app/fonts';
 import { supabase } from '@/lib/supabase';
 import {
@@ -19,6 +19,8 @@ const METAL_COLORS: Record<string, string> = {
   platinum: 'linear-gradient(135deg,#E8E8E8,#C0C0C0)',
   default: 'linear-gradient(135deg,#E5E7EB,#9CA3AF)',
 };
+
+const OVERLAY_NAVBAR_ROUTES = new Set(['/', '/hiphop', '/bespoke']);
 
 function MetalDot({ type }: { type: keyof typeof METAL_COLORS }) {
   return (
@@ -148,11 +150,13 @@ function getMegaMenuColumnCount(item: NavbarRenderItem) {
 
 export default function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const { count: wishlistCount } = useWishlistStore();
   const { count: cartCount } = useCart();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileOpenItem, setMobileOpenItem] = useState<string | null>(null);
+  const [activeMegaItem, setActiveMegaItem] = useState<string | null>(null);
   const [navHidden, setNavHidden] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -171,6 +175,7 @@ export default function Navbar() {
   const [authReady, setAuthReady] = useState(false);
   const lastScrollY = useRef(0);
   const searchRef = useRef<HTMLDivElement>(null);
+  const megaCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const onScroll = () => {
@@ -229,6 +234,14 @@ export default function Navbar() {
     document.addEventListener('mousedown', onPointerDown);
     return () => document.removeEventListener('mousedown', onPointerDown);
   }, [searchOpen]);
+
+  useEffect(() => {
+    return () => {
+      if (megaCloseTimeoutRef.current) {
+        clearTimeout(megaCloseTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     let ignore = false;
@@ -318,6 +331,24 @@ export default function Navbar() {
 
   const closeMenu = () => setMenuOpen(false);
 
+  const openMegaMenu = (label: string) => {
+    if (megaCloseTimeoutRef.current) {
+      clearTimeout(megaCloseTimeoutRef.current);
+      megaCloseTimeoutRef.current = null;
+    }
+    setActiveMegaItem(label);
+  };
+
+  const queueCloseMegaMenu = (label: string) => {
+    if (megaCloseTimeoutRef.current) {
+      clearTimeout(megaCloseTimeoutRef.current);
+    }
+    megaCloseTimeoutRef.current = setTimeout(() => {
+      setActiveMegaItem((current) => (current === label ? null : current));
+      megaCloseTimeoutRef.current = null;
+    }, 180);
+  };
+
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     closeMenu();
@@ -376,6 +407,15 @@ export default function Navbar() {
       .slice(0, 6);
   }, [searchItems, searchQuery]);
 
+  const desktopOverlayMode = pathname ? OVERLAY_NAVBAR_ROUTES.has(pathname) : false;
+  const desktopSolidMode = !desktopOverlayMode || scrolled || Boolean(activeMegaItem) || searchOpen;
+  const desktopHeaderText = desktopSolidMode ? '#0A1628' : '#FFFFFF';
+  const desktopHeaderMuted = desktopSolidMode ? '#333333' : 'rgba(255,255,255,0.88)';
+  const desktopHeaderBorder = desktopSolidMode ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.12)';
+  const desktopUtilityBg = desktopSolidMode ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.08)';
+  const desktopHeaderBg = desktopSolidMode ? '#FFFFFF' : 'transparent';
+  const desktopHeaderShadow = scrolled ? '0 2px 20px rgba(0,0,0,0.06)' : 'none';
+
   return (
     <>
       <style>{`
@@ -399,7 +439,7 @@ export default function Navbar() {
           position: absolute;
           bottom: 0; left: 30px; right: 30px;
           height: 2px;
-          background: var(--theme-ink);
+          background: currentColor;
           transform: scaleX(0);
           transform-origin: center;
           transition: transform .35s cubic-bezier(.4,0,.2,1);
@@ -407,6 +447,18 @@ export default function Navbar() {
         .mega-parent:hover .nav-link-underline::after,
         .nav-link-underline:hover::after {
           transform: scaleX(1);
+        }
+        .nav-desktop-row::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          opacity: 0;
+          transition: opacity .3s ease;
+          background: linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.26) 55%, rgba(0,0,0,0) 100%);
+        }
+        .nav-desktop-row[data-overlay='true']::before {
+          opacity: 1;
         }
       `}</style>
 
@@ -447,43 +499,184 @@ export default function Navbar() {
       <header
         id="hod-nav"
         className={[
-          `fixed left-0 right-0 ${announcementActive ? 'top-[35px]' : 'top-0'} z-[1000] bg-white`,
-          'border-b border-black/[0.06]',
+          `fixed left-0 right-0 ${announcementActive ? 'top-[35px]' : 'top-0'} z-[1000]`,
           'transition-[transform,shadow] duration-300 ease-out',
-          scrolled ? 'shadow-[0_2px_20px_rgba(0,0,0,0.06)]' : '',
         ].join(' ')}
         style={{
           transform: navHidden ? 'translateY(-120%)' : 'translateY(0)',
+          background: desktopHeaderBg,
+          boxShadow: desktopHeaderShadow,
+          borderBottom: desktopOverlayMode && !scrolled ? 'none' : `1px solid ${desktopHeaderBorder}`,
         }}
       >
-        <div className="flex items-center justify-start lg:justify-center relative px-5 sm:px-7 lg:px-[52px] pt-[22px] pb-[14px] border-b border-black/[0.04]">
-          <div ref={searchRef} className="absolute left-5 top-1/2 z-[30] hidden -translate-y-1/2 lg:block sm:left-7 lg:left-[52px]">
-            <div className="relative">
-            <div className={`flex h-[42px] items-center overflow-hidden rounded-full border border-black/10 bg-white transition-all duration-300 ${searchOpen ? 'w-[360px] shadow-[0_18px_48px_rgba(10,22,40,0.12)]' : 'w-[42px]'}`}>
+        <div
+          className="nav-desktop-row relative px-0 py-0 lg:px-[34px] lg:py-[10px]"
+          data-overlay={desktopOverlayMode && !desktopSolidMode ? 'true' : 'false'}
+        >
+          <div className="relative flex items-center justify-center border-b border-black/[0.06] bg-white px-4 py-[14px] lg:hidden">
+          <div className="absolute left-4 top-1/2 flex -translate-y-1/2 items-center gap-2.5 sm:gap-3">
+            <Link
+              href="/wishlist"
+              aria-label="Wishlist"
+              className="relative flex h-[34px] w-[34px] items-center justify-center rounded-full border border-black/10 bg-transparent transition-all duration-300 hover:border-[#0A1628] hover:bg-[#0A1628]/[0.06] group"
+            >
+              <svg width="14" height="14" viewBox="0 0 18 18" fill="none" stroke="#333" strokeWidth="1.4" strokeLinejoin="round" className="group-hover:stroke-[#0A1628] transition-colors">
+                <path d="M9 16L3 10C1.5 8.5 1.5 5.5 3 4C4.5 2.5 7 2.5 9 4C11 2.5 13.5 2.5 15 4C16.5 5.5 16.5 8.5 15 10L9 16Z" />
+              </svg>
+              {wishlistCount ? <span className="absolute -right-1 -top-1 inline-flex min-w-[18px] items-center justify-center rounded-full bg-[#0A1628] px-1 text-[10px] text-white">{wishlistCount}</span> : null}
+            </Link>
+            <Link
+              href="/cart"
+              aria-label="Cart"
+              className="relative flex h-[34px] w-[34px] items-center justify-center rounded-full border border-black/10 bg-transparent transition-all duration-300 hover:border-[#0A1628] hover:bg-[#0A1628]/[0.06] group"
+            >
+              <svg width="14" height="14" viewBox="0 0 18 18" fill="none" stroke="#333" strokeWidth="1.4" className="group-hover:stroke-[#0A1628] transition-colors">
+                <path d="M2.5 3.5H4.2L5.5 11.2H13.2L15.2 6H6.2" strokeLinecap="round" strokeLinejoin="round" />
+                <circle cx="7" cy="14" r="1.1" />
+                <circle cx="12.5" cy="14" r="1.1" />
+              </svg>
+              {cartCount ? <span className="absolute -right-1 -top-1 inline-flex min-w-[18px] items-center justify-center rounded-full bg-[#0A1628] px-1 text-[10px] text-white">{cartCount}</span> : null}
+            </Link>
+          </div>
+          <button
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-label="Menu"
+            aria-expanded={menuOpen}
+            className="absolute right-4 flex w-7 cursor-pointer flex-col gap-[5px] border-none bg-transparent p-1"
+          >
+            <span
+              className="block h-[1.5px] w-full bg-[#0A1628] rounded-sm origin-center transition-transform duration-350"
+              style={{ transform: menuOpen ? 'translateY(6.5px) rotate(45deg)' : 'none' }}
+            />
+            <span
+              className="block h-[1.5px] bg-[#0A1628] rounded-sm ml-auto transition-opacity duration-350"
+              style={{ width: '70%', opacity: menuOpen ? 0 : 1 }}
+            />
+            <span
+              className="block h-[1.5px] bg-[#0A1628] rounded-sm origin-center transition-transform duration-350"
+              style={{ transform: menuOpen ? 'translateY(-6.5px) rotate(-45deg)' : 'none', width: '100%' }}
+            />
+          </button>
+          <Link
+            href="/"
+            className="flex items-center no-underline cursor-pointer transition-opacity duration-300 hover:opacity-60"
+          >
+            <span
+              className={`${loaderWordmarkFont.className} text-[16px] sm:text-[20px] font-normal tracking-[0.24em] sm:tracking-[0.3em] uppercase`}
+              style={{ color: '#0A1628' }}
+            >
+              House of Diams
+            </span>
+          </Link>
+          </div>
+
+          <div className="hidden lg:grid lg:grid-cols-[auto_auto_1fr] lg:items-center lg:gap-5">
+          <Link
+            href="/"
+            className="relative z-[2] flex items-center no-underline transition-opacity duration-300 hover:opacity-70"
+          >
+            <span
+              className={`${loaderWordmarkFont.className} text-[16px] font-normal uppercase tracking-[0.27em]`}
+              style={{ color: desktopHeaderText }}
+            >
+              House of Diams
+            </span>
+          </Link>
+
+          <nav className="z-[2] flex items-center justify-start">
+            <ul className="flex items-center list-none m-0 p-0">
+              {navItems.map((item) => (
+                <li
+                  key={item.label}
+                  className={item.mega ? 'mega-parent' : ''}
+                  style={{ position: 'static' }}
+                  onMouseEnter={() => {
+                    if (item.mega) openMegaMenu(item.label);
+                  }}
+                  onMouseLeave={() => {
+                    if (item.mega) queueCloseMegaMenu(item.label);
+                  }}
+                >
+                  <a
+                    href={item.href ?? '#'}
+                    className="nav-link-underline relative block px-[18px] py-[11px] text-[9px] font-medium tracking-[0.17em] uppercase no-underline cursor-pointer transition-colors duration-300"
+                    style={{
+                      fontFamily: "'Montserrat', sans-serif",
+                      color: desktopHeaderMuted,
+                    }}
+                  >
+                    {item.label}
+                  </a>
+
+                  {item.mega ? (
+                    <div
+                      className="mega-drop absolute top-full overflow-hidden rounded-b-[30px] bg-white border-t-2 border-[#0A1628] shadow-[0_24px_64px_rgba(0,0,0,0.08)]"
+                      style={{
+                        left: '50%',
+                        width: '100vw',
+                        marginLeft: '-50vw',
+                        opacity: 0,
+                        visibility: 'hidden',
+                        pointerEvents: 'none',
+                        transform: 'translateY(6px)',
+                        transition: 'opacity .25s ease, visibility .25s, transform .25s ease',
+                        zIndex: 100,
+                      }}
+                      onMouseEnter={() => openMegaMenu(item.label)}
+                      onMouseLeave={() => queueCloseMegaMenu(item.label)}
+                    >
+                      <div className="max-w-[1280px] mx-auto px-[100px] py-[56px]">
+                        <div
+                          className="grid gap-0"
+                          style={{
+                            gridTemplateColumns: `repeat(${getMegaMenuColumnCount(item)}, minmax(0, 1fr))`,
+                          }}
+                        >
+                          {item.mega.sections.map((section, idx) => (
+                            <div
+                              key={`${item.label}-${section.title}-${idx}`}
+                              className={[
+                                getMegaMenuColumnCount(item) >= 5 ? 'px-[24px]' : getMegaMenuColumnCount(item) === 4 ? 'px-[34px]' : 'px-[52px]',
+                                idx === 0 ? 'pl-0' : '',
+                                idx === item.mega!.sections.length - 1 ? 'pr-0' : 'border-r border-black/[0.05]',
+                              ].join(' ')}
+                            >
+                              <MegaSection section={section} />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          <div className="relative z-[30] flex items-center justify-end gap-2.5">
+          <div ref={searchRef} className="relative">
+            <div
+              className={`flex h-[34px] items-center overflow-hidden rounded-full border transition-all duration-300 ${searchOpen ? 'w-[34px]' : 'w-[34px]'}`}
+              style={{
+                borderColor: desktopHeaderBorder,
+                background: desktopUtilityBg,
+              }}
+            >
               <button
                 type="button"
                 onClick={() => setSearchOpen((prev) => !prev)}
                 aria-label="Search"
-                className="flex h-[42px] w-[42px] flex-shrink-0 items-center justify-center"
+                className="flex h-[34px] w-[34px] flex-shrink-0 items-center justify-center"
               >
-                <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="#333" strokeWidth="1.4">
+                <svg width="13" height="13" viewBox="0 0 18 18" fill="none" stroke={searchOpen ? '#333333' : desktopHeaderText} strokeWidth="1.4">
                   <circle cx="7.5" cy="7.5" r="5.5" />
                   <path d="M12 12L16 16" strokeLinecap="round" />
                 </svg>
               </button>
-              {searchOpen ? (
-                <input
-                  autoFocus
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="Search products..."
-                  className="h-[42px] w-full border-0 bg-transparent pr-4 text-[13px] text-[#0A1628] outline-none placeholder:text-[#8B94A5]"
-                />
-              ) : null}
             </div>
 
             {searchOpen && searchQuery.trim() ? (
-              <div className="absolute left-0 top-full mt-3 w-[360px] overflow-hidden rounded-[22px] border border-black/8 bg-white shadow-[0_24px_56px_rgba(10,22,40,0.14)]">
+              <div className="absolute right-0 top-[calc(100%+24px)] w-[760px] overflow-hidden rounded-[22px] border border-black/8 bg-white shadow-[0_24px_56px_rgba(10,22,40,0.14)]">
                 {filteredSearchItems.length ? (
                   <div className="max-h-[420px] overflow-y-auto py-2">
                     {filteredSearchItems.map((item) => (
@@ -512,26 +705,17 @@ export default function Navbar() {
                 )}
               </div>
             ) : null}
-            </div>
           </div>
-          <Link
-            href="/"
-            className="flex items-center gap-[14px] pr-[112px] sm:pr-[132px] lg:pr-0 no-underline cursor-pointer transition-opacity duration-300 hover:opacity-60"
-          >
-            <span
-              className={`${loaderWordmarkFont.className} text-[16px] sm:text-[24px] lg:text-[22px] font-normal tracking-[0.24em] sm:tracking-[0.34em] lg:tracking-[0.4em] uppercase text-[#0A1628]`}
-            >
-              House of Diams
-            </span>
-          </Link>
-
-          <div className="absolute right-5 sm:right-7 lg:right-[52px] top-1/2 -translate-y-1/2 flex items-center gap-3 sm:gap-4">
             <Link
               href="/wishlist"
               aria-label="Wishlist"
-              className="relative w-[38px] h-[38px] rounded-full border border-black/10 bg-transparent flex items-center justify-center cursor-pointer transition-all duration-300 hover:border-[#0A1628] hover:bg-[#0A1628]/[0.06] group"
+              className="group relative flex h-[34px] w-[34px] items-center justify-center rounded-full transition-all duration-300"
+              style={{
+                border: `1px solid ${desktopHeaderBorder}`,
+                background: desktopUtilityBg,
+              }}
             >
-              <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="#333" strokeWidth="1.4" strokeLinejoin="round" className="group-hover:stroke-[#0A1628] transition-colors">
+              <svg width="12" height="12" viewBox="0 0 18 18" fill="none" stroke={desktopHeaderText} strokeWidth="1.4" strokeLinejoin="round">
                 <path d="M9 16L3 10C1.5 8.5 1.5 5.5 3 4C4.5 2.5 7 2.5 9 4C11 2.5 13.5 2.5 15 4C16.5 5.5 16.5 8.5 15 10L9 16Z" />
               </svg>
               {wishlistCount ? <span className="absolute -right-1 -top-1 inline-flex min-w-[18px] items-center justify-center rounded-full bg-[#0A1628] px-1 text-[10px] text-white">{wishlistCount}</span> : null}
@@ -539,9 +723,13 @@ export default function Navbar() {
             <Link
               href="/cart"
               aria-label="Cart"
-              className="relative w-[38px] h-[38px] rounded-full border border-black/10 bg-transparent flex items-center justify-center cursor-pointer transition-all duration-300 hover:border-[#0A1628] hover:bg-[#0A1628]/[0.06] group"
+              className="group relative flex h-[34px] w-[34px] items-center justify-center rounded-full transition-all duration-300"
+              style={{
+                border: `1px solid ${desktopHeaderBorder}`,
+                background: desktopUtilityBg,
+              }}
             >
-              <svg width="16" height="16" viewBox="0 0 18 18" fill="none" stroke="#333" strokeWidth="1.4" className="group-hover:stroke-[#0A1628] transition-colors">
+              <svg width="12" height="12" viewBox="0 0 18 18" fill="none" stroke={desktopHeaderText} strokeWidth="1.4">
                 <path d="M2.5 3.5H4.2L5.5 11.2H13.2L15.2 6H6.2" strokeLinecap="round" strokeLinejoin="round" />
                 <circle cx="7" cy="14" r="1.1" />
                 <circle cx="12.5" cy="14" r="1.1" />
@@ -552,92 +740,58 @@ export default function Navbar() {
             {authReady && authUser ? (
               <Link
                 href="/profile"
-                className="hidden sm:inline-flex h-[42px] items-center justify-center rounded-full border border-[rgba(10,22,40,0.1)] bg-[rgba(10,22,40,0.03)] px-5 text-[10px] font-medium uppercase tracking-[0.26em] text-[#0A1628] transition-all duration-300 hover:border-[#0A1628] hover:bg-[#0A1628] hover:text-white"
+                className="inline-flex h-[34px] items-center justify-center rounded-full px-3.5 text-[8px] font-medium uppercase tracking-[0.19em] transition-all duration-300 hover:bg-white hover:text-[#0A1628]"
+                style={{
+                  border: `1px solid ${desktopHeaderBorder}`,
+                  background: desktopUtilityBg,
+                  color: desktopHeaderText,
+                }}
               >
                 {username}
               </Link>
             ) : (
               <Link
                 href="/signup"
-                className="hidden sm:inline-flex h-[42px] items-center justify-center rounded-full bg-[#0A1628] px-5 text-[10px] font-medium uppercase tracking-[0.28em] text-white transition-all duration-300 hover:bg-[#13233b]"
+                className="inline-flex h-[34px] items-center justify-center rounded-full px-3.5 text-[8px] font-medium uppercase tracking-[0.19em] transition-all duration-300 hover:bg-white hover:text-[#0A1628]"
+                style={{
+                  border: `1px solid ${desktopHeaderBorder}`,
+                  background: desktopUtilityBg,
+                  color: desktopHeaderText,
+                }}
               >
                 Sign Up
               </Link>
             )}
-
-            <button
-              onClick={() => setMenuOpen((v) => !v)}
-              aria-label="Menu"
-              aria-expanded={menuOpen}
-              className="flex lg:hidden flex-col gap-[5px] p-1 border-none bg-transparent cursor-pointer w-7 ml-1"
-            >
-              <span
-                className="block h-[1.5px] w-full bg-[#0A1628] rounded-sm origin-center transition-transform duration-350"
-                style={{ transform: menuOpen ? 'translateY(6.5px) rotate(45deg)' : 'none' }}
-              />
-              <span
-                className="block h-[1.5px] bg-[#0A1628] rounded-sm ml-auto transition-opacity duration-350"
-                style={{ width: '70%', opacity: menuOpen ? 0 : 1 }}
-              />
-              <span
-                className="block h-[1.5px] bg-[#0A1628] rounded-sm origin-center transition-transform duration-350"
-                style={{ transform: menuOpen ? 'translateY(-6.5px) rotate(-45deg)' : 'none', width: '100%' }}
-              />
-            </button>
           </div>
         </div>
-
-        <nav className="hidden lg:flex items-center justify-center relative">
-          <ul className="flex items-center list-none m-0 p-0">
-            {navItems.map((item) => (
-              <li key={item.label} className={item.mega ? 'mega-parent' : ''} style={{ position: 'static' }}>
-                <a
-                  href={item.href ?? '#'}
-                  className="nav-link-underline relative block px-[30px] py-[16px] text-[11px] font-medium tracking-[0.2em] uppercase text-[#333] no-underline cursor-pointer transition-colors duration-300 hover:text-[#0A1628]"
-                  style={{ fontFamily: "'Montserrat', sans-serif" }}
-                >
-                  {item.label}
-                </a>
-
-                {item.mega ? (
-                  <div
-                    className="mega-drop absolute left-0 right-0 top-full bg-white border-t-2 border-[#0A1628] shadow-[0_24px_64px_rgba(0,0,0,0.08)]"
-                    style={{
-                      opacity: 0,
-                      visibility: 'hidden',
-                      pointerEvents: 'none',
-                      transform: 'translateY(6px)',
-                      transition: 'opacity .25s ease, visibility .25s, transform .25s ease',
-                      zIndex: 100,
-                    }}
-                  >
-                    <div className="max-w-[1280px] mx-auto px-[100px] py-[56px]">
-                      <div
-                        className="grid gap-0"
-                        style={{
-                          gridTemplateColumns: `repeat(${getMegaMenuColumnCount(item)}, minmax(0, 1fr))`,
-                        }}
-                      >
-                        {item.mega.sections.map((section, idx) => (
-                          <div
-                            key={`${item.label}-${section.title}-${idx}`}
-                            className={[
-                              getMegaMenuColumnCount(item) >= 5 ? 'px-[24px]' : getMegaMenuColumnCount(item) === 4 ? 'px-[34px]' : 'px-[52px]',
-                              idx === 0 ? 'pl-0' : '',
-                              idx === item.mega!.sections.length - 1 ? 'pr-0' : 'border-r border-black/[0.05]',
-                            ].join(' ')}
-                          >
-                            <MegaSection section={section} />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        </nav>
+        {searchOpen ? (
+          <div className="relative z-[20] hidden border-t border-black/[0.06] bg-white lg:block">
+            <div className="mx-auto flex max-w-[1180px] items-center gap-4 px-[34px] py-4">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#0A1628" strokeWidth="1.4">
+                <circle cx="7.5" cy="7.5" r="5.5" />
+                <path d="M12 12L16 16" strokeLinecap="round" />
+              </svg>
+              <input
+                autoFocus
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="What can we help you with?"
+                className="h-[46px] flex-1 border-0 border-b border-[rgba(10,22,40,0.18)] bg-transparent text-[15px] text-[#0A1628] outline-none placeholder:text-[#6E7685]"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery('');
+                  setSearchOpen(false);
+                }}
+                className="text-[12px] text-[#0A1628] underline underline-offset-4"
+              >
+                clear
+              </button>
+            </div>
+          </div>
+        ) : null}
+        </div>
       </header>
 
       <div

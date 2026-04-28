@@ -54,6 +54,20 @@ type CheckoutPayload = {
   } | null
 }
 
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+}
+
+function isValidPhone(value: string) {
+  const trimmed = value.trim()
+  const digitsOnly = trimmed.replace(/\D/g, '')
+  return /^\+?[0-9][0-9\s\-()]{7,19}$/.test(trimmed) && digitsOnly.length >= 8
+}
+
+function isValidPostalCode(value: string) {
+  return /^[A-Za-z0-9][A-Za-z0-9\s-]{2,11}$/.test(value.trim())
+}
+
 export async function POST(request: Request) {
   if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceRoleKey) {
     return NextResponse.json({ error: 'Missing Supabase environment variables.' }, { status: 500 })
@@ -209,6 +223,47 @@ export async function POST(request: Request) {
 
   const totalAmount = subtotalAmount + gstAmount - couponDiscountAmount
   const customer = payload?.customer ?? {}
+  const resolvedCustomer = {
+    first_name: (customer.first_name || profile?.first_name || userData.user.user_metadata?.first_name || '').trim(),
+    last_name: (customer.last_name || profile?.last_name || userData.user.user_metadata?.last_name || '').trim(),
+    email: (customer.email || profile?.email || userData.user.email || '').trim(),
+    phone: (customer.phone || profile?.phone || userData.user.user_metadata?.phone || '').trim(),
+    country: (customer.country || profile?.country || '').trim(),
+    state: (customer.state || profile?.state || '').trim(),
+    city: (customer.city || profile?.city || '').trim(),
+    postal_code: (customer.postal_code || profile?.postal_code || '').trim(),
+    address_line_1: (customer.address_line_1 || profile?.address_line_1 || '').trim(),
+    address_line_2: (customer.address_line_2 || profile?.address_line_2 || '').trim(),
+  }
+
+  if (!resolvedCustomer.first_name) {
+    return NextResponse.json({ error: 'First name is required.' }, { status: 400 })
+  }
+  if (!resolvedCustomer.last_name) {
+    return NextResponse.json({ error: 'Last name is required.' }, { status: 400 })
+  }
+  if (!resolvedCustomer.email || !isValidEmail(resolvedCustomer.email)) {
+    return NextResponse.json({ error: 'A valid email address is required.' }, { status: 400 })
+  }
+  if (!resolvedCustomer.phone || !isValidPhone(resolvedCustomer.phone)) {
+    return NextResponse.json({ error: 'A valid mobile number with country code is required.' }, { status: 400 })
+  }
+  if (!resolvedCustomer.country) {
+    return NextResponse.json({ error: 'Country is required.' }, { status: 400 })
+  }
+  if (!resolvedCustomer.state) {
+    return NextResponse.json({ error: 'State, province, or region is required.' }, { status: 400 })
+  }
+  if (!resolvedCustomer.city) {
+    return NextResponse.json({ error: 'City is required.' }, { status: 400 })
+  }
+  if (!resolvedCustomer.postal_code || !isValidPostalCode(resolvedCustomer.postal_code)) {
+    return NextResponse.json({ error: 'A valid postal code or pincode is required.' }, { status: 400 })
+  }
+  if (!resolvedCustomer.address_line_1) {
+    return NextResponse.json({ error: 'Address line 1 is required.' }, { status: 400 })
+  }
+
   const gstPercentage =
     normalizedItems.length === 1
       ? normalizedItems[0]?.gstPercentage ?? 0
@@ -218,16 +273,16 @@ export async function POST(request: Request) {
     .from('orders')
     .insert({
       user_id: userData.user.id,
-      customer_email: customer.email || profile?.email || userData.user.email || '',
-      customer_first_name: customer.first_name || profile?.first_name || userData.user.user_metadata?.first_name || 'Customer',
-      customer_last_name: customer.last_name || profile?.last_name || userData.user.user_metadata?.last_name || '',
-      customer_phone: customer.phone || profile?.phone || userData.user.user_metadata?.phone || '',
-      shipping_country: customer.country || profile?.country || '',
-      shipping_state: customer.state || profile?.state || '',
-      shipping_city: customer.city || profile?.city || '',
-      shipping_postal_code: customer.postal_code || profile?.postal_code || '',
-      shipping_address_line_1: customer.address_line_1 || profile?.address_line_1 || '',
-      shipping_address_line_2: customer.address_line_2 || profile?.address_line_2 || '',
+      customer_email: resolvedCustomer.email,
+      customer_first_name: resolvedCustomer.first_name || 'Customer',
+      customer_last_name: resolvedCustomer.last_name,
+      customer_phone: resolvedCustomer.phone,
+      shipping_country: resolvedCustomer.country,
+      shipping_state: resolvedCustomer.state,
+      shipping_city: resolvedCustomer.city,
+      shipping_postal_code: resolvedCustomer.postal_code,
+      shipping_address_line_1: resolvedCustomer.address_line_1,
+      shipping_address_line_2: resolvedCustomer.address_line_2,
       subtotal_amount: subtotalAmount,
       gst_amount: gstAmount,
       shipping_amount: 0,

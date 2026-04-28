@@ -4,18 +4,19 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { HomeBestSellerProduct, HomeBestSellerSection } from '@/lib/home-data'
 import { useWishlistStore } from '@/lib/hooks/useWishlistStore'
 import { getProductKey } from '@/lib/product-keys'
+import ProductCard from '@/components/shop/ProductCard'
 
 type Product = {
+  dbId: string
   id: string
   slug: string
   name: string
-  meta: string
-  price: string
-  badge: string
-  badgeVariant: 'navy' | 'outline'
-  detailTemplate?: 'standard' | 'hiphop'
-  image?: string
-  placeholder: React.ReactNode
+  shortMeta: string
+  priceFrom: number
+  featured?: boolean
+  isNew?: boolean
+  category?: string
+  imageUrl?: string
 }
 
 type SectionData = {
@@ -23,15 +24,6 @@ type SectionData = {
   heading: string
   cta_label: string
   cta_href: string
-}
-
-function PlaceholderGem() {
-  return (
-    <svg width="90" height="90" viewBox="0 0 100 100" fill="none">
-      <circle cx="50" cy="50" r="30" stroke="var(--theme-ink)" strokeWidth="3" fill="none" />
-      <circle cx="50" cy="50" r="24" stroke="var(--theme-ink)" strokeWidth="1" fill="none" opacity=".4" />
-    </svg>
-  )
 }
 
 function RevealDiv({
@@ -72,21 +64,6 @@ function RevealDiv({
   )
 }
 
-function HeartIcon({ filled }: { filled: boolean }) {
-  return (
-    <svg
-      width="13"
-      height="13"
-      viewBox="0 0 24 24"
-      fill={filled ? 'var(--theme-ink)' : 'none'}
-      stroke={filled ? 'var(--theme-ink)' : 'var(--theme-muted-2)'}
-      strokeWidth="1.5"
-    >
-      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-    </svg>
-  )
-}
-
 function Chevron({ direction }: { direction: 'left' | 'right' }) {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
@@ -99,99 +76,6 @@ function Chevron({ direction }: { direction: 'left' | 'right' }) {
   )
 }
 
-function ProductCard({ product }: { product: Product }) {
-  const { contains, toggle } = useWishlistStore()
-  const isHipHop = product.detailTemplate === 'hiphop'
-  const wishlisted = contains(getProductKey(product))
-
-  return (
-    <div
-      className={[
-        'group h-full overflow-hidden rounded-[22px] transition-transform duration-[350ms] ease-[cubic-bezier(.4,0,.2,1)] hover:-translate-y-[3px] hover:z-[2]',
-        isHipHop
-          ? 'border border-white/12 bg-[#0A1628] text-white'
-          : 'border border-[var(--theme-border)] bg-[var(--theme-surface)]',
-      ].join(' ')}
-    >
-      <a href={`/shop/${product.slug}`} className="block no-underline">
-        <div className={`relative aspect-[1.08/1] overflow-hidden sm:aspect-square ${isHipHop ? 'bg-gradient-to-br from-[#0A1628] to-[#111F34]' : 'bg-white'}`}>
-          <div
-            className={[
-              'absolute top-3 left-3 z-[2] text-[6.5px] tracking-[0.16em] uppercase px-[10px] py-1 font-medium',
-              isHipHop
-                ? 'border border-white/20 bg-white/10 text-white'
-                : product.badgeVariant === 'navy'
-                ? 'bg-[var(--theme-ink)] text-white'
-                : 'border border-[var(--theme-border-strong)] bg-[var(--theme-surface)] text-[var(--theme-ink)]',
-            ].join(' ')}
-          >
-            {product.badge}
-          </div>
-
-          <button
-            onClick={(event) => {
-              event.preventDefault()
-              toggle(getProductKey(product))
-            }}
-            className={[
-              'absolute top-3 right-3 z-[2] flex h-[30px] w-[30px] cursor-pointer items-center justify-center rounded-full transition-colors duration-200',
-              isHipHop
-                ? wishlisted
-                  ? 'border border-white bg-white text-[#0A1628]'
-                  : 'border border-white/20 bg-black/40 text-white hover:bg-white hover:text-[#0A1628]'
-                : 'border-[0.5px] border-[var(--theme-border-strong)] bg-[color:rgba(255,255,255,0.9)] hover:bg-[var(--theme-ink)]',
-            ].join(' ')}
-            aria-label="Toggle wishlist"
-          >
-            <HeartIcon filled={wishlisted} />
-          </button>
-
-          {product.image ? (
-            <img
-              src={product.image}
-              alt={product.name}
-              className="absolute inset-0 block h-full w-full object-cover object-center scale-[1.08] transition-transform duration-700 ease-[cubic-bezier(.4,0,.2,1)] group-hover:scale-[1.12] sm:scale-100 sm:group-hover:scale-105"
-              loading="lazy"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center opacity-10 transition-opacity duration-500 group-hover:opacity-[0.06]">
-              {product.placeholder}
-            </div>
-          )}
-        </div>
-
-        <div className={`px-[16px] pb-[18px] pt-4 sm:px-[18px] sm:pt-5 sm:pb-[22px] ${isHipHop ? 'border-t border-white/12' : ''}`}>
-          <div className={`font-display-title mb-[5px] text-[17px] font-normal leading-[1.22] tracking-[0.02em] sm:text-[19px] ${isHipHop ? 'text-white' : 'text-[var(--theme-heading)]'}`}>
-            {product.name}
-          </div>
-
-          <p className={`mb-3 text-[7px] font-light uppercase leading-[1.75] tracking-[0.13em] sm:mb-4 sm:text-[7.5px] sm:tracking-[0.14em] ${isHipHop ? 'text-white/55' : 'text-[var(--theme-muted)]'}`}>
-            {product.meta}
-          </p>
-
-          <div className="flex items-center justify-between">
-            <span className={`font-numeric text-[20px] font-light sm:text-[22px] ${isHipHop ? 'text-white' : 'text-[var(--theme-heading)]'}`}>
-              {product.price}
-            </span>
-
-            <button
-              onClick={(event) => event.preventDefault()}
-              className={[
-                'cursor-pointer px-[12px] py-[6px] text-[6.5px] font-medium uppercase tracking-[0.16em] transition-colors duration-200 sm:px-[14px] sm:py-[7px] sm:text-[7px] sm:tracking-[0.18em]',
-                isHipHop
-                  ? 'border border-white/24 bg-transparent text-white hover:border-white hover:bg-white hover:text-[#0A1628]'
-                  : 'border border-[var(--theme-ink)] bg-transparent text-[var(--theme-ink)] hover:bg-[var(--theme-ink)] hover:text-white',
-              ].join(' ')}
-            >
-              Enquire
-            </button>
-          </div>
-        </div>
-      </a>
-    </div>
-  )
-}
-
 export default function BestSellers({
   initialSection,
   initialProducts = [],
@@ -199,16 +83,27 @@ export default function BestSellers({
   initialSection?: HomeBestSellerSection
   initialProducts?: HomeBestSellerProduct[]
 }) {
-  const [section] = useState<SectionData>(initialSection ?? {
-    eyebrow: 'House of Diams',
-    heading: 'Our Best Sellers',
-    cta_label: 'View All Collection',
-    cta_href: '/shop',
-  })
+  const [section] = useState<SectionData>(
+    initialSection ?? {
+      eyebrow: 'House of Diams',
+      heading: 'Our Best Sellers',
+      cta_label: 'View All Collection',
+      cta_href: '/shop',
+    }
+  )
+  const { wishlist, toggle } = useWishlistStore()
   const [products] = useState<Product[]>(
     initialProducts.map((product) => ({
-      ...product,
-      placeholder: <PlaceholderGem />,
+      dbId: product.id,
+      id: product.id,
+      slug: product.slug,
+      name: product.name,
+      shortMeta: product.meta,
+      priceFrom: Number(String(product.price).replace(/[^0-9.]/g, '')) || 0,
+      featured: product.badge !== 'Bestseller',
+      isNew: false,
+      category: product.detailTemplate === 'hiphop' ? 'hiphop' : 'fine-jewellery',
+      imageUrl: product.image,
     }))
   )
   const [visibleCount, setVisibleCount] = useState(4)
@@ -250,7 +145,7 @@ export default function BestSellers({
   if (!products.length) return null
 
   return (
-    <section className="max-w-[1400px] mx-auto px-[52px] py-[110px] max-lg:px-7 max-md:px-5 max-md:py-[70px]">
+    <section className="mx-auto max-w-[1400px] px-[52px] py-[110px] max-lg:px-7 max-md:px-5 max-md:py-[70px]">
       <RevealDiv className="mb-12 flex flex-wrap items-end justify-between gap-6">
         <div>
           <p className="mb-[14px] flex items-center gap-3 text-[8px] font-normal uppercase tracking-[0.28em] text-[var(--theme-ink)] opacity-60">
@@ -314,7 +209,13 @@ export default function BestSellers({
                   key={product.id}
                   className="min-w-full sm:min-w-[calc(50%-10px)] lg:min-w-[calc(25%-15px)]"
                 >
-                  <ProductCard product={product} />
+                  <ProductCard
+                    product={product}
+                    wishlisted={wishlist.includes(getProductKey(product))}
+                    onWishlist={() => toggle(getProductKey(product))}
+                    onEnquire={() => {}}
+                    forceLight
+                  />
                 </div>
               ))}
             </div>

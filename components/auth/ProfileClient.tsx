@@ -26,6 +26,11 @@ type OrderItem = {
   unit_price: number;
   line_total: number;
   image_url?: string | null;
+  selected_metal?: string | null;
+  selected_purity?: string | null;
+  selected_size_or_fit?: string | null;
+  selected_gemstone?: string | null;
+  selected_carat?: string | null;
 };
 type OrderRecord = {
   id: string;
@@ -393,12 +398,19 @@ export default function ProfileClient() {
                             {order.items.map((item, index) => (
                               <div
                                 key={`${order.id}-${item.product_name}-${index}`}
-                                className="flex items-center justify-between gap-4 rounded-[18px] border border-[#edf1f5] bg-white px-4 py-3"
+                                className="flex items-start justify-between gap-4 rounded-[18px] border border-[#edf1f5] bg-white px-4 py-3"
                               >
-                                <div className="min-w-0">
+                                <div className="min-w-0 flex-1">
                                   <div className="truncate text-sm font-semibold text-[#101828]">{item.product_name}</div>
                                   <div className="mt-1 text-xs uppercase tracking-[0.16em] text-[#98a2b3]">
                                     Qty {item.quantity}
+                                  </div>
+                                  <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-[#667085]">
+                                    {item.selected_metal ? <span>Metal: {item.selected_metal}</span> : null}
+                                    {item.selected_purity ? <span>Purity: {item.selected_purity}</span> : null}
+                                    {item.selected_size_or_fit ? <span>Size/Fit: {item.selected_size_or_fit}</span> : null}
+                                    {item.selected_gemstone ? <span>Stone: {item.selected_gemstone}</span> : null}
+                                    {item.selected_carat ? <span>Carat: {item.selected_carat}</span> : null}
                                   </div>
                                 </div>
                                 <div className="shrink-0 text-sm font-semibold text-[#101828]">{formatMoney(item.line_total)}</div>

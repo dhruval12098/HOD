@@ -1,21 +1,14 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+import { createSupabaseServerClient } from '@/lib/server-supabase'
 
 export async function GET(request: Request) {
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return NextResponse.json({ error: 'Missing Supabase environment variables.' }, { status: 500 })
-  }
-
   const { searchParams } = new URL(request.url)
   const slug = searchParams.get('slug')
   if (!slug) {
     return NextResponse.json({ gstLabel: 'Taxes', gstPercentage: 0 })
   }
 
-  const supabase = createClient(supabaseUrl, supabaseAnonKey)
+  const supabase = createSupabaseServerClient()
   const { data: product } = await supabase.from('products').select('gst_slab_id').eq('slug', slug).maybeSingle()
   let gstSlabId = product?.gst_slab_id ?? null
 

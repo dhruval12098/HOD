@@ -29,7 +29,7 @@ export default function Newsletter({ onToast }: NewsletterProps) {
       }
 
       setEmail('');
-      onToast?.('Welcome to the inner circle');
+      onToast?.('WELCOME TO HOUSE OF DIAMS');
     } catch (error) {
       onToast?.(error instanceof Error ? error.message : 'Unable to subscribe right now.');
     } finally {

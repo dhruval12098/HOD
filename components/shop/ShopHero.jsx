@@ -65,6 +65,7 @@ export default function ShopHero({
   }, [browseSections, matchedSectionId]);
 
   const activeSection = browseSections.find((section) => section.id === activeSectionId) ?? browseSections[0] ?? null;
+  const currentRouteKey = `${pathname}?${searchParams?.toString() ?? ''}`;
 
   return (
     <section
@@ -237,35 +238,43 @@ export default function ShopHero({
               gap: "10px 12px",
             }}
           >
-            {activeSection.options.map((option) => (
+            {activeSection.options.map((option) => {
+              const isTextOnly = option.type !== "swatch" && !(option.type === "icon" && option.iconUrl);
+              let optionRouteKey = option.href;
+              try {
+                const target = new URL(option.href, "https://houseofdiams.local");
+                optionRouteKey = `${target.pathname}?${target.searchParams.toString()}`;
+              } catch {}
+              const isSelected = optionRouteKey === currentRouteKey;
+
+              return (
               <Link
                 key={`${activeSection.id}-${option.label}`}
                 href={option.href}
                 className="shop-hero-option"
                 style={{
-                  width: "102px",
-                  minHeight: "98px",
-                  padding: "12px 10px",
-                  border: option.type === "swatch" ? "1px solid rgba(10,22,40,0.12)" : "2px solid transparent",
-                  borderRadius: "16px",
-                  background: "#FFFFFF",
+                  width: isTextOnly ? "auto" : "102px",
+                  minWidth: isTextOnly ? "148px" : undefined,
+                  minHeight: isTextOnly ? "46px" : "98px",
+                  padding: isTextOnly ? "12px 20px" : "12px 10px",
+                  border: `1px solid ${isSelected ? "rgba(10,22,40,0.24)" : "rgba(10,22,40,0.12)"}`,
+                  borderRadius: isTextOnly ? "14px" : "16px",
+                  background: "transparent",
                   color: "#0A1628",
                   textDecoration: "none",
                   display: "inline-flex",
-                  flexDirection: "column",
+                  flexDirection: isTextOnly ? "row" : "column",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: "10px",
+                  gap: isTextOnly ? "8px" : "10px",
                   transition: "all .25s ease",
-                  boxShadow: "0 10px 26px rgba(10,22,40,0.05)",
+                  boxShadow: "none",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "#111111";
-                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.borderColor = "rgba(10,22,40,0.24)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = option.type === "swatch" ? "rgba(10,22,40,0.12)" : "transparent";
-                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.borderColor = isSelected ? "rgba(10,22,40,0.24)" : "rgba(10,22,40,0.12)";
                 }}
               >
                 {option.type === "swatch" ? (
@@ -298,12 +307,13 @@ export default function ShopHero({
                     textTransform: "none",
                     fontWeight: 500,
                     lineHeight: 1.2,
+                    whiteSpace: isTextOnly ? "nowrap" : "normal",
                   }}
                 >
                   {option.label}
                 </span>
               </Link>
-            ))}
+            )})}
           </div>
         </div>
       ) : null}
