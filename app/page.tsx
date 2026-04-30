@@ -33,7 +33,6 @@ export default async function Home() {
     heroContent,
     blogRows,
     collectionItems,
-    materialItems,
     discoverShapesItems,
     discoverRingsItems,
     hiphopSection,
@@ -65,7 +64,6 @@ export default async function Home() {
       heroContent={heroContent}
       blogPosts={blogPosts}
       collectionItems={collectionItems}
-      materialItems={materialItems}
       discoverShapesItems={discoverShapesItems}
       discoverRingsItems={discoverRingsItems}
       hiphopSection={hiphopSection}
