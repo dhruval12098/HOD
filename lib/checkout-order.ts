@@ -1,6 +1,6 @@
 import type { User } from '@supabase/supabase-js'
 import { sendOrderConfirmationEmail } from '@/lib/email'
-import { RAZORPAY_CURRENCY } from '@/lib/razorpay'
+import { buildCheckoutChargeQuote } from '@/lib/exchange-rates'
 
 export type CheckoutPayload = {
   item?: CheckoutPayloadItem | null
@@ -85,6 +85,7 @@ type PreparedCheckout = {
   couponDiscountAmount: number
   totalAmount: number
   loveLetter: CheckoutPayload['loveLetter'] | null
+  chargeQuote: Awaited<ReturnType<typeof buildCheckoutChargeQuote>>
   resolvedCustomer: {
     first_name: string
     last_name: string
@@ -157,7 +158,15 @@ function buildGatewayPayload(input: {
       gstPercentage: input.prepared.gstPercentage,
       couponDiscountAmount: input.prepared.couponDiscountAmount,
       totalAmount: input.prepared.totalAmount,
-      currency: RAZORPAY_CURRENCY,
+      baseCurrency: 'USD',
+      chargeCurrency: input.prepared.chargeQuote.chargeCurrency,
+      exchangeRate: input.prepared.chargeQuote.exchangeRate,
+      exchangeRateSource: input.prepared.chargeQuote.exchangeRateSource,
+      exchangeRateFetchedAt: input.prepared.chargeQuote.exchangeRateFetchedAt,
+      chargedSubtotal: input.prepared.chargeQuote.subtotalCharged,
+      chargedGst: input.prepared.chargeQuote.gstCharged,
+      chargedCouponDiscount: input.prepared.chargeQuote.couponDiscountCharged,
+      chargedTotal: input.prepared.chargeQuote.totalCharged,
     },
     payment: {
       razorpayOrderId: input.razorpayOrderId || null,
@@ -354,6 +363,13 @@ export async function prepareCheckoutPayload({
       ? normalizedItems[0]?.gstPercentage ?? 0
       : normalizedItems.reduce((highest, item) => Math.max(highest, item.gstPercentage), 0)
 
+  const chargeQuote = await buildCheckoutChargeQuote({
+    subtotalUsd: subtotalAmount,
+    gstUsd: gstAmount,
+    couponDiscountUsd: couponDiscountAmount,
+    country: resolvedCustomer.country,
+  })
+
   return {
     data: {
       normalizedItems,
@@ -366,6 +382,7 @@ export async function prepareCheckoutPayload({
       couponDiscountAmount,
       totalAmount,
       loveLetter,
+      chargeQuote,
       resolvedCustomer,
     } satisfies PreparedCheckout,
   } as const
@@ -415,8 +432,8 @@ export async function createPendingOrder({
       status: 'pending',
       payment_status: 'pending',
       payment_gateway: 'razorpay',
-      payment_currency: RAZORPAY_CURRENCY,
-      payment_amount: prepared.totalAmount,
+      payment_currency: prepared.chargeQuote.chargeCurrency,
+      payment_amount: prepared.chargeQuote.totalCharged,
       razorpay_order_id: razorpayOrderId,
       gateway_order_status: 'created',
       gateway_payment_status: 'pending',
@@ -668,18 +685,19 @@ export async function finalizePaidOrder({
         customerName: [order.customer_first_name, order.customer_last_name].filter(Boolean).join(' ') || 'Client',
         orderNumber: order.order_number,
         orderDate: order.created_at,
-        subtotalAmount: Number(order.subtotal_amount || 0),
-        gstAmount: Number(order.gst_amount || 0),
+        subtotalAmount: Number(((order.gateway_payload as any)?.totals?.chargedSubtotal ?? order.subtotal_amount) || 0),
+        gstAmount: Number(((order.gateway_payload as any)?.totals?.chargedGst ?? order.gst_amount) || 0),
         gstLabel: (order.gateway_payload as any)?.totals?.gstLabel || 'Taxes',
         gstPercentage: Number((order.gateway_payload as any)?.totals?.gstPercentage || 0),
-        shippingAmount: Number(order.shipping_amount || 0),
+        shippingAmount: Number(((order.gateway_payload as any)?.totals?.shippingCharged ?? order.shipping_amount) || 0),
         couponCode: coupon?.code || null,
-        couponDiscountAmount: Number(coupon?.discountAmount || 0),
-        totalAmount: Number(order.total_amount || 0),
+        couponDiscountAmount: Number((((order.gateway_payload as any)?.totals?.chargedCouponDiscount ?? coupon?.discountAmount) || 0)),
+        totalAmount: Number(order.payment_amount || order.total_amount || 0),
+        currency: (order.payment_currency as string | null) || 'USD',
         items: (items || []).map((item: any) => ({
           product_name: item.product_name,
           quantity: Number(item.quantity || 0),
-          line_total: Number(item.line_total || 0),
+          line_total: Number(item.line_total || 0) * Number((order.gateway_payload as any)?.totals?.exchangeRate || 1),
         })),
       })
     } catch (emailError) {

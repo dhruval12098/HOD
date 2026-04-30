@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer'
-import { formatUsd } from '@/lib/money'
+import { formatMoney as formatCurrencyAmount } from '@/lib/currency'
 
 type OrderEmailItem = {
   product_name: string
@@ -12,6 +12,7 @@ type BaseOrderEmailInput = {
   customerName: string
   orderNumber: string
   orderDate?: string | null
+  currency?: string | null
   subtotalAmount?: number
   gstAmount?: number
   gstLabel?: string
@@ -38,8 +39,8 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || 'htt
 
 let cachedTransporter: nodemailer.Transporter | null = null
 
-function formatMoney(amount: number) {
-  return formatUsd(amount)
+function formatMoney(amount: number, currency?: string | null) {
+  return formatCurrencyAmount(amount, currency || 'USD')
 }
 
 function getTransporter() {
@@ -60,7 +61,7 @@ function getTransporter() {
   return cachedTransporter
 }
 
-function renderItems(items: OrderEmailItem[]) {
+function renderItems(items: OrderEmailItem[], currency?: string | null) {
   return items
     .map(
       (item) => `
@@ -70,7 +71,7 @@ function renderItems(items: OrderEmailItem[]) {
             <div style="font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:.16em;margin-top:4px;">Qty ${item.quantity}</div>
           </td>
           <td style="padding:14px 0;border-bottom:1px solid #ece7dd;color:#1c1f26;font-size:14px;line-height:1.5;text-align:right;font-weight:600;">
-            ${formatMoney(item.line_total)}
+            ${formatMoney(item.line_total, currency)}
           </td>
         </tr>
       `
@@ -87,6 +88,7 @@ function renderTotals({
   couponCode,
   couponDiscountAmount = 0,
   totalAmount,
+  currency,
 }: {
   subtotalAmount?: number
   gstAmount?: number
@@ -96,6 +98,7 @@ function renderTotals({
   couponCode?: string | null
   couponDiscountAmount?: number
   totalAmount: number
+  currency?: string | null
 }) {
   const taxLabel =
     gstAmount > 0 && gstPercentage
@@ -106,29 +109,29 @@ function renderTotals({
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-top:18px;border-top:1px solid #ece7dd;border-collapse:collapse;">
       <tr>
         <td style="padding-top:18px;padding-bottom:10px;font-size:14px;color:#4b5563;">Subtotal</td>
-        <td style="padding-top:18px;padding-bottom:10px;text-align:right;font-size:14px;color:#1c1f26;font-weight:600;">${formatMoney(subtotalAmount)}</td>
+        <td style="padding-top:18px;padding-bottom:10px;text-align:right;font-size:14px;color:#1c1f26;font-weight:600;">${formatMoney(subtotalAmount, currency)}</td>
       </tr>
       <tr>
         <td style="padding-bottom:10px;font-size:14px;color:#4b5563;">Shipping</td>
-        <td style="padding-bottom:10px;text-align:right;font-size:14px;color:#1c1f26;font-weight:600;">${shippingAmount > 0 ? formatMoney(shippingAmount) : 'Free'}</td>
+        <td style="padding-bottom:10px;text-align:right;font-size:14px;color:#1c1f26;font-weight:600;">${shippingAmount > 0 ? formatMoney(shippingAmount, currency) : 'Free'}</td>
       </tr>
       <tr>
         <td style="padding-bottom:10px;font-size:14px;color:#4b5563;">${taxLabel}</td>
-        <td style="padding-bottom:10px;text-align:right;font-size:14px;color:#1c1f26;font-weight:600;">${gstAmount > 0 ? formatMoney(gstAmount) : 'Free'}</td>
+        <td style="padding-bottom:10px;text-align:right;font-size:14px;color:#1c1f26;font-weight:600;">${gstAmount > 0 ? formatMoney(gstAmount, currency) : 'Free'}</td>
       </tr>
       ${
         couponDiscountAmount > 0
           ? `
       <tr>
         <td style="padding-bottom:10px;font-size:14px;color:#14804a;">Coupon${couponCode ? ` (${couponCode})` : ''}</td>
-        <td style="padding-bottom:10px;text-align:right;font-size:14px;color:#14804a;font-weight:600;">-${formatMoney(couponDiscountAmount)}</td>
+        <td style="padding-bottom:10px;text-align:right;font-size:14px;color:#14804a;font-weight:600;">-${formatMoney(couponDiscountAmount, currency)}</td>
       </tr>
       `
           : ''
       }
       <tr>
         <td style="padding-top:10px;border-top:1px solid #ece7dd;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#8b7355;">Total</td>
-        <td style="padding-top:10px;border-top:1px solid #ece7dd;text-align:right;font-size:22px;font-weight:700;color:#0f1726;">${formatMoney(totalAmount)}</td>
+        <td style="padding-top:10px;border-top:1px solid #ece7dd;text-align:right;font-size:22px;font-weight:700;color:#0f1726;">${formatMoney(totalAmount, currency)}</td>
       </tr>
     </table>
   `
@@ -152,6 +155,7 @@ function renderShell({
   couponDiscountAmount,
   totalAmount,
   items,
+  currency,
 }: {
   pretitle: string
   title: string
@@ -170,8 +174,9 @@ function renderShell({
   couponDiscountAmount?: number
   totalAmount: number
   items: OrderEmailItem[]
+  currency?: string | null
 }) {
-  const itemRows = renderItems(items)
+  const itemRows = renderItems(items, currency)
   const totalsMarkup = renderTotals({
     subtotalAmount,
     gstAmount,
@@ -181,6 +186,7 @@ function renderShell({
     couponCode,
     couponDiscountAmount,
     totalAmount,
+    currency,
   })
   const orderDateLabel = orderDate
     ? new Date(orderDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })
@@ -261,6 +267,7 @@ export async function sendOrderConfirmationEmail(input: OrderConfirmationInput) 
     couponDiscountAmount: input.couponDiscountAmount,
     totalAmount: input.totalAmount,
     items: input.items,
+    currency: input.currency,
   })
 
   await transporter.sendMail({
@@ -295,6 +302,7 @@ export async function sendOrderStatusUpdateEmail(input: OrderStatusUpdateInput) 
     couponDiscountAmount: input.couponDiscountAmount,
     totalAmount: input.totalAmount,
     items: input.items,
+    currency: input.currency,
   })
 
   await transporter.sendMail({

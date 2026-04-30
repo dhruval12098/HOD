@@ -1,15 +1,17 @@
 import CheckoutField from '@/components/checkout/CheckoutField';
 import CheckoutSectionCard from '@/components/checkout/CheckoutSectionCard';
-import type { CheckoutProfileForm } from '@/components/checkout/types';
+import type { CheckoutPostalLookupState, CheckoutProfileForm } from '@/components/checkout/types';
 
 export default function CheckoutShippingStep({
   form,
   onChange,
   errors = {},
+  postalLookup,
 }: {
   form: CheckoutProfileForm
   onChange: (field: keyof CheckoutProfileForm, value: string) => void
   errors?: Partial<Record<keyof CheckoutProfileForm, string>>
+  postalLookup?: CheckoutPostalLookupState | null
 }) {
   return (
     <CheckoutSectionCard
@@ -24,6 +26,19 @@ export default function CheckoutShippingStep({
         <CheckoutField label="Address Line 1" value={form.address_line_1} onChange={(value) => onChange('address_line_1', value)} placeholder="Enter address line 1" required error={errors.address_line_1} />
         <CheckoutField label="Address Line 2" value={form.address_line_2} onChange={(value) => onChange('address_line_2', value)} placeholder="Apartment, suite, company, landmark (optional)" />
       </div>
+      {postalLookup?.message ? (
+        <div
+          className={`mt-4 rounded-[16px] border px-4 py-3 text-sm ${
+            postalLookup.status === 'error'
+              ? 'border-[rgba(220,38,38,0.18)] bg-[rgba(254,242,242,0.9)] text-red-700'
+              : postalLookup.status === 'success'
+                ? 'border-[rgba(18,183,106,0.18)] bg-[rgba(236,253,243,0.9)] text-[#027a48]'
+                : 'border-[#e4e7ec] bg-[#f8fafc] text-[#475467]'
+          }`}
+        >
+          {postalLookup.message}
+        </div>
+      ) : null}
     </CheckoutSectionCard>
   );
 }

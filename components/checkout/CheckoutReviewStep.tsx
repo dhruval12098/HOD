@@ -2,19 +2,25 @@ import Link from 'next/link';
 import CheckoutSectionCard from '@/components/checkout/CheckoutSectionCard';
 import { getCollectionHref } from '@/lib/browse-context';
 import { getLoveLetterOccasionLabel, type LoveLetterDraft } from '@/lib/love-letter';
+import { formatMoney } from '@/lib/currency';
+import type { CheckoutChargeQuote } from '@/components/checkout/types';
 
 export default function CheckoutReviewStep({
   onPayNow,
   isProcessingPayment,
+  paymentButtonLabel,
   continueHref,
   loveLetter,
   totalAmount,
+  chargeQuote,
 }: {
   onPayNow: () => void
   isProcessingPayment: boolean
+  paymentButtonLabel?: string
   continueHref?: string
   loveLetter?: LoveLetterDraft | null
   totalAmount: number
+  chargeQuote?: CheckoutChargeQuote | null
 }) {
   return (
     <CheckoutSectionCard
@@ -42,8 +48,21 @@ export default function CheckoutReviewStep({
         <p className="mt-2 text-sm leading-6 text-[#667085]">
           We will create your pending order first, then open Razorpay so the payment can be completed securely.
         </p>
-        <div className="mt-3 text-sm font-medium text-[#101828]">
-          Amount to pay now: ₹{Math.round(totalAmount).toLocaleString('en-IN')}
+        <div className="mt-3 space-y-1 text-sm text-[#667085]">
+          <div>
+            Catalog total: <span className="font-medium text-[#101828]">{formatMoney(totalAmount, 'USD')}</span>
+          </div>
+          <div>
+            Amount to pay now:{' '}
+            <span className="font-medium text-[#101828]">
+              {formatMoney(chargeQuote?.totalCharged ?? totalAmount, chargeQuote?.chargeCurrency || 'USD')}
+            </span>
+          </div>
+          {chargeQuote?.chargeCurrency === 'INR' ? (
+            <div>
+              India checkout is charged in INR using the live USD to INR rate locked for this payment.
+            </div>
+          ) : null}
         </div>
         <div className="mt-4 flex flex-col gap-3 sm:flex-row">
           <button
@@ -52,7 +71,7 @@ export default function CheckoutReviewStep({
             disabled={isProcessingPayment}
             className="inline-flex h-11 items-center justify-center rounded-full bg-[#101828] px-6 text-sm font-medium text-white transition hover:bg-[#1d2939]"
           >
-            {isProcessingPayment ? 'Starting Payment...' : 'Pay with Razorpay'}
+            {isProcessingPayment ? paymentButtonLabel || 'Starting Payment...' : 'Pay with Razorpay'}
           </button>
           <Link
             href={continueHref || getCollectionHref()}

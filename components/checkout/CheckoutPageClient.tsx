@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
@@ -11,7 +11,7 @@ import CheckoutReviewStep from '@/components/checkout/CheckoutReviewStep';
 import CheckoutShippingStep from '@/components/checkout/CheckoutShippingStep';
 import CheckoutStepper from '@/components/checkout/CheckoutStepper';
 import CheckoutSummary from '@/components/checkout/CheckoutSummary';
-import type { CheckoutDisplayItem, CheckoutProfileForm } from '@/components/checkout/types';
+import type { CheckoutDisplayItem, CheckoutPostalLookupState, CheckoutProfileForm } from '@/components/checkout/types';
 import { getCollectionHref } from '@/lib/browse-context';
 import { supabase } from '@/lib/supabase';
 import { useCart } from '@/lib/hooks/useCart';
@@ -84,7 +84,34 @@ type PendingPaymentSession = {
       email?: string
       contact?: string
     }
+    baseCurrency?: string
+    baseAmount?: number
+    exchangeRate?: number
+    exchangeRateSource?: string
   }
+}
+
+type CheckoutChargeQuote = {
+  baseCurrency: 'USD'
+  chargeCurrency: 'USD' | 'INR'
+  exchangeRate: number
+  exchangeRateSource: 'currencyapi' | 'fallback'
+  exchangeRateFetchedAt: string
+  totalUsd: number
+  totalCharged: number
+}
+
+type PaymentUiStage = 'idle' | 'starting' | 'confirming'
+
+type PostalLookupResponse = {
+  lookup?: {
+    country?: string
+    countryCode?: string
+    city?: string
+    state?: string
+    postalCode?: string
+  }
+  error?: string
 }
 
 function loadRazorpayCheckoutScript() {
@@ -144,6 +171,7 @@ export default function CheckoutPageClient() {
   const [sessionReady, setSessionReady] = useState(false);
   const [customerForm, setCustomerForm] = useState<CheckoutProfileForm>(EMPTY_PROFILE_FORM);
   const [processingPayment, setProcessingPayment] = useState(false);
+  const [paymentUiStage, setPaymentUiStage] = useState<PaymentUiStage>('idle')
   const [razorpayReady, setRazorpayReady] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof CheckoutProfileForm, string>>>({});
@@ -159,8 +187,16 @@ export default function CheckoutPageClient() {
   } | null>(null);
   const [couponLoading, setCouponLoading] = useState(false);
   const [pendingPaymentSession, setPendingPaymentSession] = useState<PendingPaymentSession | null>(null)
+  const [chargeQuote, setChargeQuote] = useState<CheckoutChargeQuote | null>(null)
+  const [postalLookup, setPostalLookup] = useState<CheckoutPostalLookupState | null>(null)
   const [cartProducts, setCartProducts] = useState<Array<Pick<StorefrontProduct, 'id' | 'dbId' | 'slug' | 'name' | 'imageUrl' | 'priceFrom'>>>([]);
   const [taxMap, setTaxMap] = useState<Record<string, { gstLabel: string; gstPercentage: number }>>({});
+  const lastPostalAutofillRef = useRef<{
+    country: string
+    postalCode: string
+    city: string
+    state: string
+  } | null>(null)
   const cartMode = searchParams.get('mode') === 'cart';
 
   const singleItem = useMemo<CheckoutDisplayItem>(() => ({
@@ -295,6 +331,175 @@ export default function CheckoutPageClient() {
   }, [paymentSessionSignature])
 
   useEffect(() => {
+    let ignore = false
+    if (!checkoutItems.length) return
+    if (!customerForm.country.trim()) {
+      setChargeQuote(null)
+      return
+    }
+
+    void (async () => {
+      try {
+        const response = await fetch('/api/checkout/quote', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            country: customerForm.country,
+            couponDiscountAmount: couponDiscount,
+            items: checkoutItems.map((item) => ({
+              priceFrom: item.priceFrom,
+              quantity: item.quantity,
+              gstPercentage: item.gstPercentage ?? 0,
+            })),
+          }),
+        })
+        const payload = await response.json().catch(() => null)
+        if (!ignore && response.ok) {
+          setChargeQuote(payload?.quote ?? null)
+        }
+      } catch {}
+    })()
+
+    return () => {
+      ignore = true
+    }
+  }, [checkoutItems, couponDiscount, customerForm.country])
+
+  useEffect(() => {
+    const country = customerForm.country.trim()
+    const postalCode = customerForm.postal_code.trim()
+
+    if (!postalCode) {
+      setPostalLookup(null)
+      return
+    }
+
+    if (!country) {
+      setPostalLookup({
+        status: 'idle',
+        message: 'Enter country and postal code to auto-fill city and state when available.',
+      })
+      return
+    }
+
+    if (!/^[A-Za-z0-9][A-Za-z0-9\s-]{2,11}$/.test(postalCode)) {
+      setPostalLookup(null)
+      return
+    }
+
+    const controller = new AbortController()
+    const timeoutId = window.setTimeout(() => {
+      void (async () => {
+        setPostalLookup({
+          status: 'loading',
+          message: 'Looking up city and state from the postal code...',
+        })
+
+        try {
+          const response = await fetch(
+            `/api/checkout/postal-lookup?country=${encodeURIComponent(country)}&postalCode=${encodeURIComponent(postalCode)}`,
+            {
+              cache: 'no-store',
+              signal: controller.signal,
+            }
+          )
+          const payload = (await response.json().catch(() => null)) as PostalLookupResponse | null
+
+          if (!response.ok || !payload?.lookup) {
+            setPostalLookup({
+              status: 'error',
+              message: payload?.error || 'We could not match that postal code. You can continue manually.',
+            })
+            return
+          }
+
+          const nextCity = (payload.lookup.city || '').trim()
+          const nextState = (payload.lookup.state || '').trim()
+          const nextCountry = (payload.lookup.country || country).trim()
+
+          setCustomerForm((current) => {
+            const patch: Partial<CheckoutProfileForm> = {}
+            const currentCity = current.city.trim()
+            const currentState = current.state.trim()
+            const currentCountry = current.country.trim()
+
+            if (nextCity && (!currentCity || currentCity === lastPostalAutofillRef.current?.city)) {
+              patch.city = nextCity
+            }
+
+            if (nextState && (!currentState || currentState === lastPostalAutofillRef.current?.state)) {
+              patch.state = nextState
+            }
+
+            if (nextCountry && (!currentCountry || currentCountry === lastPostalAutofillRef.current?.country)) {
+              patch.country = nextCountry
+            }
+
+            if (!Object.keys(patch).length) {
+              return current
+            }
+
+            return { ...current, ...patch }
+          })
+
+          setFieldErrors((current) => {
+            const next = { ...current }
+            let changed = false
+
+            if (nextCity && current.city) {
+              delete next.city
+              changed = true
+            }
+
+            if (nextState && current.state) {
+              delete next.state
+              changed = true
+            }
+
+            if (nextCountry && current.country) {
+              delete next.country
+              changed = true
+            }
+
+            return changed ? next : current
+          })
+
+          lastPostalAutofillRef.current = {
+            country: nextCountry || country,
+            postalCode,
+            city: nextCity,
+            state: nextState,
+          }
+
+          setPostalLookup({
+            status: 'success',
+            message:
+              nextCity || nextState
+                ? `Found ${[nextCity, nextState].filter(Boolean).join(', ')}. You can still edit the address if needed.`
+                : 'Postal code found. You can continue editing the address manually if needed.',
+            city: nextCity || undefined,
+            state: nextState || undefined,
+            country: nextCountry || undefined,
+            countryCode: payload.lookup.countryCode || undefined,
+          })
+        } catch (error) {
+          if (controller.signal.aborted) return
+          console.error('Postal lookup failed:', error)
+          setPostalLookup({
+            status: 'error',
+            message: 'Postal lookup is unavailable right now. You can continue filling the address manually.',
+          })
+        }
+      })()
+    }, 450)
+
+    return () => {
+      controller.abort()
+      window.clearTimeout(timeoutId)
+    }
+  }, [customerForm.country, customerForm.postal_code])
+
+  useEffect(() => {
     if (cartMode || !singleItem.slug) return;
     void (async () => {
       const response = await fetch(`/api/checkout/tax?slug=${encodeURIComponent(singleItem.slug)}`);
@@ -384,14 +589,25 @@ export default function CheckoutPageClient() {
   const isLastStep = currentStep === CHECKOUT_STEPS.length - 1;
   const continueHref = getCollectionHref(searchParams.get('category'));
 
-  const updateCustomerForm = (field: keyof CheckoutProfileForm, value: string) => {
-    setCustomerForm((current) => ({ ...current, [field]: value }));
+  const patchCustomerForm = (patch: Partial<CheckoutProfileForm>) => {
+    setCustomerForm((current) => ({ ...current, ...patch }))
     setFieldErrors((current) => {
-      if (!current[field]) return current
       const next = { ...current }
-      delete next[field]
+      let changed = false
+
+      for (const key of Object.keys(patch) as Array<keyof CheckoutProfileForm>) {
+        if (!current[key]) continue
+        delete next[key]
+        changed = true
+      }
+
+      if (!changed) return current
       return next
     })
+  }
+
+  const updateCustomerForm = (field: keyof CheckoutProfileForm, value: string) => {
+    patchCustomerForm({ [field]: value })
   };
 
   const validateCheckoutForm = () => {
@@ -480,16 +696,18 @@ export default function CheckoutPageClient() {
     }
 
     setProcessingPayment(true);
+    setPaymentUiStage('starting')
     setErrorMessage('');
     let popupOpened = false
     try {
       const { data } = await supabase.auth.getSession();
-      const accessToken = data.session?.access_token;
-      if (!accessToken) {
-        setErrorMessage('Please sign in to continue checkout.');
-        setProcessingPayment(false)
-        return;
-      }
+        const accessToken = data.session?.access_token;
+        if (!accessToken) {
+          setErrorMessage('Please sign in to continue checkout.');
+          setPaymentUiStage('idle')
+          setProcessingPayment(false)
+          return;
+        }
 
       const paymentSession =
         pendingPaymentSession ||
@@ -526,12 +744,13 @@ export default function CheckoutPageClient() {
           return nextSession
         })())
 
-      if (!paymentSession) {
+        if (!paymentSession) {
+        setPaymentUiStage('idle')
         setProcessingPayment(false)
-        return
-      }
+          return
+        }
 
-      const razorpayInstance = new window.Razorpay({
+        const razorpayInstance = new window.Razorpay({
         key: paymentSession.razorpay.keyId,
         order_id: paymentSession.razorpay.orderId,
         amount: paymentSession.razorpay.amount,
@@ -542,16 +761,18 @@ export default function CheckoutPageClient() {
         theme: {
           color: '#101828',
         },
-        modal: {
-          ondismiss: () => {
-            setProcessingPayment(false)
-            setErrorMessage('Payment popup closed. Your order is still pending payment and you can try again.')
+          modal: {
+            ondismiss: () => {
+              setPaymentUiStage('idle')
+              setProcessingPayment(false)
+              setErrorMessage('Payment popup closed. Your order is still pending payment and you can try again.')
+            },
           },
-        },
-        handler: async (paymentResponse) => {
-          const verifyResponse = await fetch('/api/payments/verify', {
-            method: 'POST',
-            headers: {
+          handler: async (paymentResponse) => {
+            setPaymentUiStage('confirming')
+            const verifyResponse = await fetch('/api/payments/verify', {
+              method: 'POST',
+              headers: {
               'content-type': 'application/json',
               authorization: `Bearer ${accessToken}`,
             },
@@ -564,38 +785,49 @@ export default function CheckoutPageClient() {
             }),
           })
 
-          const verifyPayload = await verifyResponse.json().catch(() => null)
-          if (!verifyResponse.ok) {
-            setProcessingPayment(false)
-            setErrorMessage(verifyPayload?.error ?? 'Payment verification failed. Please contact support if the amount was deducted.')
-            return
-          }
+            const verifyPayload = await verifyResponse.json().catch(() => null)
+            if (!verifyResponse.ok) {
+              setPaymentUiStage('idle')
+              setProcessingPayment(false)
+              setErrorMessage(verifyPayload?.error ?? 'Payment verification failed. Please contact support if the amount was deducted.')
+              return
+            }
 
           if (cartMode) {
             clearCart()
-          }
-          setPendingPaymentSession(null)
-          clearLoveLetterDraft()
-          router.push(`/checkout/success?order=${encodeURIComponent(verifyPayload.orderNumber || paymentSession.orderNumber)}`)
-        },
-      })
+            }
+            setPendingPaymentSession(null)
+            clearLoveLetterDraft()
+            router.replace(`/checkout/success?order=${encodeURIComponent(verifyPayload.orderNumber || paymentSession.orderNumber)}`)
+          },
+        })
 
-      razorpayInstance.on('payment.failed', (failure) => {
+        razorpayInstance.on('payment.failed', (failure) => {
+        setPaymentUiStage('idle')
         setProcessingPayment(false)
         setErrorMessage(failure.error?.description || 'Payment failed. You can try again from this checkout.')
-      })
+        })
 
       popupOpened = true
       razorpayInstance.open()
-    } catch (error) {
-      console.error('Unable to start Razorpay checkout:', error)
-      setErrorMessage('Unable to open Razorpay checkout right now. Please try again.')
-    } finally {
-      if (!popupOpened) {
-        setProcessingPayment(false)
+      } catch (error) {
+        console.error('Unable to start Razorpay checkout:', error)
+        setPaymentUiStage('idle')
+        setErrorMessage('Unable to open Razorpay checkout right now. Please try again.')
+      } finally {
+        if (!popupOpened) {
+        setPaymentUiStage('idle')
+          setProcessingPayment(false)
+        }
       }
-    }
-  };
+    };
+
+  const paymentButtonLabel =
+    paymentUiStage === 'confirming'
+      ? 'Confirming Order...'
+      : paymentUiStage === 'starting'
+        ? 'Starting Payment...'
+        : 'Starting Payment...'
 
   const handleApplyCoupon = async () => {
     const normalizedCode = couponCodeInput.trim().toUpperCase()
@@ -692,6 +924,19 @@ export default function CheckoutPageClient() {
 
   return (
     <section className="min-h-[calc(100vh-111px)] bg-[#f7f8fa] px-4 py-8 sm:px-6 lg:px-10">
+      {paymentUiStage === 'confirming' ? (
+        <div className="fixed inset-0 z-[140] flex items-center justify-center bg-[rgba(247,248,250,0.82)] px-4 backdrop-blur-sm">
+          <div className="w-full max-w-[420px] rounded-[28px] border border-[#e7ebf0] bg-white px-6 py-8 text-center shadow-[0_24px_80px_rgba(15,23,42,0.12)] sm:px-8">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-[#d0d5dd] bg-[#f8fafc]">
+              <div className="h-7 w-7 animate-spin rounded-full border-2 border-[#d0d5dd] border-t-[#101828]" />
+            </div>
+            <div className="mt-5 text-[24px] font-semibold tracking-[-0.03em] text-[#101828]">Confirming your order</div>
+            <p className="mt-2 text-sm leading-7 text-[#667085]">
+              Your payment is done. We are now verifying Razorpay and preparing your order confirmation.
+            </p>
+          </div>
+        </div>
+      ) : null}
       <div className="mx-auto max-w-[1240px]">
         <div className="mb-6">
           <div className="text-[11px] font-medium uppercase tracking-[0.24em] text-[#98a2b3]">Checkout</div>
@@ -731,10 +976,10 @@ export default function CheckoutPageClient() {
 
               <div className="animate-[fadeUp_0.35s_ease]">
                 {currentStep === 0 ? <CheckoutCustomerStep form={customerForm} onChange={updateCustomerForm} errors={fieldErrors} /> : null}
-               {currentStep === 1 ? <CheckoutShippingStep form={customerForm} onChange={updateCustomerForm} errors={fieldErrors} /> : null}
+               {currentStep === 1 ? <CheckoutShippingStep form={customerForm} onChange={updateCustomerForm} errors={fieldErrors} postalLookup={postalLookup} /> : null}
                 {currentStep === 2 ? <CheckoutDeliveryStep /> : null}
-                {currentStep === 3 ? <CheckoutPaymentStep totalAmount={totalPayable} /> : null}
-                {currentStep === 4 ? <CheckoutReviewStep onPayNow={handlePayNow} isProcessingPayment={processingPayment} continueHref={continueHref} loveLetter={loveLetterDraft} totalAmount={totalPayable} /> : null}
+                {currentStep === 3 ? <CheckoutPaymentStep totalAmount={totalPayable} chargeQuote={chargeQuote} /> : null}
+                {currentStep === 4 ? <CheckoutReviewStep onPayNow={handlePayNow} isProcessingPayment={processingPayment} paymentButtonLabel={paymentButtonLabel} continueHref={continueHref} loveLetter={loveLetterDraft} totalAmount={totalPayable} chargeQuote={chargeQuote} /> : null}
             </div>
 
             {!isLastStep ? (
@@ -826,6 +1071,7 @@ export default function CheckoutPageClient() {
                   couponCode: appliedCoupon?.code,
                   couponDiscount: appliedCoupon?.discountAmount ?? 0,
                   loveLetter: loveLetterDraft,
+                  chargeQuote,
                 }}
               />
             </div>

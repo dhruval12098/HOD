@@ -1,5 +1,15 @@
 import type { LoveLetterDraft } from '@/lib/love-letter'
 
+export type CheckoutChargeQuote = {
+  baseCurrency: 'USD'
+  chargeCurrency: 'USD' | 'INR'
+  exchangeRate: number
+  exchangeRateSource: 'currencyapi' | 'fallback'
+  exchangeRateFetchedAt: string
+  totalUsd: number
+  totalCharged: number
+}
+
 export type CheckoutDisplayItem = {
   name: string
   slug: string
@@ -20,6 +30,7 @@ export type CheckoutSummaryData = {
   couponCode?: string
   couponDiscount?: number
   loveLetter?: LoveLetterDraft | null
+  chargeQuote?: CheckoutChargeQuote | null
 }
 
 export type CheckoutProfileForm = {
@@ -33,4 +44,13 @@ export type CheckoutProfileForm = {
   postal_code: string
   address_line_1: string
   address_line_2: string
+}
+
+export type CheckoutPostalLookupState = {
+  status: 'idle' | 'loading' | 'success' | 'error'
+  message: string
+  city?: string
+  state?: string
+  country?: string
+  countryCode?: string
 }

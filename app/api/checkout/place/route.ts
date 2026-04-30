@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createPendingOrder, type CheckoutPayload, prepareCheckoutPayload } from '@/lib/checkout-order'
-import { getRazorpayClient, getRazorpayKeyId, isRazorpayConfigured, RAZORPAY_CURRENCY } from '@/lib/razorpay'
+import { getRazorpayClient, getRazorpayKeyId, isRazorpayConfigured } from '@/lib/razorpay'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -46,11 +46,11 @@ export async function POST(request: Request) {
   try {
     const prepared = preparedResult.data
     const razorpay = getRazorpayClient()
-    const amountInSubunits = Math.round(prepared.totalAmount * 100)
+    const amountInSubunits = Math.round(prepared.chargeQuote.totalCharged * 100)
 
     const razorpayOrder = await razorpay.orders.create({
       amount: amountInSubunits,
-      currency: RAZORPAY_CURRENCY,
+      currency: prepared.chargeQuote.chargeCurrency,
       receipt: `hod-${Date.now()}`,
       notes: {
         customer_email: prepared.resolvedCustomer.email,
@@ -86,6 +86,10 @@ export async function POST(request: Request) {
           email: prepared.resolvedCustomer.email,
           contact: prepared.resolvedCustomer.phone,
         },
+        baseCurrency: prepared.chargeQuote.baseCurrency,
+        baseAmount: prepared.chargeQuote.totalUsd,
+        exchangeRate: prepared.chargeQuote.exchangeRate,
+        exchangeRateSource: prepared.chargeQuote.exchangeRateSource,
       },
     })
   } catch (error) {
