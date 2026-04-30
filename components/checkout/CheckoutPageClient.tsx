@@ -17,6 +17,7 @@ import { supabase } from '@/lib/supabase';
 import { useCart } from '@/lib/hooks/useCart';
 import { getProductKey } from '@/lib/product-keys';
 import type { StorefrontProduct } from '@/lib/catalog-products';
+import { clearLoveLetterDraft, readLoveLetterDraft, type LoveLetterDraft } from '@/lib/love-letter';
 
 function parseCurrency(value: string | null) {
   const parsed = Number(value ?? '0');
@@ -133,6 +134,19 @@ export default function CheckoutPageClient() {
       })
       .filter(Boolean) as CheckoutDisplayItem[];
   }, [cartMode, resolvedCartItems, taxMap]);
+
+  const cartModeLoveLetterDraft = useMemo<LoveLetterDraft | null>(() => {
+    if (!cartMode || resolvedCartItems.length !== 1) return null
+    return resolvedCartItems[0]?.entry.selection.loveLetter ?? null
+  }, [cartMode, resolvedCartItems])
+
+  const loveLetterDraft = useMemo<LoveLetterDraft | null>(() => {
+    if (cartMode) return cartModeLoveLetterDraft
+    const draft = readLoveLetterDraft()
+    if (!draft) return null
+    if (draft.sourceSlug && draft.sourceSlug !== singleItem.slug) return null
+    return draft
+  }, [cartMode, cartModeLoveLetterDraft, singleItem.slug])
 
   const checkoutItems = useMemo(
     () =>
@@ -355,6 +369,7 @@ export default function CheckoutPageClient() {
           item: cartMode ? null : singleItem,
           items: cartMode ? checkoutItems : undefined,
           customer: customerForm,
+          loveLetter: loveLetterDraft,
           coupon: appliedCoupon
             ? {
                 id: appliedCoupon.id,
@@ -374,6 +389,7 @@ export default function CheckoutPageClient() {
       if (cartMode) {
         clearCart();
       }
+      clearLoveLetterDraft();
       router.push(`/checkout/success?order=${encodeURIComponent(payload.orderNumber)}`);
     } finally {
       setPlacingOrder(false);
@@ -517,7 +533,7 @@ export default function CheckoutPageClient() {
                {currentStep === 1 ? <CheckoutShippingStep form={customerForm} onChange={updateCustomerForm} errors={fieldErrors} /> : null}
                 {currentStep === 2 ? <CheckoutDeliveryStep /> : null}
                 {currentStep === 3 ? <CheckoutPaymentStep /> : null}
-                {currentStep === 4 ? <CheckoutReviewStep onPlaceOrder={handlePlaceOrder} isPlacingOrder={placingOrder} continueHref={continueHref} /> : null}
+                {currentStep === 4 ? <CheckoutReviewStep onPlaceOrder={handlePlaceOrder} isPlacingOrder={placingOrder} continueHref={continueHref} loveLetter={loveLetterDraft} /> : null}
             </div>
 
             {!isLastStep ? (
@@ -608,6 +624,7 @@ export default function CheckoutPageClient() {
                   items: checkoutItems,
                   couponCode: appliedCoupon?.code,
                   couponDiscount: appliedCoupon?.discountAmount ?? 0,
+                  loveLetter: loveLetterDraft,
                 }}
               />
             </div>

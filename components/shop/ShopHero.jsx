@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 
 /**
- * @typedef {{ id: string; title: string; iconUrl?: string | null; options: { label: string; href: string; type?: 'default' | 'swatch' | 'icon', iconUrl?: string | null }[], emphasis?: 'section' | 'group' }} ShopHeroBrowseSection
+ * @typedef {{ id: string; title: string; iconUrl?: string | null; href?: string | null; options: { label: string; href: string; type?: 'default' | 'swatch' | 'icon', iconUrl?: string | null, colorHex?: string | null }[], emphasis?: 'section' | 'group' }} ShopHeroBrowseSection
  */
 
 /**
@@ -22,11 +22,24 @@ export default function ShopHero({
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const currentRouteKey = `${pathname}?${searchParams?.toString() ?? ''}`;
 
   const matchedSectionId = useMemo(() => {
     const currentParams = searchParams?.toString() ?? '';
 
     for (const section of browseSections) {
+      if (section.href) {
+        try {
+          const target = new URL(section.href, 'https://houseofdiams.local');
+          const targetPath = target.pathname;
+          const targetParams = target.searchParams.toString();
+
+          if (targetPath === pathname && targetParams === currentParams) {
+            return section.id;
+          }
+        } catch {}
+      }
+
       for (const option of section.options ?? []) {
         try {
           const target = new URL(option.href, 'https://houseofdiams.local');
@@ -65,7 +78,10 @@ export default function ShopHero({
   }, [browseSections, matchedSectionId]);
 
   const activeSection = browseSections.find((section) => section.id === activeSectionId) ?? browseSections[0] ?? null;
-  const currentRouteKey = `${pathname}?${searchParams?.toString() ?? ''}`;
+  const activeSectionIndex = Math.max(
+    0,
+    browseSections.findIndex((section) => section.id === activeSection?.id)
+  );
 
   return (
     <section
@@ -166,42 +182,47 @@ export default function ShopHero({
               border: "1px solid rgba(10,22,40,0.12)",
               borderRadius: "24px",
               background: "rgba(255,255,255,0.76)",
-              boxShadow: "0 18px 48px rgba(10,22,40,0.06)",
             }}
           >
             <div
               className={`shop-hero-tabs${browseSections.length === 1 ? ' single' : ''}`}
               style={{
+                position: "relative",
+                isolation: "isolate",
                 display: browseSections.length === 1 ? "flex" : "grid",
                 justifyContent: browseSections.length === 1 ? "center" : undefined,
                 gridTemplateColumns: browseSections.length === 1 ? undefined : `repeat(${Math.max(1, browseSections.length)}, minmax(0, 1fr))`,
                 gap: "5px",
               }}
             >
+              {browseSections.length > 1 ? (
+                <span
+                  aria-hidden="true"
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    bottom: 0,
+                    width: `calc((100% - ${(browseSections.length - 1) * 5}px) / ${browseSections.length})`,
+                    borderRadius: "14px",
+                    background: "#0A1628",
+                    transform: `translateX(calc(${activeSectionIndex} * (100% + 5px)))`,
+                    transition: "transform .38s cubic-bezier(0.22, 1, 0.36, 1)",
+                    zIndex: 0,
+                  }}
+                />
+              ) : null}
               {browseSections.map((section) => {
-                const isActive = section.id === activeSection.id;
-                return (
-                  <button
-                    key={section.id}
-                    type="button"
-                    className="shop-hero-tab"
-                    onClick={() => setActiveSectionId(section.id)}
-                    style={{
-                      minWidth: "0",
-                      width: browseSections.length === 1 ? "auto" : "100%",
-                      padding: "10px 14px",
-                      borderRadius: "14px",
-                      border: isActive ? "1px solid rgba(10,22,40,0.24)" : "1px solid transparent",
-                      background: isActive ? "#FFFFFF" : "transparent",
-                      color: "#0A1628",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "8px",
-                      transition: "all .2s ease",
-                      boxShadow: isActive ? "0 6px 16px rgba(10,22,40,0.05)" : "none",
-                    }}
-                  >
+                let sectionRouteKey = '';
+                if (section.href) {
+                  try {
+                    const target = new URL(section.href, 'https://houseofdiams.local');
+                    sectionRouteKey = `${target.pathname}?${target.searchParams.toString()}`;
+                  } catch {}
+                }
+                const isActive = sectionRouteKey ? sectionRouteKey === currentRouteKey : section.id === activeSection.id;
+                const tabContent = (
+                  <>
                     {section.iconUrl ? (
                       <img
                         src={section.iconUrl}
@@ -211,6 +232,7 @@ export default function ShopHero({
                           height: "16px",
                           objectFit: "contain",
                           flexShrink: 0,
+                          filter: isActive ? "brightness(0) invert(1)" : "none",
                         }}
                       />
                     ) : null}
@@ -223,98 +245,132 @@ export default function ShopHero({
                     >
                       {section.title}
                     </span>
+                  </>
+                );
+
+                const commonTabStyle = {
+                  minWidth: "0",
+                  width: browseSections.length === 1 ? "auto" : "100%",
+                  padding: "10px 14px",
+                  position: "relative",
+                  zIndex: 1,
+                  borderRadius: "14px",
+                  border: browseSections.length === 1 && isActive ? "1px solid #0A1628" : "1px solid transparent",
+                  background: browseSections.length === 1 && isActive ? "#0A1628" : "transparent",
+                  color: isActive ? "#FFFFFF" : "#0A1628",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                  transition: "color .25s ease, border-color .25s ease",
+                  textDecoration: "none",
+                };
+
+                if (section.href) {
+                  return (
+                    <Link key={section.id} href={section.href} className="shop-hero-tab" style={commonTabStyle}>
+                      {tabContent}
+                    </Link>
+                  );
+                }
+
+                return (
+                  <button
+                    key={section.id}
+                    type="button"
+                    className="shop-hero-tab"
+                    onClick={() => setActiveSectionId(section.id)}
+                    style={commonTabStyle}
+                  >
+                    {tabContent}
                   </button>
                 );
               })}
             </div>
           </div>
 
-          <div
-            className="shop-hero-options"
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              flexWrap: "wrap",
-              gap: "10px 12px",
-            }}
-          >
-            {activeSection.options.map((option) => {
-              const isTextOnly = option.type !== "swatch" && !(option.type === "icon" && option.iconUrl);
-              let optionRouteKey = option.href;
-              try {
-                const target = new URL(option.href, "https://houseofdiams.local");
-                optionRouteKey = `${target.pathname}?${target.searchParams.toString()}`;
-              } catch {}
-              const isSelected = optionRouteKey === currentRouteKey;
+          {activeSection.options.length > 0 ? (
+            <div
+              className="shop-hero-options"
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                flexWrap: "wrap",
+                gap: "10px 12px",
+              }}
+            >
+              {activeSection.options.map((option) => {
+                const isTextOnly = option.type !== "swatch" && !(option.type === "icon" && option.iconUrl);
 
-              return (
-              <Link
-                key={`${activeSection.id}-${option.label}`}
-                href={option.href}
-                className="shop-hero-option"
-                style={{
-                  width: isTextOnly ? "auto" : "102px",
-                  minWidth: isTextOnly ? "148px" : undefined,
-                  minHeight: isTextOnly ? "46px" : "98px",
-                  padding: isTextOnly ? "12px 20px" : "12px 10px",
-                  border: `1px solid ${isSelected ? "rgba(10,22,40,0.24)" : "rgba(10,22,40,0.12)"}`,
-                  borderRadius: isTextOnly ? "14px" : "16px",
-                  background: "transparent",
-                  color: "#0A1628",
-                  textDecoration: "none",
-                  display: "inline-flex",
-                  flexDirection: isTextOnly ? "row" : "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: isTextOnly ? "8px" : "10px",
-                  transition: "all .25s ease",
-                  boxShadow: "none",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(10,22,40,0.24)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = isSelected ? "rgba(10,22,40,0.24)" : "rgba(10,22,40,0.12)";
-                }}
-              >
-                {option.type === "swatch" ? (
-                  <span
-                    style={{
-                      width: "16px",
-                      height: "16px",
-                      borderRadius: "999px",
-                      background: "#D9D9D9",
-                      border: "1px solid rgba(10,22,40,0.12)",
-                      flexShrink: 0,
-                    }}
-                  />
-                ) : option.type === "icon" && option.iconUrl ? (
-                  <img
-                    src={option.iconUrl}
-                    alt={option.label}
-                    style={{
-                      width: "30px",
-                      height: "30px",
-                      objectFit: "contain",
-                      flexShrink: 0,
-                    }}
-                  />
-                ) : null}
-                <span
+                return (
+                <Link
+                  key={`${activeSection.id}-${option.label}`}
+                  href={option.href}
+                  className="shop-hero-option"
                   style={{
-                    fontSize: "11px",
-                    letterSpacing: ".01em",
-                    textTransform: "none",
-                    fontWeight: 500,
-                    lineHeight: 1.2,
-                    whiteSpace: isTextOnly ? "nowrap" : "normal",
+                    width: isTextOnly ? "auto" : "110px",
+                    minWidth: isTextOnly ? "148px" : undefined,
+                    minHeight: isTextOnly ? "46px" : "104px",
+                    padding: isTextOnly ? "12px 20px" : "14px 10px",
+                    border: "1px solid transparent",
+                    borderRadius: isTextOnly ? "14px" : "16px",
+                    background: "transparent",
+                    color: "#0A1628",
+                    textDecoration: "none",
+                    display: "inline-flex",
+                    flexDirection: isTextOnly ? "row" : "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: isTextOnly ? "8px" : "10px",
+                    transition: "all .25s ease",
+                    boxShadow: "none",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = "rgba(10,22,40,0.24)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = "transparent";
                   }}
                 >
-                  {option.label}
-                </span>
-              </Link>
-            )})}
-          </div>
+                  {option.type === "swatch" ? (
+                    <span
+                      style={{
+                        width: "18px",
+                        height: "18px",
+                        borderRadius: "999px",
+                        background: option.colorHex || "#D9D9D9",
+                        border: "1px solid rgba(10,22,40,0.12)",
+                        flexShrink: 0,
+                      }}
+                    />
+                  ) : option.type === "icon" && option.iconUrl ? (
+                    <img
+                      src={option.iconUrl}
+                      alt={option.label}
+                      style={{
+                        width: "38px",
+                        height: "38px",
+                        objectFit: "contain",
+                        flexShrink: 0,
+                      }}
+                    />
+                  ) : null}
+                  <span
+                    style={{
+                      fontSize: "12px",
+                      letterSpacing: ".01em",
+                      textTransform: "none",
+                      fontWeight: 500,
+                      lineHeight: 1.2,
+                      whiteSpace: isTextOnly ? "nowrap" : "normal",
+                    }}
+                  >
+                    {option.label}
+                  </span>
+                </Link>
+              )})}
+            </div>
+          ) : null}
         </div>
       ) : null}
     </section>

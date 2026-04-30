@@ -1,5 +1,7 @@
 "use client";
+import { useState } from "react";
 import { formatUsdNumber } from "@/lib/money";
+import { METAL_META } from "@/lib/data/product-config";
 
 // ── Gem SVG renderer ──────────────────────────────────────────────────────────
 export function GemSVG({ style, size = 110, color = "#20304A" }) {
@@ -128,15 +130,54 @@ export function GemSVG({ style, size = 110, color = "#20304A" }) {
 // ── ProductCard ───────────────────────────────────────────────────────────────
 const LARGE_GEM_STYLES = ["chain", "tennis", "grillz", "cross"];
 
+function getMetalSwatches(product) {
+  if (!Array.isArray(product?.metalsFull)) return [];
+
+  return product.metalsFull
+    .map((metal) => ({
+      id: metal.id || metal.slug,
+      metalId: metal.id || null,
+      slug: metal.slug || "",
+      name: metal.name || metal.slug || "Metal",
+      color:
+        metal.colorHex ||
+        METAL_META[metal.slug]?.color ||
+        METAL_META[(metal.name || "").toLowerCase().replace(/\s+/g, "-")]?.color ||
+        null,
+    }))
+    .filter((metal) => metal.color);
+}
+
+function getMetalImages(product, metalSwatch) {
+  if (!metalSwatch?.metalId || !Array.isArray(product?.metalMediaRows)) return [];
+
+  const match = product.metalMediaRows.find((entry) => entry.metal_id === metalSwatch.metalId);
+  const fallback = product.defaultMetalMedia && product.defaultMetalMedia.metal_id === metalSwatch.metalId
+    ? product.defaultMetalMedia
+    : match;
+  const source = match || fallback;
+  if (!source) return [];
+
+  return [
+    source.image_1_path,
+    source.image_2_path,
+    source.image_3_path,
+    source.image_4_path,
+  ].filter(Boolean);
+}
+
 export default function ProductCard({ product, wishlisted, onWishlist, onEnquire, forceLight = false }) {
   const isDark = !forceLight && product.category === "hiphop";
   const tag = product.isNew ? "New" : product.featured ? "Featured" : "Signature";
   const gemSize = LARGE_GEM_STYLES.includes(product.gemStyle) ? 140 : 110;
+  const metalSwatches = getMetalSwatches(product);
+  const [activeMetalId, setActiveMetalId] = useState("");
 
-  const visualBg = isDark ? "#0F1B2E" : "#FBFBFC";
+  const activeMetalSwatch = metalSwatches.find((metal) => metal.id === activeMetalId) || metalSwatches[0] || null;
+  const activeImageUrl = getMetalImages(product, activeMetalSwatch)[0] || product.imageUrl;
+
   const visualBorder = isDark ? "rgba(255,255,255,0.12)" : "rgba(10,22,40,0.06)";
   const namColor = isDark ? "#FFFFFF" : "#0A1628";
-  const metaColor = isDark ? "#6A6A6A" : "#6A6A6A";
 
   return (
     <>
@@ -150,9 +191,18 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
           gap: 4px !important;
         }
         .shop-product-card-title {
-          font-size: 15px !important;
-          line-height: 1.22 !important;
+          font-size: 13px !important;
+          line-height: 1.2 !important;
           letter-spacing: 0 !important;
+        }
+        .shop-product-card-title-wrap {
+          min-height: 34px !important;
+        }
+        .shop-product-card-swatches {
+          gap: 8px !important;
+        }
+        .shop-product-card-bottom {
+          padding-top: 8px !important;
         }
         .shop-product-card-price {
           font-size: 14px !important;
@@ -285,9 +335,9 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
           </svg>
         </button>
 
-        {product.imageUrl ? (
+        {activeImageUrl ? (
           <img
-            src={product.imageUrl}
+            src={activeImageUrl}
             alt={`${product.name} jewellery`}
             className="card-gem"
             style={{
@@ -319,18 +369,86 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
         className="shop-product-card-info"
         style={{
           padding: "14px 12px 10px",
-          flex: 1,
           display: "flex",
           flexDirection: "column",
           gap: "6px",
           background: "transparent",
-          minHeight: "170px",
+          minHeight: "118px",
         }}
       >
-        <div className="shop-product-card-title" style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: "20px", fontWeight: 400, color: namColor, letterSpacing: ".02em", lineHeight: 1.2 }}>
-          {product.name}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: metalSwatches.length > 0 ? "minmax(0,1fr) auto" : "minmax(0,1fr)",
+            alignItems: "start",
+            gap: "12px",
+          }}
+        >
+          <div
+            className="shop-product-card-title-wrap"
+          style={{
+              minHeight: "40px",
+          }}
+        >
+          <div
+            className="shop-product-card-title"
+            style={{
+              fontFamily: "inherit",
+              fontSize: "15px",
+              fontWeight: 600,
+              color: namColor,
+              letterSpacing: "0",
+              lineHeight: 1.25,
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}
+          >
+            {product.name}
+          </div>
+          </div>
+        {metalSwatches.length > 0 ? (
+          <div
+            className="shop-product-card-swatches"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              paddingTop: "2px",
+            }}
+          >
+            {metalSwatches.map((metal) => (
+              <button
+                type="button"
+                key={metal.id}
+                title={metal.name}
+                aria-label={metal.name}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setActiveMetalId(metal.id);
+                }}
+                style={{
+                  width: "20px",
+                  height: "20px",
+                  borderRadius: "999px",
+                  border: metal.id === activeMetalId ? "2px solid #0A1628" : "1px solid rgba(10,22,40,0.18)",
+                  background: metal.color,
+                  boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.4)",
+                  flex: "0 0 auto",
+                  cursor: "pointer",
+                  padding: 0,
+                }}
+              />
+            ))}
+          </div>
+        ) : null}
         </div>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto", paddingTop: "16px" }}>
+        <div
+          className="shop-product-card-bottom"
+          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto", paddingTop: "8px" }}
+        >
           <div>
             <span style={{ fontSize: "8px", fontWeight: 400, letterSpacing: ".24em", color: "#7F8898", textTransform: "uppercase", display: "block", marginBottom: "2px", fontFamily: "var(--numeric)" }}>From</span>
             <span className="shop-product-card-price" style={{ fontFamily: "var(--numeric)", fontSize: "18px", fontWeight: 500, color: isDark ? "#FFFFFF" : "#0A1628", letterSpacing: ".02em" }}>

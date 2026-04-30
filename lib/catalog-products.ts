@@ -43,6 +43,15 @@ type CatalogMetal = {
   id: string
   name: string
   slug: string
+  color_hex?: string | null
+}
+
+type CatalogMaterialValue = {
+  id: string
+  name: string
+  slug: string
+  cta_mode?: 'both' | 'enquire_only' | 'checkout_only' | null
+  cta_label?: string | null
 }
 
 type CatalogCertificate = {
@@ -166,6 +175,12 @@ type ProductRow = {
   detail_sections?: ProductDetailSection[] | null
 }
 
+type ProductMaterialValueSelectionRow = {
+  product_id: string
+  material_value_id: string
+  sort_order?: number | null
+}
+
 type ProductPurityPriceRow = {
   id: string
   product_id: string
@@ -200,7 +215,7 @@ export type StorefrontProduct = Product & {
   optionSlug?: string | null
   styleName?: string | null
   styleSlug?: string | null
-  metalsFull: { id: string; name: string; slug: string }[]
+  metalsFull: { id: string; name: string; slug: string; colorHex?: string | null }[]
   purities: string[]
   certificateNames: string[]
   ringSizeNames: string[]
@@ -213,6 +228,7 @@ export type StorefrontProduct = Product & {
   gemstoneLabel: string
   gemstoneValue: string
   gemstoneValues: string[]
+  materialValueOptions: { id: string; name: string; slug: string; ctaMode: 'both' | 'enquire_only' | 'checkout_only'; ctaLabel?: string | null }[]
   shapesEnabled: boolean
   shapeOptions: { id: string; name: string; slug: string; iconUrl?: string | null }[]
   primaryShapeSlug: string
@@ -323,19 +339,21 @@ function resolveMetalMediaDefaults(
 const fetchStorefrontProducts = async () => {
   const supabase = createSupabaseServerClient()
 
-  const [productsResult, categoriesResult, subcategoriesResult, optionsResult, metalsResult, certificatesResult, stylesResult, ringCategoriesResult, ringCategorySizesResult, productContentRulesResult, metalSelectionsResult, shapeSelectionsResult, gstSlabsResult, purityPricesResult, metalMediaResult] =
+  const [productsResult, categoriesResult, subcategoriesResult, optionsResult, metalsResult, materialValuesResult, certificatesResult, stylesResult, ringCategoriesResult, ringCategorySizesResult, productContentRulesResult, metalSelectionsResult, materialValueSelectionsResult, shapeSelectionsResult, gstSlabsResult, purityPricesResult, metalMediaResult] =
     await Promise.all([
       supabase.from('products').select('*').eq('status', 'active').order('created_at', { ascending: false }),
       supabase.from('catalog_categories').select('id, code, name, slug, category_lane'),
       supabase.from('catalog_subcategories').select('id, category_id, name, slug'),
       supabase.from('catalog_options').select('id, subcategory_id, name, slug'),
-      supabase.from('catalog_metals').select('id, name, slug'),
+      supabase.from('catalog_metals').select('id, name, slug, color_hex'),
+      supabase.from('catalog_material_values').select('id, name, slug, cta_mode, cta_label').eq('status', 'active').order('display_order', { ascending: true }),
       supabase.from('catalog_certificates').select('id, name, code'),
       supabase.from('catalog_styles').select('id, name, slug').eq('status', 'active').order('display_order', { ascending: true }),
       supabase.from('catalog_ring_categories').select('id, name, slug, description').eq('status', 'active').order('display_order', { ascending: true }),
       supabase.from('catalog_ring_category_sizes').select('id, ring_category_id, size_label, size_value').eq('status', 'active').order('display_order', { ascending: true }),
       supabase.from('product_content_rules').select('id, kind, name, slug, title, body').eq('status', 'active'),
       supabase.from('product_metal_selections').select('product_id, metal_id, sort_order').order('sort_order', { ascending: true }),
+      supabase.from('product_material_value_selections').select('product_id, material_value_id, sort_order').order('sort_order', { ascending: true }),
       supabase.from('product_stone_shapes').select('product_id, shape_id, shape:catalog_stone_shapes(id, name, slug, svg_asset_url)'),
       supabase.from('catalog_gst_slabs').select('id, name, code, percentage').neq('status', 'hidden'),
       supabase.from('product_purity_prices').select('*').order('sort_order', { ascending: true }),
@@ -358,6 +376,7 @@ const fetchStorefrontProducts = async () => {
   const subcategories = (subcategoriesResult.data || []) as CatalogSubcategory[]
   const options = (optionsResult.data || []) as CatalogOption[]
   const metals = (metalsResult.data || []) as CatalogMetal[]
+  const materialValues = materialValuesResult.error ? ([] as CatalogMaterialValue[]) : ((materialValuesResult.data || []) as CatalogMaterialValue[])
   const certificates = certificatesResult.error ? ([] as CatalogCertificate[]) : ((certificatesResult.data || []) as CatalogCertificate[])
   const styles = stylesResult.error ? ([] as CatalogStyle[]) : ((stylesResult.data || []) as CatalogStyle[])
   const ringCategories = ringCategoriesResult.error ? ([] as CatalogRingCategory[]) : ((ringCategoriesResult.data || []) as CatalogRingCategory[])
@@ -379,6 +398,12 @@ const fetchStorefrontProducts = async () => {
       .map((entry) => entry.metal_id)
 
     const selectedMetals = metals.filter((entry) => productMetalIds.includes(entry.id))
+    const productMaterialValueSelections = (materialValueSelectionsResult.error ? [] : ((materialValueSelectionsResult.data || []) as ProductMaterialValueSelectionRow[]))
+      .filter((entry) => entry.product_id === product.id)
+      .sort((left, right) => (left.sort_order ?? 0) - (right.sort_order ?? 0))
+    const selectedMaterialValues = productMaterialValueSelections
+      .map((entry) => materialValues.find((materialValue) => materialValue.id === entry.material_value_id))
+      .filter(Boolean) as CatalogMaterialValue[]
     const selectedShapes = (shapeSelectionsResult.error ? [] : (shapeSelectionsResult.data || []))
       .filter((entry) => entry.product_id === product.id)
       .map((entry) => Array.isArray(entry.shape) ? entry.shape[0] : entry.shape)
@@ -444,7 +469,7 @@ const fetchStorefrontProducts = async () => {
       cut: 'round',
       metals: selectedMetals.map((entry) => entry.slug),
       priceFrom: resolvedPrice,
-      carat: product.gemstone_value || option?.name || category?.name || 'Signature',
+      carat: selectedMaterialValues[0]?.name || product.gemstone_value || option?.name || category?.name || 'Signature',
       featured: Boolean(product.featured),
       isNew: false,
       shortMeta: buildShortMeta({
@@ -466,7 +491,12 @@ const fetchStorefrontProducts = async () => {
       optionSlug: option?.slug ?? null,
       styleName: style?.name ?? null,
       styleSlug: style?.slug ?? null,
-      metalsFull: selectedMetals,
+      metalsFull: selectedMetals.map((entry) => ({
+        id: entry.id,
+        name: entry.name,
+        slug: entry.slug,
+        colorHex: entry.color_hex ?? null,
+      })),
       purities: productPurityPrices.length > 0 ? productPurityPrices.map((entry) => entry.purity_label) : (product.purity_values ?? []),
       certificateNames: selectedCertificates,
       ringSizeNames: product.ring_enabled ? selectedRingSizes : [],
@@ -477,8 +507,15 @@ const fetchStorefrontProducts = async () => {
       fitLabel: product.fit_label || 'Fit',
       fitOptions: product.fit_options ?? [],
       gemstoneLabel: product.gemstone_label || 'Stone Type',
-      gemstoneValue: (product.gemstone_value || '').split(',').map((entry) => entry.trim()).filter(Boolean)[0] || '',
-      gemstoneValues: (product.gemstone_value || '').split(',').map((entry) => entry.trim()).filter(Boolean),
+      gemstoneValue: selectedMaterialValues[0]?.name || (product.gemstone_value || '').split(',').map((entry) => entry.trim()).filter(Boolean)[0] || '',
+      gemstoneValues: selectedMaterialValues.length > 0 ? selectedMaterialValues.map((entry) => entry.name) : (product.gemstone_value || '').split(',').map((entry) => entry.trim()).filter(Boolean),
+      materialValueOptions: selectedMaterialValues.map((entry) => ({
+        id: entry.id,
+        name: entry.name,
+        slug: entry.slug,
+        ctaMode: entry.cta_mode === 'enquire_only' || entry.cta_mode === 'checkout_only' ? entry.cta_mode : 'both',
+        ctaLabel: entry.cta_label ?? null,
+      })),
       shapesEnabled: Boolean(product.shapes_enabled) && selectedShapes.length > 0,
       shapeOptions: selectedShapes.map((shape) => ({
         id: shape.id,

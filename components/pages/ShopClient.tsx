@@ -25,7 +25,8 @@ export default function ShopClient({
     id: string
     title: string
     iconUrl?: string | null
-    options: { label: string; href: string; type?: 'default' | 'swatch' | 'icon'; iconUrl?: string | null }[]
+    href?: string | null
+    options: { label: string; href: string; type?: 'default' | 'swatch' | 'icon'; iconUrl?: string | null; colorHex?: string | null }[]
     emphasis?: 'section' | 'group'
   }[]
 }) {

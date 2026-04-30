@@ -51,6 +51,18 @@ export type HomeMaterialItem = {
   icon_path: string;
 };
 
+export type HomeDiscoverItem = {
+  sort_order: number;
+  title: string;
+  description: string;
+  image_path: string;
+  image_alt?: string | null;
+  href?: string | null;
+  shape_id?: string | null;
+  target_kind?: string | null;
+  target_id?: string | null;
+};
+
 export type HomeHipHopSection = {
   eyebrow: string;
   heading_line_1: string;
@@ -134,6 +146,86 @@ export type HomeBestSellerProduct = {
   badgeVariant: 'navy' | 'outline';
   detailTemplate?: 'standard' | 'hiphop';
   image?: string;
+  metalsFull?: Array<{ id: string; name: string; slug: string; colorHex?: string | null }>;
+};
+
+type BestSellerProductRow = {
+  id: string;
+  slug: string;
+  name: string;
+  base_price: number | null;
+  detail_template?: 'standard' | 'hiphop' | null;
+  featured?: boolean | null;
+  image_1_path?: string | null;
+  gemstone_label?: string | null;
+  gemstone_value?: string | null;
+  purity_values?: string[] | null;
+  subcategory?: { name?: string | null } | { name?: string | null }[] | null;
+  option?: { name?: string | null } | { name?: string | null }[] | null;
+  category?: { name?: string | null } | { name?: string | null }[] | null;
+};
+
+type BestSellerMetalSelectionRow = {
+  product_id: string;
+  metal_id: string;
+  sort_order?: number | null;
+};
+
+type BestSellerMetalRow = {
+  id: string;
+  name: string;
+  slug: string;
+  color_hex?: string | null;
+};
+
+type BestSellerMetalMediaRow = {
+  product_id: string;
+  metal_id: string;
+  image_1_path?: string | null;
+  is_default_fallback?: boolean | null;
+};
+
+type BestSellerMaterialValueSelectionRow = {
+  product_id: string;
+  material_value_id: string;
+  sort_order?: number | null;
+};
+
+type BestSellerMaterialValueRow = {
+  id: string;
+  name: string;
+};
+
+type DiscoverCategoryRow = {
+  id: string;
+  name: string;
+  slug: string;
+};
+
+type DiscoverSubcategoryRow = {
+  id: string;
+  category_id: string;
+  name: string;
+  slug: string;
+};
+
+type DiscoverOptionRow = {
+  id: string;
+  subcategory_id: string;
+  name: string;
+  slug: string;
+};
+
+type DiscoverStoneShapeRow = {
+  id: string;
+  name: string;
+  slug: string;
+};
+
+type DiscoverStyleRow = {
+  id: string;
+  name: string;
+  slug: string;
 };
 
 function toPublicUrl(path: string | null | undefined) {
@@ -142,9 +234,16 @@ function toPublicUrl(path: string | null | undefined) {
   return `${supabaseUrl}/storage/v1/object/public/${process.env.NEXT_PUBLIC_SUPABASE_COLLECTION_BUCKET || 'hod'}/${path}`;
 }
 
-function buildBestSellerMeta(product: any) {
+function readRelationName(
+  relation?: { name?: string | null } | { name?: string | null }[] | null
+) {
+  if (Array.isArray(relation)) return relation[0]?.name || '';
+  return relation?.name || '';
+}
+
+function buildBestSellerMeta(product: BestSellerProductRow) {
   const bits = [
-    product.option?.name || product.subcategory?.name || product.category?.name || '',
+    readRelationName(product.option) || readRelationName(product.subcategory) || readRelationName(product.category) || '',
     product.gemstone_label && product.gemstone_value ? `${product.gemstone_label} · ${product.gemstone_value}` : '',
     product.purity_values?.[0] || '',
   ].filter(Boolean);
@@ -157,6 +256,230 @@ function buildBestSellerPrice(value: number | null | undefined) {
   return formatUsd(value);
 }
 
+function normalizeDiscoverText(value: string | null | undefined) {
+  return (value ?? '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, ' ')
+    .replace(/[-_]+/g, ' ')
+    .replace(/\s+/g, ' ');
+}
+
+function slugifyDiscoverValue(value: string | null | undefined) {
+  return normalizeDiscoverText(value).replace(/\s+/g, '-');
+}
+
+function findExactDiscoverMatch<T extends { name: string; slug: string }>(items: T[], value: string) {
+  const normalizedValue = normalizeDiscoverText(value);
+  const slugValue = slugifyDiscoverValue(value);
+  return items.find((item) => item.slug === slugValue || normalizeDiscoverText(item.name) === normalizedValue) ?? null;
+}
+
+function findContainedDiscoverMatch<T extends { name: string; slug: string }>(items: T[], value: string) {
+  const haystack = ` ${normalizeDiscoverText(value)} `;
+
+  return (
+    items
+      .slice()
+      .sort((left, right) => {
+        const rightLength = Math.max(normalizeDiscoverText(right.name).length, (right.slug ?? '').length);
+        const leftLength = Math.max(normalizeDiscoverText(left.name).length, (left.slug ?? '').length);
+        return rightLength - leftLength;
+      })
+      .find((item) => {
+        const normalizedName = normalizeDiscoverText(item.name);
+        const normalizedSlug = normalizeDiscoverText(item.slug);
+        return (
+          (normalizedName && haystack.includes(` ${normalizedName} `)) ||
+          (normalizedSlug && haystack.includes(` ${normalizedSlug} `))
+        );
+      }) ?? null
+  );
+}
+
+function buildCategoryCollectionHref(categorySlug: string, params?: URLSearchParams) {
+  const query = params?.toString();
+  return query ? `/${categorySlug}?${query}` : `/${categorySlug}`;
+}
+
+function buildDiscoverSubcategoryHref(args: {
+  subcategory: DiscoverSubcategoryRow;
+  categoriesById: Map<string, DiscoverCategoryRow>;
+  extraParams?: Record<string, string | null | undefined>;
+}) {
+  const { subcategory, categoriesById, extraParams } = args;
+  const params = new URLSearchParams();
+
+  if (extraParams) {
+    Object.entries(extraParams).forEach(([key, value]) => {
+      if (value) params.set(key, value);
+    });
+  }
+
+  params.set('subcategory', subcategory.slug);
+
+  const category = categoriesById.get(subcategory.category_id);
+  return category?.slug ? buildCategoryCollectionHref(category.slug, params) : `/shop?${params.toString()}`;
+}
+
+function buildDiscoverOptionHref(args: {
+  option: DiscoverOptionRow;
+  subcategoriesById: Map<string, DiscoverSubcategoryRow>;
+  categoriesById: Map<string, DiscoverCategoryRow>;
+  extraParams?: Record<string, string | null | undefined>;
+}) {
+  const { option, subcategoriesById, categoriesById, extraParams } = args;
+  const subcategory = subcategoriesById.get(option.subcategory_id);
+  const params = new URLSearchParams();
+
+  if (extraParams) {
+    Object.entries(extraParams).forEach(([key, value]) => {
+      if (value) params.set(key, value);
+    });
+  }
+
+  if (subcategory?.slug) {
+    params.set('subcategory', subcategory.slug);
+  }
+  params.set('option', option.slug);
+
+  const category = subcategory ? categoriesById.get(subcategory.category_id) : null;
+  return category?.slug ? buildCategoryCollectionHref(category.slug, params) : `/shop?${params.toString()}`;
+}
+
+function buildDiscoverFilterHref(filters: Record<string, string | null | undefined>) {
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value) params.set(key, value);
+  });
+
+  const query = params.toString();
+  return query ? `/shop?${query}` : '/shop';
+}
+
+function resolveDiscoverShapeHref(shapeId: string | null | undefined, stoneShapes: DiscoverStoneShapeRow[]) {
+  const matchedShape = stoneShapes.find((entry) => entry.id === shapeId) ?? null;
+  return matchedShape ? buildDiscoverFilterHref({ shape: matchedShape.slug }) : '/shop';
+}
+
+function resolveDiscoverRingHref(args: {
+  title: string;
+  targetKind?: string | null;
+  targetId?: string | null;
+  categories: DiscoverCategoryRow[];
+  subcategories: DiscoverSubcategoryRow[];
+  options: DiscoverOptionRow[];
+  stoneShapes: DiscoverStoneShapeRow[];
+  styles: DiscoverStyleRow[];
+}) {
+  const { title, targetKind, targetId, categories, subcategories, options, stoneShapes, styles } = args;
+  const categoriesById = new Map(categories.map((item) => [item.id, item] as const));
+  const subcategoriesById = new Map(subcategories.map((item) => [item.id, item] as const));
+
+  if (targetKind && targetId) {
+    if (targetKind === 'category') {
+      const category = categories.find((entry) => entry.id === targetId) ?? null;
+      if (category) return buildCategoryCollectionHref(category.slug);
+    }
+
+    if (targetKind === 'subcategory') {
+      const subcategory = subcategories.find((entry) => entry.id === targetId) ?? null;
+      if (subcategory) {
+        return buildDiscoverSubcategoryHref({ subcategory, categoriesById });
+      }
+    }
+
+    if (targetKind === 'option') {
+      const option = options.find((entry) => entry.id === targetId) ?? null;
+      if (option) {
+        return buildDiscoverOptionHref({ option, subcategoriesById, categoriesById });
+      }
+    }
+
+    if (targetKind === 'shape') {
+      const shape = stoneShapes.find((entry) => entry.id === targetId) ?? null;
+      if (shape) return buildDiscoverFilterHref({ shape: shape.slug });
+    }
+
+    if (targetKind === 'style') {
+      const style = styles.find((entry) => entry.id === targetId) ?? null;
+      if (style) return buildDiscoverFilterHref({ style: style.slug });
+    }
+  }
+
+  const exactOption = findExactDiscoverMatch(options, title);
+  if (exactOption) {
+    return buildDiscoverOptionHref({ option: exactOption, subcategoriesById, categoriesById });
+  }
+
+  const exactSubcategory = findExactDiscoverMatch(subcategories, title);
+  if (exactSubcategory) {
+    return buildDiscoverSubcategoryHref({ subcategory: exactSubcategory, categoriesById });
+  }
+
+  const exactCategory = findExactDiscoverMatch(categories, title);
+  if (exactCategory) {
+    return buildCategoryCollectionHref(exactCategory.slug);
+  }
+
+  const exactStyle = findExactDiscoverMatch(styles, title);
+  if (exactStyle) {
+    return buildDiscoverFilterHref({ style: exactStyle.slug });
+  }
+
+  const exactShape = findExactDiscoverMatch(stoneShapes, title);
+  if (exactShape) {
+    return buildDiscoverFilterHref({ shape: exactShape.slug });
+  }
+
+  const containedShape = findContainedDiscoverMatch(stoneShapes, title);
+  const containedOption = findContainedDiscoverMatch(options, title);
+  if (containedOption) {
+    return buildDiscoverOptionHref({
+      option: containedOption,
+      subcategoriesById,
+      categoriesById,
+      extraParams: { shape: containedShape?.slug },
+    });
+  }
+
+  const containedSubcategory = findContainedDiscoverMatch(subcategories, title);
+  if (containedSubcategory) {
+    return buildDiscoverSubcategoryHref({
+      subcategory: containedSubcategory,
+      categoriesById,
+      extraParams: { shape: containedShape?.slug },
+    });
+  }
+
+  const containedStyle = findContainedDiscoverMatch(styles, title);
+  if (containedStyle || containedShape) {
+    return buildDiscoverFilterHref({
+      style: containedStyle?.slug,
+      shape: containedShape?.slug,
+    });
+  }
+
+  const containedCategory = findContainedDiscoverMatch(categories, title);
+  if (containedCategory) {
+    return buildCategoryCollectionHref(containedCategory.slug);
+  }
+
+  return '/shop';
+}
+
+function buildBestSellerMetaFromMaterialValue(
+  product: BestSellerProductRow,
+  materialValueName?: string
+) {
+  const primaryLabel =
+    readRelationName(product.option) || readRelationName(product.subcategory) || readRelationName(product.category) || '';
+  const materialLabel = product.gemstone_label && materialValueName ? `${product.gemstone_label} · ${materialValueName}` : '';
+  const purityLabel = product.purity_values?.[0] || '';
+
+  return [primaryLabel, materialLabel, purityLabel].filter(Boolean).join(' · ');
+}
+
 const loadHomePageData = unstable_cache(
   async () => {
     const supabase = createHomeSupabaseClient();
@@ -166,6 +489,13 @@ const loadHomePageData = unstable_cache(
       blogResult,
       collectionResult,
       materialResult,
+      discoverShapesResult,
+      discoverRingsResult,
+      discoverCategoriesResult,
+      discoverSubcategoriesResult,
+      discoverOptionsResult,
+      discoverStoneShapesResult,
+      discoverStylesResult,
       hiphopResult,
       collectionPageConfigResult,
       certificationsSectionResult,
@@ -197,6 +527,41 @@ const loadHomePageData = unstable_cache(
         .from('material_strip_items')
         .select('sort_order, title, description, icon_path')
         .order('sort_order', { ascending: true }),
+      supabase
+        .from('discover_shapes_items')
+        .select('*')
+        .eq('status', 'active')
+        .order('sort_order', { ascending: true }),
+      supabase
+        .from('discover_rings_items')
+        .select('*')
+        .eq('status', 'active')
+        .order('sort_order', { ascending: true }),
+      supabase
+        .from('catalog_categories')
+        .select('id, name, slug')
+        .eq('status', 'active')
+        .order('display_order', { ascending: true }),
+      supabase
+        .from('catalog_subcategories')
+        .select('id, category_id, name, slug')
+        .eq('status', 'active')
+        .order('display_order', { ascending: true }),
+      supabase
+        .from('catalog_options')
+        .select('id, subcategory_id, name, slug')
+        .eq('status', 'active')
+        .order('display_order', { ascending: true }),
+      supabase
+        .from('catalog_stone_shapes')
+        .select('id, name, slug')
+        .eq('status', 'active')
+        .order('display_order', { ascending: true }),
+      supabase
+        .from('catalog_styles')
+        .select('id, name, slug')
+        .eq('status', 'active')
+        .order('display_order', { ascending: true }),
       supabase
         .from('hiphop_showcase_section')
         .select('eyebrow, heading_line_1, heading_line_2, heading_emphasis, cta_label, cta_link, image_path, image_alt')
@@ -293,47 +658,134 @@ const loadHomePageData = unstable_cache(
     }
 
     let bestSellerProducts: HomeBestSellerProduct[] = [];
+    const discoverCategories = (discoverCategoriesResult.data ?? []) as DiscoverCategoryRow[];
+    const discoverSubcategories = (discoverSubcategoriesResult.data ?? []) as DiscoverSubcategoryRow[];
+    const discoverOptions = (discoverOptionsResult.data ?? []) as DiscoverOptionRow[];
+    const discoverStoneShapes = (discoverStoneShapesResult.data ?? []) as DiscoverStoneShapeRow[];
+    const discoverStyles = (discoverStylesResult.data ?? []) as DiscoverStyleRow[];
+
     if (bestSellerSectionResult.data?.id) {
       const productIds = (bestSellerProductSelectionsResult.data ?? [])
         .filter((item) => item.section_id === bestSellerSectionResult.data?.id)
         .map((item) => item.product_id);
 
       if (productIds.length) {
-        const { data } = await supabase
-          .from('products')
-          .select(`
-            id,
-            slug,
-            name,
-            base_price,
-            detail_template,
-            featured,
-            image_1_path,
-            gemstone_label,
-            gemstone_value,
-            purity_values,
-            subcategory:catalog_subcategories(name),
-            option:catalog_options(name),
-            category:catalog_categories(name)
-          `)
-          .in('id', productIds)
-          .eq('status', 'active');
+        const [
+          { data },
+          { data: metalSelections },
+          { data: metalCatalog },
+          { data: metalMediaRows },
+          { data: materialValueSelections },
+          { data: materialValueCatalog },
+        ] = await Promise.all([
+          supabase
+            .from('products')
+            .select(`
+              id,
+              slug,
+              name,
+              base_price,
+              detail_template,
+              featured,
+              image_1_path,
+              gemstone_label,
+              purity_values,
+              subcategory:catalog_subcategories(name),
+              option:catalog_options(name),
+              category:catalog_categories(name)
+            `)
+            .in('id', productIds)
+            .eq('status', 'active'),
+          supabase
+            .from('product_metal_selections')
+            .select('product_id, metal_id, sort_order')
+            .in('product_id', productIds)
+            .order('sort_order', { ascending: true }),
+          supabase
+            .from('catalog_metals')
+            .select('id, name, slug, color_hex')
+            .eq('status', 'active')
+            .order('display_order', { ascending: true }),
+          supabase
+            .from('product_metal_media')
+            .select('product_id, metal_id, image_1_path, is_default_fallback')
+            .in('product_id', productIds),
+          supabase
+            .from('product_material_value_selections')
+            .select('product_id, material_value_id, sort_order')
+            .in('product_id', productIds)
+            .order('sort_order', { ascending: true }),
+          supabase
+            .from('catalog_material_values')
+            .select('id, name')
+            .eq('status', 'active')
+            .order('display_order', { ascending: true }),
+        ]);
 
-        const productMap = new Map((data ?? []).map((item) => [item.id, item]));
+        const productMap = new Map((data ?? []).map((item) => [item.id, item as BestSellerProductRow]));
+        const metalsById = new Map((metalCatalog ?? []).map((item) => {
+          const metal = item as BestSellerMetalRow;
+          return [metal.id, metal] as const;
+        }));
+        const selectionsByProduct = new Map<string, BestSellerMetalSelectionRow[]>();
+        (metalSelections ?? []).forEach((selection) => {
+          const typedSelection = selection as BestSellerMetalSelectionRow;
+          const existing = selectionsByProduct.get(typedSelection.product_id) ?? [];
+          existing.push(typedSelection);
+          selectionsByProduct.set(typedSelection.product_id, existing);
+        });
+        const mediaByProduct = new Map<string, BestSellerMetalMediaRow[]>();
+        (metalMediaRows ?? []).forEach((entry) => {
+          const typedEntry = entry as BestSellerMetalMediaRow;
+          const existing = mediaByProduct.get(typedEntry.product_id) ?? [];
+          existing.push(typedEntry);
+          mediaByProduct.set(typedEntry.product_id, existing);
+        });
+        const materialValuesById = new Map((materialValueCatalog ?? []).map((item) => {
+          const materialValue = item as BestSellerMaterialValueRow;
+          return [materialValue.id, materialValue] as const;
+        }));
+        const materialValueSelectionsByProduct = new Map<string, BestSellerMaterialValueSelectionRow[]>();
+        (materialValueSelections ?? []).forEach((selection) => {
+          const typedSelection = selection as BestSellerMaterialValueSelectionRow;
+          const existing = materialValueSelectionsByProduct.get(typedSelection.product_id) ?? [];
+          existing.push(typedSelection);
+          materialValueSelectionsByProduct.set(typedSelection.product_id, existing);
+        });
         bestSellerProducts = productIds
           .map((id) => productMap.get(id))
           .filter(Boolean)
-          .map((product: any, index) => ({
-            id: product.id,
-            slug: product.slug,
-            name: product.name,
-            meta: buildBestSellerMeta(product),
-            price: buildBestSellerPrice(product.base_price),
-            badge: index === 0 ? 'Bestseller' : product.featured ? 'Featured' : 'Selected',
-            badgeVariant: index === 0 || product.featured ? 'navy' : 'outline',
-            detailTemplate: product.detail_template === 'hiphop' ? 'hiphop' : 'standard',
-            image: toPublicUrl(product.image_1_path),
-          }));
+          .map((product, index) => {
+            const selectedMetals = (selectionsByProduct.get(product.id) ?? [])
+              .map((selection) => metalsById.get(selection.metal_id))
+              .filter(Boolean)
+              .map((metal) => ({
+                id: metal.id,
+                name: metal.name,
+                slug: metal.slug,
+                colorHex: metal.color_hex ?? null,
+              }));
+            const fallbackMedia =
+              (mediaByProduct.get(product.id) ?? []).find((entry) => entry.is_default_fallback && entry.image_1_path) ??
+              (mediaByProduct.get(product.id) ?? []).find((entry) => entry.image_1_path);
+            const primaryMaterialValueName =
+              (materialValueSelectionsByProduct.get(product.id) ?? [])
+                .map((selection) => materialValuesById.get(selection.material_value_id)?.name)
+                .find(Boolean) ?? undefined;
+
+            return {
+              id: product.id,
+              slug: product.slug,
+              name: product.name,
+              meta: buildBestSellerMetaFromMaterialValue(product, primaryMaterialValueName),
+              price: buildBestSellerPrice(product.base_price),
+              badge: index === 0 ? 'Bestseller' : product.featured ? 'Featured' : 'Selected',
+              badgeVariant: index === 0 || product.featured ? 'navy' : 'outline',
+              detailTemplate: product.detail_template === 'hiphop' ? 'hiphop' : 'standard',
+              image: toPublicUrl(fallbackMedia?.image_1_path || product.image_1_path),
+              metalsFull: selectedMetals,
+            };
+          });
       }
     }
 
@@ -358,6 +810,25 @@ const loadHomePageData = unstable_cache(
       blogRows: blogResult.data ?? [],
       collectionItems: collectionResult.data ?? [],
       materialItems: materialResult.data ?? [],
+      discoverShapesItems: (discoverShapesResult.data ?? []).map((item) => ({
+        ...item,
+        image_path: toPublicUrl(item.image_path) || item.image_path,
+        href: resolveDiscoverShapeHref(item.shape_id, discoverStoneShapes),
+      })),
+      discoverRingsItems: (discoverRingsResult.data ?? []).map((item) => ({
+        ...item,
+        image_path: toPublicUrl(item.image_path) || item.image_path,
+        href: resolveDiscoverRingHref({
+          title: item.title,
+          targetKind: item.target_kind,
+          targetId: item.target_id,
+          categories: discoverCategories,
+          subcategories: discoverSubcategories,
+          options: discoverOptions,
+          stoneShapes: discoverStoneShapes,
+          styles: discoverStyles,
+        }),
+      })),
       hiphopSection:
         hiphopResult.data ?? {
           eyebrow: 'Hip Hop Collection · House of Diams',
@@ -418,7 +889,7 @@ const loadHomePageData = unstable_cache(
       bestSellerProducts,
     };
   },
-  ['home-page-data-v1'],
+  ['home-page-data-v2'],
   { revalidate: 300 }
 );
 

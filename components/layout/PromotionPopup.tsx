@@ -108,8 +108,8 @@ export default function PromotionPopup() {
   const imageOnlyMode = Boolean(item.image_only_mode)
 
   return (
-    <div className="fixed inset-0 z-[1300] flex items-center justify-center bg-[rgba(10,22,40,0.48)] p-4 backdrop-blur-[6px]">
-      <div className="relative w-full max-w-[420px] overflow-hidden rounded-[28px] border border-[rgba(184,149,74,0.2)] bg-[linear-gradient(180deg,#fffdf9_0%,#f8f4ec_100%)] shadow-[0_24px_64px_rgba(10,22,40,0.22)]">
+    <div className="fixed inset-0 z-[1300] flex items-center justify-center bg-[rgba(10,22,40,0.48)] p-4 backdrop-blur-[6px] sm:p-5">
+      <div className="relative w-full max-w-[620px] overflow-hidden rounded-[30px] border border-[rgba(184,149,74,0.2)] bg-[linear-gradient(180deg,#fffdf9_0%,#f8f4ec_100%)] shadow-[0_24px_64px_rgba(10,22,40,0.22)]">
         <button
           type="button"
           onClick={close}
@@ -122,21 +122,21 @@ export default function PromotionPopup() {
         </button>
 
         {imageOnlyMode && imageSrc ? (
-          <div className="flex min-h-[340px] flex-col">
-            <div className="relative h-[210px] w-full shrink-0 overflow-hidden bg-[radial-gradient(circle_at_top,#f5e7c4_0%,#ebd8ad_42%,#dcc18d_100%)]">
+          <div className="flex min-h-[500px] flex-col sm:min-h-[560px]">
+            <div className="relative h-[320px] w-full shrink-0 overflow-hidden bg-[radial-gradient(circle_at_top,#f5e7c4_0%,#ebd8ad_42%,#dcc18d_100%)] sm:h-[380px]">
               <img
                 src={imageSrc}
                 alt={item.image_alt || item.title || 'Promotion image'}
-                className="h-full w-full object-contain object-center"
+                className="h-full w-full object-cover object-center"
                 loading="eager"
               />
             </div>
-            <div className="flex flex-1 items-end p-5 sm:p-6">
+            <div className="flex flex-1 items-end p-6 sm:p-8">
               {item.cta_text && item.cta_link ? (
                 <Link
                   href={item.cta_link}
                   onClick={close}
-                  className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-[var(--theme-ink)] px-6 text-[10px] font-medium uppercase tracking-[0.24em] text-white transition hover:bg-[#13233b]"
+                  className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-[var(--theme-ink)] px-7 text-[10px] font-medium uppercase tracking-[0.24em] text-white transition hover:bg-[#13233b]"
                 >
                   {item.cta_text}
                 </Link>
@@ -144,7 +144,7 @@ export default function PromotionPopup() {
             </div>
           </div>
         ) : (
-          <div className="flex min-h-[340px] flex-col p-5 sm:p-6">
+          <div className="flex min-h-[420px] flex-col p-6 sm:min-h-[500px] sm:p-8">
             <div className="flex-1">
               {item.cta_text && item.cta_link ? (
                 <div className="sr-only">{item.cta_text}</div>
@@ -157,21 +157,21 @@ export default function PromotionPopup() {
                 </div>
               ) : null}
 
-              <h2 className="max-w-[14ch] text-[clamp(1.5rem,4vw,2.3rem)] leading-[0.98] text-[var(--theme-ink)]">
+              <h2 className="max-w-[15ch] text-[clamp(1.9rem,4vw,3rem)] leading-[0.96] text-[var(--theme-ink)]">
                 {item.title}
               </h2>
 
-              <p className="mt-3 max-w-[34ch] text-[13px] leading-6 text-[var(--theme-muted)]">
+              <p className="mt-4 max-w-[44ch] text-[14px] leading-7 text-[var(--theme-muted)] sm:text-[15px]">
                 {item.description}
               </p>
             </div>
 
-            <div className="pt-6">
+            <div className="pt-8">
               {item.cta_text && item.cta_link ? (
                 <Link
                   href={item.cta_link}
                   onClick={close}
-                  className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-[var(--theme-ink)] px-6 text-[10px] font-medium uppercase tracking-[0.24em] text-white transition hover:bg-[#13233b]"
+                  className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-[var(--theme-ink)] px-7 text-[10px] font-medium uppercase tracking-[0.24em] text-white transition hover:bg-[#13233b]"
                 >
                   {item.cta_text}
                 </Link>

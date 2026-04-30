@@ -4,41 +4,50 @@ import Link from 'next/link';
 import type { CollectionPageConfig } from '@/lib/home-data';
 
 export default function CollectionShowcase({ config }: { config: CollectionPageConfig }) {
+  const imageUrl = config.showcaseImageUrl || config.showcaseMobileImageUrl || '';
+
   return (
-    <section className="grid min-h-[600px] w-full grid-cols-2 overflow-hidden bg-[var(--theme-base)] max-[960px]:grid-cols-1">
-      <div className="flex flex-col justify-center px-20 py-[88px] max-[960px]:px-7 max-[960px]:py-16">
-        <p className="mb-7 font-sans text-[8.5px] font-normal uppercase tracking-[.32em] text-[var(--theme-ink)] opacity-65">
-          House of Diams Collection
-        </p>
-        <h2
-          className="mb-8 font-serif font-light leading-none tracking-[.01em] text-[var(--theme-heading)]"
-          style={{ fontSize: 'clamp(48px, 6vw, 82px)' }}
-        >
-          {config.showcaseHeading}
-        </h2>
-        <p className="mb-10 max-w-[520px] text-[15px] leading-[1.9] text-[var(--theme-ink)] opacity-72">
-          {config.showcaseSubtitle}
-        </p>
-        <Link
-          href={config.showcaseCtaHref || '/collection'}
-          className="inline-flex w-fit items-center gap-3 border-[1.5px] border-[var(--theme-ink)] bg-[var(--theme-ink)] px-9 py-4 font-sans text-[9px] font-normal uppercase tracking-[.26em] text-white transition-colors duration-300 hover:bg-transparent hover:text-[var(--theme-ink)]"
-        >
-          {config.showcaseCtaLabel || 'Explore Collection'}
-          <span className="text-[15px]">→</span>
-        </Link>
-      </div>
-      <div className="relative flex items-center justify-center px-8 py-10 max-[960px]:min-h-[320px] max-[960px]:px-6 max-[960px]:py-8">
-        <div className="relative aspect-square w-full max-w-[560px] overflow-hidden rounded-[22px] border border-[rgba(10,22,40,0.14)] bg-[linear-gradient(180deg,#faf7f0_0%,#f0eadf_100%)] shadow-[0_18px_48px_rgba(10,22,40,0.08)]">
-          {config.showcaseImageUrl ? (
-            <picture>
-              {config.showcaseMobileImageUrl ? <source media="(max-width: 960px)" srcSet={config.showcaseMobileImageUrl} /> : null}
-              <img src={config.showcaseImageUrl} alt={config.showcaseHeading || 'Collection showcase'} className="h-full w-full object-cover object-center" loading="lazy" />
-            </picture>
-          ) : (
-            <div className="flex h-full items-center justify-center px-8 text-center text-[11px] uppercase tracking-[0.22em] text-[var(--theme-ink)] opacity-35">
-              Upload a Collection showcase image in CMS
-            </div>
-          )}
+    <section className="relative isolate min-h-[360px] overflow-hidden md:min-h-[460px] lg:min-h-[560px]">
+      {imageUrl ? (
+        <picture>
+          {config.showcaseMobileImageUrl ? <source media="(max-width: 960px)" srcSet={config.showcaseMobileImageUrl} /> : null}
+          <img
+            src={imageUrl}
+            alt={config.showcaseHeading || 'Collection showcase'}
+            className="absolute inset-0 h-full w-full object-cover object-center"
+            loading="lazy"
+          />
+        </picture>
+      ) : (
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_22%,rgba(255,255,255,0.22),transparent_36%),linear-gradient(135deg,#f7f1e7_0%,#eadfce_42%,#dcc9ab_100%)]" />
+      )}
+
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(250,247,240,0.94)_0%,rgba(250,247,240,0.78)_34%,rgba(250,247,240,0.42)_62%,rgba(250,247,240,0.14)_100%)]" />
+
+      <div className="relative z-10 flex min-h-[360px] items-end px-5 py-12 md:min-h-[460px] md:px-8 md:py-16 lg:min-h-[560px] lg:px-12 lg:py-20">
+        <div className="max-w-[620px]">
+          <p className="mb-5 font-sans text-[10px] uppercase tracking-[0.34em] text-[#0A1628]/68 md:mb-6">
+            House of Diams Collection
+          </p>
+
+          <h2
+            className="font-serif font-light leading-[0.96] tracking-[0.01em] text-[#0A1628]"
+            style={{ fontSize: 'clamp(42px, 7vw, 88px)' }}
+          >
+            {config.showcaseHeading || 'Collection'}
+          </h2>
+
+          <p className="mt-6 max-w-[540px] text-[15px] leading-[1.9] text-[#0A1628]/76 md:text-[16px]">
+            {config.showcaseSubtitle || 'Browse House of Diams collection pieces in a dedicated enquiry-first showcase.'}
+          </p>
+
+          <Link
+            href={config.showcaseCtaHref || '/collection'}
+            className="mt-8 inline-flex items-center gap-3 rounded-full border border-[#0A1628]/14 bg-[#0A1628] px-7 py-3.5 font-sans text-[10px] uppercase tracking-[0.28em] text-white transition hover:bg-white hover:text-[#0A1628]"
+          >
+            {config.showcaseCtaLabel || 'Explore Collection'}
+            <span className="text-sm">→</span>
+          </Link>
         </div>
       </div>
     </section>

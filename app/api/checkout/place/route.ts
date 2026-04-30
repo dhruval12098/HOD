@@ -52,6 +52,17 @@ type CheckoutPayload = {
     code?: string
     discountAmount?: number
   } | null
+  loveLetter?: {
+    wantsLetter?: boolean
+    letterType?: 'generate_for_me' | 'write_myself' | 'no_letter'
+    recipientName?: string
+    senderName?: string
+    occasionKey?: 'proposal' | 'anniversary' | 'birthday' | 'justbecause' | 'apology' | 'mother' | 'newchapter' | null
+    aboutHerText?: string
+    customLetterText?: string
+    finalLetterText?: string
+    finalLetterHtml?: string
+  } | null
 }
 
 function isValidEmail(value: string) {
@@ -222,6 +233,7 @@ export async function POST(request: Request) {
   }
 
   const totalAmount = subtotalAmount + gstAmount - couponDiscountAmount
+  const loveLetter = payload?.loveLetter ?? null
   const customer = payload?.customer ?? {}
   const resolvedCustomer = {
     first_name: (customer.first_name || profile?.first_name || userData.user.user_metadata?.first_name || '').trim(),
@@ -287,6 +299,8 @@ export async function POST(request: Request) {
       gst_amount: gstAmount,
       shipping_amount: 0,
       total_amount: totalAmount,
+      love_letter_included: Boolean(loveLetter?.wantsLetter),
+      love_letter_type: loveLetter?.letterType || 'no_letter',
       status: 'pending',
       payment_status: 'pending',
       notes: couponCode
@@ -298,6 +312,26 @@ export async function POST(request: Request) {
 
   if (orderError || !order) {
     return NextResponse.json({ error: orderError?.message || 'Unable to create order.' }, { status: 500 })
+  }
+
+  if (loveLetter) {
+    const { error: loveLetterError } = await adminClient.from('order_love_letters').insert({
+      order_id: order.id,
+      wants_letter: Boolean(loveLetter.wantsLetter),
+      letter_type: loveLetter.letterType || 'no_letter',
+      recipient_name: loveLetter.recipientName?.trim() || null,
+      sender_name: loveLetter.senderName?.trim() || null,
+      occasion_key: loveLetter.occasionKey || null,
+      about_her_text: loveLetter.aboutHerText?.trim() || null,
+      custom_letter_text: loveLetter.customLetterText?.trim() || null,
+      final_letter_text: loveLetter.finalLetterText?.trim() || null,
+      final_letter_html: loveLetter.finalLetterHtml?.trim() || null,
+      print_status: loveLetter.wantsLetter ? 'pending' : 'skipped',
+    })
+
+    if (loveLetterError) {
+      return NextResponse.json({ error: loveLetterError.message }, { status: 500 })
+    }
   }
 
   const { error: itemError } = await adminClient.from('order_items').insert(

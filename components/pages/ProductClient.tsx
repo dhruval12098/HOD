@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import type { StorefrontProduct } from '@/lib/catalog-products';
 import { STONE_MAP } from '@/lib/data/product-config';
 import EnquireModal from '@/components/home/EnquireModal';
@@ -13,14 +13,17 @@ import ProductCategoryPill from '@/components/product/ProductCategoryPill';
 import ProductPriceBlock from '@/components/product/ProductPriceBlock';
 import ProductDescription from '@/components/product/ProductDescription';
 import ProductConfigurator from '@/components/product/ProductConfigurator';
+import RingGuide from '@/components/product/RingGuide';
 import ProductCTAs from '@/components/product/ProductCTAs';
 import ProductTrustRow from '@/components/product/ProductTrustRow';
 import ProductTabs from '@/components/product/ProductTabs';
 import ProductLayout from '@/components/product/ProductLayout';
 import RelatedProducts from '@/components/product/RelatedProducts';
+import LoveLetterModal from '@/components/product/LoveLetterModal';
 import { useWishlistStore } from '@/lib/hooks/useWishlistStore';
 import { useCart } from '@/lib/hooks/useCart';
 import { getProductKey } from '@/lib/product-keys';
+import { saveLoveLetterDraft, type LoveLetterDraft } from '@/lib/love-letter';
 
 interface ProductClientProps {
   product: StorefrontProduct;
@@ -28,6 +31,7 @@ interface ProductClientProps {
 }
 
 export default function ProductClient({ product, relatedProducts }: ProductClientProps) {
+  const router = useRouter();
   const storefrontProduct = product as StorefrontProduct & {
     hiphopCaratLabel: string;
     hiphopCaratValues: string[];
@@ -47,13 +51,20 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
   const { wishlist, contains, toggle } = useWishlistStore();
   const { addItem } = useCart();
   const [isEnquireOpen, setIsEnquireOpen] = useState(false);
+  const [isLoveLetterOpen, setIsLoveLetterOpen] = useState(false);
+  const [loveLetterIntent, setLoveLetterIntent] = useState<'cart' | 'checkout' | null>(null);
   const [toastMessage, setToastMessage] = useState('');
   const [toastVisible, setToastVisible] = useState(false);
 
   const isDark = product.category === 'hiphop';
+  const showRingGuide = Boolean(storefrontProduct.ringEnabled || storefrontProduct.type === 'ring');
   const wishlistKey = getProductKey(product);
   const inWishlist = contains(wishlistKey);
   const selectedMetalMeta = storefrontProduct.metalsFull.find((entry) => entry.slug === selectedMetal) || storefrontProduct.metalsFull[0];
+  const selectedMaterialValueMeta =
+    storefrontProduct.materialValueOptions?.find((entry) => entry.name === selectedGemstoneValue) ||
+    storefrontProduct.materialValueOptions?.[0] ||
+    null;
   const selectedPurityPriceRow = storefrontProduct.purityPriceRows.find((entry) => entry.purity_label === purity) || storefrontProduct.purityPriceRows[0] || null;
   const selectedMetalMedia = storefrontProduct.metalMediaRows.find((entry) => entry.metal_id === selectedMetalMeta?.id) || storefrontProduct.defaultMetalMedia || null;
   const activeImageUrls = useMemo<string[]>(() => {
@@ -144,23 +155,33 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
     showToast(result === 'removed' ? 'Removed from wishlist' : 'Saved to wishlist');
   };
 
+  const buildCartSelection = (loveLetterDraft: LoveLetterDraft | null = null) => ({
+    metal: selectedMetal,
+    purity,
+    resolvedPrice: activePrice,
+    resolvedImageUrl: activeProduct.imageUrl || undefined,
+    sizeOrFit,
+    ringSize: selectedRingSize,
+    ringCategoryId: selectedRingCategoryId,
+    gemstone: selectedGemstoneValue,
+    shape: selectedShapeSlug,
+    hiphopCarat: selectedHiphopCarat,
+    engravingMode,
+    engravingText,
+    loveLetter: loveLetterDraft,
+  });
+
   const handleAddToCart = () => {
+    setLoveLetterIntent('cart');
+    setIsLoveLetterOpen(true);
+  };
+
+  const addConfiguredProductToCart = (loveLetterDraft: LoveLetterDraft | null = null) => {
     addItem(product, {
-      metal: selectedMetal,
-      purity,
-      resolvedPrice: activePrice,
-      resolvedImageUrl: activeProduct.imageUrl || undefined,
-      sizeOrFit,
-      ringSize: selectedRingSize,
-      ringCategoryId: selectedRingCategoryId,
-      gemstone: selectedGemstoneValue,
-      shape: selectedShapeSlug,
-      hiphopCarat: selectedHiphopCarat,
-      engravingMode,
-      engravingText,
+      ...buildCartSelection(loveLetterDraft),
     });
     showToast('Added to cart');
-  };
+  }
 
   const handleMetalChange = (metal: string) => {
     setSelectedMetal(metal);
@@ -175,6 +196,23 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
   const handleRelatedEnquire = (name: string) => {
     if (name) showToast(`Opening enquiry for ${name}`);
     setIsEnquireOpen(true);
+  };
+
+  const handleCheckoutContinue = (draft: LoveLetterDraft) => {
+    if (loveLetterIntent === 'cart') {
+      addConfiguredProductToCart(draft);
+      setIsLoveLetterOpen(false);
+      setLoveLetterIntent(null);
+      return;
+    }
+
+    saveLoveLetterDraft({
+      ...draft,
+      sourceSlug: product.slug,
+    });
+    setIsLoveLetterOpen(false);
+    setLoveLetterIntent(null);
+    router.push(checkoutHref);
   };
 
     return (
@@ -245,12 +283,20 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
 
               <ProductCTAs
                 product={activeProduct}
+                ctaMode={selectedMaterialValueMeta?.ctaMode || 'both'}
+                ctaLabel={selectedMaterialValueMeta?.ctaLabel || null}
                 onEnquire={() => setIsEnquireOpen(true)}
                 inWishlist={inWishlist}
                 onWishlist={() => handleWishlistToggle(product)}
                 onAddToCart={handleAddToCart}
+                onCheckout={() => {
+                  setLoveLetterIntent('checkout');
+                  setIsLoveLetterOpen(true);
+                }}
                 checkoutHref={checkoutHref}
               />
+
+              {showRingGuide ? <RingGuide /> : null}
 
               <ProductTrustRow />
               <ProductTabs
@@ -277,6 +323,12 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
         piece={`${product.name}${selectedGemstoneValue ? ` (${selectedGemstoneValue})` : ` (${STONE_MAP[product.stone] ?? product.stone})`}`}
         onClose={() => setIsEnquireOpen(false)}
       />
+      {isLoveLetterOpen ? (
+        <LoveLetterModal
+          onClose={() => setIsLoveLetterOpen(false)}
+          onContinue={handleCheckoutContinue}
+        />
+      ) : null}
 
       <Toast message={toastMessage} visible={toastVisible} />
     </div>

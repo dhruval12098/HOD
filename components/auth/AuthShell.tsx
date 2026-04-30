@@ -46,7 +46,7 @@ export default function AuthShell({
         <div className="absolute bottom-[-6%] right-[-5%] h-72 w-72 rounded-full bg-[rgba(184,149,74,0.16)] blur-3xl" />
       </div>
 
-      <div className="relative mx-auto grid min-h-[calc(100vh-2rem)] max-w-[1180px] items-center gap-4 md:grid-cols-2 lg:gap-5">
+      <div className="relative mx-auto grid min-h-[calc(100dvh-2rem)] max-w-[1180px] items-start gap-4 md:grid-cols-2 lg:gap-5">
         <div className="order-2 relative overflow-hidden rounded-[30px] border border-[var(--theme-border-strong)] shadow-[0_30px_90px_rgba(10,22,40,0.18)] md:order-2">
           {JEWELRY_IMAGES.map((image, index) => (
             <div
@@ -63,7 +63,7 @@ export default function AuthShell({
 
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(212,175,55,0.18),transparent_32%)]" />
 
-          <div className="relative flex h-full min-h-[300px] flex-col justify-between p-5 text-white sm:p-6 lg:min-h-[calc(100vh-4.5rem)] lg:max-h-[calc(100vh-4.5rem)] lg:p-7">
+          <div className="relative flex h-full min-h-[300px] flex-col justify-between p-5 text-white sm:p-6 lg:min-h-[calc(100dvh-4.5rem)] lg:p-7">
             <div>
               <div className="mb-2.5 inline-flex items-center gap-3 text-[8px] uppercase tracking-[0.28em] text-[rgba(255,255,255,0.78)]">
                 <span className="inline-block h-px w-8 bg-[rgba(212,175,55,0.8)]" />
@@ -114,8 +114,8 @@ export default function AuthShell({
           </div>
         </div>
 
-        <div className="order-1 flex items-center justify-center md:order-1">
-          <div className="w-full max-w-[560px] rounded-[26px] border border-[rgba(10,22,40,0.08)] bg-[rgba(255,255,255,0.9)] p-4 shadow-[0_24px_80px_rgba(10,22,40,0.08)] backdrop-blur-xl sm:p-5 lg:min-h-[calc(100vh-4.5rem)] lg:max-h-[calc(100vh-4.5rem)] lg:p-6">
+        <div className="order-1 flex items-start justify-center md:order-1">
+          <div className="w-full max-w-[560px] rounded-[26px] border border-[rgba(10,22,40,0.08)] bg-[rgba(255,255,255,0.9)] p-4 shadow-[0_24px_80px_rgba(10,22,40,0.08)] backdrop-blur-xl sm:p-5 lg:min-h-[calc(100dvh-4.5rem)] lg:p-6">
             {children}
           </div>
         </div>

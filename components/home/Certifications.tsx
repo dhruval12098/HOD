@@ -109,12 +109,12 @@ export default function Certifications({
             >
               <span className="absolute top-0 left-1/2 -translate-x-1/2 h-[2px] w-0 bg-[#0A1628] transition-[width] duration-[400ms] ease-[cubic-bezier(.4,0,.2,1)] group-hover:w-4/5" />
 
-              <div className="w-9 h-9 flex items-center justify-center mb-5 flex-shrink-0">
+              <div className="w-14 h-14 flex items-center justify-center mb-6 flex-shrink-0">
                 {cert.icon_path ? (
                   <img
                     src={buildIconUrl(cert.icon_path)}
                     alt={cert.title}
-                    className="w-9 h-9 object-cover"
+                    className="w-14 h-14 object-contain"
                     loading="lazy"
                   />
                 ) : (
@@ -128,21 +128,9 @@ export default function Certifications({
                 )}
               </div>
 
-              <div className="font-serif text-[17px] font-normal tracking-[0.02em] text-[#0A0A0A] leading-[1.25]">
-                {cert.title}
-              </div>
-
-              {cert.description && (
-                <p className="text-[10px] font-light leading-[1.8] text-[#6A6A6A] tracking-[0.02em] mt-2 mb-[14px] flex-1">
-                  {cert.description}
-                </p>
-              )}
-
-              {cert.badge && (
-                <div className="mt-auto inline-block px-3 py-[5px] text-[7.5px] font-medium tracking-[0.26em] uppercase text-[#0A1628] bg-[rgba(10,22,40,0.05)] border border-[rgba(10,22,40,0.12)]">
-                  {cert.badge}
-                </div>
-              )}
+              <p className="font-serif text-[18px] font-normal tracking-[0.02em] text-[#0A0A0A] leading-[1.5] max-w-[16ch]">
+                {cert.title || cert.description}
+              </p>
             </div>
           ))}
         </div>

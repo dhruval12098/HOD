@@ -236,10 +236,6 @@ export default function AuthForm({ mode }: AuthFormProps) {
           />
         </label>
 
-        <div className="rounded-[18px] border border-[rgba(184,149,74,0.18)] bg-[linear-gradient(135deg,rgba(250,247,242,0.9),rgba(245,247,252,0.9))] px-4 py-3 text-[11px] leading-5 tracking-[0.02em] text-[var(--theme-muted)]">
-          Passwords are never hashed in the browser by us manually. Supabase Auth securely hashes them server-side before storage, and your session is persisted in the client so you stay signed in across visits.
-        </div>
-
         {error ? (
           <div className="rounded-[16px] border border-[rgba(179,69,69,0.18)] bg-[rgba(179,69,69,0.06)] px-4 py-2.5 text-[12px] text-[#8f2f2f]">
             {error}

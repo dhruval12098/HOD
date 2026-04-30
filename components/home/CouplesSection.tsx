@@ -90,7 +90,8 @@ export default function CouplesSection({
   const [subtitle] = useState(initialData?.subtitle || 'Real couples. Real proposals. Real diamonds. Every ring tells a story.');
   const [items] = useState<CoupleItem[]>(initialData?.items ?? []);
   const [active, setActive] = useState<CoupleItem | null>(null);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [cardsPerView, setCardsPerView] = useState(3);
+  const [activePage, setActivePage] = useState(0);
 
   useEffect(() => {
     if (!active) return;
@@ -115,14 +116,34 @@ export default function CouplesSection({
   }, [active]);
 
   useEffect(() => {
-    if (items.length <= 1) return;
+    const syncCardsPerView = () => {
+      if (window.innerWidth < 768) {
+        setCardsPerView(1);
+        return;
+      }
+      if (window.innerWidth < 1100) {
+        setCardsPerView(2);
+        return;
+      }
+      setCardsPerView(3);
+    };
 
-    const intervalId = window.setInterval(() => {
-      setActiveIndex((current) => (current + 1) % items.length);
-    }, 4200);
+    syncCardsPerView();
+    window.addEventListener('resize', syncCardsPerView);
+    return () => window.removeEventListener('resize', syncCardsPerView);
+  }, []);
 
-    return () => window.clearInterval(intervalId);
-  }, [items.length]);
+  const pages = useMemo(() => {
+    if (items.length === 0) return [] as CoupleItem[][];
+    return Array.from({ length: Math.ceil(items.length / cardsPerView) }, (_, pageIndex) =>
+      items.slice(pageIndex * cardsPerView, pageIndex * cardsPerView + cardsPerView)
+    );
+  }, [cardsPerView, items]);
+
+  useEffect(() => {
+    if (pages.length === 0) return;
+    setActivePage((current) => Math.min(current, pages.length - 1));
+  }, [pages.length]);
 
   const modal = useMemo(() => {
     if (typeof document === 'undefined' || !active) return null;
@@ -168,6 +189,8 @@ export default function CouplesSection({
     );
   }, [active]);
 
+  const showCarouselControls = pages.length > 1;
+
   return (
     <section className="relative px-13 py-30 overflow-hidden max-md:px-5 max-md:py-20" style={{ background: 'linear-gradient(180deg,#F5F7FC,#fff)' }}>
       <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg,transparent,rgba(10,22,40,0.3),transparent)' }} />
@@ -186,116 +209,87 @@ export default function CouplesSection({
           </p>
         </div>
 
-        <div className="hidden grid-cols-3 gap-8 max-[1100px]:grid-cols-2 md:grid">
-          {items.map((couple) => (
-            <button
-              key={couple.names}
-              onClick={() => setActive(couple)}
-              className="text-left group relative bg-white border border-black/8 overflow-hidden cursor-pointer transition-all duration-500 ease-[cubic-bezier(0.2,0.7,0.3,1)] hover:-translate-y-2 hover:shadow-[0_24px_60px_rgba(0,0,0,0.08)] hover:border-[rgba(10,22,40,0.2)]"
-            >
-              <div className="h-80 overflow-hidden relative bg-gradient-to-br from-[#f5f5f5] to-[#ececec]">
-                {couple.image_path ? <img src={buildImageUrl(couple.image_path)} alt={couple.names} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]" /> : <div className="w-full h-full flex items-center justify-center"><HeartIcon /></div>}
-                <div className="absolute bottom-0 left-0 right-0 h-1/2 pointer-events-none" style={{ background: 'linear-gradient(transparent,rgba(0,0,0,0.03))' }} />
-              </div>
-              <div className="relative px-7 pt-7.5 pb-8.5">
-                <div className="absolute top-6 right-6 font-serif text-[56px] font-medium text-[#0A1628] leading-[0.5]" style={{ opacity: 0.2 }} aria-hidden="true">&ldquo;</div>
-                <div className="font-serif text-2xl font-normal text-[#0A1628] tracking-[0.02em] mb-1.5">{couple.names}</div>
-                <div className="inline-flex items-center gap-2 text-[9px] font-normal tracking-[0.28em] uppercase text-[#0A1628] mb-4"><span className="w-1 h-1 rounded-full bg-[#0A1628]" />{couple.location}</div>
-                <StarRating />
-                <p className="text-[13px] font-light leading-[1.9] text-[#777] tracking-[0.02em] mb-5 line-clamp-4">{couple.story}</p>
-                <div className="flex items-center gap-3.5 px-4.5 py-4 bg-[#F5F7FC] border border-black/8 transition-colors duration-300 group-hover:border-[rgba(10,22,40,0.2)]">
-                  <div>
-                    <ProductNameLink name={couple.product_name} href={couple.product_link} />
-                    <div className="text-[9px] font-normal tracking-[0.2em] text-[#aaa] uppercase mt-0.5">{couple.product_detail}</div>
-                  </div>
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
-
-        <div className="md:hidden">
+        <div>
           <div className="overflow-hidden rounded-[28px]">
             <div
               className="flex transition-transform duration-700 ease-[cubic-bezier(0.2,0.7,0.3,1)]"
-              style={{ transform: `translateX(-${activeIndex * 100}%)` }}
+              style={{ transform: `translateX(-${activePage * 100}%)` }}
             >
-              {items.map((couple) => (
-                <div key={`${couple.names}-mobile`} className="min-w-full">
-                  <button
-                    onClick={() => setActive(couple)}
-                    className="group relative w-full overflow-hidden border border-black/8 bg-white text-left shadow-[0_20px_50px_rgba(0,0,0,0.06)]"
-                  >
-                    <div className="relative h-[310px] overflow-hidden bg-gradient-to-br from-[#f5f5f5] to-[#ececec] sm:h-[340px]">
-                      {couple.image_path ? (
-                        <img
-                          src={buildImageUrl(couple.image_path)}
-                          alt={couple.names}
-                          className="h-full w-full object-cover object-center scale-[1.1] transition-transform duration-700 group-hover:scale-[1.14] sm:scale-100 sm:group-hover:scale-[1.04]"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center">
-                          <HeartIcon />
+              {pages.map((pageItems, pageIndex) => (
+                <div key={`couples-page-${pageIndex}`} className="min-w-full">
+                  <div className={`grid gap-8 ${cardsPerView === 1 ? 'grid-cols-1' : cardsPerView === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                    {pageItems.map((couple) => (
+                      <button
+                        key={`${couple.names}-${pageIndex}`}
+                        onClick={() => setActive(couple)}
+                        className="group relative overflow-hidden border border-black/8 bg-white text-left"
+                      >
+                        <div className={`relative overflow-hidden bg-gradient-to-br from-[#f5f5f5] to-[#ececec] ${cardsPerView === 1 ? 'h-[310px] sm:h-[340px]' : 'h-80'}`}>
+                          {couple.image_path ? (
+                            <img
+                              src={buildImageUrl(couple.image_path)}
+                              alt={couple.names}
+                              className="h-full w-full object-cover object-center"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center">
+                              <HeartIcon />
+                            </div>
+                          )}
+                          <div
+                            className="pointer-events-none absolute bottom-0 left-0 right-0 h-1/2"
+                            style={{ background: 'linear-gradient(transparent,rgba(0,0,0,0.03))' }}
+                          />
                         </div>
-                      )}
-                      <div
-                        className="pointer-events-none absolute bottom-0 left-0 right-0 h-1/2"
-                        style={{ background: 'linear-gradient(transparent,rgba(0,0,0,0.03))' }}
-                      />
-                    </div>
 
-                    <div className="relative px-6 pb-7 pt-6">
-                      <div className="absolute right-5 top-5 font-serif text-[48px] font-medium leading-[0.5] text-[#0A1628] opacity-20" aria-hidden="true">
-                        &ldquo;
-                      </div>
-                      <div className="mb-1.5 font-serif text-[26px] font-normal tracking-[0.02em] text-[#0A1628]">{couple.names}</div>
-                      <div className="mb-4 inline-flex items-center gap-2 text-[9px] font-normal uppercase tracking-[0.28em] text-[#0A1628]">
-                        <span className="h-1 w-1 rounded-full bg-[#0A1628]" />
-                        {couple.location}
-                      </div>
-                      <StarRating />
-                      <p className="mb-5 line-clamp-4 text-[13px] font-light leading-[1.9] tracking-[0.02em] text-[#777]">{couple.story}</p>
-                      <div className="flex items-center gap-3.5 border border-black/8 bg-[#F5F7FC] px-4.5 py-4">
-                        <div>
-                          <ProductNameLink name={couple.product_name} href={couple.product_link} />
-                          <div className="mt-0.5 text-[9px] font-normal uppercase tracking-[0.2em] text-[#aaa]">{couple.product_detail}</div>
+                        <div className={`${cardsPerView === 1 ? 'relative px-6 pb-7 pt-6' : 'relative px-7 pt-7.5 pb-8.5'}`}>
+                          <div
+                            className={`${cardsPerView === 1 ? 'absolute right-5 top-5 text-[48px]' : 'absolute top-6 right-6 text-[56px]'} font-serif font-medium leading-[0.5] text-[#0A1628] opacity-20`}
+                            aria-hidden="true"
+                          >
+                            &ldquo;
+                          </div>
+                          <div className={`${cardsPerView === 1 ? 'mb-1.5 text-[26px]' : 'mb-1.5 text-2xl'} font-serif font-normal tracking-[0.02em] text-[#0A1628]`}>
+                            {couple.names}
+                          </div>
+                          <div className="mb-4 inline-flex items-center gap-2 text-[9px] font-normal uppercase tracking-[0.28em] text-[#0A1628]">
+                            <span className="h-1 w-1 rounded-full bg-[#0A1628]" />
+                            {couple.location}
+                          </div>
+                          <StarRating />
+                          <p className="mb-5 line-clamp-4 text-[13px] font-light leading-[1.9] tracking-[0.02em] text-[#777]">{couple.story}</p>
+                          <div className="flex items-center gap-3.5 border border-black/8 bg-[#F5F7FC] px-4.5 py-4">
+                            <div>
+                              <ProductNameLink name={couple.product_name} href={couple.product_link} />
+                              <div className="mt-0.5 text-[9px] font-normal uppercase tracking-[0.2em] text-[#aaa]">{couple.product_detail}</div>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  </button>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {items.length > 1 ? (
-            <div className="mt-5 flex items-center justify-center gap-2">
+          {showCarouselControls ? (
+            <div className="mt-5 flex items-center justify-center gap-3">
               <button
                 type="button"
-                onClick={() => setActiveIndex((current) => Math.max(0, current - 1))}
-                disabled={activeIndex === 0}
-                aria-label="Previous couple"
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-[rgba(10,22,40,0.12)] bg-white text-[#0A1628] shadow-[0_14px_30px_rgba(10,22,40,0.08)] disabled:opacity-35"
+                onClick={() => setActivePage((current) => Math.max(0, current - 1))}
+                disabled={activePage === 0}
+                aria-label="Previous couples"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-[rgba(10,22,40,0.12)] bg-white text-[#0A1628] disabled:opacity-35"
               >
                 <Chevron direction="left" />
               </button>
-              {items.map((item, index) => (
-                <button
-                  key={`${item.names}-${index}-dot`}
-                  type="button"
-                  onClick={() => setActiveIndex(index)}
-                  aria-label={`Show couple ${index + 1}`}
-                  className={`h-2 rounded-full transition-all duration-300 ${
-                    index === activeIndex ? 'w-8 bg-[#0A1628]' : 'w-2 bg-[#0A1628]/25'
-                  }`}
-                />
-              ))}
               <button
                 type="button"
-                onClick={() => setActiveIndex((current) => Math.min(items.length - 1, current + 1))}
-                disabled={activeIndex >= items.length - 1}
-                aria-label="Next couple"
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-[rgba(10,22,40,0.12)] bg-white text-[#0A1628] shadow-[0_14px_30px_rgba(10,22,40,0.08)] disabled:opacity-35"
+                onClick={() => setActivePage((current) => Math.min(pages.length - 1, current + 1))}
+                disabled={activePage >= pages.length - 1}
+                aria-label="Next couples"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-[rgba(10,22,40,0.12)] bg-white text-[#0A1628] disabled:opacity-35"
               >
                 <Chevron direction="right" />
               </button>

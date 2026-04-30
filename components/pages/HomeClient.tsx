@@ -9,8 +9,9 @@ import BlogGrid from '@/components/blog/BlogGrid';
 import { posts } from '@/lib/data/blog-posts';
 import type { BlogPost } from '@/lib/data/blog-posts';
 import DiamondInfo from '@/components/home/DiamondInfo';
+import DiscoverRings from '@/components/home/DiscoverRings';
+import DiscoverShapes from '@/components/home/DiscoverShapes';
 import Collection from '@/components/home/Collection';
-import MaterialStrip from '@/components/home/MaterialStrip';
 import HipHopShowcase from '@/components/home/HipHopShowcase';
 import CollectionShowcase from '@/components/home/CollectionShowcase';
 import Certifications from '@/components/home/Certifications';
@@ -28,11 +29,11 @@ import type {
   HomeCertificationSection,
   HomeCollectionItem,
   HomeCoupleItem,
+  HomeDiscoverItem,
   HomeDiamondInfoConfig,
   HomeDiamondInfoItem,
   HomeHipHopSection,
   HomeMarqueeData,
-  HomeMaterialItem,
   HomeTestimonialsData,
 } from '@/lib/home-data';
 
@@ -68,7 +69,8 @@ export default function HomeClient({
   heroContent,
   blogPosts = posts,
   collectionItems = [],
-  materialItems = [],
+  discoverShapesItems = [],
+  discoverRingsItems = [],
   hiphopSection,
   collectionPageConfig,
   certificationsSection,
@@ -84,7 +86,8 @@ export default function HomeClient({
   heroContent?: HeroContent
   blogPosts?: BlogPost[]
   collectionItems?: HomeCollectionItem[]
-  materialItems?: HomeMaterialItem[]
+  discoverShapesItems?: HomeDiscoverItem[]
+  discoverRingsItems?: HomeDiscoverItem[]
   hiphopSection: HomeHipHopSection
   collectionPageConfig: CollectionPageConfig
   certificationsSection: HomeCertificationSection
@@ -150,10 +153,13 @@ export default function HomeClient({
       <TestimonialMarquee initialData={marqueeData} />
       <Collection items={collectionItems} />
       <DiamondInfo items={diamondInfoItems} config={diamondInfoConfig} />
+      <DiscoverShapes initialItems={discoverShapesItems} />
+      
       {/* <MaterialStrip items={materialItems} /> */}
       <HipHopShowcase initialSection={hiphopSection} />
       <BestSellers initialSection={bestSellerSection} initialProducts={bestSellerProducts} />
       {collectionPageConfig.pageEnabled && collectionPageConfig.showHomeShowcase ? <CollectionShowcase config={collectionPageConfig} /> : null}
+      <DiscoverRings initialItems={discoverRingsItems} />
       <Certifications initialSection={certificationsSection} initialItems={certificationItems} />
       <Testimonials initialData={testimonialsData} />
       <CouplesSection initialData={couplesData} />

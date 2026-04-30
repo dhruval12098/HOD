@@ -19,6 +19,8 @@ type AppSelectProps = {
   contentClassName?: string;
   required?: boolean;
   validationLabel?: string;
+  contentSide?: "top" | "bottom";
+  avoidCollisions?: boolean;
 };
 
 export function Select({
@@ -31,6 +33,8 @@ export function Select({
   contentClassName = "",
   required = false,
   validationLabel = "selection",
+  contentSide = "bottom",
+  avoidCollisions = true,
 }: AppSelectProps) {
   return (
     <div className="relative">
@@ -69,14 +73,16 @@ export function Select({
         <SelectPrimitive.Portal>
           <SelectPrimitive.Content
             position="popper"
+            side={contentSide}
+            avoidCollisions={avoidCollisions}
             sideOffset={10}
             className={[
-              "z-[90] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-[18px]",
+              "z-[1500] min-w-[var(--radix-select-trigger-width)] max-h-[260px] overflow-y-auto rounded-[18px]",
               "border border-[rgba(10,22,40,0.1)] bg-white shadow-[0_26px_60px_rgba(10,22,40,0.16)]",
               contentClassName,
             ].join(" ")}
           >
-            <SelectPrimitive.Viewport className="max-h-[260px] p-2">
+            <SelectPrimitive.Viewport className="overscroll-contain p-2">
               {options.map((option) => (
                 <SelectPrimitive.Item
                   key={option.value}

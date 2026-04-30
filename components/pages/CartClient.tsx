@@ -83,6 +83,12 @@ export default function CartClient() {
                     <div>
                       <span className="block text-[8px] uppercase tracking-[0.24em] text-[#7F8898]">Price</span>
                       <span className="mt-1 block text-[18px] font-medium text-[#0A1628]">${(item.selection.resolvedPrice ?? product?.priceFrom ?? 0).toLocaleString('en-US')}</span>
+                      <span className="mt-2 block text-[8px] uppercase tracking-[0.24em] text-[#7F8898]">Love Letter</span>
+                      <span className="mt-1 block text-[12px] text-[#6A6A6A]">
+                        {item.selection.loveLetter?.wantsLetter
+                          ? `Included${item.selection.loveLetter.recipientName ? ` for ${item.selection.loveLetter.recipientName}` : ''}`
+                          : 'No letter'}
+                      </span>
                     </div>
                     <div className="flex items-center gap-3">
                       <button onClick={() => updateQuantity(item.key, item.quantity - 1)} className="h-9 w-9 rounded-full border border-[rgba(10,22,40,0.12)] text-[#0A1628] transition-colors hover:bg-[#0A1628] hover:text-white">-</button>

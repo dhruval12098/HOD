@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { HomeTestimonialsData } from '@/lib/home-data';
 
 type TestimonialItem = {
@@ -64,17 +64,57 @@ export default function Testimonials({ initialData }: { initialData?: HomeTestim
   const [eyebrow] = useState(initialData?.eyebrow || 'Client Stories');
   const [heading] = useState(initialData?.heading || 'What Our Clients Say');
   const [testimonials] = useState<TestimonialItem[]>(initialData?.items ?? []);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [cardsPerView, setCardsPerView] = useState(3);
+  const [viewportWidth, setViewportWidth] = useState(0);
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const gapPx = cardsPerView === 1 ? 16 : 30;
 
   useEffect(() => {
-    if (testimonials.length <= 1) return;
+    const syncCardsPerView = () => {
+      if (window.innerWidth < 768) {
+        setCardsPerView(1);
+        return;
+      }
+      if (window.innerWidth < 1100) {
+        setCardsPerView(2);
+        return;
+      }
+      setCardsPerView(3);
+    };
 
-    const intervalId = window.setInterval(() => {
-      setActiveIndex((current) => (current + 1) % testimonials.length);
-    }, 3800);
+    syncCardsPerView();
+    window.addEventListener('resize', syncCardsPerView);
+    return () => window.removeEventListener('resize', syncCardsPerView);
+  }, []);
 
-    return () => window.clearInterval(intervalId);
-  }, [testimonials.length]);
+  useEffect(() => {
+    if (!viewportRef.current) return;
+
+    const updateWidth = () => {
+      setViewportWidth(viewportRef.current?.clientWidth ?? 0);
+    };
+
+    updateWidth();
+
+    const observer = new ResizeObserver(() => updateWidth());
+    observer.observe(viewportRef.current);
+
+    window.addEventListener('resize', updateWidth);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', updateWidth);
+    };
+  }, []);
+
+  const marqueeItems = useMemo(() => {
+    if (testimonials.length === 0) return [];
+    return [...testimonials, ...testimonials];
+  }, [testimonials]);
+  const shouldAnimate = testimonials.length > cardsPerView;
+  const animationDuration = Math.max(26, testimonials.length * 6);
+  const cardPixelWidth = viewportWidth > 0
+    ? (viewportWidth - gapPx * (cardsPerView - 1)) / cardsPerView
+    : 0;
 
   return (
     <section className="py-[110px] px-[52px] max-w-[1400px] mx-auto max-lg:px-7 max-md:px-5 max-md:py-[70px]">
@@ -94,109 +134,80 @@ export default function Testimonials({ initialData }: { initialData?: HomeTestim
         </RevealDiv>
       </div>
 
-      <div className="mt-14 hidden grid-cols-3 gap-[30px] max-lg:grid-cols-2 md:grid">
-        {testimonials.map((t, i) => (
-          <RevealDiv key={`${t.author}-${i}`} delay={i * 100}>
-            <div className="bg-white p-10 border border-[rgba(10,22,40,0.10)] relative transition-all duration-500 ease-[cubic-bezier(0.2,0.7,0.3,1)] hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(10,22,40,0.12)] hover:border-[rgba(10,22,40,0.25)] h-full">
-              <div className="absolute top-[30px] right-[30px] font-serif text-[88px] font-medium text-[#0A1628] opacity-20 leading-[0.5] select-none pointer-events-none">
-                &ldquo;
-              </div>
-
-              <div className="flex gap-1 mb-[18px]">
-                {Array.from({ length: 5 }).map((_, si) => (
-                  <div
-                    key={si}
-                    className={`w-3 h-3 ${si < (t.rating ?? 5) ? 'bg-[#0A1628]' : 'bg-[#0A1628]/20'}`}
-                    style={{
-                      clipPath:
-                        'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
-                    }}
-                  />
-                ))}
-              </div>
-
-              <p className="text-[13px] font-light leading-[1.9] text-[#253246] mb-[26px] tracking-[0.02em]">
-                {t.quote}
-              </p>
-
-              <div className="font-serif text-[18px] font-normal text-[#0A1628] mb-[3px]">
-                {t.author}
-              </div>
-              <div className="text-[9px] font-normal tracking-[0.26em] text-[#6A6A6A] uppercase">
-                {t.origin}
-              </div>
-            </div>
-          </RevealDiv>
-        ))}
-      </div>
-
-      <div className="mt-12 md:hidden">
-        <div className="overflow-hidden rounded-[28px]">
+      <div className="mt-14">
+        <div ref={viewportRef} className="overflow-hidden rounded-[28px] px-1 py-3 md:px-2 md:py-4">
           <div
-            className="flex transition-transform duration-500 ease-[cubic-bezier(0.2,0.7,0.3,1)]"
-            style={{ transform: `translateX(-${activeIndex * 100}%)` }}
+            className={shouldAnimate ? 'testimonial-marquee-track flex' : 'flex'}
+            style={{
+              gap: `${gapPx}px`,
+              width: shouldAnimate ? 'max-content' : '100%',
+              animationDuration: `${animationDuration}s`,
+            }}
           >
-            {testimonials.map((t, i) => (
-              <div key={`${t.author}-${i}-mobile`} className="min-w-full">
-                <div className="relative h-full border border-[rgba(10,22,40,0.10)] bg-white p-7 shadow-[0_20px_50px_rgba(10,22,40,0.08)]">
-                  <div className="pointer-events-none absolute right-6 top-6 font-serif text-[72px] font-medium leading-[0.5] text-[#0A1628] opacity-15">
-                    &ldquo;
-                  </div>
+            {marqueeItems.map((t, i) => (
+              <div
+                key={`${t.author}-${i}-${shouldAnimate ? 'loop' : 'single'}`}
+                className="shrink-0"
+                style={{ width: cardPixelWidth > 0 ? `${cardPixelWidth}px` : undefined }}
+              >
+                <RevealDiv delay={i * 70} className="h-full">
+                  <div className="relative min-h-[270px] border border-[rgba(10,22,40,0.10)] bg-white p-7 md:min-h-[290px] md:p-10">
+                    <div className="pointer-events-none absolute right-6 top-6 font-serif text-[72px] font-medium leading-[0.5] text-[#0A1628] opacity-15 md:right-[30px] md:top-[30px] md:text-[88px] md:opacity-20">
+                      &ldquo;
+                    </div>
 
-                  <div className="mb-[18px] flex gap-1">
-                    {Array.from({ length: 5 }).map((_, si) => (
-                      <div
-                        key={si}
-                        className={`h-3 w-3 ${si < (t.rating ?? 5) ? 'bg-[#0A1628]' : 'bg-[#0A1628]/20'}`}
-                        style={{
-                          clipPath:
-                            'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
-                        }}
-                      />
-                    ))}
-                  </div>
+                    <div className="mb-[18px] flex gap-1">
+                      {Array.from({ length: 5 }).map((_, si) => (
+                        <div
+                          key={si}
+                          className={`h-3 w-3 ${si < (t.rating ?? 5) ? 'bg-[#0A1628]' : 'bg-[#0A1628]/20'}`}
+                          style={{
+                            clipPath:
+                              'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
+                          }}
+                        />
+                      ))}
+                    </div>
 
-                  <p className="mb-6 text-[13px] font-light leading-[1.9] tracking-[0.02em] text-[#253246]">
-                    {t.quote}
-                  </p>
+                    <p className="mb-6 text-[13px] font-light leading-[1.9] tracking-[0.02em] text-[#253246]">
+                      {t.quote}
+                    </p>
 
-                  <div className="font-serif text-[18px] font-normal text-[#0A1628]">{t.author}</div>
-                  <div className="mt-1 text-[9px] font-normal uppercase tracking-[0.26em] text-[#6A6A6A]">
-                    {t.origin}
+                    <div className="font-serif text-[18px] font-normal text-[#0A1628]">{t.author}</div>
+                    <div className="mt-1 text-[9px] font-normal uppercase tracking-[0.26em] text-[#6A6A6A]">
+                      {t.origin}
+                    </div>
                   </div>
-                </div>
+                </RevealDiv>
               </div>
             ))}
           </div>
         </div>
 
-        {testimonials.length > 1 ? (
+        {shouldAnimate ? (
           <div className="mt-5 flex items-center justify-center gap-2">
             <button
               type="button"
-              onClick={() => setActiveIndex((current) => Math.max(0, current - 1))}
-              disabled={activeIndex === 0}
-              aria-label="Previous testimonial"
+              onClick={() => {
+                const track = document.querySelector<HTMLElement>('.testimonial-marquee-track');
+                if (track) {
+                  track.style.animationPlayState = track.style.animationPlayState === 'paused' ? 'running' : 'paused';
+                }
+              }}
+              aria-label="Pause or resume testimonials"
               className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--theme-border-strong)] bg-white text-[var(--theme-ink)] disabled:opacity-35"
             >
               <Chevron direction="left" />
             </button>
-            {testimonials.map((item, index) => (
-              <button
-                key={`${item.author}-${index}-dot`}
-                type="button"
-                onClick={() => setActiveIndex(index)}
-                aria-label={`Show testimonial ${index + 1}`}
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  index === activeIndex ? 'w-8 bg-[#0A1628]' : 'w-2 bg-[#0A1628]/25'
-                }`}
-              />
-            ))}
             <button
               type="button"
-              onClick={() => setActiveIndex((current) => Math.min(testimonials.length - 1, current + 1))}
-              disabled={activeIndex >= testimonials.length - 1}
-              aria-label="Next testimonial"
+              onClick={() => {
+                const track = document.querySelector<HTMLElement>('.testimonial-marquee-track');
+                if (track) {
+                  track.style.animationDirection = track.style.animationDirection === 'reverse' ? 'normal' : 'reverse';
+                }
+              }}
+              aria-label="Reverse testimonial direction"
               className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--theme-border-strong)] bg-white text-[var(--theme-ink)] disabled:opacity-35"
             >
               <Chevron direction="right" />
@@ -204,6 +215,25 @@ export default function Testimonials({ initialData }: { initialData?: HomeTestim
           </div>
         ) : null}
       </div>
+
+      <style jsx>{`
+        .testimonial-marquee-track {
+          animation-name: testimonial-marquee-scroll;
+          animation-timing-function: linear;
+          animation-iteration-count: infinite;
+          animation-play-state: running;
+          animation-direction: normal;
+        }
+
+        @keyframes testimonial-marquee-scroll {
+          from {
+            transform: translateX(0);
+          }
+          to {
+            transform: translateX(calc(-50% - ${gapPx / 2}px));
+          }
+        }
+      `}</style>
     </section>
   );
 }

@@ -19,6 +19,23 @@ type SearchProduct = {
   isNew?: boolean
   gemColor?: string
   gemStyle?: string
+  metalsFull?: { id: string; name: string; slug: string; colorHex?: string | null }[]
+  metalMediaRows?: Array<{
+    metal_id: string
+    image_1_path?: string | null
+    image_2_path?: string | null
+    image_3_path?: string | null
+    image_4_path?: string | null
+    video_path?: string | null
+  }>
+  defaultMetalMedia?: {
+    metal_id: string
+    image_1_path?: string | null
+    image_2_path?: string | null
+    image_3_path?: string | null
+    image_4_path?: string | null
+    video_path?: string | null
+  } | null
 }
 
 export default function WishlistClient() {

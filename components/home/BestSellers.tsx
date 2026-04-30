@@ -17,6 +17,7 @@ type Product = {
   isNew?: boolean
   category?: string
   imageUrl?: string
+  metalsFull?: { id: string; name: string; slug: string; colorHex?: string | null }[]
 }
 
 type SectionData = {
@@ -104,6 +105,7 @@ export default function BestSellers({
       isNew: false,
       category: product.detailTemplate === 'hiphop' ? 'hiphop' : 'fine-jewellery',
       imageUrl: product.image,
+      metalsFull: product.metalsFull,
     }))
   )
   const [visibleCount, setVisibleCount] = useState(4)

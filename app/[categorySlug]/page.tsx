@@ -15,13 +15,6 @@ function slugifyValue(value: string) {
     .replace(/-+/g, '-')
 }
 
-type CategoryBrowseSection = {
-  id: string
-  title: string
-  iconUrl?: string | null
-  options: { label: string; href: string; type?: 'default' | 'swatch' | 'icon'; iconUrl?: string | null }[]
-}
-
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -41,11 +34,21 @@ function getPublicNavbarDataClient() {
 }
 
 function uniqueSectionOptions(
-  options: { label: string; href: string; type?: 'default' | 'swatch' | 'icon'; iconUrl?: string | null }[]
+  options: { label: string; href: string; type?: 'default' | 'swatch' | 'icon'; iconUrl?: string | null; colorHex?: string | null }[]
 ) {
   const seen = new Set<string>()
   return options.filter((option) => {
     const key = `${option.label}::${option.href}::${option.type ?? 'default'}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
+function uniqueBrowseSections<T extends { id: string; title: string; href?: string | null }>(sections: T[]) {
+  const seen = new Set<string>()
+  return sections.filter((section) => {
+    const key = `${section.title}::${section.href ?? ''}::${section.id}`
     if (seen.has(key)) return false
     seen.add(key)
     return true
@@ -174,8 +177,8 @@ export default async function CategoryCollectionPage({
       publicNavbarClient.from('navbar_section_source_items').select('*').eq('is_active', true).order('sort_order', { ascending: true }),
       publicNavbarClient.from('navbar_featured_cards').select('*'),
       publicNavbarClient.from('catalog_categories').select('id, name, slug, display_order, status').eq('status', 'active').order('display_order', { ascending: true }),
-      publicNavbarClient.from('catalog_subcategories').select('id, category_id, name, slug, display_order, status').eq('status', 'active').order('display_order', { ascending: true }),
-      publicNavbarClient.from('catalog_options').select('id, subcategory_id, name, slug, display_order, status').eq('status', 'active').order('display_order', { ascending: true }),
+      publicNavbarClient.from('catalog_subcategories').select('id, category_id, name, slug, icon_svg_path, display_order, status').eq('status', 'active').order('display_order', { ascending: true }),
+      publicNavbarClient.from('catalog_options').select('id, subcategory_id, name, slug, icon_svg_path, display_order, status').eq('status', 'active').order('display_order', { ascending: true }),
       publicNavbarClient.from('catalog_certificates').select('*').order('display_order', { ascending: true }),
       publicNavbarClient.from('catalog_metals').select('*').eq('status', 'active').order('display_order', { ascending: true }),
       publicNavbarClient.from('catalog_stone_shapes').select('*').eq('status', 'active').order('display_order', { ascending: true }),
@@ -213,7 +216,25 @@ export default async function CategoryCollectionPage({
     const matchedItem = renderItems.find((entry) => entry.linkedCategoryId === category.id || entry.slug === category.slug)
     const filterSections = (matchedItem?.mega?.sections ?? []).filter((section) => section.showAsFilter)
 
-    return filterSections.map((section) => {
+    const categoryTabs = filterSections
+      .flatMap((section) =>
+        (section.links ?? [])
+          .filter((link) => link.isCategoryLink)
+          .map((link) => ({
+            id: `${section.id}-category-link`,
+            title: link.label,
+            iconUrl: section.iconUrl ?? null,
+            href: resolveMasterFilterHref({
+              href: link.href,
+              currentCategorySlug: categorySlug,
+              categoryProducts,
+              allProducts: products,
+            }),
+            options: [],
+          }))
+      )
+
+    const contentSections = filterSections.map((section) => {
       const allOptions = uniqueSectionOptions([
         ...(section.metals ?? []).map((metal) => ({
           label: metal.label,
@@ -224,18 +245,22 @@ export default async function CategoryCollectionPage({
             allProducts: products,
           }),
           type: 'swatch' as const,
+          colorHex: metal.colorHex ?? null,
         })),
-        ...((section.links ?? []).map((link) => ({
-          label: link.label,
-          href: resolveMasterFilterHref({
-            href: link.href,
-            currentCategorySlug: categorySlug,
-            categoryProducts,
-            allProducts: products,
-          }),
-          type: link.type ?? 'default',
-          iconUrl: link.iconUrl ?? null,
-        }))),
+        ...((section.links ?? [])
+          .filter((link) => !link.isCategoryLink)
+          .map((link) => ({
+            label: link.label,
+            href: resolveMasterFilterHref({
+              href: link.href,
+              currentCategorySlug: categorySlug,
+              categoryProducts,
+              allProducts: products,
+            }),
+            type: link.type ?? 'default',
+            iconUrl: link.iconUrl ?? null,
+            colorHex: link.colorHex ?? null,
+          }))),
       ])
 
       return {
@@ -245,6 +270,8 @@ export default async function CategoryCollectionPage({
         options: allOptions,
       }
     })
+
+    return uniqueBrowseSections([...categoryTabs, ...contentSections])
   })()
 
   const certificateFilterValue =

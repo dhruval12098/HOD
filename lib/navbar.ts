@@ -73,6 +73,7 @@ export type PublicSubcategoryRow = {
   category_id: string
   name: string
   slug: string
+  icon_svg_path?: string | null
   display_order: number
   status: 'active' | 'hidden'
 }
@@ -82,6 +83,7 @@ export type PublicOptionRow = {
   subcategory_id: string
   name: string
   slug: string
+  icon_svg_path?: string | null
   display_order: number
   status: 'active' | 'hidden'
 }
@@ -90,6 +92,7 @@ export type PublicMetalRow = {
   id: string
   name: string
   slug: string
+  color_hex?: string | null
   display_order: number
   status: 'active' | 'hidden'
 }
@@ -116,6 +119,7 @@ export type PublicStyleRow = {
   id: string
   name: string
   slug: string
+  icon_svg_path?: string | null
   display_order: number
   status: 'active' | 'hidden'
 }
@@ -124,6 +128,8 @@ export type NavbarRenderLink = {
   label: string
   href: string
   iconUrl?: string | null
+  colorHex?: string | null
+  isCategoryLink?: boolean
   type?: 'default' | 'swatch' | 'icon'
 }
 
@@ -135,7 +141,7 @@ export type NavbarRenderSection = {
   showAsFilter?: boolean
   twoCol?: boolean
   links?: NavbarRenderLink[]
-  metals?: readonly ({ type: 'yellow' | 'rose' | 'white' | 'platinum' | 'default'; label: string; href: string })[]
+  metals?: readonly ({ type: 'yellow' | 'rose' | 'white' | 'platinum' | 'default'; label: string; href: string; colorHex?: string | null })[]
 }
 
 export type NavbarRenderItem = {
@@ -230,10 +236,15 @@ function buildCategoryListLinks(args: {
   return options
     .filter((entry) => entry.subcategory_id === subcategory.id && entry.status === 'active')
     .sort((left, right) => left.display_order - right.display_order)
-    .map((entry) => ({
-      label: entry.name,
-      href: `${itemHref}?subcategory=${subcategory.slug}&option=${entry.slug}`,
-    }))
+    .map((entry) => {
+      const iconUrl = resolveStoragePublicUrl(entry.icon_svg_path)
+      return {
+        label: entry.name,
+        href: `${itemHref}?subcategory=${subcategory.slug}&option=${entry.slug}`,
+        iconUrl,
+        type: iconUrl ? 'icon' : 'default',
+      }
+    })
 }
 
 function buildStoneShapeLinks(itemHref: string, stoneShapes: PublicStoneShapeRow[]): NavbarRenderLink[] {
@@ -267,10 +278,15 @@ function buildStyleLinks(itemHref: string, styles: PublicStyleRow[]) {
   return styles
     .filter((entry) => entry.status === 'active')
     .sort((left, right) => left.display_order - right.display_order)
-    .map((entry) => ({
-      label: entry.name,
-      href: buildCategoryFilterHref(itemHref, 'style', entry.slug || slugifyValue(entry.name)),
-    }))
+    .map((entry) => {
+      const iconUrl = resolveStoragePublicUrl(entry.icon_svg_path)
+      return {
+        label: entry.name,
+        href: buildCategoryFilterHref(itemHref, 'style', entry.slug || slugifyValue(entry.name)),
+        iconUrl,
+        type: iconUrl ? 'icon' : 'default',
+      }
+    })
 }
 
 function buildMetalLinks(itemHref: string, metals: PublicMetalRow[]) {
@@ -283,6 +299,7 @@ function buildMetalLinks(itemHref: string, metals: PublicMetalRow[]) {
       type: getMetalType(entry),
       label: entry.name,
       href: buildCategoryFilterHref(itemHref, 'metal', entry.slug || slugifyValue(entry.name)),
+      colorHex: entry.color_hex ?? null,
     })),
   }
 }
@@ -373,6 +390,7 @@ export function buildNavbarRenderItems(args: {
                 {
                   label: injectedCategory.name,
                   href: `/${injectedCategory.slug}`,
+                  isCategoryLink: true,
                 },
               ]
             : []
@@ -462,6 +480,7 @@ export function buildNavbarRenderItems(args: {
                 {
                   label: section.title,
                   href: `/${section.source_category_slug}`,
+                  isCategoryLink: true,
                 },
               ],
             } satisfies NavbarRenderSection
@@ -477,6 +496,8 @@ export function buildNavbarRenderItems(args: {
                   {
                     label: subcategory.name,
                     href: `${itemHref}?subcategory=${subcategory.slug}`,
+                    iconUrl: resolveStoragePublicUrl(subcategory.icon_svg_path),
+                    type: resolveStoragePublicUrl(subcategory.icon_svg_path) ? 'icon' : 'default',
                   },
                 ]
             : []

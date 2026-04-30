@@ -1,3 +1,5 @@
+import type { LoveLetterDraft } from '@/lib/love-letter'
+
 export type CheckoutDisplayItem = {
   name: string
   slug: string
@@ -17,6 +19,7 @@ export type CheckoutSummaryData = {
   items: CheckoutDisplayItem[]
   couponCode?: string
   couponDiscount?: number
+  loveLetter?: LoveLetterDraft | null
 }
 
 export type CheckoutProfileForm = {

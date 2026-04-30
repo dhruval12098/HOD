@@ -1,4 +1,5 @@
 import type { CheckoutSummaryData } from '@/components/checkout/types';
+import { getLoveLetterOccasionLabel } from '@/lib/love-letter';
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat('en-US', {
@@ -46,6 +47,23 @@ export default function CheckoutSummary({ summary }: { summary: CheckoutSummaryD
           </div>
         ))}
       </div>
+
+      {summary.loveLetter ? (
+        <div className="mt-5 rounded-[20px] border border-[#eaecf0] bg-[#fcfcfd] p-4">
+          <div className="text-[11px] font-medium uppercase tracking-[0.24em] text-[#98a2b3]">Love Letter</div>
+          {summary.loveLetter.wantsLetter ? (
+            <div className="mt-3 space-y-1 text-sm text-[#667085]">
+              <div className="font-medium text-[#101828]">
+                {summary.loveLetter.letterType === 'write_myself' ? 'Written by you' : 'Generated from your prompts'}
+              </div>
+              {summary.loveLetter.recipientName ? <div>For: {summary.loveLetter.recipientName}</div> : null}
+              {summary.loveLetter.occasionKey ? <div>Occasion: {getLoveLetterOccasionLabel(summary.loveLetter.occasionKey)}</div> : null}
+            </div>
+          ) : (
+            <div className="mt-3 text-sm text-[#667085]">No letter will be included with this order.</div>
+          )}
+        </div>
+      ) : null}
 
       <div className="mt-5 space-y-3 text-sm">
         <div className="flex items-center justify-between text-[#667085]">

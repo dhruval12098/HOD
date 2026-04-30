@@ -22,11 +22,15 @@ const METAL_COLORS: Record<string, string> = {
 
 const OVERLAY_NAVBAR_ROUTES = new Set(['/', '/hiphop', '/bespoke']);
 
-function MetalDot({ type }: { type: keyof typeof METAL_COLORS }) {
+function MetalDot({ type, colorHex }: { type: keyof typeof METAL_COLORS; colorHex?: string | null }) {
+  const background = typeof colorHex === 'string' && colorHex.trim().length > 0
+    ? colorHex.trim()
+    : METAL_COLORS[type];
+
   return (
     <span
       className="inline-block w-5 h-5 rounded-full border border-black/10 flex-shrink-0"
-      style={{ background: METAL_COLORS[type] }}
+      style={{ background }}
     />
   );
 }
@@ -50,7 +54,7 @@ function MegaSection({ section }: { section: NavbarRenderSection }) {
               className="flex items-center gap-[14px] py-[10px] text-[13.5px] font-light tracking-[0.02em] text-[#555] no-underline transition-all duration-250 hover:text-[#0A1628] hover:pl-1.5 group"
               style={{ fontFamily: "'Montserrat', sans-serif" }}
             >
-              <MetalDot type={metal.type as keyof typeof METAL_COLORS} />
+              <MetalDot type={metal.type as keyof typeof METAL_COLORS} colorHex={metal.colorHex} />
               {metal.label}
             </a>
           ))}
@@ -124,7 +128,7 @@ function getMobileSectionEntries(section: NavbarRenderSection) {
     section.metals?.map((metal) => ({
       label: metal.label,
       href: metal.href,
-      icon: <MetalDot type={metal.type as keyof typeof METAL_COLORS} />,
+      icon: <MetalDot type={metal.type as keyof typeof METAL_COLORS} colorHex={metal.colorHex} />,
     })) ?? [];
 
   const linkEntries =
@@ -562,7 +566,7 @@ export default function Navbar() {
             className="flex items-center no-underline cursor-pointer transition-opacity duration-300 hover:opacity-60"
           >
             <span
-              className={`${loaderWordmarkFont.className} text-[16px] sm:text-[20px] font-normal tracking-[0.24em] sm:tracking-[0.3em] uppercase`}
+              className={`${loaderWordmarkFont.className} text-[16px] sm:text-[20px] font-semibold tracking-[0.24em] sm:tracking-[0.3em] uppercase`}
               style={{ color: '#0A1628' }}
             >
               House of Diams
@@ -576,7 +580,7 @@ export default function Navbar() {
             className="relative z-[2] flex items-center no-underline transition-opacity duration-300 hover:opacity-70"
           >
             <span
-              className={`${loaderWordmarkFont.className} text-[16px] font-normal uppercase tracking-[0.27em]`}
+              className={`${loaderWordmarkFont.className} text-[16px] font-semibold uppercase tracking-[0.27em]`}
               style={{ color: desktopHeaderText }}
             >
               House of Diams

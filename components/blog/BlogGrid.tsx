@@ -55,13 +55,9 @@ export default function BlogGrid({ posts, onPostClick }: BlogGridProps) {
             className="flex gap-0 transition-transform duration-500 ease-[cubic-bezier(.4,0,.2,1)]"
             style={{ transform: `translateX(-${page * 100}%)` }}
           >
-            {mobileCards.map((post, index) => (
+            {mobileCards.map((post) => (
               <div key={post.id} className="min-w-full">
-                {index === 0 ? (
-                  <BlogCardBig post={post} onClick={() => onPostClick(post.id)} />
-                ) : (
-                  <BlogCardSmall post={post} onClick={() => onPostClick(post.id)} />
-                )}
+                <BlogCardSmall post={post} onClick={() => onPostClick(post.id)} />
               </div>
             ))}
           </div>
