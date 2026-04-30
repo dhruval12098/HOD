@@ -40,13 +40,22 @@ function BespokeInner({
   return (
     <div className="min-h-screen bg-(--bg) text-(--ink)">
       {pageLoading ? <Loader ready onComplete={handleLoaderComplete} /> : null}
-      <BespokeHero onEnquireClick={() => setEnquireOpen(true)} initialHero={hero} initialSlides={slides} />
-      <ProcessSteps initialItems={processItems} />
-      <BespokePortfolio initialCategories={portfolioCategories} initialItems={portfolioItems} />
-      <Manufacturing initialItems={manufacturingItems} />
-      <BespokeForm initialConfig={formConfig} onSuccess={() => showToast("Enquiry sent - we'll reply within 24 hours")} />
+      <div
+        aria-hidden={pageLoading}
+        style={{
+          opacity: pageLoading ? 0 : 1,
+          transition: 'opacity .2s ease',
+          pointerEvents: pageLoading ? 'none' : 'auto',
+        }}
+      >
+        <BespokeHero onEnquireClick={() => setEnquireOpen(true)} initialHero={hero} initialSlides={slides} />
+        <ProcessSteps initialItems={processItems} />
+        <BespokePortfolio initialCategories={portfolioCategories} initialItems={portfolioItems} />
+        <Manufacturing initialItems={manufacturingItems} />
+        <BespokeForm initialConfig={formConfig} onSuccess={() => showToast("Enquiry sent - we'll reply within 24 hours")} />
 
-      <EnquireModal open={enquireOpen} onClose={() => setEnquireOpen(false)} />
+        <EnquireModal open={enquireOpen} onClose={() => setEnquireOpen(false)} />
+      </div>
     </div>
   );
 }

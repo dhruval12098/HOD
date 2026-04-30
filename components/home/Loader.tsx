@@ -46,11 +46,6 @@ export default function Loader({
 
     const ctx = gsap.context(() => {
       gsap.set(wordRefs.current, { autoAlpha: 0, y: 44 });
-      gsap.fromTo(
-        overlayRef.current,
-        { autoAlpha: 0 },
-        { autoAlpha: 1, duration: 0.28, ease: 'power1.out' }
-      );
       gsap.to(wordRefs.current, {
         autoAlpha: 1,
         y: 0,

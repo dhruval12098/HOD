@@ -7,6 +7,8 @@ import Overlay from '@/components/hiphop/Overlay';
 import MobileDrawer from '@/components/hiphop/MobileDrawer';
 import Toast from '@/components/home/Toast';
 import EnquireModal from '@/components/home/EnquireModal';
+import Loader from '@/components/home/Loader';
+import { usePageLoaderCache } from '@/lib/hooks/usePageLoaderCache';
 import type { StorefrontProduct } from '@/lib/catalog-products';
 
 export default function HipHopClient({ products }: { products: StorefrontProduct[] }) {
@@ -15,6 +17,11 @@ export default function HipHopClient({ products }: { products: StorefrontProduct
   const [enquirePiece, setEnquirePiece] = useState('');
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
+  const { pageLoading, handleLoaderComplete } = usePageLoaderCache({
+    cacheKey: 'hod_hiphop_loader_v1',
+    ttlMs: 1000 * 60 * 60 * 12,
+    fallbackDelayMs: 260,
+  });
 
   const openEnquire = (piece: string) => {
     setEnquirePiece(piece);
@@ -29,40 +36,50 @@ export default function HipHopClient({ products }: { products: StorefrontProduct
 
   return (
     <div className="min-h-screen bg-(--bg) text-(--ink)">
-      <HipHopHero />
-
-      <div className="max-w-[1400px] mx-auto px-[52px] pt-[36px] max-[700px]:px-5">
-        {/* <button
-          type="button"
-          onClick={() => setDrawerOpen(true)}
-          className="inline-flex items-center gap-2.5 text-[10px] font-normal tracking-[0.28em] uppercase text-[#0A1628] border border-[#0A1628] px-8 py-[15px] bg-transparent cursor-pointer transition-all duration-400 hover:bg-[#0A1628] hover:text-[#FAFBFD]"
-          style={{ fontFamily: "'Montserrat', sans-serif" }}
-        >
-          Open Navigation
-        </button> */}
-      </div>
-
-      <HipHopCollection products={products} onEnquire={openEnquire} onWishlistToast={handleWishlistToast} />
-
-      <Overlay isVisible={drawerOpen} onClick={() => setDrawerOpen(false)} />
-      <MobileDrawer
-        isOpen={drawerOpen}
-        activeHref="/hiphop"
-        onEnquire={() => {
-          setDrawerOpen(false);
-          openEnquire('Hip Hop Enquiry');
+      {pageLoading ? <Loader ready onComplete={handleLoaderComplete} /> : null}
+      <div
+        aria-hidden={pageLoading}
+        style={{
+          opacity: pageLoading ? 0 : 1,
+          transition: 'opacity .2s ease',
+          pointerEvents: pageLoading ? 'none' : 'auto',
         }}
-      />
+      >
+        <HipHopHero />
 
-      {enquireOpen && (
-        <EnquireModal
-          open={enquireOpen}
-          piece={enquirePiece}
-          onClose={() => setEnquireOpen(false)}
+        <div className="max-w-[1400px] mx-auto px-[52px] pt-[36px] max-[700px]:px-5">
+          {/* <button
+            type="button"
+            onClick={() => setDrawerOpen(true)}
+            className="inline-flex items-center gap-2.5 text-[10px] font-normal tracking-[0.28em] uppercase text-[#0A1628] border border-[#0A1628] px-8 py-[15px] bg-transparent cursor-pointer transition-all duration-400 hover:bg-[#0A1628] hover:text-[#FAFBFD]"
+            style={{ fontFamily: "'Montserrat', sans-serif" }}
+          >
+            Open Navigation
+          </button> */}
+        </div>
+
+        <HipHopCollection products={products} onEnquire={openEnquire} onWishlistToast={handleWishlistToast} />
+
+        <Overlay isVisible={drawerOpen} onClick={() => setDrawerOpen(false)} />
+        <MobileDrawer
+          isOpen={drawerOpen}
+          activeHref="/hiphop"
+          onEnquire={() => {
+            setDrawerOpen(false);
+            openEnquire('Hip Hop Enquiry');
+          }}
         />
-      )}
 
-      <Toast message={toastMessage} visible={showToast} />
+        {enquireOpen && (
+          <EnquireModal
+            open={enquireOpen}
+            piece={enquirePiece}
+            onClose={() => setEnquireOpen(false)}
+          />
+        )}
+
+        <Toast message={toastMessage} visible={showToast} />
+      </div>
     </div>
   );
 }

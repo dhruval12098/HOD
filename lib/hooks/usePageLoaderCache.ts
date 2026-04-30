@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 
 type UsePageLoaderCacheOptions = {
   cacheKey: string
@@ -17,7 +17,7 @@ export function usePageLoaderCache({
 }: UsePageLoaderCacheOptions) {
   const [pageLoading, setPageLoading] = useState(true);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (typeof document === 'undefined') return;
     document.body.classList.toggle(bodyClassName, pageLoading);
     return () => {

@@ -821,7 +821,7 @@ export default function Navbar() {
           href="/"
           onClick={closeMenu}
           className="block py-4 text-[26px] font-normal tracking-[0.05em] border-b border-black/[0.06] no-underline text-[#0A1628] transition-all duration-300 hover:text-[#0A1628] hover:pl-2"
-          style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+          style={{ fontFamily: 'var(--display-title)' }}
         >
           Home
         </a>
@@ -837,7 +837,7 @@ export default function Navbar() {
                 href={item.href}
                 onClick={closeMenu}
                 className="block py-4 text-[26px] font-normal tracking-[0.05em] border-b border-black/[0.06] no-underline text-[#0A1628] transition-all duration-300 hover:text-[#0A1628] hover:pl-2"
-                style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+                style={{ fontFamily: 'var(--display-title)' }}
               >
                 {item.label}
               </a>
@@ -850,7 +850,7 @@ export default function Navbar() {
                 type="button"
                 onClick={() => setMobileOpenItem((current) => (current === item.label ? null : item.label))}
                 className="flex w-full items-center justify-between py-4 text-left text-[26px] font-normal tracking-[0.05em] text-[#0A1628]"
-                style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+                style={{ fontFamily: 'var(--display-title)' }}
               >
                 <span>{item.label}</span>
                 <svg
@@ -876,7 +876,7 @@ export default function Navbar() {
                       <div key={`${item.label}-${section.id}`} className="pb-3 last:pb-0">
                         <div
                           className="pb-2 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#6A6A6A]"
-                          style={{ fontFamily: "'Montserrat', sans-serif" }}
+                          style={{ fontFamily: 'var(--display-title)' }}
                         >
                           {section.title}
                         </div>
@@ -914,7 +914,7 @@ export default function Navbar() {
             href={item.href}
             onClick={closeMenu}
             className="block py-4 text-[26px] font-normal tracking-[0.05em] border-b border-black/[0.06] no-underline text-[#0A1628] transition-all duration-300 hover:text-[#0A1628] hover:pl-2"
-            style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+            style={{ fontFamily: 'var(--display-title)' }}
           >
             {item.label}
           </a>

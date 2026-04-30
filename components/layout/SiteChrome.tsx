@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { useEffect, useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
@@ -21,7 +21,7 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
     ? AUTH_ROUTES.has(pathname) || pathname.startsWith('/checkout')
     : false;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (pathname === '/') {
       setIsHomeLoading(true);
     } else {

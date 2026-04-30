@@ -194,7 +194,7 @@ export default function ProductGrid({ products, sourceProducts = products, initi
           }
         }
         @media (max-width: 768px) {
-          .shop-grid-layout { padding: 28px 16px 56px !important; }
+          .shop-grid-layout { padding: 28px 10px 56px !important; }
         }
         .product-grid {
           display: grid;

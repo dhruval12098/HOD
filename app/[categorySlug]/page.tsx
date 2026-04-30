@@ -216,24 +216,6 @@ export default async function CategoryCollectionPage({
     const matchedItem = renderItems.find((entry) => entry.linkedCategoryId === category.id || entry.slug === category.slug)
     const filterSections = (matchedItem?.mega?.sections ?? []).filter((section) => section.showAsFilter)
 
-    const categoryTabs = filterSections
-      .flatMap((section) =>
-        (section.links ?? [])
-          .filter((link) => link.isCategoryLink)
-          .map((link) => ({
-            id: `${section.id}-category-link`,
-            title: link.label,
-            iconUrl: section.iconUrl ?? null,
-            href: resolveMasterFilterHref({
-              href: link.href,
-              currentCategorySlug: categorySlug,
-              categoryProducts,
-              allProducts: products,
-            }),
-            options: [],
-          }))
-      )
-
     const contentSections = filterSections.map((section) => {
       const allOptions = uniqueSectionOptions([
         ...(section.metals ?? []).map((metal) => ({
@@ -271,7 +253,7 @@ export default async function CategoryCollectionPage({
       }
     })
 
-    return uniqueBrowseSections([...categoryTabs, ...contentSections])
+    return uniqueBrowseSections(contentSections)
   })()
 
   const certificateFilterValue =

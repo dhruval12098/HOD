@@ -19,6 +19,96 @@ import { getProductKey } from '@/lib/product-keys';
 import type { StorefrontProduct } from '@/lib/catalog-products';
 import { clearLoveLetterDraft, readLoveLetterDraft, type LoveLetterDraft } from '@/lib/love-letter';
 
+type RazorpayCheckoutSuccess = {
+  razorpay_payment_id: string
+  razorpay_order_id: string
+  razorpay_signature: string
+}
+
+type RazorpayCheckoutFailure = {
+  error?: {
+    code?: string
+    description?: string
+    source?: string
+    step?: string
+    reason?: string
+    metadata?: {
+      order_id?: string
+      payment_id?: string
+    }
+  }
+}
+
+type RazorpayCheckoutOptions = {
+  key: string
+  order_id: string
+  amount: number
+  currency: string
+  name: string
+  description?: string
+  prefill?: {
+    name?: string
+    email?: string
+    contact?: string
+  }
+  theme?: {
+    color?: string
+  }
+  modal?: {
+    ondismiss?: () => void
+  }
+  handler: (response: RazorpayCheckoutSuccess) => void | Promise<void>
+}
+
+declare global {
+  interface Window {
+    Razorpay?: new (options: RazorpayCheckoutOptions) => {
+      open: () => void
+      on: (event: 'payment.failed', handler: (response: RazorpayCheckoutFailure) => void) => void
+    }
+  }
+}
+
+type PendingPaymentSession = {
+  orderId: string
+  orderNumber: string
+  razorpay: {
+    keyId: string
+    orderId: string
+    amount: number
+    currency: string
+    name: string
+    description?: string
+    prefill?: {
+      name?: string
+      email?: string
+      contact?: string
+    }
+  }
+}
+
+function loadRazorpayCheckoutScript() {
+  if (typeof window === 'undefined') return Promise.resolve(false)
+  if (window.Razorpay) return Promise.resolve(true)
+
+  return new Promise<boolean>((resolve) => {
+    const existing = document.querySelector<HTMLScriptElement>('script[data-razorpay-checkout="true"]')
+    if (existing) {
+      existing.addEventListener('load', () => resolve(Boolean(window.Razorpay)), { once: true })
+      existing.addEventListener('error', () => resolve(false), { once: true })
+      return
+    }
+
+    const script = document.createElement('script')
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+    script.async = true
+    script.dataset.razorpayCheckout = 'true'
+    script.onload = () => resolve(Boolean(window.Razorpay))
+    script.onerror = () => resolve(false)
+    document.body.appendChild(script)
+  })
+}
+
 function parseCurrency(value: string | null) {
   const parsed = Number(value ?? '0');
   return Number.isFinite(parsed) ? parsed : 0;
@@ -53,7 +143,8 @@ export default function CheckoutPageClient() {
   const [sessionLoading, setSessionLoading] = useState(true);
   const [sessionReady, setSessionReady] = useState(false);
   const [customerForm, setCustomerForm] = useState<CheckoutProfileForm>(EMPTY_PROFILE_FORM);
-  const [placingOrder, setPlacingOrder] = useState(false);
+  const [processingPayment, setProcessingPayment] = useState(false);
+  const [razorpayReady, setRazorpayReady] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof CheckoutProfileForm, string>>>({});
   const [taxInfo, setTaxInfo] = useState<{ gstLabel: string; gstPercentage: number } | null>(null);
@@ -67,6 +158,7 @@ export default function CheckoutPageClient() {
     discountAmount: number
   } | null>(null);
   const [couponLoading, setCouponLoading] = useState(false);
+  const [pendingPaymentSession, setPendingPaymentSession] = useState<PendingPaymentSession | null>(null)
   const [cartProducts, setCartProducts] = useState<Array<Pick<StorefrontProduct, 'id' | 'dbId' | 'slug' | 'name' | 'imageUrl' | 'priceFrom'>>>([]);
   const [taxMap, setTaxMap] = useState<Record<string, { gstLabel: string; gstPercentage: number }>>({});
   const cartMode = searchParams.get('mode') === 'cart';
@@ -168,6 +260,39 @@ export default function CheckoutPageClient() {
     () => checkoutItems.reduce((sum, item) => sum + (item.priceFrom * item.quantity), 0),
     [checkoutItems]
   );
+  const gstTotal = useMemo(
+    () => checkoutItems.reduce((sum, item) => sum + (item.priceFrom * item.quantity * ((item.gstPercentage ?? 0) / 100)), 0),
+    [checkoutItems]
+  )
+  const couponDiscount = appliedCoupon?.discountAmount ?? 0
+  const totalPayable = subtotal + gstTotal - couponDiscount
+
+  const paymentSessionSignature = useMemo(
+    () =>
+      JSON.stringify({
+        items: checkoutItems,
+        customerForm,
+        couponId: appliedCoupon?.id ?? null,
+        couponAmount: appliedCoupon?.discountAmount ?? 0,
+        loveLetter: loveLetterDraft,
+      }),
+    [appliedCoupon?.discountAmount, appliedCoupon?.id, checkoutItems, customerForm, loveLetterDraft]
+  )
+
+  useEffect(() => {
+    let ignore = false
+    void (async () => {
+      const ready = await loadRazorpayCheckoutScript()
+      if (!ignore) setRazorpayReady(ready)
+    })()
+    return () => {
+      ignore = true
+    }
+  }, [])
+
+  useEffect(() => {
+    setPendingPaymentSession(null)
+  }, [paymentSessionSignature])
 
   useEffect(() => {
     if (cartMode || !singleItem.slug) return;
@@ -341,58 +466,134 @@ export default function CheckoutPageClient() {
     setCurrentStep((step) => Math.min(CHECKOUT_STEPS.length - 1, step + 1))
   }
 
-  const handlePlaceOrder = async () => {
+  const handlePayNow = async () => {
     const allErrors = validateCheckoutForm()
     setFieldErrors(allErrors)
     if (Object.keys(allErrors).length > 0) {
-      setErrorMessage('Please complete all required customer and shipping details before placing the order.')
+      setErrorMessage('Please complete all required customer and shipping details before continuing to payment.')
       return
     }
 
-    setPlacingOrder(true);
+    if (!razorpayReady || !window.Razorpay) {
+      setErrorMessage('Razorpay checkout is still loading. Please try again in a moment.')
+      return
+    }
+
+    setProcessingPayment(true);
     setErrorMessage('');
+    let popupOpened = false
     try {
       const { data } = await supabase.auth.getSession();
       const accessToken = data.session?.access_token;
       if (!accessToken) {
         setErrorMessage('Please sign in to continue checkout.');
+        setProcessingPayment(false)
         return;
       }
 
-      const response = await fetch('/api/checkout/place', {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          authorization: `Bearer ${accessToken}`,
+      const paymentSession =
+        pendingPaymentSession ||
+        (await (async () => {
+          const response = await fetch('/api/checkout/place', {
+            method: 'POST',
+            headers: {
+              'content-type': 'application/json',
+              authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({
+              item: cartMode ? null : singleItem,
+              items: cartMode ? checkoutItems : undefined,
+              customer: customerForm,
+              loveLetter: loveLetterDraft,
+              coupon: appliedCoupon
+                ? {
+                    id: appliedCoupon.id,
+                    code: appliedCoupon.code,
+                    discountAmount: appliedCoupon.discountAmount,
+                  }
+                : null,
+            }),
+          })
+          const payload = await response.json().catch(() => null)
+
+          if (!response.ok) {
+            setErrorMessage(payload?.error ?? 'Unable to start payment.')
+            return null
+          }
+
+          const nextSession = payload as PendingPaymentSession
+          setPendingPaymentSession(nextSession)
+          return nextSession
+        })())
+
+      if (!paymentSession) {
+        setProcessingPayment(false)
+        return
+      }
+
+      const razorpayInstance = new window.Razorpay({
+        key: paymentSession.razorpay.keyId,
+        order_id: paymentSession.razorpay.orderId,
+        amount: paymentSession.razorpay.amount,
+        currency: paymentSession.razorpay.currency,
+        name: paymentSession.razorpay.name,
+        description: paymentSession.razorpay.description,
+        prefill: paymentSession.razorpay.prefill,
+        theme: {
+          color: '#101828',
         },
-        body: JSON.stringify({
-          item: cartMode ? null : singleItem,
-          items: cartMode ? checkoutItems : undefined,
-          customer: customerForm,
-          loveLetter: loveLetterDraft,
-          coupon: appliedCoupon
-            ? {
-                id: appliedCoupon.id,
-                code: appliedCoupon.code,
-                discountAmount: appliedCoupon.discountAmount,
-              }
-            : null,
-        }),
-      });
-      const payload = await response.json().catch(() => null);
+        modal: {
+          ondismiss: () => {
+            setProcessingPayment(false)
+            setErrorMessage('Payment popup closed. Your order is still pending payment and you can try again.')
+          },
+        },
+        handler: async (paymentResponse) => {
+          const verifyResponse = await fetch('/api/payments/verify', {
+            method: 'POST',
+            headers: {
+              'content-type': 'application/json',
+              authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({
+              orderId: paymentSession.orderId,
+              orderNumber: paymentSession.orderNumber,
+              razorpay_order_id: paymentResponse.razorpay_order_id,
+              razorpay_payment_id: paymentResponse.razorpay_payment_id,
+              razorpay_signature: paymentResponse.razorpay_signature,
+            }),
+          })
 
-      if (!response.ok) {
-        setErrorMessage(payload?.error ?? 'Unable to place order.');
-        return;
-      }
+          const verifyPayload = await verifyResponse.json().catch(() => null)
+          if (!verifyResponse.ok) {
+            setProcessingPayment(false)
+            setErrorMessage(verifyPayload?.error ?? 'Payment verification failed. Please contact support if the amount was deducted.')
+            return
+          }
 
-      if (cartMode) {
-        clearCart();
-      }
-      clearLoveLetterDraft();
-      router.push(`/checkout/success?order=${encodeURIComponent(payload.orderNumber)}`);
+          if (cartMode) {
+            clearCart()
+          }
+          setPendingPaymentSession(null)
+          clearLoveLetterDraft()
+          router.push(`/checkout/success?order=${encodeURIComponent(verifyPayload.orderNumber || paymentSession.orderNumber)}`)
+        },
+      })
+
+      razorpayInstance.on('payment.failed', (failure) => {
+        setProcessingPayment(false)
+        setErrorMessage(failure.error?.description || 'Payment failed. You can try again from this checkout.')
+      })
+
+      popupOpened = true
+      razorpayInstance.open()
+    } catch (error) {
+      console.error('Unable to start Razorpay checkout:', error)
+      setErrorMessage('Unable to open Razorpay checkout right now. Please try again.')
     } finally {
-      setPlacingOrder(false);
+      if (!popupOpened) {
+        setProcessingPayment(false)
+      }
     }
   };
 
@@ -532,8 +733,8 @@ export default function CheckoutPageClient() {
                 {currentStep === 0 ? <CheckoutCustomerStep form={customerForm} onChange={updateCustomerForm} errors={fieldErrors} /> : null}
                {currentStep === 1 ? <CheckoutShippingStep form={customerForm} onChange={updateCustomerForm} errors={fieldErrors} /> : null}
                 {currentStep === 2 ? <CheckoutDeliveryStep /> : null}
-                {currentStep === 3 ? <CheckoutPaymentStep /> : null}
-                {currentStep === 4 ? <CheckoutReviewStep onPlaceOrder={handlePlaceOrder} isPlacingOrder={placingOrder} continueHref={continueHref} loveLetter={loveLetterDraft} /> : null}
+                {currentStep === 3 ? <CheckoutPaymentStep totalAmount={totalPayable} /> : null}
+                {currentStep === 4 ? <CheckoutReviewStep onPayNow={handlePayNow} isProcessingPayment={processingPayment} continueHref={continueHref} loveLetter={loveLetterDraft} totalAmount={totalPayable} /> : null}
             </div>
 
             {!isLastStep ? (

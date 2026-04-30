@@ -4,20 +4,22 @@ import { getCollectionHref } from '@/lib/browse-context';
 import { getLoveLetterOccasionLabel, type LoveLetterDraft } from '@/lib/love-letter';
 
 export default function CheckoutReviewStep({
-  onPlaceOrder,
-  isPlacingOrder,
+  onPayNow,
+  isProcessingPayment,
   continueHref,
   loveLetter,
+  totalAmount,
 }: {
-  onPlaceOrder: () => void
-  isPlacingOrder: boolean
+  onPayNow: () => void
+  isProcessingPayment: boolean
   continueHref?: string
   loveLetter?: LoveLetterDraft | null
+  totalAmount: number
 }) {
   return (
     <CheckoutSectionCard
       title="Review"
-      description="Review your order and create a pending order record in the admin panel."
+      description="Review your order, then continue into secure Razorpay payment."
     >
       {loveLetter ? (
         <div className="mb-4 rounded-[18px] border border-[#eadfbc] bg-[#fffaf0] p-4">
@@ -38,16 +40,19 @@ export default function CheckoutReviewStep({
       <div className="rounded-[18px] border border-[#eaecf0] bg-[#fcfcfd] p-4">
         <div className="text-sm font-medium text-[#344054]">Ready to place your order</div>
         <p className="mt-2 text-sm leading-6 text-[#667085]">
-          Payment is not integrated yet. This step will create a pending order so it shows up in admin orders.
+          We will create your pending order first, then open Razorpay so the payment can be completed securely.
         </p>
+        <div className="mt-3 text-sm font-medium text-[#101828]">
+          Amount to pay now: ₹{Math.round(totalAmount).toLocaleString('en-IN')}
+        </div>
         <div className="mt-4 flex flex-col gap-3 sm:flex-row">
           <button
             type="button"
-            onClick={onPlaceOrder}
-            disabled={isPlacingOrder}
+            onClick={onPayNow}
+            disabled={isProcessingPayment}
             className="inline-flex h-11 items-center justify-center rounded-full bg-[#101828] px-6 text-sm font-medium text-white transition hover:bg-[#1d2939]"
           >
-            {isPlacingOrder ? 'Placing Order...' : 'Place Order'}
+            {isProcessingPayment ? 'Starting Payment...' : 'Pay with Razorpay'}
           </button>
           <Link
             href={continueHref || getCollectionHref()}

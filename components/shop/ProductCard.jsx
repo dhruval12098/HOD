@@ -191,12 +191,12 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
           gap: 4px !important;
         }
         .shop-product-card-title {
-          font-size: 13px !important;
-          line-height: 1.2 !important;
-          letter-spacing: 0 !important;
+          font-size: 14px !important;
+          line-height: 1.12 !important;
+          letter-spacing: .01em !important;
         }
         .shop-product-card-title-wrap {
-          min-height: 34px !important;
+          min-height: 36px !important;
         }
         .shop-product-card-swatches {
           gap: 8px !important;
@@ -206,11 +206,6 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
         }
         .shop-product-card-price {
           font-size: 14px !important;
-        }
-        .shop-product-card-enquire {
-          padding: 6px 10px !important;
-          font-size: 7px !important;
-          letter-spacing: .18em !important;
         }
       }
     `}</style>
@@ -393,12 +388,12 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
           <div
             className="shop-product-card-title"
             style={{
-              fontFamily: "inherit",
-              fontSize: "15px",
-              fontWeight: 600,
+              fontFamily: "var(--display-title)",
+              fontSize: "18px",
+              fontWeight: 400,
               color: namColor,
-              letterSpacing: "0",
-              lineHeight: 1.25,
+              letterSpacing: ".01em",
+              lineHeight: 1.05,
               display: "-webkit-box",
               WebkitLineClamp: 2,
               WebkitBoxOrient: "vertical",
@@ -447,7 +442,7 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
         </div>
         <div
           className="shop-product-card-bottom"
-          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto", paddingTop: "8px" }}
+          style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", marginTop: "auto", paddingTop: "8px" }}
         >
           <div>
             <span style={{ fontSize: "8px", fontWeight: 400, letterSpacing: ".24em", color: "#7F8898", textTransform: "uppercase", display: "block", marginBottom: "2px", fontFamily: "var(--numeric)" }}>From</span>
@@ -455,39 +450,6 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
               ${formatUsdNumber(product.priceFrom)}
             </span>
           </div>
-          <button
-            className="shop-product-card-enquire"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onEnquire(product.name);
-            }}
-            style={{
-              fontSize: "8px",
-              fontWeight: 400,
-              letterSpacing: ".24em",
-              padding: "7px 14px",
-              border: isDark ? "1px solid rgba(255,255,255,0.24)" : "1px solid rgba(10,22,40,0.10)",
-              background: "transparent",
-              color: isDark ? "#FFFFFF" : "#253246",
-              cursor: "pointer",
-              textTransform: "uppercase",
-              transition: "all .3s",
-              fontFamily: "inherit",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = isDark ? "#FFFFFF" : "#0A1628";
-              e.currentTarget.style.color = isDark ? "#0A1628" : "#fff";
-              e.currentTarget.style.borderColor = isDark ? "#FFFFFF" : "#0A1628";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "transparent";
-              e.currentTarget.style.color = isDark ? "#FFFFFF" : "#253246";
-              e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.24)" : "rgba(10,22,40,0.10)";
-            }}
-          >
-            Enquire
-          </button>
         </div>
       </div>
     </a>
