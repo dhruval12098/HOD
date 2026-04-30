@@ -264,7 +264,7 @@ function filterBySelectedIds<T extends { id: string }>(items: T[], selectedIds: 
   return items.filter((entry) => selectedIds.has(entry.id))
 }
 
-function buildCertificateLinks(itemHref: string, certificates: PublicCertificateRow[]) {
+function buildCertificateLinks(itemHref: string, certificates: PublicCertificateRow[]): NavbarRenderLink[] {
   return certificates
     .filter((entry) => !entry.status || entry.status === 'active')
     .sort((left, right) => (left.display_order ?? 0) - (right.display_order ?? 0))
@@ -274,7 +274,7 @@ function buildCertificateLinks(itemHref: string, certificates: PublicCertificate
     }))
 }
 
-function buildStyleLinks(itemHref: string, styles: PublicStyleRow[]) {
+function buildStyleLinks(itemHref: string, styles: PublicStyleRow[]): NavbarRenderLink[] {
   return styles
     .filter((entry) => entry.status === 'active')
     .sort((left, right) => left.display_order - right.display_order)
@@ -385,7 +385,7 @@ export function buildNavbarRenderItems(args: {
             section.enable_category_link && section.linked_category_id
               ? categoriesById.get(section.linked_category_id)
               : null
-          const categoryLink = injectedCategory
+          const categoryLink: NavbarRenderLink[] = injectedCategory
             ? [
                 {
                   label: injectedCategory.name,
@@ -498,7 +498,7 @@ export function buildNavbarRenderItems(args: {
                     href: `${itemHref}?subcategory=${subcategory.slug}`,
                     iconUrl: resolveStoragePublicUrl(subcategory.icon_svg_path),
                     type: resolveStoragePublicUrl(subcategory.icon_svg_path) ? 'icon' : 'default',
-                  },
+                  } satisfies NavbarRenderLink,
                 ]
             : []
 

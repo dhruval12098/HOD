@@ -753,12 +753,12 @@ const loadHomePageData = unstable_cache(
           materialValueSelectionsByProduct.set(typedSelection.product_id, existing);
         });
         bestSellerProducts = productIds
-          .map((id) => productMap.get(id))
-          .filter(Boolean)
+          .map((id) => productMap.get(id) ?? null)
+          .filter((product): product is BestSellerProductRow => Boolean(product))
           .map((product, index) => {
             const selectedMetals = (selectionsByProduct.get(product.id) ?? [])
               .map((selection) => metalsById.get(selection.metal_id))
-              .filter(Boolean)
+              .filter((metal): metal is BestSellerMetalRow => Boolean(metal))
               .map((metal) => ({
                 id: metal.id,
                 name: metal.name,

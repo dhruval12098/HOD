@@ -13,6 +13,8 @@ import { formatUsdNumber } from '@/lib/money';
  * @param {string}   props.checkoutHref - Static checkout route for standard products
  * @param {function} props.onAddToCart  - Adds the configured product to cart
  * @param {function} props.onCheckout   - Opens the pre-checkout love letter flow
+ * @param {'both'|'checkout_only'|'enquire_only'} [props.ctaMode] - Controls which CTAs are visible
+ * @param {string|null} [props.ctaLabel] - Optional CTA label override from material rules
  */
 export default function ProductCTAs({ product, ctaMode = 'both', ctaLabel = null, onEnquire, inWishlist, onWishlist, checkoutHref, onAddToCart, onCheckout }) {
   const waText = encodeURIComponent(
