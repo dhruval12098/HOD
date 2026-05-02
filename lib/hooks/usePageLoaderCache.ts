@@ -39,8 +39,7 @@ export function usePageLoaderCache({
       }
     } catch {}
 
-    const timer = window.setTimeout(() => setPageLoading(false), fallbackDelayMs);
-    return () => window.clearTimeout(timer);
+    return undefined;
   }, [cacheKey, fallbackDelayMs]);
 
   const handleLoaderComplete = () => {

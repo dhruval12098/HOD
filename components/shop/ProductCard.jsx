@@ -446,7 +446,7 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
         >
           <div>
             <span style={{ fontSize: "8px", fontWeight: 400, letterSpacing: ".24em", color: "#7F8898", textTransform: "uppercase", display: "block", marginBottom: "2px", fontFamily: "var(--numeric)" }}>From</span>
-            <span className="shop-product-card-price" style={{ fontFamily: "var(--numeric)", fontSize: "18px", fontWeight: 500, color: isDark ? "#FFFFFF" : "#0A1628", letterSpacing: ".02em" }}>
+            <span className="shop-product-card-price" style={{ fontFamily: "var(--numeric)", fontSize: "14px", fontWeight: 700, color: isDark ? "#FFFFFF" : "#0A1628", letterSpacing: ".02em" }}>
               ${formatUsdNumber(product.priceFrom)}
             </span>
           </div>

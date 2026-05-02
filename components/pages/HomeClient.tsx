@@ -25,8 +25,6 @@ import { useHomeLoader } from '@/components/layout/HomeLoaderContext';
 import type {
   HomeBestSellerProduct,
   HomeBestSellerSection,
-  HomeCertificationItem,
-  HomeCertificationSection,
   HomeCollectionItem,
   HomeCoupleItem,
   HomeDiscoverItem,
@@ -73,8 +71,6 @@ export default function HomeClient({
   discoverRingsItems = [],
   hiphopSection,
   collectionPageConfig,
-  certificationsSection,
-  certificationItems = [],
   couplesData,
   diamondInfoItems = [],
   diamondInfoConfig,
@@ -90,8 +86,6 @@ export default function HomeClient({
   discoverRingsItems?: HomeDiscoverItem[]
   hiphopSection: HomeHipHopSection
   collectionPageConfig: CollectionPageConfig
-  certificationsSection: HomeCertificationSection
-  certificationItems?: HomeCertificationItem[]
   couplesData: { eyebrow: string; heading: string; subtitle: string; items: HomeCoupleItem[] }
   diamondInfoItems?: HomeDiamondInfoItem[]
   diamondInfoConfig?: HomeDiamondInfoConfig
@@ -160,7 +154,7 @@ export default function HomeClient({
       <BestSellers initialSection={bestSellerSection} initialProducts={bestSellerProducts} />
       {collectionPageConfig.pageEnabled && collectionPageConfig.showHomeShowcase ? <CollectionShowcase config={collectionPageConfig} /> : null}
       <DiscoverRings initialItems={discoverRingsItems} />
-      <Certifications initialSection={certificationsSection} initialItems={certificationItems} />
+      <Certifications />
       <Testimonials initialData={testimonialsData} />
       <CouplesSection initialData={couplesData} />
 

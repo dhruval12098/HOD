@@ -1,3 +1,5 @@
+import type { HTMLInputTypeAttribute, InputHTMLAttributes, ReactNode } from 'react'
+
 export default function CheckoutField({
   label,
   value,
@@ -6,14 +8,20 @@ export default function CheckoutField({
   placeholder,
   required = false,
   error,
+  onBlur,
+  inputMode,
+  trailing,
 }: {
   label: string
   value: string
   onChange?: (value: string) => void
-  type?: string
+  type?: HTMLInputTypeAttribute
   placeholder?: string
   required?: boolean
   error?: string
+  onBlur?: () => void
+  inputMode?: InputHTMLAttributes<HTMLInputElement>['inputMode']
+  trailing?: ReactNode
 }) {
   return (
     <div className={`rounded-[18px] border bg-[#fcfcfd] px-4 py-3 ${error ? 'border-red-300' : 'border-[#eaecf0]'}`}>
@@ -22,13 +30,18 @@ export default function CheckoutField({
         {required ? <span className="ml-1 text-red-500">*</span> : null}
       </div>
       {onChange ? (
-        <input
-          type={type}
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          placeholder={placeholder}
-          className="mt-2 h-10 w-full border-0 bg-transparent p-0 text-sm font-medium text-[#101828] outline-none placeholder:text-[#98a2b3]"
-        />
+        <div className="mt-2 flex items-center gap-3">
+          <input
+            type={type}
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            onBlur={onBlur}
+            inputMode={inputMode}
+            placeholder={placeholder}
+            className="h-10 w-full border-0 bg-transparent p-0 text-sm font-medium text-[#101828] outline-none placeholder:text-[#98a2b3]"
+          />
+          {trailing ? <div className="flex h-5 w-5 flex-none items-center justify-center text-[#98a2b3]">{trailing}</div> : null}
+        </div>
       ) : (
         <div className="mt-2 text-sm font-medium text-[#101828]">{value}</div>
       )}

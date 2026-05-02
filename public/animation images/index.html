@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Page</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body>
+    <div class="bg-black w-full">
+      <div class="parent relative top-0 left-0 w-full h-[700vh]">
+        <div class="w-full sticky top-0 left-0 h-screen">
+          <canvas class="w-full h-screen" id="frame"></canvas>
+        </div>
+      </div>
+    </div>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"
+      integrity="sha512-NcZdtrT77bJr4STcmsGAESr06BYGE8woZdSdEgqnpyqac7sugNO+Tr4bGwGF3MsnEkGKhU2KL2xh6Ec+BqsaHA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script>
+      const frames = {
+        currentIndex: 1,
+        maxIndex: 1086,
+      };
+
+      let  imagesloaded = 0;
+      const images =[];
+      
+
+    function loadImage(i){
+      if(i>=0 && i<=frames.maxIndex){
+        const img = images[index]
+      }
+    }
+
+      function preloadImages() {
+        for (var i = 1; i <= frames.maxIndex; i++) {
+          const imageurl = `./frames/frame_${(i.toString().padStart(4, "0"))}.jpeg`;
+          const img = new Image();
+          img.src = imageurl
+          img.onload = () => {
+            imagesloaded++;
+            if(imagesloaded === frames.maxIndex){
+              console.log('all images loaded')
+              loadImage(frames.currentIndex)
+            }
+          };
+          images.push(img);
+        }
+      }
+      preloadImages();
+    </script>
+  </body>
+</html>

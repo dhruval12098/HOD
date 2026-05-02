@@ -7,11 +7,13 @@ export default function CheckoutShippingStep({
   onChange,
   errors = {},
   postalLookup,
+  onPostalBlur,
 }: {
   form: CheckoutProfileForm
   onChange: (field: keyof CheckoutProfileForm, value: string) => void
   errors?: Partial<Record<keyof CheckoutProfileForm, string>>
   postalLookup?: CheckoutPostalLookupState | null
+  onPostalBlur?: () => void
 }) {
   return (
     <CheckoutSectionCard
@@ -22,7 +24,23 @@ export default function CheckoutShippingStep({
         <CheckoutField label="Country" value={form.country} onChange={(value) => onChange('country', value)} placeholder="Enter country" required error={errors.country} />
         <CheckoutField label="State / Province / Region" value={form.state} onChange={(value) => onChange('state', value)} placeholder="Enter state, province, or region" required error={errors.state} />
         <CheckoutField label="City" value={form.city} onChange={(value) => onChange('city', value)} placeholder="Enter city" required error={errors.city} />
-        <CheckoutField label="Postal Code / Pincode" value={form.postal_code} onChange={(value) => onChange('postal_code', value)} placeholder="Enter postal code or pincode" required error={errors.postal_code} />
+        <CheckoutField
+          label="Postal Code / Pincode"
+          value={form.postal_code}
+          onChange={(value) => onChange('postal_code', value)}
+          onBlur={onPostalBlur}
+          placeholder="Enter postal code or pincode"
+          required
+          error={errors.postal_code}
+          trailing={
+            postalLookup?.status === 'loading' ? (
+              <span
+                className="inline-flex h-4 w-4 animate-spin rounded-full border-2 border-[#d0d5dd] border-t-[#101828]"
+                aria-hidden="true"
+              />
+            ) : null
+          }
+        />
         <CheckoutField label="Address Line 1" value={form.address_line_1} onChange={(value) => onChange('address_line_1', value)} placeholder="Enter address line 1" required error={errors.address_line_1} />
         <CheckoutField label="Address Line 2" value={form.address_line_2} onChange={(value) => onChange('address_line_2', value)} placeholder="Apartment, suite, company, landmark (optional)" />
       </div>

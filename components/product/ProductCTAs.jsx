@@ -4,19 +4,17 @@ import Link from 'next/link';
 import { formatUsdNumber } from '@/lib/money';
 
 /**
- * CTA button row: Request Quote, WhatsApp, Wishlist heart.
+ * CTA button row: primary purchase and enquiry actions.
  * @param {object}   props
  * @param {object}   props.product      - Full product object
  * @param {function} props.onEnquire    - Opens the enquiry modal
- * @param {boolean}  props.inWishlist   - Whether this product is currently wishlisted
- * @param {function} props.onWishlist   - Toggles wishlist state
  * @param {string}   props.checkoutHref - Static checkout route for standard products
  * @param {function} props.onAddToCart  - Adds the configured product to cart
  * @param {function} props.onCheckout   - Opens the pre-checkout love letter flow
  * @param {'both'|'checkout_only'|'enquire_only'} [props.ctaMode] - Controls which CTAs are visible
  * @param {string|null} [props.ctaLabel] - Optional CTA label override from material rules
  */
-export default function ProductCTAs({ product, ctaMode = 'both', ctaLabel = null, onEnquire, inWishlist, onWishlist, checkoutHref, onAddToCart, onCheckout }) {
+export default function ProductCTAs({ product, ctaMode = 'both', ctaLabel = null, onEnquire, checkoutHref, onAddToCart, onCheckout }) {
   const waText = encodeURIComponent(
     `Hi, I'd like to enquire about the ${product.name} (from $${formatUsdNumber(product.priceFrom)})`
   );
@@ -98,32 +96,6 @@ export default function ProductCTAs({ product, ctaMode = 'both', ctaLabel = null
           {ctaLabel || 'WhatsApp'}
         </a>
       ) : null}
-
-      <button
-        onClick={onWishlist}
-        aria-label={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
-        className={`
-          flex items-center justify-center
-          w-14 flex-shrink-0 cursor-pointer
-          border transition-all duration-300
-          max-[1100px]:w-full max-[1100px]:h-[52px]
-          ${inWishlist
-            ? 'bg-[#0A1628] border-[#0A1628]'
-            : 'bg-transparent border-[#0A1628] hover:bg-[#0A1628]'
-          }
-        `}
-      >
-        <svg
-          width="16" height="16" viewBox="0 0 16 16" fill={inWishlist ? '#fff' : 'none'}
-          className={`transition-colors duration-300 ${inWishlist ? 'stroke-white' : 'stroke-[#0A1628] group-hover:stroke-white'}`}
-          style={{ stroke: inWishlist ? '#fff' : '#0A1628' }}
-        >
-          <path
-            d="M8 14L2.5 8.5C1 7 1 4.5 2.5 3C4 1.5 6.5 1.5 8 3C9.5 1.5 12 1.5 13.5 3C15 4.5 15 7 13.5 8.5L8 14Z"
-            strokeWidth="1.3" strokeLinejoin="round"
-          />
-        </svg>
-      </button>
     </div>
   );
 }

@@ -23,7 +23,8 @@ export default function CheckoutSuccessClient() {
         <div className="mt-6 rounded-[20px] border border-[#eaecf0] bg-[#fcfcfd] p-5 text-left">
           <div className="text-xs font-medium uppercase tracking-[0.18em] text-[#98a2b3]">Order Number</div>
           <div className="mt-2 text-lg font-semibold text-[#101828]">{orderNumber}</div>
-          <div className="mt-4 text-sm text-[#667085]">Estimated delivery: 3 to 5 business days</div>
+          <div className="mt-4 text-sm text-[#667085]">Estimated delivery: approximately 3 to 4 weeks</div>
+          <div className="mt-2 text-sm text-[#667085]">You will also receive delivery and progress updates by email after the order is placed.</div>
         </div>
 
         <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
@@ -114,6 +114,16 @@ type PostalLookupResponse = {
   error?: string
 }
 
+const POSTAL_CODE_PATTERN = /^[A-Za-z0-9][A-Za-z0-9\s-]{2,11}$/
+
+function normalizePostalCodeValue(value: string) {
+  return value.trim()
+}
+
+function isLookupReadyAfterTyping(postalCode: string) {
+  return postalCode.replace(/[\s-]/g, '').length >= 6
+}
+
 function loadRazorpayCheckoutScript() {
   if (typeof window === 'undefined') return Promise.resolve(false)
   if (window.Razorpay) return Promise.resolve(true)
@@ -197,6 +207,8 @@ export default function CheckoutPageClient() {
     city: string
     state: string
   } | null>(null)
+  const postalLookupAbortRef = useRef<AbortController | null>(null)
+  const lastPostalLookupKeyRef = useRef<string>('')
   const cartMode = searchParams.get('mode') === 'cart';
 
   const singleItem = useMemo<CheckoutDisplayItem>(() => ({
@@ -365,12 +377,185 @@ export default function CheckoutPageClient() {
     }
   }, [checkoutItems, couponDiscount, customerForm.country])
 
-  useEffect(() => {
+  const setPostalCodeFieldError = useCallback((message?: string) => {
+    setFieldErrors((current) => {
+      if (!message) {
+        if (!current.postal_code) return current
+        const next = { ...current }
+        delete next.postal_code
+        return next
+      }
+
+      if (current.postal_code === message) return current
+      return { ...current, postal_code: message }
+    })
+  }, [])
+
+  const lookupPostalCode = useCallback(
+    async (country: string, postalCode: string) => {
+      const normalizedPostalCode = normalizePostalCodeValue(postalCode)
+      const normalizedCountry = country.trim()
+      const lookupKey = `${normalizedCountry.toLowerCase()}::${normalizedPostalCode.toUpperCase()}`
+
+      if (!normalizedPostalCode) {
+        setPostalLookup(null)
+        setPostalCodeFieldError()
+        return
+      }
+
+      if (!normalizedCountry) {
+        setPostalLookup({
+          status: 'idle',
+          message: 'Enter country and postal code to auto-fill city and state when available.',
+        })
+        return
+      }
+
+      if (!POSTAL_CODE_PATTERN.test(normalizedPostalCode)) {
+        setPostalLookup({
+          status: 'error',
+          message: 'Enter a valid postal code or pincode to auto-fill the address.',
+        })
+        setPostalCodeFieldError('Enter a valid postal code or pincode.')
+        return
+      }
+
+      if (lastPostalLookupKeyRef.current === lookupKey) {
+        return
+      }
+
+      postalLookupAbortRef.current?.abort()
+      const controller = new AbortController()
+      postalLookupAbortRef.current = controller
+
+      setPostalLookup({
+        status: 'loading',
+        message: 'Looking up city and state from the postal code...',
+      })
+      setPostalCodeFieldError()
+
+      try {
+        const response = await fetch(
+          `/api/checkout/postal-lookup?country=${encodeURIComponent(normalizedCountry)}&postalCode=${encodeURIComponent(normalizedPostalCode)}`,
+          {
+          cache: 'no-store',
+          signal: controller.signal,
+          method: 'GET',
+          headers: { accept: 'application/json' },
+          }
+        )
+        const payload = (await response.json().catch(() => null)) as PostalLookupResponse | null
+
+        if (!response.ok || !payload?.lookup) {
+          const message = payload?.error || 'We could not match that postal code. You can continue manually.'
+          setPostalLookup({
+            status: 'error',
+            message,
+          })
+          setPostalCodeFieldError(message)
+          return
+        }
+
+        const nextCity = (payload.lookup.city || '').trim()
+        const nextState = (payload.lookup.state || '').trim()
+        const nextCountry = (payload.lookup.country || normalizedCountry).trim()
+
+        setCustomerForm((current) => {
+          const patch: Partial<CheckoutProfileForm> = {}
+          const currentCity = current.city.trim()
+          const currentState = current.state.trim()
+          const currentCountry = current.country.trim()
+
+          if (nextCity && (!currentCity || currentCity === lastPostalAutofillRef.current?.city)) {
+            patch.city = nextCity
+          }
+
+          if (nextState && (!currentState || currentState === lastPostalAutofillRef.current?.state)) {
+            patch.state = nextState
+          }
+
+          if (nextCountry && (!currentCountry || currentCountry === lastPostalAutofillRef.current?.country)) {
+            patch.country = nextCountry
+          }
+
+          if (!Object.keys(patch).length) {
+            return current
+          }
+
+          return { ...current, ...patch }
+        })
+
+        setFieldErrors((current) => {
+          const next = { ...current }
+          let changed = false
+
+          if (nextCity && current.city) {
+            delete next.city
+            changed = true
+          }
+
+          if (nextState && current.state) {
+            delete next.state
+            changed = true
+          }
+
+          if (nextCountry && current.country) {
+            delete next.country
+            changed = true
+          }
+
+          if (current.postal_code) {
+            delete next.postal_code
+            changed = true
+          }
+
+          return changed ? next : current
+        })
+
+        lastPostalAutofillRef.current = {
+          country: nextCountry || normalizedCountry,
+          postalCode: normalizedPostalCode,
+          city: nextCity,
+          state: nextState,
+        }
+        lastPostalLookupKeyRef.current = lookupKey
+
+        setPostalLookup({
+          status: 'success',
+          message:
+            nextCity || nextState
+              ? `Found ${[nextCity, nextState].filter(Boolean).join(', ')}. You can still edit the address if needed.`
+              : 'Postal code found. You can continue editing the address manually if needed.',
+          city: nextCity || undefined,
+          state: nextState || undefined,
+          country: nextCountry || undefined,
+          countryCode: payload.lookup.countryCode || undefined,
+        })
+      } catch (error) {
+        if (controller.signal.aborted) return
+        console.error('Postal lookup failed:', error)
+        const message = 'Postal lookup is unavailable right now. You can continue filling the address manually.'
+        setPostalLookup({
+          status: 'error',
+          message,
+        })
+        setPostalCodeFieldError(message)
+      } finally {
+        if (postalLookupAbortRef.current === controller) {
+          postalLookupAbortRef.current = null
+        }
+      }
+    },
+    [setPostalCodeFieldError]
+  )
+
+  const handlePostalCodeBlur = useCallback(() => {
     const country = customerForm.country.trim()
-    const postalCode = customerForm.postal_code.trim()
+    const postalCode = normalizePostalCodeValue(customerForm.postal_code)
 
     if (!postalCode) {
       setPostalLookup(null)
+      setPostalCodeFieldError()
       return
     }
 
@@ -382,122 +567,44 @@ export default function CheckoutPageClient() {
       return
     }
 
-    if (!/^[A-Za-z0-9][A-Za-z0-9\s-]{2,11}$/.test(postalCode)) {
+    void lookupPostalCode(country, postalCode)
+  }, [customerForm.country, customerForm.postal_code, lookupPostalCode, setPostalCodeFieldError])
+
+  useEffect(() => {
+    const country = customerForm.country.trim()
+    const postalCode = normalizePostalCodeValue(customerForm.postal_code)
+
+    if (!postalCode) {
+      postalLookupAbortRef.current?.abort()
+      lastPostalLookupKeyRef.current = ''
+      setPostalLookup(null)
+      setPostalCodeFieldError()
+      return
+    }
+
+    if (!country) {
+      postalLookupAbortRef.current?.abort()
+      setPostalLookup({
+        status: 'idle',
+        message: 'Enter country and postal code to auto-fill city and state when available.',
+      })
+      return
+    }
+
+    if (!POSTAL_CODE_PATTERN.test(postalCode) || !isLookupReadyAfterTyping(postalCode)) {
+      postalLookupAbortRef.current?.abort()
       setPostalLookup(null)
       return
     }
 
-    const controller = new AbortController()
     const timeoutId = window.setTimeout(() => {
-      void (async () => {
-        setPostalLookup({
-          status: 'loading',
-          message: 'Looking up city and state from the postal code...',
-        })
-
-        try {
-          const response = await fetch(
-            `/api/checkout/postal-lookup?country=${encodeURIComponent(country)}&postalCode=${encodeURIComponent(postalCode)}`,
-            {
-              cache: 'no-store',
-              signal: controller.signal,
-            }
-          )
-          const payload = (await response.json().catch(() => null)) as PostalLookupResponse | null
-
-          if (!response.ok || !payload?.lookup) {
-            setPostalLookup({
-              status: 'error',
-              message: payload?.error || 'We could not match that postal code. You can continue manually.',
-            })
-            return
-          }
-
-          const nextCity = (payload.lookup.city || '').trim()
-          const nextState = (payload.lookup.state || '').trim()
-          const nextCountry = (payload.lookup.country || country).trim()
-
-          setCustomerForm((current) => {
-            const patch: Partial<CheckoutProfileForm> = {}
-            const currentCity = current.city.trim()
-            const currentState = current.state.trim()
-            const currentCountry = current.country.trim()
-
-            if (nextCity && (!currentCity || currentCity === lastPostalAutofillRef.current?.city)) {
-              patch.city = nextCity
-            }
-
-            if (nextState && (!currentState || currentState === lastPostalAutofillRef.current?.state)) {
-              patch.state = nextState
-            }
-
-            if (nextCountry && (!currentCountry || currentCountry === lastPostalAutofillRef.current?.country)) {
-              patch.country = nextCountry
-            }
-
-            if (!Object.keys(patch).length) {
-              return current
-            }
-
-            return { ...current, ...patch }
-          })
-
-          setFieldErrors((current) => {
-            const next = { ...current }
-            let changed = false
-
-            if (nextCity && current.city) {
-              delete next.city
-              changed = true
-            }
-
-            if (nextState && current.state) {
-              delete next.state
-              changed = true
-            }
-
-            if (nextCountry && current.country) {
-              delete next.country
-              changed = true
-            }
-
-            return changed ? next : current
-          })
-
-          lastPostalAutofillRef.current = {
-            country: nextCountry || country,
-            postalCode,
-            city: nextCity,
-            state: nextState,
-          }
-
-          setPostalLookup({
-            status: 'success',
-            message:
-              nextCity || nextState
-                ? `Found ${[nextCity, nextState].filter(Boolean).join(', ')}. You can still edit the address if needed.`
-                : 'Postal code found. You can continue editing the address manually if needed.',
-            city: nextCity || undefined,
-            state: nextState || undefined,
-            country: nextCountry || undefined,
-            countryCode: payload.lookup.countryCode || undefined,
-          })
-        } catch (error) {
-          if (controller.signal.aborted) return
-          console.error('Postal lookup failed:', error)
-          setPostalLookup({
-            status: 'error',
-            message: 'Postal lookup is unavailable right now. You can continue filling the address manually.',
-          })
-        }
-      })()
+      void lookupPostalCode(country, postalCode)
     }, 450)
 
     return () => {
-      controller.abort()
       window.clearTimeout(timeoutId)
     }
-  }, [customerForm.country, customerForm.postal_code])
+  }, [customerForm.country, customerForm.postal_code, lookupPostalCode, setPostalCodeFieldError])
 
   useEffect(() => {
     if (cartMode || !singleItem.slug) return;
@@ -976,7 +1083,7 @@ export default function CheckoutPageClient() {
 
               <div className="animate-[fadeUp_0.35s_ease]">
                 {currentStep === 0 ? <CheckoutCustomerStep form={customerForm} onChange={updateCustomerForm} errors={fieldErrors} /> : null}
-               {currentStep === 1 ? <CheckoutShippingStep form={customerForm} onChange={updateCustomerForm} errors={fieldErrors} postalLookup={postalLookup} /> : null}
+               {currentStep === 1 ? <CheckoutShippingStep form={customerForm} onChange={updateCustomerForm} errors={fieldErrors} postalLookup={postalLookup} onPostalBlur={handlePostalCodeBlur} /> : null}
                 {currentStep === 2 ? <CheckoutDeliveryStep /> : null}
                 {currentStep === 3 ? <CheckoutPaymentStep totalAmount={totalPayable} chargeQuote={chargeQuote} /> : null}
                 {currentStep === 4 ? <CheckoutReviewStep onPayNow={handlePayNow} isProcessingPayment={processingPayment} paymentButtonLabel={paymentButtonLabel} continueHref={continueHref} loveLetter={loveLetterDraft} totalAmount={totalPayable} chargeQuote={chargeQuote} /> : null}

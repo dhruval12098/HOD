@@ -498,8 +498,6 @@ const loadHomePageData = unstable_cache(
       discoverStylesResult,
       hiphopResult,
       collectionPageConfigResult,
-      certificationsSectionResult,
-      certificationsItemsResult,
       couplesSectionResult,
       diamondInfoResult,
       diamondInfoConfigResult,
@@ -572,15 +570,6 @@ const loadHomePageData = unstable_cache(
         .select('page_enabled, show_in_footer, show_home_showcase, showcase_heading, showcase_subtitle, showcase_cta_label, showcase_cta_href, showcase_image_path, showcase_mobile_image_path')
         .eq('section_key', 'main_collection_page')
         .maybeSingle(),
-      supabase
-        .from('certifications_section')
-        .select('eyebrow, heading')
-        .eq('section_key', 'home_certifications')
-        .maybeSingle(),
-      supabase
-        .from('certifications_items')
-        .select('sort_order, title, description, badge, icon_path')
-        .order('sort_order', { ascending: true }),
       supabase
         .from('couples_section')
         .select('id, eyebrow, heading, subtitle')
@@ -851,12 +840,6 @@ const loadHomePageData = unstable_cache(
         showcaseImageUrl: toPublicUrl(collectionPageConfigResult.data?.showcase_image_path),
         showcaseMobileImageUrl: toPublicUrl(collectionPageConfigResult.data?.showcase_mobile_image_path),
       },
-      certificationsSection:
-        certificationsSectionResult.data ?? {
-          eyebrow: 'Our Promise',
-          heading: 'Why Choose House of Diams',
-        },
-      certificationItems: certificationsItemsResult.data ?? [],
       couplesData: {
         eyebrow: couplesSectionResult.data?.eyebrow ?? 'Love Stories',
         heading: couplesSectionResult.data?.heading ?? 'Our Cute Couples',

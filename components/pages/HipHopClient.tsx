@@ -10,13 +10,24 @@ import EnquireModal from '@/components/home/EnquireModal';
 import Loader from '@/components/home/Loader';
 import { usePageLoaderCache } from '@/lib/hooks/usePageLoaderCache';
 import type { StorefrontProduct } from '@/lib/catalog-products';
+import type { HipHopHeroContent, HipHopHeroSlide } from '@/lib/hiphop-hero';
 
-export default function HipHopClient({ products }: { products: StorefrontProduct[] }) {
+export default function HipHopClient({
+  products,
+  hero,
+}: {
+  products: StorefrontProduct[]
+  hero: {
+    content: HipHopHeroContent
+    slides: HipHopHeroSlide[]
+  }
+}) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [enquireOpen, setEnquireOpen] = useState(false);
   const [enquirePiece, setEnquirePiece] = useState('');
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
+  const [heroReady, setHeroReady] = useState(false)
   const { pageLoading, handleLoaderComplete } = usePageLoaderCache({
     cacheKey: 'hod_hiphop_loader_v1',
     ttlMs: 1000 * 60 * 60 * 12,
@@ -36,7 +47,7 @@ export default function HipHopClient({ products }: { products: StorefrontProduct
 
   return (
     <div className="min-h-screen bg-(--bg) text-(--ink)">
-      {pageLoading ? <Loader ready onComplete={handleLoaderComplete} /> : null}
+      {pageLoading ? <Loader ready={heroReady} onComplete={handleLoaderComplete} /> : null}
       <div
         aria-hidden={pageLoading}
         style={{
@@ -45,7 +56,7 @@ export default function HipHopClient({ products }: { products: StorefrontProduct
           pointerEvents: pageLoading ? 'none' : 'auto',
         }}
       >
-        <HipHopHero />
+        <HipHopHero initialContent={hero.content} initialSlides={hero.slides} onReady={() => setHeroReady(true)} />
 
         <div className="max-w-[1400px] mx-auto px-[52px] pt-[36px] max-[700px]:px-5">
           {/* <button

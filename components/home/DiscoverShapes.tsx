@@ -293,13 +293,13 @@ export default function DiscoverShapes({
           >
             Discover Shapes
           </h2>
-          <p className="mx-auto mt-3 max-w-[700px] text-[18px] font-light leading-[1.55] text-[#1B1B1B] md:text-[22px]">
+          <p className="mx-auto mt-3 max-w-[660px] text-[15px] font-light leading-[1.5] text-[#1B1B1B] md:text-[18px]">
             Explore our curated selection, categorized by diamond shape, to find your perfect expression of elegance.
           </p>
         </div>
 
         {/* Carousel track */}
-        <div className="relative mt-6 flex h-[220px] items-center justify-center overflow-hidden md:mt-8 md:h-[300px] lg:h-[380px]">
+        <div className="relative mt-2 flex h-[220px] items-center justify-center overflow-hidden md:mt-3 md:h-[300px] lg:h-[380px]">
           {items.map((item, i) => {
             const off = getOffset(i, current, total);
             const isCenter = off === 0;
@@ -357,7 +357,7 @@ export default function DiscoverShapes({
         </div>
 
         {/* Controls */}
-        <div className="mt-2 flex items-center justify-center gap-6 md:mt-4 md:gap-14">
+        <div className="-mt-2 flex items-center justify-center gap-6 md:-mt-3 md:gap-14">
           <button
             type="button"
             onClick={() => go(-1)}
@@ -374,7 +374,7 @@ export default function DiscoverShapes({
                 <Link href={displayHref} className="inline-flex items-center justify-center transition-opacity hover:opacity-75">
                   <span
                     ref={nameRef}
-                    className="inline-block font-sans text-[34px] font-normal tracking-[0.01em] text-[#0A0A0A] md:text-[46px]"
+                    className="inline-block font-sans text-[28px] font-normal tracking-[0.01em] text-[#0A0A0A] md:text-[38px]"
                   >
                     {displayName}
                   </span>
@@ -382,7 +382,7 @@ export default function DiscoverShapes({
               ) : (
                 <span
                   ref={nameRef}
-                  className="inline-block font-sans text-[34px] font-normal tracking-[0.01em] text-[#0A0A0A] md:text-[46px]"
+                  className="inline-block font-sans text-[28px] font-normal tracking-[0.01em] text-[#0A0A0A] md:text-[38px]"
                 >
                   {displayName}
                 </span>
@@ -391,7 +391,7 @@ export default function DiscoverShapes({
             <div className="overflow-hidden">
               <p
                 ref={descRef}
-                className="mx-auto mt-3 max-w-[480px] text-[18px] font-light leading-[1.55] text-[#303030] md:text-[22px]"
+                className="mx-auto mt-2.5 max-w-[440px] text-[15px] font-light leading-[1.5] text-[#303030] md:text-[17px]"
               >
                 {displayDesc}
               </p>

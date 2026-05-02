@@ -1,36 +1,31 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import type { HipHopHeroContent, HipHopHeroSlide } from '@/lib/hiphop-hero'
 
-type HeroSlide = {
-  sort_order: number
-  image_path: string
-  mobile_image_path?: string
-  button_text: string
-  button_link: string
-}
-
-type HeroContent = {
-  eyebrow: string
-  headline: string
-  subtitle: string
-  slider_enabled?: boolean
-}
-
-const fallbackContent: HeroContent = {
+const fallbackContent: HipHopHeroContent = {
   eyebrow: 'Hip Hop',
   headline: 'Hip Hop Jewellery',
   subtitle: 'Fully iced chains, grillz, pendants and statement rings - handcrafted with CVD diamonds in 14K and 18K gold.',
   slider_enabled: false,
 }
 
-export default function HipHopHero() {
-  const [content, setContent] = useState<HeroContent>(fallbackContent)
-  const [slides, setSlides] = useState<HeroSlide[]>([])
+export default function HipHopHero({
+  initialContent,
+  initialSlides,
+  onReady,
+}: {
+  initialContent?: HipHopHeroContent
+  initialSlides?: HipHopHeroSlide[]
+  onReady?: () => void
+}) {
+  const [content, setContent] = useState<HipHopHeroContent>(initialContent ?? fallbackContent)
+  const [slides, setSlides] = useState<HipHopHeroSlide[]>(initialSlides ?? [])
   const [activeSlide, setActiveSlide] = useState(0)
+  const readyReportedRef = useRef(false)
 
   const getPublicImageUrl = (path: string) => {
     if (!path) return ''
@@ -41,6 +36,10 @@ export default function HipHopHero() {
   }
 
   useEffect(() => {
+    if ((initialSlides?.length ?? 0) > 0 || initialContent) {
+      return
+    }
+
     let active = true
     ;(async () => {
       try {
@@ -49,7 +48,7 @@ export default function HipHopHero() {
         if (!active) return
 
         const newSlides = Array.isArray(payload?.items) ? payload.items : []
-        const hasNewBanner = Boolean(payload?.item && Boolean(payload.item.slider_enabled) && newSlides.some((item: HeroSlide) => item.image_path?.trim()))
+        const hasNewBanner = Boolean(payload?.item && Boolean(payload.item.slider_enabled) && newSlides.some((item: HipHopHeroSlide) => item.image_path?.trim()))
 
         if (hasNewBanner) {
           setContent({
@@ -108,9 +107,16 @@ export default function HipHopHero() {
     return () => {
       active = false
     }
-  }, [])
+  }, [initialContent, initialSlides])
 
   const sortedSlides = useMemo(() => slides.filter((item) => item.image_path?.trim()).sort((a, b) => a.sort_order - b.sort_order), [slides])
+
+  useEffect(() => {
+    if (sortedSlides.length > 0) return
+    if (readyReportedRef.current) return
+    readyReportedRef.current = true
+    onReady?.()
+  }, [onReady, sortedSlides.length])
 
   useEffect(() => {
     setActiveSlide(0)
@@ -127,6 +133,12 @@ export default function HipHopHero() {
   const currentSlide = sortedSlides[activeSlide] ?? sortedSlides[0]
   const hasImageHero = Boolean(content.slider_enabled && currentSlide)
 
+  const handleImageReady = () => {
+    if (readyReportedRef.current) return
+    readyReportedRef.current = true
+    onReady?.()
+  }
+
   if (hasImageHero && currentSlide) {
     return (
       <section
@@ -139,8 +151,8 @@ export default function HipHopHero() {
             <div className="relative h-[360px] sm:h-[440px] md:h-[520px] lg:h-[620px]">
               {sortedSlides.map((slide, index) => (
                 <div key={`${slide.sort_order}-${slide.image_path}`} className={`absolute inset-0 transition-opacity duration-700 ${index === activeSlide ? 'opacity-100' : 'opacity-0'}`}>
-                  <Image src={getPublicImageUrl(slide.mobile_image_path || slide.image_path)} alt={slide.button_text || `Hip Hop slide ${index + 1}`} fill priority={index === 0} sizes="100vw" className="h-full w-full object-cover sm:hidden" />
-                  <Image src={getPublicImageUrl(slide.image_path)} alt={slide.button_text || `Hip Hop slide ${index + 1}`} fill priority={index === 0} sizes="100vw" className="hidden h-full w-full object-cover sm:block" />
+                  <Image src={getPublicImageUrl(slide.mobile_image_path || slide.image_path)} alt={slide.button_text || `Hip Hop slide ${index + 1}`} fill priority={index === 0} sizes="100vw" className="h-full w-full object-cover sm:hidden" onLoadingComplete={index === 0 ? handleImageReady : undefined} />
+                  <Image src={getPublicImageUrl(slide.image_path)} alt={slide.button_text || `Hip Hop slide ${index + 1}`} fill priority={index === 0} sizes="100vw" className="hidden h-full w-full object-cover sm:block" onLoadingComplete={index === 0 ? handleImageReady : undefined} />
                 </div>
               ))}
             </div>

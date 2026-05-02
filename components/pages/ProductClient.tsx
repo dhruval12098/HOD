@@ -218,7 +218,13 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
     return (
       <div className="min-h-screen bg-(--bg) text-(--ink)">
         <section className="mx-auto max-w-[1400px] px-[52px] pb-[100px] pt-10 max-[1100px]:px-7 max-[700px]:px-5 max-[700px]:pb-[70px]">
-        <ProductBreadcrumb productName={product.name} collectionHref={collectionHref} collectionLabel={collectionLabel} />
+        <ProductBreadcrumb
+          productName={product.name}
+          collectionHref={collectionHref}
+          collectionLabel={collectionLabel}
+          inWishlist={inWishlist}
+          onWishlist={() => handleWishlistToggle(product)}
+        />
 
         <ProductLayout
               gallery={(
@@ -286,8 +292,6 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
                 ctaMode={selectedMaterialValueMeta?.ctaMode || 'both'}
                 ctaLabel={selectedMaterialValueMeta?.ctaLabel || null}
                 onEnquire={() => setIsEnquireOpen(true)}
-                inWishlist={inWishlist}
-                onWishlist={() => handleWishlistToggle(product)}
                 onAddToCart={handleAddToCart}
                 onCheckout={() => {
                   setLoveLetterIntent('checkout');

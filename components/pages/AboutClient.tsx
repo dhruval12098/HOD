@@ -28,7 +28,7 @@ export default function AboutClient({
   return (
     <div className="min-h-screen bg-(--bg) text-(--ink)">
       {pageLoading ? <Loader ready onComplete={handleLoaderComplete} /> : null}
-      <TrustStrip />
+      
       <AboutHero content={hero ?? undefined} />
       <FoundersSection initialItems={founders ?? []} />
       <TimelineSection initialItems={timeline ?? []} />

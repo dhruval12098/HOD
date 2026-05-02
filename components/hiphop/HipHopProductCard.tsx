@@ -105,7 +105,7 @@ export default function HipHopProductCard({
             <span className="mb-0.5 block text-[8px] font-normal uppercase tracking-[0.24em] text-white/45">
               From
             </span>
-            <span className="font-numeric text-[18px] font-medium tracking-[0.02em] text-white">
+            <span className="font-numeric text-[14px] font-bold tracking-[0.02em] text-white">
               ${formatUsdNumber(product.priceFrom)}
             </span>
           </div>
