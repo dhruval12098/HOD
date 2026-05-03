@@ -458,15 +458,15 @@ export default function DiamondInfoSequence({
       style={{ height: sectionHeight }}
     >
       <div className="sticky top-0 h-screen overflow-hidden bg-white">
-        <div className="mx-auto grid h-full w-full max-w-[1700px] grid-cols-1 grid-rows-[auto_auto_minmax(320px,48vh)] items-center gap-6 px-5 py-8 sm:px-8 md:px-10 lg:grid-cols-[minmax(240px,1fr)_minmax(420px,52vw)_minmax(240px,1fr)] lg:grid-rows-1 lg:gap-8 lg:px-12 xl:px-16">
-          <div className="order-1 relative flex min-h-[220px] items-center justify-center lg:min-h-[520px]">
+        <div className="mx-auto grid h-full w-full max-w-[1700px] grid-cols-1 grid-rows-[auto_auto_minmax(320px,48vh)] items-center gap-3 px-5 py-6 sm:gap-5 sm:px-8 sm:py-8 md:px-10 lg:grid-cols-[minmax(240px,1fr)_minmax(420px,52vw)_minmax(240px,1fr)] lg:grid-rows-1 lg:gap-8 lg:px-12 xl:px-16">
+          <div className="order-1 relative flex min-h-[156px] items-center justify-center sm:min-h-[190px] lg:min-h-[520px]">
             {stages.map((stage, index) => (
               <div
                 key={`left-${index}`}
                 ref={(node) => {
                   leftTextRefs.current[index] = node;
                 }}
-                className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-2 text-center lg:items-start lg:text-left"
+                className="pointer-events-none absolute inset-0 flex flex-col items-center justify-start px-2 pt-2 text-center sm:justify-center sm:pt-0 lg:items-start lg:text-left"
               >
                 <div className="overflow-visible py-[0.2em]">
                   <p
@@ -502,14 +502,14 @@ export default function DiamondInfoSequence({
             {!firstFrameReady ? <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(248,248,248,0.96)_0%,rgba(255,255,255,1)_68%)]" /> : null}
           </div>
 
-          <div className="order-2 relative flex min-h-[150px] items-center justify-center lg:order-3 lg:min-h-[440px]">
+          <div className="order-2 relative flex min-h-[88px] items-center justify-center sm:min-h-[120px] lg:order-3 lg:min-h-[440px]">
             {stages.map((stage, index) => (
               <div
                 key={`right-${index}`}
                 ref={(node) => {
                   rightTextRefs.current[index] = node;
                 }}
-                className="pointer-events-none absolute inset-0 flex items-center justify-center text-center lg:justify-end lg:text-left"
+                className="pointer-events-none absolute inset-0 flex items-start justify-center pt-0 text-center sm:items-center lg:justify-end lg:text-left"
               >
                 <div className="max-w-[320px] lg:max-w-[360px]">
                   <div className="overflow-hidden py-[0.08em]">
