@@ -8,7 +8,7 @@ import TestimonialMarquee from '@/components/home/TestimonialMarquee';
 import BlogGrid from '@/components/blog/BlogGrid';
 import { posts } from '@/lib/data/blog-posts';
 import type { BlogPost } from '@/lib/data/blog-posts';
-import DiamondInfo from '@/components/home/DiamondInfo';
+import DiamondInfoSequence from '@/components/home/DiamondInfoSequence';
 import DiscoverRings from '@/components/home/DiscoverRings';
 import DiscoverShapes from '@/components/home/DiscoverShapes';
 import Collection from '@/components/home/Collection';
@@ -146,7 +146,7 @@ export default function HomeClient({
       <Hero initialContent={heroContent} />
       <TestimonialMarquee initialData={marqueeData} />
       <Collection items={collectionItems} />
-      <DiamondInfo items={diamondInfoItems} config={diamondInfoConfig} />
+      <Certifications />
       <DiscoverShapes initialItems={discoverShapesItems} />
       
       {/* <MaterialStrip items={materialItems} /> */}
@@ -154,7 +154,7 @@ export default function HomeClient({
       <BestSellers initialSection={bestSellerSection} initialProducts={bestSellerProducts} />
       {collectionPageConfig.pageEnabled && collectionPageConfig.showHomeShowcase ? <CollectionShowcase config={collectionPageConfig} /> : null}
       <DiscoverRings initialItems={discoverRingsItems} />
-      <Certifications />
+      <DiamondInfoSequence items={diamondInfoItems} config={diamondInfoConfig} />
       <Testimonials initialData={testimonialsData} />
       <CouplesSection initialData={couplesData} />
 
