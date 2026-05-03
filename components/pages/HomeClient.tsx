@@ -95,32 +95,104 @@ export default function HomeClient({
   bestSellerProducts?: HomeBestSellerProduct[]
 }) {
   const router = useRouter();
-  const { setIsHomeLoading } = useHomeLoader();
+  const { setIsHomeLoading, setIsHomeReady } = useHomeLoader();
   const [isEnquireOpen, setIsEnquireOpen] = useState(false);
   const [enquireGemName, setEnquireGemName] = useState('');
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
+  const [heroReady, setHeroReady] = useState(false);
+  const [fontsReady, setFontsReady] = useState(false);
+  const [skipHomeLoader, setSkipHomeLoader] = useState(false);
 
   useLayoutEffect(() => {
     if (typeof window === 'undefined') return;
+
+    let shouldSkipLoader = false;
 
     try {
       const cached = window.localStorage.getItem(HOME_LOADER_CACHE_KEY);
       if (cached) {
         const parsed = JSON.parse(cached) as { expiresAt?: number } | null;
         if (parsed?.expiresAt && parsed.expiresAt > Date.now()) {
-          setIsHomeLoading(false);
-          return;
+          shouldSkipLoader = true;
         }
       }
     } catch {}
 
-    setIsHomeLoading(true);
+    setSkipHomeLoader(shouldSkipLoader);
+    if (shouldSkipLoader) {
+      setIsHomeReady(true);
+      setIsHomeLoading(false);
+    } else {
+      setIsHomeReady(false);
+      setIsHomeLoading(true);
+    }
 
     return () => {
       setIsHomeLoading(false);
+      setIsHomeReady(false);
     };
-  }, [setIsHomeLoading]);
+  }, [setIsHomeLoading, setIsHomeReady]);
+
+  useEffect(() => {
+    if (skipHomeLoader) {
+      setFontsReady(true);
+      return;
+    }
+
+    let cancelled = false;
+    const fallbackTimer = window.setTimeout(() => {
+      if (!cancelled) {
+        setFontsReady(true);
+      }
+    }, 2500);
+
+    if (typeof document !== 'undefined' && 'fonts' in document && document.fonts?.ready) {
+      document.fonts.ready
+        .then(() => {
+          if (!cancelled) {
+            setFontsReady(true);
+          }
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setFontsReady(true);
+          }
+        });
+    } else {
+      setFontsReady(true);
+    }
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(fallbackTimer);
+    };
+  }, [skipHomeLoader]);
+
+  useEffect(() => {
+    if (skipHomeLoader || heroReady) return;
+
+    const fallbackTimer = window.setTimeout(() => {
+      setHeroReady(true);
+    }, 4500);
+
+    return () => {
+      window.clearTimeout(fallbackTimer);
+    };
+  }, [heroReady, skipHomeLoader]);
+
+  useEffect(() => {
+    if (!skipHomeLoader && (!heroReady || !fontsReady)) return;
+
+    setIsHomeReady(true);
+    try {
+      window.localStorage.setItem(
+        HOME_LOADER_CACHE_KEY,
+        JSON.stringify({ expiresAt: Date.now() + HOME_LOADER_CACHE_TTL_MS })
+      );
+    } catch {}
+  }, [fontsReady, heroReady, setIsHomeReady, skipHomeLoader]);
+
   const handleEnquireClose = () => {
     setIsEnquireOpen(false);
     setEnquireGemName('');
@@ -132,18 +204,14 @@ export default function HomeClient({
     setTimeout(() => setShowToast(false), 3000);
   };
 
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(
-        HOME_LOADER_CACHE_KEY,
-        JSON.stringify({ expiresAt: Date.now() + HOME_LOADER_CACHE_TTL_MS })
-      );
-    } catch {}
-  }, []);
-
   return (
     <div className="min-h-screen bg-(--bg) text-(--ink)">
-      <Hero initialContent={heroContent} />
+      <Hero
+        initialContent={heroContent}
+        onPrimaryVisualReady={() => {
+          setHeroReady(true);
+        }}
+      />
       <TestimonialMarquee initialData={marqueeData} />
       <Collection items={collectionItems} />
       <Certifications />

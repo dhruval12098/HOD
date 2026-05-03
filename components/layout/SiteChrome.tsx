@@ -16,6 +16,7 @@ const OVERLAY_NAVBAR_ROUTES = new Set(['/', '/hiphop', '/bespoke']);
 export default function SiteChrome({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [isHomeLoading, setIsHomeLoading] = useState(pathname === '/');
+  const [isHomeReady, setIsHomeReady] = useState(pathname !== '/');
   const usesDesktopOverlayNavbar = pathname ? OVERLAY_NAVBAR_ROUTES.has(pathname) : false;
   const isMinimalChromeRoute = pathname
     ? AUTH_ROUTES.has(pathname) || pathname.startsWith('/checkout')
@@ -24,13 +25,15 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
   useLayoutEffect(() => {
     if (pathname === '/') {
       setIsHomeLoading(true);
+      setIsHomeReady(false);
     } else {
       setIsHomeLoading(false);
+      setIsHomeReady(true);
     }
   }, [pathname]);
 
   return (
-    <HomeLoaderProvider value={{ isHomeLoading, setIsHomeLoading }}>
+    <HomeLoaderProvider value={{ isHomeLoading, setIsHomeLoading, isHomeReady, setIsHomeReady }}>
       {isMinimalChromeRoute ? (
         <main className="flex-1">{children}</main>
       ) : (
@@ -50,7 +53,9 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
           </div>
           <PromotionPopup />
           {!isHomeLoading ? <FloatingWidgets /> : null}
-          {pathname === '/' && isHomeLoading ? <Loader ready onComplete={() => setIsHomeLoading(false)} /> : null}
+          {pathname === '/' && isHomeLoading ? (
+            <Loader ready={isHomeReady} onComplete={() => setIsHomeLoading(false)} />
+          ) : null}
         </>
       )}
     </HomeLoaderProvider>

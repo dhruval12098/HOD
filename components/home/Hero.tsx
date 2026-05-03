@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
@@ -24,6 +24,7 @@ type HeroContent = {
 interface HeroProps {
   onEnquireClick?: () => void;
   initialContent?: HeroContent;
+  onPrimaryVisualReady?: () => void;
 }
 
 const defaultContent: HeroContent = {
@@ -43,13 +44,21 @@ const getPublicImageUrl = (path: string) => {
   return data.publicUrl;
 };
 
-export default function Hero({ initialContent }: HeroProps) {
+export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps) {
   const [content, setContent] = useState<HeroContent>(() => ({
     ...defaultContent,
     ...initialContent,
     slider_items: initialContent?.slider_items ?? [],
   }));
   const [activeSlide, setActiveSlide] = useState(0);
+  const [contentResolved, setContentResolved] = useState(Boolean(initialContent));
+  const hasSignaledPrimaryVisualRef = useRef(false);
+
+  const signalPrimaryVisualReady = () => {
+    if (hasSignaledPrimaryVisualRef.current) return;
+    hasSignaledPrimaryVisualRef.current = true;
+    onPrimaryVisualReady?.();
+  };
 
   useEffect(() => {
     if (initialContent) return;
@@ -62,7 +71,10 @@ export default function Hero({ initialContent }: HeroProps) {
         .eq('is_active', true)
         .single();
 
-      if (!heroData) return;
+      if (!heroData) {
+        setContentResolved(true);
+        return;
+      }
 
       let sliderItems: HeroSlide[] = [];
 
@@ -83,9 +95,13 @@ export default function Hero({ initialContent }: HeroProps) {
         slider_enabled: heroData.slider_enabled,
         slider_items: sliderItems,
       });
+      setContentResolved(true);
     };
 
-    loadHero();
+    loadHero().catch(() => {
+      setContentResolved(true);
+      signalPrimaryVisualReady();
+    });
   }, [initialContent]);
 
   const slides = useMemo(
@@ -110,6 +126,13 @@ export default function Hero({ initialContent }: HeroProps) {
   const line2 = rest.join(' ');
   const currentSlide = slides[activeSlide] ?? slides[0];
   const hasImageHero = Boolean(content.slider_enabled && currentSlide);
+
+  useEffect(() => {
+    if (!contentResolved) return;
+    if (!hasImageHero) {
+      signalPrimaryVisualReady();
+    }
+  }, [contentResolved, hasImageHero]);
 
   return (
     <section
@@ -183,6 +206,12 @@ export default function Hero({ initialContent }: HeroProps) {
                           priority={index === 0}
                           sizes="100vw"
                           className="h-full w-full object-cover sm:hidden"
+                          onLoad={() => {
+                            if (index === 0) signalPrimaryVisualReady();
+                          }}
+                          onError={() => {
+                            if (index === 0) signalPrimaryVisualReady();
+                          }}
                         />
                         <Image
                           src={desktopImageUrl}
@@ -191,6 +220,12 @@ export default function Hero({ initialContent }: HeroProps) {
                           priority={index === 0}
                           sizes="100vw"
                           className="hidden h-full w-full object-cover sm:block"
+                          onLoad={() => {
+                            if (index === 0) signalPrimaryVisualReady();
+                          }}
+                          onError={() => {
+                            if (index === 0) signalPrimaryVisualReady();
+                          }}
                         />
                       </>
                     </div>

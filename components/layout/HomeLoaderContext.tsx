@@ -5,6 +5,8 @@ import { createContext, useContext } from 'react';
 export type HomeLoaderContextValue = {
   isHomeLoading: boolean;
   setIsHomeLoading: (value: boolean) => void;
+  isHomeReady: boolean;
+  setIsHomeReady: (value: boolean) => void;
 };
 
 const HomeLoaderContext = createContext<HomeLoaderContextValue | null>(null);
