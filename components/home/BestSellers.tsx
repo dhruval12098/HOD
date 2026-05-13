@@ -156,8 +156,8 @@ export default function BestSellers({
           </p>
 
           <h2
-            className="font-serif font-light leading-[1.08] tracking-[0.01em] text-[var(--theme-heading)]"
-            style={{ fontSize: 'clamp(32px, 4vw, 50px)' }}
+            className="font-serif font-light leading-[1.08] tracking-[0.01em] text-[var(--theme-heading)] max-md:text-[30px]"
+            style={{ fontSize: 'clamp(28px, 4vw, 50px)' }}
           >
             {headingParts.start}{' '}
             {headingParts.emphasis ? (

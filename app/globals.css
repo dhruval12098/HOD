@@ -120,13 +120,6 @@ body.page-loader-active {
   overflow: hidden;
 }
 
-body.page-loader-active #site-navbar-shell,
-body.page-loader-active #site-footer-shell {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-}
-
 /* Ensure headings use the requested display font site-wide without touching body copy. */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--serif) !important;

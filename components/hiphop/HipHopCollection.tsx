@@ -4,30 +4,46 @@ import { useMemo, useState } from 'react'
 import type { StorefrontProduct } from '@/lib/catalog-products'
 import { useWishlistStore } from '@/lib/hooks/useWishlistStore'
 import { getProductKey } from '@/lib/product-keys'
-import TypeFilterBar, { FilterType } from './TypeFilterBar'
 import ProductCard from '@/components/shop/ProductCard'
 
 interface HipHopCollectionProps {
   products: StorefrontProduct[]
+  browseSections: {
+    id: string
+    title: string
+    slug: string
+    options: { id: string; label: string; slug: string }[]
+  }[]
   onEnquire: (piece: string) => void
   onWishlistToast: (msg: string) => void
 }
 
-function getFiltered(products: StorefrontProduct[], type: FilterType): StorefrontProduct[] {
-  if (type === 'all') return products
-  if (type === 'others') return products.filter((product) => !['ring', 'bracelet', 'chain', 'pendant'].includes(product.type))
-  return products.filter((product) => product.type === type)
+function getFiltered(products: StorefrontProduct[], activeSubcategory: string, activeOption: string): StorefrontProduct[] {
+  return products.filter((product) => {
+    if (activeSubcategory !== 'all' && product.subcategorySlug !== activeSubcategory) return false
+    if (activeOption !== 'all' && product.optionSlug !== activeOption) return false
+    return true
+  })
 }
 
 export default function HipHopCollection({
   products: sourceProducts,
+  browseSections,
   onEnquire,
   onWishlistToast,
 }: HipHopCollectionProps) {
-  const [activeFilter, setActiveFilter] = useState<FilterType>('all')
+  const [activeSubcategory, setActiveSubcategory] = useState<string>(browseSections[0]?.slug ?? 'all')
+  const [activeOption, setActiveOption] = useState<string>('all')
   const { toggle, contains } = useWishlistStore()
 
-  const products = useMemo(() => getFiltered(sourceProducts, activeFilter), [sourceProducts, activeFilter])
+  const activeSection = useMemo(
+    () => browseSections.find((section) => section.slug === activeSubcategory) ?? browseSections[0] ?? null,
+    [activeSubcategory, browseSections]
+  )
+  const products = useMemo(
+    () => getFiltered(sourceProducts, activeSubcategory, activeOption),
+    [sourceProducts, activeSubcategory, activeOption]
+  )
 
   const handleWishlist = (product: StorefrontProduct) => {
     const productKey = getProductKey(product)
@@ -38,7 +54,70 @@ export default function HipHopCollection({
 
   return (
     <section className="px-[52px] pt-[60px] pb-[100px] max-w-[1400px] mx-auto md:px-7 sm:px-5">
-      <TypeFilterBar active={activeFilter} onChange={setActiveFilter} />
+      {browseSections.length > 0 ? (
+        <div className="mb-12">
+          <div className="flex flex-wrap justify-center gap-2 mb-6">
+            {browseSections.map((section) => (
+              <button
+                key={section.id}
+                type="button"
+                onClick={() => {
+                  setActiveSubcategory(section.slug)
+                  setActiveOption('all')
+                }}
+                className={`
+                  px-[18px] py-2
+                  text-[9px] font-normal tracking-[0.24em] uppercase
+                  border cursor-pointer transition-all duration-300
+                  ${
+                    activeSubcategory === section.slug
+                      ? 'border-[#0A1628] bg-[#0A1628] text-white'
+                      : 'text-[#0A1628]/72 border-[#0A1628]/16 hover:text-[#0A1628] hover:border-[#0A1628]/40'
+                  }
+                `}
+              >
+                {section.title}
+              </button>
+            ))}
+          </div>
+
+          {activeSection && activeSection.options.length > 0 ? (
+            <div className="flex flex-wrap justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => setActiveOption('all')}
+                className={`
+                  rounded-full px-4 py-2 text-[10px] tracking-[0.08em] transition-all duration-300
+                  ${
+                    activeOption === 'all'
+                      ? 'bg-white text-[#0A1628]'
+                      : 'border border-[#0A1628]/16 text-[#0A1628]/72 hover:border-[#0A1628]/40 hover:text-[#0A1628]'
+                  }
+                `}
+              >
+                All
+              </button>
+              {activeSection.options.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => setActiveOption(option.slug)}
+                  className={`
+                    rounded-full px-4 py-2 text-[10px] tracking-[0.08em] transition-all duration-300
+                    ${
+                      activeOption === option.slug
+                        ? 'bg-white text-[#0A1628]'
+                        : 'border border-[#0A1628]/16 text-[#0A1628]/72 hover:border-[#0A1628]/40 hover:text-[#0A1628]'
+                    }
+                  `}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
 
       {products.length === 0 ? (
         <div className="text-center py-20 col-span-full">

@@ -152,8 +152,8 @@ export default function FAQ() {
         </RevealDiv>
         <RevealDiv delay={100}>
           <h2
-            className="mt-[18px] font-serif text-[#0A1628] leading-[1.05] tracking-[0.02em]"
-            style={{ fontSize: 'clamp(40px, 5.5vw, 72px)' }}
+            className="mt-[18px] font-serif text-[#0A1628] leading-[1.05] tracking-[0.02em] max-md:text-[30px]"
+            style={{ fontSize: 'clamp(30px, 5.5vw, 72px)' }}
           >
             {section.title || 'Frequently Asked Questions'}
           </h2>

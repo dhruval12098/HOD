@@ -8,7 +8,7 @@
  * @param {'piece'|'diamond'} [props.variant] - Icon variant
  * @param {boolean} [props.leftAlignValues] - Left align value column when content is prose/policy style
  */
-export default function SpecSection({ title, rows, variant = 'piece', leftAlignValues = false }) {
+export default function SpecSection({ title, rows, variant = 'piece', leftAlignValues = false, hideTitle = false }) {
   const icon =
     variant === 'diamond' ? (
       <svg className="w-[14px] h-[14px] flex-shrink-0" viewBox="0 0 14 14" fill="none">
@@ -22,31 +22,34 @@ export default function SpecSection({ title, rows, variant = 'piece', leftAlignV
     );
 
   return (
-    <div className="mb-7 rounded-[24px] border border-[rgba(10,22,40,0.10)] bg-white p-5 shadow-[0_18px_50px_rgba(10,22,40,0.04)] last:mb-0">
-      {/* Section title */}
-      <div className="mb-[6px] flex items-center gap-[10px] border-b border-[rgba(10,22,40,0.25)] pb-[10px] font-sans text-[16px] font-semibold tracking-[0.01em] text-[#0A1628] sm:text-[18px]">
-        {/* faint gold dot */}
-        <span className="w-[14px] h-[14px] bg-[#0A1628] opacity-20 rounded-full flex-shrink-0" />
-        {icon}
-        {title}
-      </div>
-
-      {/* Rows */}
-      {rows.map(([label, value]) => (
-        <div
-          key={label}
-          className="flex flex-col gap-1 py-3 border-b border-[rgba(10,22,40,0.10)] last:border-b-0 font-sans text-[12px] sm:flex-row sm:items-start sm:justify-between sm:gap-6"
-        >
-          <span className="max-w-full break-words text-[#6A6A6A] tracking-[0.04em]">{label}</span>
-          <span
-            className={`max-w-full break-words text-[#0A1628] font-medium tracking-[0.01em] ${
-              leftAlignValues ? 'sm:text-left' : 'sm:text-right'
-            }`}
-          >
-            {value}
-          </span>
+    <div className="mb-10 last:mb-0">
+      {hideTitle ? null : (
+        <div className="mb-5 flex items-center gap-[10px] font-sans text-[18px] font-semibold tracking-[0.01em] text-[#0A1628] sm:text-[20px]">
+          <span className="h-[14px] w-[14px] rounded-full bg-[#0A1628] opacity-20 flex-shrink-0" />
+          {icon}
+          {title}
         </div>
-      ))}
+      )}
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        {rows.map(([label, value], index) => (
+          <div
+            key={`${label}-${index}`}
+            className="rounded-[18px] border border-[rgba(10,22,40,0.10)] bg-[#FAFBFD] p-5 shadow-[0_14px_34px_rgba(10,22,40,0.04)]"
+          >
+            <div className="mb-2 font-sans text-[11px] font-medium uppercase tracking-[0.14em] text-[#8B94A5]">
+              {label}
+            </div>
+            <div
+              className={`font-sans text-[18px] font-semibold leading-[1.3] text-[#0A1628] ${
+                leftAlignValues ? 'text-left' : 'text-left'
+              }`}
+            >
+              {value}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

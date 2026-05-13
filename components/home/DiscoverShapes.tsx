@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { gsap } from 'gsap';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { houseOfDiamsWordmarkFont } from '@/app/fonts';
 
 type ShapeItem = {
   id: string;
@@ -288,13 +289,13 @@ export default function DiscoverShapes({
         {/* Heading */}
         <div className="mx-auto max-w-[820px] text-center">
           <h2
-            className="font-serif font-light uppercase tracking-[0.02em] text-[#0A0A0A]"
-            style={{ fontSize: 'clamp(42px, 6vw, 68px)' }}
+            className="font-serif font-light uppercase tracking-[0.02em] text-[#0A0A0A] max-md:text-[30px]"
+            style={{ fontSize: 'clamp(32px, 6vw, 68px)' }}
           >
             Discover Shapes
           </h2>
           <p className="mx-auto mt-3 max-w-[660px] text-[15px] font-light leading-[1.5] text-[#1B1B1B] md:text-[18px]">
-            Explore our curated selection, categorized by diamond shape, to find your perfect expression of elegance.
+            Ten shapes. Each one cut differently. Pick what suits you.
           </p>
         </div>
 
@@ -374,7 +375,7 @@ export default function DiscoverShapes({
                 <Link href={displayHref} className="inline-flex items-center justify-center transition-opacity hover:opacity-75">
                   <span
                     ref={nameRef}
-                    className="inline-block font-sans text-[28px] font-normal tracking-[0.01em] text-[#0A0A0A] md:text-[38px]"
+                    className={`${houseOfDiamsWordmarkFont.className} inline-block text-[28px] font-normal tracking-[0.04em] text-[#0A0A0A] md:text-[38px]`}
                   >
                     {displayName}
                   </span>
@@ -382,7 +383,7 @@ export default function DiscoverShapes({
               ) : (
                 <span
                   ref={nameRef}
-                  className="inline-block font-sans text-[28px] font-normal tracking-[0.01em] text-[#0A0A0A] md:text-[38px]"
+                  className={`${houseOfDiamsWordmarkFont.className} inline-block text-[28px] font-normal tracking-[0.04em] text-[#0A0A0A] md:text-[38px]`}
                 >
                   {displayName}
                 </span>

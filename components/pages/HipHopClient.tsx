@@ -15,12 +15,19 @@ import type { HipHopHeroContent, HipHopHeroSlide } from '@/lib/hiphop-hero';
 export default function HipHopClient({
   products,
   hero,
+  browseSections,
 }: {
   products: StorefrontProduct[]
   hero: {
     content: HipHopHeroContent
     slides: HipHopHeroSlide[]
   }
+  browseSections: {
+    id: string
+    title: string
+    slug: string
+    options: { id: string; label: string; slug: string }[]
+  }[]
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [enquireOpen, setEnquireOpen] = useState(false);
@@ -69,7 +76,7 @@ export default function HipHopClient({
           </button> */}
         </div>
 
-        <HipHopCollection products={products} onEnquire={openEnquire} onWishlistToast={handleWishlistToast} />
+        <HipHopCollection products={products} browseSections={browseSections} onEnquire={openEnquire} onWishlistToast={handleWishlistToast} />
 
         <Overlay isVisible={drawerOpen} onClick={() => setDrawerOpen(false)} />
         <MobileDrawer

@@ -44,6 +44,7 @@ export default function BlogClient({ blogPosts = posts }: { blogPosts?: BlogPost
           title={activePost.title}
           subtitle={activePost.subtitle}
           body={activePost.body}
+          contentBlocks={activePost.contentBlocks}
         />
         <BlogPostTags tags={activePost.tags} />
       </section>

@@ -12,12 +12,22 @@ import { usePathname, useSearchParams } from 'next/navigation';
  * @param {{
  *   title?: string
  *   subtitle?: string
+ *   desktopImageUrl?: string
+ *   mobileImageUrl?: string
+ *   ctaLabel?: string
+ *   ctaHref?: string
+ *   bannerEnabled?: boolean
  *   browseSections?: ShopHeroBrowseSection[]
  * }} props
  */
 export default function ShopHero({
   title = 'Our Collection',
   subtitle = 'Browse our curated selection of fine jewellery with natural and CVD diamonds. Every piece certified, every stone responsibly sourced.',
+  desktopImageUrl = '',
+  mobileImageUrl = '',
+  ctaLabel = '',
+  ctaHref = '',
+  bannerEnabled = false,
   browseSections = [],
 }) {
   const pathname = usePathname();
@@ -82,20 +92,21 @@ export default function ShopHero({
     0,
     browseSections.findIndex((section) => section.id === activeSection?.id)
   );
+  const hasBannerImage = bannerEnabled && Boolean(desktopImageUrl || mobileImageUrl);
 
   return (
     <section
       className="shop-hero-section"
       style={{
-        padding: "92px 52px 50px",
+        position: "relative",
         textAlign: "center",
-        background: "linear-gradient(180deg, #FAFBFD 0%, #FAF7F2 100%)",
+        background: "#FFFFFF",
         borderBottom: "1px solid rgba(10,22,40,0.10)",
       }}
     >
       <style>{`
         @media (max-width: 640px) {
-          .shop-hero-section { padding: 72px 20px 40px !important; }
+          .shop-hero-top { padding: ${hasBannerImage ? '120px 20px 40px' : '72px 20px 40px'} !important; }
           .shop-hero-browse { display: none !important; }
           .shop-hero-tabs-wrap { padding: 6px !important; }
           .shop-hero-tabs { gap: 6px !important; }
@@ -108,68 +119,137 @@ export default function ShopHero({
       `}</style>
 
       <div
+        className="shop-hero-top"
         style={{
-          fontSize: "9px",
-          letterSpacing: ".3em",
-          textTransform: "uppercase",
-          color: "#6A6A6A",
-          marginBottom: "20px",
+          position: "relative",
+          overflow: "hidden",
+          padding: hasBannerImage ? "140px 52px 46px" : "92px 52px 40px",
+          background: hasBannerImage ? "#0A1628" : "linear-gradient(180deg, #FAFBFD 0%, #FAF7F2 100%)",
         }}
       >
-        <Link
-          href="/"
-          style={{ color: "#6A6A6A", textDecoration: "none", transition: "color .3s" }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = "#0A1628")}
-          onMouseLeave={(e) => (e.currentTarget.style.color = "#6A6A6A")}
-        >
-          Home
-        </Link>
-        <span style={{ margin: "0 10px", color: "#7F8898" }}>/</span>
-        <span style={{ color: "#0A1628" }}>Shop</span>
-      </div>
-
-      <h1
-        style={{
-          fontFamily: "var(--serif)",
-          fontSize: "clamp(46px, 6vw, 76px)",
-          fontWeight: 300,
-          color: "#0A1628",
-          letterSpacing: ".02em",
-          lineHeight: 1.1,
-          marginBottom: "14px",
-        }}
-      >
-        {title.includes(' ') ? (
+        {hasBannerImage ? (
           <>
-            {title.split(' ').slice(0, -1).join(' ')}{' '}
-            <em style={{ fontStyle: "normal", color: "#0A1628" }}>{title.split(' ').slice(-1)}</em>
+            <picture>
+              {mobileImageUrl ? <source media="(max-width: 960px)" srcSet={mobileImageUrl} /> : null}
+              <img
+                src={desktopImageUrl || mobileImageUrl}
+                alt={title}
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  objectPosition: "center",
+                }}
+              />
+            </picture>
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                background: "linear-gradient(90deg, rgba(10,22,40,0.82) 0%, rgba(10,22,40,0.58) 34%, rgba(10,22,40,0.18) 66%, rgba(10,22,40,0) 100%)",
+              }}
+            />
           </>
-        ) : (
-          <em style={{ fontStyle: "normal", color: "#0A1628" }}>{title}</em>
-        )}
-      </h1>
+        ) : null}
 
-      <p
-        style={{
-          fontSize: "12px",
-          letterSpacing: ".12em",
-          color: "#6A6A6A",
-          maxWidth: "540px",
-          margin: "0 auto",
-          lineHeight: 1.8,
-        }}
-      >
-        {subtitle}
-      </p>
+        <div
+          style={{
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
+          <div
+            style={{
+              fontSize: "9px",
+              letterSpacing: ".3em",
+              textTransform: "uppercase",
+              color: hasBannerImage ? "rgba(255,255,255,0.72)" : "#6A6A6A",
+              marginBottom: "20px",
+            }}
+          >
+            <Link
+              href="/"
+              style={{ color: hasBannerImage ? "rgba(255,255,255,0.72)" : "#6A6A6A", textDecoration: "none", transition: "color .3s" }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = hasBannerImage ? "#FFFFFF" : "#0A1628")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = hasBannerImage ? "rgba(255,255,255,0.72)" : "#6A6A6A")}
+            >
+              Home
+            </Link>
+            <span style={{ margin: "0 10px", color: hasBannerImage ? "rgba(255,255,255,0.42)" : "#7F8898" }}>/</span>
+            <span style={{ color: hasBannerImage ? "#FFFFFF" : "#0A1628" }}>Shop</span>
+          </div>
+
+          <h1
+            style={{
+              fontFamily: "var(--serif)",
+              fontSize: "clamp(46px, 6vw, 76px)",
+              fontWeight: 300,
+              color: hasBannerImage ? "#FFFFFF" : "#0A1628",
+              letterSpacing: ".02em",
+              lineHeight: 1.1,
+              marginBottom: "14px",
+            }}
+          >
+            {title.includes(' ') ? (
+              <>
+                {title.split(' ').slice(0, -1).join(' ')}{' '}
+                <em style={{ fontStyle: "normal", color: hasBannerImage ? "#FFFFFF" : "#0A1628" }}>{title.split(' ').slice(-1)}</em>
+              </>
+            ) : (
+              <em style={{ fontStyle: "normal", color: hasBannerImage ? "#FFFFFF" : "#0A1628" }}>{title}</em>
+            )}
+          </h1>
+
+          <p
+            style={{
+              fontSize: "12px",
+              letterSpacing: ".12em",
+              color: hasBannerImage ? "rgba(255,255,255,0.82)" : "#6A6A6A",
+              maxWidth: "540px",
+              margin: "0 auto",
+              lineHeight: 1.8,
+            }}
+          >
+            {subtitle}
+          </p>
+
+          {hasBannerImage && ctaLabel && ctaHref ? (
+            <div style={{ marginTop: "26px" }}>
+              <Link
+                href={ctaHref}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  padding: "14px 28px",
+                  borderRadius: "999px",
+                  background: "#FFFFFF",
+                  color: "#0A1628",
+                  textDecoration: "none",
+                  textTransform: "uppercase",
+                  letterSpacing: ".24em",
+                  fontSize: "10px",
+                  fontWeight: 600,
+                  border: "1px solid rgba(255,255,255,0.18)",
+                }}
+              >
+                <span>{ctaLabel}</span>
+                <span style={{ fontSize: "14px" }}>&rarr;</span>
+              </Link>
+            </div>
+          ) : null}
+        </div>
+      </div>
 
       {browseSections.length > 0 && activeSection ? (
         <div
           className="shop-hero-browse"
           style={{
             maxWidth: "1120px",
-            margin: "30px auto 0",
-            borderTop: "1px solid rgba(10,22,40,0.08)",
-            paddingTop: "22px",
+            margin: "0 auto",
+            padding: "28px 52px 34px",
           }}
         >
           <div
@@ -181,7 +261,7 @@ export default function ShopHero({
               padding: "5px",
               border: "1px solid rgba(10,22,40,0.12)",
               borderRadius: "24px",
-              background: "rgba(255,255,255,0.76)",
+              background: "#FFFFFF",
             }}
           >
             <div

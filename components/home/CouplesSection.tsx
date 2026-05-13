@@ -201,7 +201,7 @@ export default function CouplesSection({
             {eyebrow}
             <span className="w-6 h-px bg-[#0A1628]" />
           </div>
-          <h2 className="font-serif font-light text-[#0A1628] leading-[1.05] mb-3.5" style={{ fontSize: 'clamp(40px,5vw,64px)' }}>
+          <h2 className="font-serif font-light text-[#0A1628] leading-[1.05] mb-3.5 max-md:text-[38px]" style={{ fontSize: 'clamp(28px,5vw,64px)' }}>
             {heading}
           </h2>
           <p className="text-[12px] font-light tracking-[0.12em] text-[#777] leading-[1.9] max-w-140 mx-auto">

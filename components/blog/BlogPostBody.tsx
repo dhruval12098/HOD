@@ -1,12 +1,17 @@
 "use client";
 
+"use client";
+
+import { getStorageImageUrl, type BlogPostContentBlock } from "@/lib/data/blog-posts";
+
 interface BlogPostBodyProps {
   title: string;
   subtitle: string;
   body: string;
+  contentBlocks?: BlogPostContentBlock[];
 }
 
-export default function BlogPostBody({ title, subtitle, body }: BlogPostBodyProps) {
+export default function BlogPostBody({ title, subtitle, body, contentBlocks = [] }: BlogPostBodyProps) {
   return (
     <>
       <h1
@@ -32,6 +37,57 @@ export default function BlogPostBody({ title, subtitle, body }: BlogPostBodyProp
         "
         dangerouslySetInnerHTML={{ __html: body }}
       />
+
+      {contentBlocks.length > 0 ? (
+        <div className="mt-10 space-y-10">
+          {contentBlocks.map((block) => {
+            if (block.type === 'image') {
+              const imageUrl = getStorageImageUrl(block.imagePath)
+              if (!imageUrl) return null
+
+              return (
+                <figure key={block.id} className="space-y-3">
+                  <div className="overflow-hidden rounded-[28px] bg-[#f3f1eb]">
+                    <img src={imageUrl} alt={block.imageAlt || title} className="block h-auto w-full object-cover" />
+                  </div>
+                  {block.imageCaption ? (
+                    <figcaption className="text-[13px] leading-[1.7] tracking-[0.02em] text-[#222222]">
+                      {block.imageCaption}
+                    </figcaption>
+                  ) : null}
+                </figure>
+              )
+            }
+
+            if (block.type === 'heading' && block.heading) {
+              return (
+                <h3
+                  key={block.id}
+                  className="font-['Cormorant_Garamond',Georgia,serif] text-[28px] font-normal tracking-[0.02em] text-[#0A0A0A] leading-[1.2]"
+                >
+                  {block.heading}
+                </h3>
+              )
+            }
+
+            if ((block.type === 'text' || block.type === 'quote') && block.bodyHtml) {
+              return (
+                <div
+                  key={block.id}
+                  className={
+                    block.type === 'quote'
+                      ? "[&_blockquote]:border-l-2 [&_blockquote]:border-[#0A1628] [&_blockquote]:px-7 [&_blockquote]:py-5 [&_blockquote]:my-0 [&_blockquote]:bg-[#FAFBFD] [&_blockquote_p]:font-['Cormorant_Garamond',Georgia,serif] [&_blockquote_p]:text-[20px] [&_blockquote_p]:italic [&_blockquote_p]:text-[#0A0A0A] [&_blockquote_p]:m-0 [&_blockquote_p]:leading-[1.65]"
+                      : "[&_p]:text-[15px] [&_p]:tracking-[0.03em] [&_p]:leading-[1.95] [&_p]:text-[#3A3A3A] [&_p]:mb-6 [&_p]:font-light [&_ul]:my-4 [&_ul]:mb-6 [&_ul]:p-0 [&_ul]:list-none [&_ul_li]:text-[15px] [&_ul_li]:tracking-[0.03em] [&_ul_li]:leading-[1.9] [&_ul_li]:text-[#3A3A3A] [&_ul_li]:py-1.5 [&_ul_li]:pl-5 [&_ul_li]:relative [&_ul_li]:before:content-[''] [&_ul_li]:before:absolute [&_ul_li]:before:left-0 [&_ul_li]:before:top-[17px] [&_ul_li]:before:w-1.5 [&_ul_li]:before:h-px [&_ul_li]:before:bg-[#0A1628]"
+                  }
+                  dangerouslySetInnerHTML={{ __html: block.bodyHtml }}
+                />
+              )
+            }
+
+            return null
+          })}
+        </div>
+      ) : null}
     </>
   );
 }

@@ -142,7 +142,7 @@ function PackagingIcon() {
 const certificationItems = [
   { title: ['Free', 'Resizing'], icon: <FreeResizingIcon /> },
   { title: ['Overnight', 'Shipping'], icon: <OvernightShippingIcon /> },
-  { title: ['30 Days', 'Free Return'], icon: <FreeReturnIcon /> },
+  { title: ['15 Days', 'Free Return'], icon: <FreeReturnIcon /> },
   { title: ['Certificate', '& Appraisal'], icon: <CertificateIcon /> },
   { title: ['Conflict Free', 'Diamonds'], icon: <ConflictFreeIcon /> },
   { title: ['Elegant', 'Packaging'], icon: <PackagingIcon /> },
@@ -164,16 +164,16 @@ function renderDisplayLine(line: string) {
 
 export default function Certifications() {
   return (
-    <section className="mx-auto max-w-[1400px] px-[52px] py-[110px] max-lg:px-7 max-md:px-5 max-md:py-[70px]">
+    <section className="mx-auto max-w-[1400px] px-[52px] py-[110px] max-lg:px-7 max-md:px-4 max-md:py-[56px]">
       <RevealDiv className="mb-16 flex flex-col items-center text-center">
         <p className="mb-[14px] text-[8px] font-normal uppercase tracking-[0.28em] text-[#0A1628] opacity-60">
           Our Promise
         </p>
 
-        <h2
-          className={`${loaderWordmarkFont.className} font-light tracking-[0.01em] text-[#0A0A0A] leading-[1.08]`}
-          style={{ fontSize: 'clamp(34px, 4.5vw, 54px)', fontWeight: 400 }}
-        >
+          <h2
+            className={`${loaderWordmarkFont.className} font-light tracking-[0.01em] text-[#0A0A0A] leading-[1.08] max-md:text-[28px]`}
+            style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}
+          >
           Why Choose{' '}
           <em className="not-italic font-normal italic text-[#0A1628]">
             House of Diams
@@ -182,26 +182,20 @@ export default function Certifications() {
       </RevealDiv>
 
       <RevealDiv delay={150}>
-        <div className="grid grid-cols-6 border-y border-[rgba(10,22,40,0.08)] max-xl:grid-cols-3 max-md:grid-cols-2">
-          {certificationItems.map((item, i) => (
+        <div className="grid grid-cols-6 max-xl:grid-cols-3 max-md:grid-cols-3">
+          {certificationItems.map((item) => (
             <div
               key={item.title.join('-')}
               className={[
-                'group relative flex min-h-[220px] flex-col items-center justify-center px-6 py-10 text-center transition-colors duration-300',
-                'border-r border-[rgba(10,22,40,0.08)] hover:bg-white/70',
-                i === certificationItems.length - 1 ? '!border-r-0' : '',
-                i === 2 || i === 5 ? 'max-xl:!border-r-0' : '',
-                i % 2 === 1 ? 'max-md:!border-r-0' : '',
+                'relative flex min-h-[220px] flex-col items-center justify-center px-6 py-10 text-center max-md:min-h-[132px] max-md:px-2 max-md:py-4',
               ].join(' ')}
             >
-              <span className="absolute left-1/2 top-0 h-[2px] w-0 -translate-x-1/2 bg-[#0A1628] transition-[width] duration-[400ms] ease-[cubic-bezier(.4,0,.2,1)] group-hover:w-4/5" />
-
-              <div className="mb-6 flex h-14 w-14 items-center justify-center text-[#0A1628]">
+              <div className="mb-6 flex h-14 w-14 items-center justify-center text-[#0A1628] max-md:mb-3 max-md:scale-[0.68]">
                 {item.icon}
               </div>
 
               <p
-                className={`${loaderWordmarkFont.className} max-w-[16ch] whitespace-pre-line text-[18px] font-normal leading-[1.5] tracking-[0.02em] text-[#0A0A0A]`}
+                className={`${loaderWordmarkFont.className} max-w-[16ch] whitespace-pre-line text-[18px] font-normal leading-[1.5] tracking-[0.02em] text-[#0A0A0A] max-md:text-[11px] max-md:leading-[1.28]`}
                 style={{ fontWeight: 400 }}
               >
                 {item.title.map((line, index) => (

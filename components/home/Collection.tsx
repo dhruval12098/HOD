@@ -98,7 +98,7 @@ export default function Collection({ items = [] }: CollectionProps) {
           Explore
           <span className="inline-block h-px w-6 bg-[#0A1628]" />
         </div>
-        <h2 className="mt-4 font-serif text-[clamp(34px,5vw,60px)] font-light leading-[1.02] text-[#0A1628]">
+        <h2 className="mt-4 font-serif text-[clamp(26px,5vw,60px)] font-light leading-[1.02] text-[#0A1628] max-md:text-[32px]">
           Our <em className="not-italic italic">Collections</em>
         </h2>
         <p className="mx-auto mt-3 max-w-xl text-[12px] font-light tracking-[0.1em] text-[#6A6A6A] sm:text-[13px]">
@@ -135,10 +135,10 @@ export default function Collection({ items = [] }: CollectionProps) {
                   <div className="text-[7px] font-medium uppercase tracking-[0.22em] text-white/70 sm:text-[8px]">
                     {panel.label}
                   </div>
-                  <h3 className="mt-2 font-sans text-[17px] font-medium leading-[1.08] text-white sm:text-[21px]">
+                  <h3 className="mt-1.5 font-sans text-[24px] font-bold leading-[1.01] text-white sm:text-[30px]">
                     {panel.name}
                   </h3>
-                  <div className="mt-3 inline-flex items-center gap-2.5 text-[9px] font-medium uppercase tracking-[0.22em] text-white sm:text-[10px]">
+                  <div className="mt-1.5 inline-flex items-center gap-2.5 text-[8px] font-medium uppercase tracking-[0.2em] text-white/92 sm:text-[9px]">
                     <span>{panel.cta}</span>
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
                       <path d="M4 3L9 7L4 11" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />

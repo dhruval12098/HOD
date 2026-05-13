@@ -10,7 +10,6 @@ import BespokeHero from '@/components/bespoke/BespokeHero';
 import ProcessSteps from '@/components/bespoke/ProcessSteps';
 import BespokePortfolio from '@/components/bespoke/BespokePortfolio';
 import BespokeForm from '@/components/bespoke/BespokeForm';
-import Manufacturing from '../home/Manufacturing';
 
 function BespokeInner({
   hero,
@@ -18,7 +17,6 @@ function BespokeInner({
   processItems,
   portfolioCategories,
   portfolioItems,
-  manufacturingItems,
   formConfig,
 }: {
   hero?: any;
@@ -26,7 +24,6 @@ function BespokeInner({
   processItems?: any[];
   portfolioCategories?: any[];
   portfolioItems?: any[];
-  manufacturingItems?: any[];
   formConfig?: any;
 }) {
   const { showToast } = useToast();
@@ -51,7 +48,6 @@ function BespokeInner({
         <BespokeHero onEnquireClick={() => setEnquireOpen(true)} initialHero={hero} initialSlides={slides} />
         <ProcessSteps initialItems={processItems} />
         <BespokePortfolio initialCategories={portfolioCategories} initialItems={portfolioItems} />
-        <Manufacturing initialItems={manufacturingItems} />
         <BespokeForm initialConfig={formConfig} onSuccess={() => showToast("Enquiry sent - we'll reply within 24 hours")} />
 
         <EnquireModal open={enquireOpen} onClose={() => setEnquireOpen(false)} />
@@ -66,7 +62,6 @@ export default function BespokeClient(props: {
   processItems?: any[];
   portfolioCategories?: any[];
   portfolioItems?: any[];
-  manufacturingItems?: any[];
   formConfig?: any;
 }) {
   return (

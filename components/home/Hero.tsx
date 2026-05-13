@@ -126,6 +126,12 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
   const line2 = rest.join(' ');
   const currentSlide = slides[activeSlide] ?? slides[0];
   const hasImageHero = Boolean(content.slider_enabled && currentSlide);
+  const goToPrevSlide = () => {
+    setActiveSlide((current) => (current - 1 + slides.length) % slides.length);
+  };
+  const goToNextSlide = () => {
+    setActiveSlide((current) => (current + 1) % slides.length);
+  };
 
   useEffect(() => {
     if (!contentResolved) return;
@@ -233,6 +239,29 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
                 })}
             </div>
 
+            {slides.length > 1 ? (
+              <div className="absolute inset-x-0 top-1/2 z-20 flex -translate-y-1/2 items-center justify-between px-4 sm:px-6 lg:px-8">
+                <button
+                  type="button"
+                  onClick={goToPrevSlide}
+                  aria-label="Previous slide"
+                  className="flex h-11 w-11 items-center justify-center rounded-full border border-white/22 bg-white/12 text-white backdrop-blur-xl transition hover:bg-white/18 hover:border-white/34"
+                  style={{ boxShadow: '0 14px 38px rgba(10,22,40,0.18)' }}
+                >
+                  <span className="text-lg leading-none">&#8592;</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={goToNextSlide}
+                  aria-label="Next slide"
+                  className="flex h-11 w-11 items-center justify-center rounded-full border border-white/22 bg-white/12 text-white backdrop-blur-xl transition hover:bg-white/18 hover:border-white/34"
+                  style={{ boxShadow: '0 14px 38px rgba(10,22,40,0.18)' }}
+                >
+                  <span className="text-lg leading-none">&#8594;</span>
+                </button>
+              </div>
+            ) : null}
+
             <div className="absolute inset-x-0 bottom-0 z-20 flex items-end justify-between gap-6 px-4 pb-4 sm:px-6 sm:pb-6 lg:px-8 lg:pb-8">
               <div className="flex flex-col items-start gap-4">
                 <Link
@@ -267,7 +296,7 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--theme-ink)]" />
           </div>
 
-          <h1 className="mb-8 animate-[fadeUp_1.2s_0.4s_ease_forwards] font-serif text-[clamp(56px,9vw,132px)] font-light leading-[0.95] tracking-[-0.01em] text-[var(--theme-heading)]">
+          <h1 className="mb-8 animate-[fadeUp_1.2s_0.4s_ease_forwards] font-serif text-[clamp(40px,9vw,132px)] font-light leading-[0.95] tracking-[-0.01em] text-[var(--theme-heading)] max-md:text-[54px]">
             {line1}
             <br />
             <span className="relative inline-block font-normal text-[var(--theme-ink)]">

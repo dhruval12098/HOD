@@ -21,16 +21,23 @@ const METAL_COLORS: Record<string, string> = {
 };
 
 const OVERLAY_NAVBAR_ROUTES = new Set(['/', '/hiphop', '/bespoke']);
+const FALLBACK_NAV_ITEMS: NavbarRenderItem[] = [
+  { label: 'Fine Jewellery', href: '/fine-jewellery' },
+  { label: 'Engagement Rings', href: '/engagement-rings' },
+  { label: 'Wedding Bands', href: '/wedding-bands' },
+  { label: 'Hip Hop', href: '/hiphop' },
+  { label: 'Bespoke', href: '/bespoke' },
+];
 
 function MetalDot({ type, colorHex }: { type: keyof typeof METAL_COLORS; colorHex?: string | null }) {
-  const background = typeof colorHex === 'string' && colorHex.trim().length > 0
+  const color = typeof colorHex === 'string' && colorHex.trim().length > 0
     ? colorHex.trim()
     : METAL_COLORS[type];
 
   return (
     <span
-      className="inline-block w-5 h-5 rounded-full border border-black/10 flex-shrink-0"
-      style={{ background }}
+      className="inline-block h-5 w-5 flex-shrink-0 rounded-full border-[5px] bg-transparent"
+      style={{ borderColor: color }}
     />
   );
 }
@@ -46,7 +53,7 @@ function MegaSection({ section }: { section: NavbarRenderSection }) {
       </div>
 
       {section.metals && (
-        <div className="flex flex-col">
+        <div className={section.twoCol ? 'grid grid-cols-2 gap-x-7 gap-y-1' : 'flex flex-col'}>
           {section.metals.map((metal) => (
             <a
               key={`${metal.type}-${metal.label}`}
@@ -62,7 +69,7 @@ function MegaSection({ section }: { section: NavbarRenderSection }) {
       )}
 
       {section.metals && section.links && section.links.length > 0 && (
-        <div className="mt-4 flex flex-col border-t border-black/[0.06] pt-4">
+        <div className={`mt-4 border-t border-black/[0.06] pt-4 ${section.twoCol ? 'grid grid-cols-2 gap-x-7 gap-y-1' : 'flex flex-col'}`}>
           {section.links.map((link) => (
             <a
               key={`${section.title}-${link.label}`}
@@ -89,7 +96,7 @@ function MegaSection({ section }: { section: NavbarRenderSection }) {
                 <img
                   src={link.iconUrl}
                   alt={link.label}
-                  className="h-4 w-4 flex-shrink-0 object-contain"
+                  className="h-5 w-5 flex-shrink-0 object-contain"
                 />
               ) : null}
               {link.label}
@@ -111,7 +118,7 @@ function MegaSection({ section }: { section: NavbarRenderSection }) {
                 <img
                   src={link.iconUrl}
                   alt={link.label}
-                  className="h-4 w-4 flex-shrink-0 object-contain"
+                  className="h-5 w-5 flex-shrink-0 object-contain"
                 />
               ) : null}
               {link.label}
@@ -139,7 +146,7 @@ function getMobileSectionEntries(section: NavbarRenderSection) {
         <img
           src={link.iconUrl}
           alt={link.label}
-          className="h-4 w-4 flex-shrink-0 object-contain"
+            className="h-5 w-5 flex-shrink-0 object-contain"
         />
       ) : null,
     })) ?? [];
@@ -149,7 +156,7 @@ function getMobileSectionEntries(section: NavbarRenderSection) {
 
 function getMegaMenuColumnCount(item: NavbarRenderItem) {
   const sectionCount = item.mega?.sections.length ?? 0;
-  return Math.max(1, Math.min(5, sectionCount || 1));
+  return Math.max(1, Math.min(3, sectionCount || 1));
 }
 
 export default function Navbar() {
@@ -165,7 +172,7 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchItems, setSearchItems] = useState<Array<{ dbId?: string; slug: string; name: string; shortMeta: string; imageUrl?: string; priceFrom: number }>>([]);
-  const [navItems, setNavItems] = useState<NavbarRenderItem[]>([]);
+  const [navItems, setNavItems] = useState<NavbarRenderItem[]>(FALLBACK_NAV_ITEMS);
   const [announcementItems, setAnnouncementItems] = useState<
     Array<{ message: string; link_url: string; open_in_new_tab: boolean }>
   >([
@@ -254,7 +261,7 @@ export default function Navbar() {
       const response = await fetch('/api/public/navbar', { cache: 'no-store' });
       const payload = await response.json().catch(() => null);
 
-      if (ignore || !response.ok || !Array.isArray(payload?.items)) {
+      if (ignore || !response.ok || !Array.isArray(payload?.items) || payload.items.length === 0) {
         return;
       }
 
@@ -438,20 +445,6 @@ export default function Navbar() {
           pointer-events: auto !important;
           transform: translateY(0) !important;
         }
-        .nav-link-underline::after {
-          content: '';
-          position: absolute;
-          bottom: 0; left: 30px; right: 30px;
-          height: 2px;
-          background: currentColor;
-          transform: scaleX(0);
-          transform-origin: center;
-          transition: transform .35s cubic-bezier(.4,0,.2,1);
-        }
-        .mega-parent:hover .nav-link-underline::after,
-        .nav-link-underline:hover::after {
-          transform: scaleX(1);
-        }
         .nav-desktop-row::before {
           content: '';
           position: absolute;
@@ -603,7 +596,7 @@ export default function Navbar() {
                 >
                   <a
                     href={item.href ?? '#'}
-                    className="nav-link-underline relative block px-[18px] py-[11px] text-[9px] font-medium tracking-[0.17em] uppercase no-underline cursor-pointer transition-colors duration-300"
+                    className="nav-link-underline relative block px-[18px] py-[11px] text-[11px] font-semibold tracking-[0.19em] uppercase no-underline cursor-pointer transition-colors duration-300"
                     style={{
                       fontFamily: "'Montserrat', sans-serif",
                       color: desktopHeaderMuted,
@@ -631,7 +624,7 @@ export default function Navbar() {
                     >
                       <div className="max-w-[1280px] mx-auto px-[100px] py-[56px]">
                         <div
-                          className="grid gap-0"
+                          className="grid gap-y-10"
                           style={{
                             gridTemplateColumns: `repeat(${getMegaMenuColumnCount(item)}, minmax(0, 1fr))`,
                           }}
@@ -820,7 +813,7 @@ export default function Navbar() {
         <a
           href="/"
           onClick={closeMenu}
-          className="block py-4 text-[26px] font-normal tracking-[0.05em] border-b border-black/[0.06] no-underline text-[#0A1628] transition-all duration-300 hover:text-[#0A1628] hover:pl-2"
+          className="block py-3.5 text-[20px] font-normal tracking-[0.04em] border-b border-black/[0.06] no-underline text-[#0A1628] transition-all duration-300 hover:text-[#0A1628] hover:pl-2"
           style={{ fontFamily: 'var(--display-title)' }}
         >
           Home
@@ -836,7 +829,7 @@ export default function Navbar() {
                 key={item.label}
                 href={item.href}
                 onClick={closeMenu}
-                className="block py-4 text-[26px] font-normal tracking-[0.05em] border-b border-black/[0.06] no-underline text-[#0A1628] transition-all duration-300 hover:text-[#0A1628] hover:pl-2"
+                className="block py-3.5 text-[20px] font-normal tracking-[0.04em] border-b border-black/[0.06] no-underline text-[#0A1628] transition-all duration-300 hover:text-[#0A1628] hover:pl-2"
                 style={{ fontFamily: 'var(--display-title)' }}
               >
                 {item.label}
@@ -849,7 +842,7 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => setMobileOpenItem((current) => (current === item.label ? null : item.label))}
-                className="flex w-full items-center justify-between py-4 text-left text-[26px] font-normal tracking-[0.05em] text-[#0A1628]"
+                className="flex w-full items-center justify-between py-3.5 text-left text-[20px] font-normal tracking-[0.04em] text-[#0A1628]"
                 style={{ fontFamily: 'var(--display-title)' }}
               >
                 <span>{item.label}</span>
@@ -886,7 +879,7 @@ export default function Navbar() {
                               key={`${section.id}-${entry.label}-${entry.href}`}
                               href={entry.href}
                               onClick={closeMenu}
-                              className="flex items-center gap-3 rounded-xl px-2 py-2 text-[14px] font-light tracking-[0.02em] text-[#253246] no-underline transition-colors duration-200 hover:bg-black/[0.03] hover:text-[#0A1628]"
+                            className="flex items-center gap-3 rounded-xl px-2 py-2 text-[13px] font-light tracking-[0.02em] text-[#253246] no-underline transition-colors duration-200 hover:bg-black/[0.03] hover:text-[#0A1628]"
                               style={{ fontFamily: "'Montserrat', sans-serif" }}
                             >
                               {entry.icon}
@@ -913,7 +906,7 @@ export default function Navbar() {
             key={item.label}
             href={item.href}
             onClick={closeMenu}
-            className="block py-4 text-[26px] font-normal tracking-[0.05em] border-b border-black/[0.06] no-underline text-[#0A1628] transition-all duration-300 hover:text-[#0A1628] hover:pl-2"
+            className="block py-3.5 text-[20px] font-normal tracking-[0.04em] border-b border-black/[0.06] no-underline text-[#0A1628] transition-all duration-300 hover:text-[#0A1628] hover:pl-2"
             style={{ fontFamily: 'var(--display-title)' }}
           >
             {item.label}

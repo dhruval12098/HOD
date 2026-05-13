@@ -200,6 +200,7 @@ export default function Footer() {
 
         <div>
           <ColTitle>Support</ColTitle>
+          <ColLink href="/faq">FAQ</ColLink>
           <ColLink href="/shipping">Shipping</ColLink>
           <ColLink href="/returns">Returns</ColLink>
           <ColLink href="/terms">Terms &amp; Conditions</ColLink>

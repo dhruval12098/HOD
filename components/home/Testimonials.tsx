@@ -126,8 +126,8 @@ export default function Testimonials({ initialData }: { initialData?: HomeTestim
         </RevealDiv>
         <RevealDiv delay={100}>
           <h2
-            className="font-serif font-light tracking-[0.02em] text-[#0A1628] leading-[1.05] text-center"
-            style={{ fontSize: 'clamp(40px, 5.5vw, 72px)' }}
+            className="font-serif font-light tracking-[0.02em] text-[#0A1628] leading-[1.05] text-center max-md:text-[32px]"
+            style={{ fontSize: 'clamp(30px, 5.5vw, 72px)' }}
           >
             {heading}
           </h2>

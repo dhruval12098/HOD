@@ -73,7 +73,7 @@ export default function ProductConfigurator({
   onEngravingTextChange,
   onRingCategoryChange,
 }) {
-  const metalName = METAL_META[metal]?.name || metal;
+  const metalName = product.metalsFull?.find((entry) => entry.slug === metal)?.name || METAL_META[metal]?.name || metal;
   const showMetal = product.metals.length > 0;
   const showPurity = product.showPurity && product.purities.length > 0;
   const showPrimaryFit = product.chainLengthOptions.length > 0 || product.fitOptions.length > 0;
@@ -107,11 +107,8 @@ export default function ProductConfigurator({
         <span className="h-[6px] w-[6px] flex-shrink-0 rounded-full bg-[#0A1628]" />
         Configure Your Piece
       </div>
-      <p className="mb-6 font-sans text-[10px] font-light tracking-[0.14em] text-[#6A6A6A]">
-        Configure the live product attributes saved from admin
-      </p>
 
-      {showMetal ? <ConfiguratorMetalSwatches metals={product.metals} active={metal} onChange={onMetalChange} /> : null}
+      {showMetal ? <ConfiguratorMetalSwatches metals={product.metals} metalOptions={product.metalsFull || []} active={metal} onChange={onMetalChange} /> : null}
 
       {showPurity ? (
         <ConfiguratorPillGroup

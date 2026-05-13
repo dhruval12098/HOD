@@ -200,11 +200,15 @@ export default function ProductGrid({ products, sourceProducts = products, initi
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
           gap: 24px;
+          align-items: start;
+          overflow: visible;
+          padding-bottom: 96px;
         }
         @media (max-width: 768px) {
           .product-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
             gap: 12px !important;
+            padding-bottom: 24px !important;
           }
         }
       `}</style>

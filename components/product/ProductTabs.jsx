@@ -1,31 +1,22 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 import SpecSection from './SpecSection';
 
-/**
- * @typedef {{ key: string; value: string }} ProductKeyValue
- * @typedef {{ id: string; title: string; rows: ProductKeyValue[]; visible: boolean }} ProductDetailSection
- * @typedef {{ title: string; body: string }} ProductPolicyContent
- */
-
-/**
- * @param {{
- *   specifications?: ProductKeyValue[]
- *   productDetails?: ProductKeyValue[]
- *   detailSections?: ProductDetailSection[]
- *   shippingContent?: ProductPolicyContent | null
- *   careWarrantyContent?: ProductPolicyContent | null
- * }} props
- */
 export default function ProductTabs({
   specifications = [],
   productDetails = [],
   detailSections = [],
   shippingContent = null,
   careWarrantyContent = null,
+  showSections = true,
+  showPolicies = true,
 }) {
-  const [active, setActive] = useState('specs');
+  const [openPanels, setOpenPanels] = useState({
+    care: false,
+    shipping: false,
+  });
 
   const visibleSections = useMemo(() => {
     const sections = [];
@@ -59,42 +50,27 @@ export default function ProductTabs({
     return sections;
   }, [specifications, productDetails, detailSections]);
 
-  const tabs = [
-    { id: 'specs', label: 'Specifications' },
-    ...(careWarrantyContent?.body ? [{ id: 'care', label: careWarrantyContent.title || 'Care & Warranty' }] : []),
-    ...(shippingContent?.body ? [{ id: 'shipping', label: shippingContent.title || 'Shipping' }] : []),
-  ];
+  const togglePanel = (key) => {
+    setOpenPanels((current) => ({
+      ...current,
+      [key]: !current[key],
+    }));
+  };
 
   return (
-    <div className="mt-[30px] overflow-hidden">
-      <div className="overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div className="inline-flex min-w-full items-stretch gap-0 border-b border-[rgba(10,22,40,0.12)]">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActive(tab.id)}
-              className={`
-                relative flex-shrink-0 cursor-pointer border-b-2 px-4 py-[13px] text-left
-                font-sans text-[10px] font-semibold uppercase tracking-[0.2em]
-                transition-colors duration-300
-                max-sm:min-w-[170px] sm:min-w-[190px]
-                ${active === tab.id
-                  ? 'border-[#0A1628] text-[#0A1628]'
-                  : 'border-transparent text-[#6A6A6A] hover:text-[#0A1628]'}
-              `}
-            >
-              <span className="block whitespace-nowrap">{tab.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="min-w-0 pt-6">
-        {active === 'specs' ? (
+    <div className="mt-6 overflow-hidden">
+      <div className="min-w-0">
+        {showSections ? (
           <div className="animate-[fadeUp_0.4s_ease]">
             {visibleSections.length > 0 ? (
               visibleSections.map((section) => (
-                <SpecSection key={section.title} title={section.title} rows={section.rows} variant={section.variant} />
+                <SpecSection
+                  key={section.title}
+                  title={section.title}
+                  rows={section.rows}
+                  variant={section.variant}
+                  hideTitle={section.title === 'Specifications'}
+                />
               ))
             ) : (
               <div className="font-sans text-[12px] font-light leading-[1.9] text-[#253246]">
@@ -104,30 +80,68 @@ export default function ProductTabs({
           </div>
         ) : null}
 
-        {active === 'care' && careWarrantyContent?.body ? (
-          <SpecSection
-            title={careWarrantyContent.title || 'Care & Warranty'}
-            rows={careWarrantyContent.body
-              .split(/\n+/)
-              .map((entry) => entry.trim())
-              .filter(Boolean)
-              .map((entry, index) => [`Point ${index + 1}`, entry])}
-            variant="piece"
-            leftAlignValues
-          />
-        ) : null}
+        {showPolicies ? (
+          <div className="mt-8 overflow-hidden border border-[rgba(10,22,40,0.10)] bg-white">
+            {careWarrantyContent?.body ? (
+              <div className="border-b border-[rgba(10,22,40,0.10)] last:border-b-0">
+                <button
+                  type="button"
+                  onClick={() => togglePanel('care')}
+                  className="flex w-full items-center justify-between bg-white px-6 py-5 text-left transition-colors duration-200 hover:bg-[#FAFBFD]"
+                >
+                  <span className="font-sans text-[12px] font-medium uppercase tracking-[0.12em] text-[#253246]">
+                    {careWarrantyContent.title || 'Care & Warranty'}
+                  </span>
+                  <ChevronDown className={`h-4 w-4 text-[#8B94A5] transition-transform duration-300 ${openPanels.care ? 'rotate-180' : ''}`} />
+                </button>
+                <div className={`${openPanels.care ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'} grid transition-all duration-300`}>
+                  <div className="overflow-hidden">
+                    <div className="border-t border-[rgba(10,22,40,0.10)] bg-[#FAFBFD] px-6 pb-5 pt-5 font-sans text-[13px] font-light leading-[1.9] text-[#6A6A6A]">
+                      {careWarrantyContent.body
+                        .split(/\n+/)
+                        .map((entry) => entry.trim())
+                        .filter(Boolean)
+                        .map((entry, index) => (
+                          <p key={`care-${index}`} className="mb-3 last:mb-0">
+                            {entry}
+                          </p>
+                        ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : null}
 
-        {active === 'shipping' && shippingContent?.body ? (
-          <SpecSection
-            title={shippingContent.title || 'Shipping'}
-            rows={shippingContent.body
-              .split(/\n+/)
-              .map((entry) => entry.trim())
-              .filter(Boolean)
-              .map((entry, index) => [`Point ${index + 1}`, entry])}
-            variant="piece"
-            leftAlignValues
-          />
+            {shippingContent?.body ? (
+              <div className="border-b border-[rgba(10,22,40,0.10)] last:border-b-0">
+                <button
+                  type="button"
+                  onClick={() => togglePanel('shipping')}
+                  className="flex w-full items-center justify-between bg-white px-6 py-5 text-left transition-colors duration-200 hover:bg-[#FAFBFD]"
+                >
+                  <span className="font-sans text-[12px] font-medium uppercase tracking-[0.12em] text-[#253246]">
+                    {shippingContent.title || 'Shipping'}
+                  </span>
+                  <ChevronDown className={`h-4 w-4 text-[#8B94A5] transition-transform duration-300 ${openPanels.shipping ? 'rotate-180' : ''}`} />
+                </button>
+                <div className={`${openPanels.shipping ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'} grid transition-all duration-300`}>
+                  <div className="overflow-hidden">
+                    <div className="border-t border-[rgba(10,22,40,0.10)] bg-[#FAFBFD] px-6 pb-5 pt-5 font-sans text-[13px] font-light leading-[1.9] text-[#6A6A6A]">
+                      {shippingContent.body
+                        .split(/\n+/)
+                        .map((entry) => entry.trim())
+                        .filter(Boolean)
+                        .map((entry, index) => (
+                          <p key={`shipping-${index}`} className="mb-3 last:mb-0">
+                            {entry}
+                          </p>
+                        ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </div>
         ) : null}
       </div>
     </div>

@@ -13,9 +13,20 @@ export interface BlogPost {
   tags: string[];
   body: string;
   heroImagePath?: string;
+  contentBlocks?: BlogPostContentBlock[];
   isPublished?: boolean;
   sortOrder?: number;
 }
+
+export type BlogPostContentBlock = {
+  id: string;
+  type: 'text' | 'image' | 'heading' | 'quote';
+  heading?: string;
+  bodyHtml?: string;
+  imagePath?: string;
+  imageAlt?: string;
+  imageCaption?: string;
+};
 
 export const bgColors: Record<string, string> = {
   "bg-0": "#EEF1F8",
@@ -146,6 +157,15 @@ export function mapBlogPostRecord(record: {
   subtitle: string
   body_html: string
   hero_image_path?: string
+  content_blocks?: Array<{
+    id: number | string
+    block_type: 'text' | 'image' | 'heading' | 'quote'
+    heading?: string | null
+    body_html?: string | null
+    image_path?: string | null
+    image_alt?: string | null
+    image_caption?: string | null
+  }>
   is_published?: boolean
   sort_order?: number
   tags?: string[]
@@ -165,6 +185,15 @@ export function mapBlogPostRecord(record: {
     tags: record.tags ?? [],
     body: record.body_html,
     heroImagePath: record.hero_image_path ?? '',
+    contentBlocks: (record.content_blocks ?? []).map((block) => ({
+      id: String(block.id),
+      type: block.block_type,
+      heading: block.heading ?? '',
+      bodyHtml: block.body_html ?? '',
+      imagePath: block.image_path ?? '',
+      imageAlt: block.image_alt ?? '',
+      imageCaption: block.image_caption ?? '',
+    })),
     isPublished: record.is_published ?? true,
     sortOrder: record.sort_order ?? 0,
   }

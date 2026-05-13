@@ -449,6 +449,7 @@ export function buildNavbarRenderItems(args: {
               iconUrl: resolveStoragePublicUrl(section.icon_svg_path),
               type: section.section_type,
               showAsFilter: section.show_as_filter ?? false,
+              twoCol: true,
               links: [...styleLinks, ...categoryLink],
             } satisfies NavbarRenderSection
           }
@@ -464,6 +465,7 @@ export function buildNavbarRenderItems(args: {
               iconUrl: resolveStoragePublicUrl(section.icon_svg_path),
               type: section.section_type,
               showAsFilter: section.show_as_filter ?? false,
+              twoCol: true,
               metals: metalData.metals,
               links: categoryLink,
             } satisfies NavbarRenderSection

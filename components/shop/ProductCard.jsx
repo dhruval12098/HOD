@@ -202,10 +202,20 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
           gap: 8px !important;
         }
         .shop-product-card-bottom {
-          padding-top: 8px !important;
+          padding-top: 4px !important;
         }
         .shop-product-card-price {
           font-size: 14px !important;
+        }
+        .shop-product-card-actions {
+          opacity: 1 !important;
+          transform: none !important;
+          pointer-events: auto !important;
+          max-height: 76px !important;
+          margin-top: 0 !important;
+          position: static !important;
+          padding: 10px 2px 4px !important;
+          box-shadow: none !important;
         }
       }
     `}</style>
@@ -215,23 +225,65 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
       style={{
         cursor: "pointer",
         position: "relative",
-        transition: "transform .5s cubic-bezier(.2,.7,.3,1)",
+        zIndex: 1,
+        overflow: "visible",
+        transition: "transform .55s cubic-bezier(.16,1,.3,1), box-shadow .55s cubic-bezier(.16,1,.3,1), filter .55s cubic-bezier(.16,1,.3,1)",
         textDecoration: "none",
         color: "inherit",
         display: "flex",
         flexDirection: "column",
+        borderRadius: "0",
+        background: isDark ? "#0A1628" : "#FFFFFF",
+        boxShadow: "0 0 0 rgba(10,22,40,0)",
+        filter: "brightness(1)",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "translateY(-6px)";
+        e.currentTarget.style.transform = "translateY(-10px)";
+        e.currentTarget.style.zIndex = "20";
+        e.currentTarget.style.boxShadow = isDark
+          ? "0 28px 56px rgba(0,0,0,0.32)"
+          : "0 30px 60px rgba(10,22,40,0.16)";
+        e.currentTarget.style.filter = "brightness(1.01)";
         const glow = e.currentTarget.querySelector(".card-glow");
         if (glow) glow.style.opacity = "1";
+        const actions = e.currentTarget.querySelector(".shop-product-card-actions");
+        if (actions) {
+          actions.style.opacity = "1";
+          actions.style.transform = "translateY(0)";
+          actions.style.pointerEvents = "auto";
+          actions.style.maxHeight = "76px";
+          actions.style.marginTop = "0";
+        }
+        const shell = e.currentTarget.querySelector(".shop-product-card-visual");
+        if (shell) {
+          shell.style.borderColor = isDark ? "rgba(255,255,255,0.18)" : "rgba(10,22,40,0.10)";
+          shell.style.boxShadow = isDark
+            ? "inset 0 0 0 1px rgba(255,255,255,0.04)"
+            : "inset 0 0 0 1px rgba(255,255,255,0.75)";
+        }
         const gem = e.currentTarget.querySelector(".card-gem");
         if (gem) gem.style.transform = "scale(1.08) rotate(-3deg)";
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = "translateY(0)";
+        e.currentTarget.style.zIndex = "1";
+        e.currentTarget.style.boxShadow = "0 0 0 rgba(10,22,40,0)";
+        e.currentTarget.style.filter = "brightness(1)";
         const glow = e.currentTarget.querySelector(".card-glow");
         if (glow) glow.style.opacity = "0";
+        const actions = e.currentTarget.querySelector(".shop-product-card-actions");
+        if (actions) {
+          actions.style.opacity = "0";
+          actions.style.transform = "translateY(10px)";
+          actions.style.pointerEvents = "none";
+          actions.style.maxHeight = "0";
+          actions.style.marginTop = "0";
+        }
+        const shell = e.currentTarget.querySelector(".shop-product-card-visual");
+        if (shell) {
+          shell.style.borderColor = visualBorder;
+          shell.style.boxShadow = isDark ? "none" : "inset 0 0 0 1px rgba(255,255,255,0.65)";
+        }
         const gem = e.currentTarget.querySelector(".card-gem");
         if (gem) gem.style.transform = "scale(1) rotate(0deg)";
       }}
@@ -249,9 +301,10 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
           justifyContent: "center",
           position: "relative",
           overflow: "hidden",
-          borderRadius: "18px",
+          borderRadius: "0",
           border: `1px solid ${visualBorder}`,
           boxShadow: isDark ? "none" : "inset 0 0 0 1px rgba(255,255,255,0.65)",
+          transition: "border-color .55s cubic-bezier(.16,1,.3,1), box-shadow .55s cubic-bezier(.16,1,.3,1)",
         }}
       >
         {/* Glow overlay */}
@@ -262,7 +315,7 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
             inset: 0,
             background: "radial-gradient(circle at 50% 50%, rgba(10,22,40,0.08), transparent 70%)",
             opacity: 0,
-            transition: "opacity .5s",
+            transition: "opacity .55s cubic-bezier(.16,1,.3,1)",
           }}
         />
 
@@ -342,7 +395,7 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
               objectPosition: "center center",
               padding: "0",
               transform: "scale(1.04)",
-              transition: "transform .7s cubic-bezier(.2,.7,.3,1)",
+              transition: "transform .75s cubic-bezier(.16,1,.3,1)",
             }}
             loading="lazy"
           />
@@ -350,7 +403,7 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
           <div
             className="card-gem"
             style={{
-              transition: "transform .7s cubic-bezier(.2,.7,.3,1)",
+              transition: "transform .75s cubic-bezier(.16,1,.3,1)",
               filter: "drop-shadow(0 8px 20px rgba(10,22,40,0.2))",
             }}
           >
@@ -363,12 +416,16 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
       <div
         className="shop-product-card-info"
         style={{
-          padding: "14px 12px 10px",
+          padding: "14px 12px 12px",
           display: "flex",
           flexDirection: "column",
           gap: "6px",
-          background: "transparent",
+          background: isDark ? "#0A1628" : "#FFFFFF",
           minHeight: "118px",
+          position: "relative",
+          zIndex: 2,
+          overflow: "visible",
+          borderRadius: "0",
         }}
       >
         <div
@@ -442,14 +499,76 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
         </div>
         <div
           className="shop-product-card-bottom"
-          style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", marginTop: "auto", paddingTop: "8px" }}
+          style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", marginTop: "auto", paddingTop: "4px" }}
         >
           <div>
-            <span style={{ fontSize: "8px", fontWeight: 400, letterSpacing: ".24em", color: "#7F8898", textTransform: "uppercase", display: "block", marginBottom: "2px", fontFamily: "var(--numeric)" }}>From</span>
             <span className="shop-product-card-price" style={{ fontFamily: "var(--numeric)", fontSize: "14px", fontWeight: 700, color: isDark ? "#FFFFFF" : "#0A1628", letterSpacing: ".02em" }}>
               ${formatUsdNumber(product.priceFrom)}
             </span>
           </div>
+        </div>
+        <div
+          className="shop-product-card-actions"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0,1fr) minmax(0,1.2fr)",
+            gap: "8px",
+            opacity: 0,
+            maxHeight: "0",
+            overflow: "hidden",
+            marginTop: "0",
+            padding: "10px 2px 4px",
+            transform: "translateY(10px)",
+            pointerEvents: "none",
+            background: "inherit",
+            borderRadius: "0",
+            transition: "opacity .45s cubic-bezier(.16,1,.3,1), transform .45s cubic-bezier(.16,1,.3,1), max-height .45s cubic-bezier(.16,1,.3,1), margin-top .45s cubic-bezier(.16,1,.3,1)",
+          }}
+        >
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onEnquire?.(product.name);
+            }}
+            style={{
+              height: "40px",
+              borderRadius: "999px",
+              border: isDark ? "1px solid rgba(255,255,255,0.65)" : "1.5px solid rgba(10,22,40,0.9)",
+              background: isDark ? "rgba(255,255,255,0.08)" : "#FFFFFF",
+              color: isDark ? "#FFFFFF" : "#0A1628",
+              fontSize: "12px",
+              fontWeight: 600,
+              letterSpacing: ".02em",
+              cursor: "pointer",
+              boxShadow: isDark ? "0 8px 18px rgba(0,0,0,0.18)" : "0 8px 18px rgba(10,22,40,0.08)",
+            }}
+          >
+            More Info
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              window.location.href = `/shop/${product.slug}`;
+            }}
+            style={{
+              height: "40px",
+              borderRadius: "999px",
+              border: isDark ? "1px solid rgba(255,255,255,0.14)" : "1px solid #0A1628",
+              background: isDark ? "#FFFFFF" : "#0A1628",
+              color: isDark ? "#0A1628" : "#FFFFFF",
+              fontSize: "12px",
+              fontWeight: 700,
+              letterSpacing: ".02em",
+              cursor: "pointer",
+              boxShadow: isDark ? "0 8px 18px rgba(0,0,0,0.18)" : "0 8px 18px rgba(10,22,40,0.10)",
+            }}
+          >
+            Add to Cart
+          </button>
         </div>
       </div>
     </a>

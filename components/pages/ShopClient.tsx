@@ -11,6 +11,11 @@ export default function ShopClient({
   sourceProducts,
   heroTitle,
   heroSubtitle,
+  heroDesktopImageUrl,
+  heroMobileImageUrl,
+  heroCtaLabel,
+  heroCtaHref,
+  heroBannerEnabled,
   initialFilters,
   filterGroups,
   headerBrowseSections,
@@ -19,6 +24,11 @@ export default function ShopClient({
   sourceProducts?: StorefrontProduct[]
   heroTitle?: string
   heroSubtitle?: string
+  heroDesktopImageUrl?: string
+  heroMobileImageUrl?: string
+  heroCtaLabel?: string
+  heroCtaHref?: string
+  heroBannerEnabled?: boolean
   initialFilters?: Record<string, string[]>
   filterGroups?: { id: string; title: string; options: { value: string; label: string }[] }[]
   headerBrowseSections?: {
@@ -40,7 +50,16 @@ export default function ShopClient({
 
   return (
     <div className="min-h-screen bg-(--bg) text-(--ink)">
-      <ShopHero title={heroTitle} subtitle={heroSubtitle} browseSections={headerBrowseSections} />
+      <ShopHero
+        title={heroTitle}
+        subtitle={heroSubtitle}
+        desktopImageUrl={heroDesktopImageUrl}
+        mobileImageUrl={heroMobileImageUrl}
+        ctaLabel={heroCtaLabel}
+        ctaHref={heroCtaHref}
+        bannerEnabled={heroBannerEnabled}
+        browseSections={headerBrowseSections}
+      />
       <ProductGrid
         products={products}
         sourceProducts={sourceProducts ?? products}

@@ -22,31 +22,31 @@ export default function CollectionShowcase({ config }: { config: CollectionPageC
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_22%,rgba(255,255,255,0.22),transparent_36%),linear-gradient(135deg,#f7f1e7_0%,#eadfce_42%,#dcc9ab_100%)]" />
       )}
 
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(250,247,240,0.94)_0%,rgba(250,247,240,0.78)_34%,rgba(250,247,240,0.42)_62%,rgba(250,247,240,0.14)_100%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(10,22,40,0.8)_0%,rgba(10,22,40,0.58)_34%,rgba(10,22,40,0.2)_64%,rgba(10,22,40,0)_100%)]" />
 
       <div className="relative z-10 flex min-h-[360px] items-end px-5 py-12 md:min-h-[460px] md:px-8 md:py-16 lg:min-h-[560px] lg:px-12 lg:py-20">
         <div className="max-w-[620px]">
-          <p className="mb-5 font-sans text-[10px] uppercase tracking-[0.34em] text-[#0A1628]/68 md:mb-6">
+          <p className="mb-5 font-sans text-[10px] uppercase tracking-[0.34em] text-white/72 md:mb-6">
             House of Diams Collection
           </p>
 
           <h2
-            className="font-serif font-light leading-[0.96] tracking-[0.01em] text-[#0A1628]"
+            className="font-serif font-light leading-[0.96] tracking-[0.01em] text-white"
             style={{ fontSize: 'clamp(42px, 7vw, 88px)' }}
           >
             {config.showcaseHeading || 'Collection'}
           </h2>
 
-          <p className="mt-6 max-w-[540px] text-[15px] leading-[1.9] text-[#0A1628]/76 md:text-[16px]">
+          <p className="mt-6 max-w-[540px] text-[15px] leading-[1.9] text-white/82 md:text-[16px]">
             {config.showcaseSubtitle || 'Browse House of Diams collection pieces in a dedicated enquiry-first showcase.'}
           </p>
 
           <Link
             href={config.showcaseCtaHref || '/collection'}
-            className="mt-8 inline-flex items-center gap-3 rounded-full border border-[#0A1628]/14 bg-[#0A1628] px-7 py-3.5 font-sans text-[10px] uppercase tracking-[0.28em] text-white transition hover:bg-white hover:text-[#0A1628]"
+            className="mt-8 inline-flex items-center gap-3 rounded-full border border-white/18 bg-white px-7 py-3.5 font-sans text-[10px] uppercase tracking-[0.28em] text-[#0A1628] transition hover:bg-white/90 hover:text-[#0A1628]"
           >
             {config.showcaseCtaLabel || 'Explore Collection'}
-            <span className="text-sm">→</span>
+            <span className="text-sm">&rarr;</span>
           </Link>
         </div>
       </div>

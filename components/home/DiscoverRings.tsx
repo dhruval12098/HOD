@@ -82,7 +82,7 @@ const SLOTS: Record<number, SlotConfig> = {
   [2]:  { xPercent: 155,  scale: 0.32, opacity: 0.4,  zIndex: 1 },
 };
 
-const BASE_PX = 280;
+const BASE_PX = 320;
 
 function Chevron({ direction }: { direction: 'left' | 'right' }) {
   return (
@@ -242,13 +242,13 @@ export default function DiscoverRings({
         {/* Heading */}
         <div className="mx-auto max-w-[820px] text-center">
           <h2
-            className="font-serif font-light uppercase tracking-[0.02em] text-[#0A0A0A]"
-            style={{ fontSize: 'clamp(42px, 6vw, 68px)' }}
+            className="font-serif font-light uppercase tracking-[0.02em] text-[#0A0A0A] max-md:text-[30px]"
+            style={{ fontSize: 'clamp(32px, 6vw, 68px)' }}
           >
             Discover Rings
           </h2>
           <p className="mx-auto mt-3 max-w-[660px] text-[15px] font-light leading-[1.5] text-[#1B1B1B] md:text-[18px]">
-            Explore our curated collection of ring styles, each crafted to complement your perfect diamond.
+            Pick the style. We&apos;ll handle the rest.
           </p>
         </div>
 
@@ -288,7 +288,7 @@ export default function DiscoverRings({
                       src={item.imageSrc}
                       alt={item.imageAlt}
                       fill
-                      sizes="(max-width: 768px) 200px, 280px"
+                      sizes="(max-width: 768px) 220px, 320px"
                       className="object-contain"
                       priority={isCenter}
                     />
@@ -299,7 +299,7 @@ export default function DiscoverRings({
                       src={item.imageSrc}
                       alt={item.imageAlt}
                       fill
-                      sizes="(max-width: 768px) 200px, 280px"
+                      sizes="(max-width: 768px) 220px, 320px"
                       className="object-contain"
                       priority={isCenter}
                     />

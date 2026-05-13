@@ -49,8 +49,6 @@ export default function HipHopShowcase({ initialSection }: { initialSection?: Ho
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_22%,rgba(255,255,255,0.16),transparent_36%),linear-gradient(135deg,#0b1018_0%,#1f2937_42%,#0a1628_100%)]" />
       )}
 
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(10,22,40,0.82)_0%,rgba(10,22,40,0.58)_34%,rgba(10,22,40,0.22)_62%,rgba(10,22,40,0.08)_100%)]" />
-
       <div className="relative z-10 flex min-h-[360px] items-end px-5 py-12 md:min-h-[460px] md:px-8 md:py-16 lg:min-h-[560px] lg:px-12 lg:py-20">
         <div className="max-w-[620px]">
           <p className="mb-5 font-sans text-[10px] uppercase tracking-[0.34em] text-white/72 md:mb-6">

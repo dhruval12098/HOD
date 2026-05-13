@@ -44,6 +44,7 @@ type CatalogMetal = {
   name: string
   slug: string
   color_hex?: string | null
+  composition_description?: string | null
 }
 
 type CatalogMaterialValue = {
@@ -202,6 +203,15 @@ type ProductMetalMediaRow = {
   is_default_fallback?: boolean | null
 }
 
+type MetalCompositionPartRow = {
+  id: number
+  metal_id: string
+  part_name: string
+  percentage: number
+  color_hex?: string | null
+  sort_order?: number | null
+}
+
 export type StorefrontProduct = Product & {
   dbId: string
   productLane: 'standard' | 'hiphop' | 'collection'
@@ -215,7 +225,13 @@ export type StorefrontProduct = Product & {
   optionSlug?: string | null
   styleName?: string | null
   styleSlug?: string | null
-  metalsFull: { id: string; name: string; slug: string; colorHex?: string | null }[]
+  metalsFull: { id: string; name: string; slug: string; colorHex?: string | null; compositionDescription?: string | null }[]
+  metalCompositions: {
+    metalId: string
+    name: string
+    description?: string | null
+    parts: { partName: string; percentage: number; colorHex?: string | null }[]
+  }[]
   purities: string[]
   certificateNames: string[]
   ringSizeNames: string[]
@@ -339,13 +355,13 @@ function resolveMetalMediaDefaults(
 const fetchStorefrontProducts = async () => {
   const supabase = createSupabaseServerClient()
 
-  const [productsResult, categoriesResult, subcategoriesResult, optionsResult, metalsResult, materialValuesResult, certificatesResult, stylesResult, ringCategoriesResult, ringCategorySizesResult, productContentRulesResult, metalSelectionsResult, materialValueSelectionsResult, shapeSelectionsResult, gstSlabsResult, purityPricesResult, metalMediaResult] =
+  const [productsResult, categoriesResult, subcategoriesResult, optionsResult, metalsResult, materialValuesResult, certificatesResult, stylesResult, ringCategoriesResult, ringCategorySizesResult, productContentRulesResult, metalSelectionsResult, materialValueSelectionsResult, shapeSelectionsResult, gstSlabsResult, purityPricesResult, metalMediaResult, metalCompositionPartsResult] =
     await Promise.all([
       supabase.from('products').select('*').eq('status', 'active').order('created_at', { ascending: false }),
       supabase.from('catalog_categories').select('id, code, name, slug, category_lane'),
       supabase.from('catalog_subcategories').select('id, category_id, name, slug'),
       supabase.from('catalog_options').select('id, subcategory_id, name, slug'),
-      supabase.from('catalog_metals').select('id, name, slug, color_hex'),
+      supabase.from('catalog_metals').select('id, name, slug, color_hex, composition_description'),
       supabase.from('catalog_material_values').select('id, name, slug, cta_mode, cta_label').eq('status', 'active').order('display_order', { ascending: true }),
       supabase.from('catalog_certificates').select('id, name, code'),
       supabase.from('catalog_styles').select('id, name, slug').eq('status', 'active').order('display_order', { ascending: true }),
@@ -358,6 +374,7 @@ const fetchStorefrontProducts = async () => {
       supabase.from('catalog_gst_slabs').select('id, name, code, percentage').neq('status', 'hidden'),
       supabase.from('product_purity_prices').select('*').order('sort_order', { ascending: true }),
       supabase.from('product_metal_media').select('*'),
+      supabase.from('metal_composition_parts').select('*').order('sort_order', { ascending: true }),
     ])
 
   const error =
@@ -385,6 +402,7 @@ const fetchStorefrontProducts = async () => {
   const gstSlabs = gstSlabsResult.error ? ([] as CatalogGstSlab[]) : ((gstSlabsResult.data || []) as CatalogGstSlab[])
   const purityPriceRows = purityPricesResult.error ? ([] as ProductPurityPriceRow[]) : ((purityPricesResult.data || []) as ProductPurityPriceRow[])
   const metalMediaRows = metalMediaResult.error ? ([] as ProductMetalMediaRow[]) : ((metalMediaResult.data || []) as ProductMetalMediaRow[])
+  const metalCompositionParts = metalCompositionPartsResult.error ? ([] as MetalCompositionPartRow[]) : ((metalCompositionPartsResult.data || []) as MetalCompositionPartRow[])
   const products = (productsResult.data || []) as ProductRow[]
 
   return products.map((product, index) => {
@@ -496,6 +514,19 @@ const fetchStorefrontProducts = async () => {
         name: entry.name,
         slug: entry.slug,
         colorHex: entry.color_hex ?? null,
+        compositionDescription: entry.composition_description ?? null,
+      })),
+      metalCompositions: selectedMetals.map((entry) => ({
+        metalId: entry.id,
+        name: entry.name,
+        description: entry.composition_description ?? null,
+        parts: metalCompositionParts
+          .filter((part) => part.metal_id === entry.id)
+          .map((part) => ({
+            partName: part.part_name,
+            percentage: Number(part.percentage ?? 0),
+            colorHex: part.color_hex ?? null,
+          })),
       })),
       purities: productPurityPrices.length > 0 ? productPurityPrices.map((entry) => entry.purity_label) : (product.purity_values ?? []),
       certificateNames: selectedCertificates,

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { StorefrontProduct } from '@/lib/catalog-products';
 import { STONE_MAP } from '@/lib/data/product-config';
@@ -12,6 +12,7 @@ import ProductTagLine from '@/components/product/ProductTagLine';
 import ProductCategoryPill from '@/components/product/ProductCategoryPill';
 import ProductPriceBlock from '@/components/product/ProductPriceBlock';
 import ProductDescription from '@/components/product/ProductDescription';
+import ProductMetalComposition from '@/components/product/ProductMetalComposition';
 import ProductConfigurator from '@/components/product/ProductConfigurator';
 import RingGuide from '@/components/product/RingGuide';
 import ProductCTAs from '@/components/product/ProductCTAs';
@@ -55,6 +56,9 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
   const [loveLetterIntent, setLoveLetterIntent] = useState<'cart' | 'checkout' | null>(null);
   const [toastMessage, setToastMessage] = useState('');
   const [toastVisible, setToastVisible] = useState(false);
+  const [showStickyCartBar, setShowStickyCartBar] = useState(false);
+  const ctaAnchorRef = useRef<HTMLDivElement | null>(null);
+  const pageTopRef = useRef<HTMLDivElement | null>(null);
 
   const isDark = product.category === 'hiphop';
   const showRingGuide = Boolean(storefrontProduct.ringEnabled || storefrontProduct.type === 'ring');
@@ -67,6 +71,9 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
     null;
   const selectedPurityPriceRow = storefrontProduct.purityPriceRows.find((entry) => entry.purity_label === purity) || storefrontProduct.purityPriceRows[0] || null;
   const selectedMetalMedia = storefrontProduct.metalMediaRows.find((entry) => entry.metal_id === selectedMetalMeta?.id) || storefrontProduct.defaultMetalMedia || null;
+  const selectedMetalComposition =
+    storefrontProduct.metalCompositions.find((entry) => entry.metalId === selectedMetalMeta?.id) ||
+    null;
   const activeImageUrls = useMemo<string[]>(() => {
     const metalImages = selectedMetalMedia
       ? [
@@ -114,6 +121,28 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
     }
   }, [activeRingCategory, selectedRingSize, storefrontProduct.ringSizeNames]);
 
+  useEffect(() => {
+    const ctaNode = ctaAnchorRef.current;
+    const topNode = pageTopRef.current;
+    if (!ctaNode || !topNode || typeof window === 'undefined') return;
+
+    const updateStickyBar = () => {
+      const topRect = topNode.getBoundingClientRect();
+      const ctaRect = ctaNode.getBoundingClientRect();
+      const hasScrolledIntoPage = topRect.top < -240;
+      const ctaIsPastHeader = ctaRect.bottom < 110;
+      setShowStickyCartBar(hasScrolledIntoPage && ctaIsPastHeader);
+    };
+
+    updateStickyBar();
+    window.addEventListener('scroll', updateStickyBar, { passive: true });
+    window.addEventListener('resize', updateStickyBar);
+    return () => {
+      window.removeEventListener('scroll', updateStickyBar);
+      window.removeEventListener('resize', updateStickyBar);
+    };
+  }, []);
+
   const description = useMemo(
     () => product.descriptionText,
     [product]
@@ -123,6 +152,7 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
     [storefrontProduct.mainCategorySlug]
   );
   const collectionLabel = storefrontProduct.mainCategoryName || 'Collection';
+  const stickySummary = [selectedMetalMeta?.name, purity].filter(Boolean).join(' · ');
 
   const checkoutHref = useMemo(() => {
     const params = new URLSearchParams();
@@ -217,7 +247,32 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
 
     return (
       <div className="min-h-screen bg-(--bg) text-(--ink)">
-        <section className="mx-auto max-w-[1400px] px-[52px] pb-[100px] pt-10 max-[1100px]:px-7 max-[700px]:px-5 max-[700px]:pb-[70px]">
+      <div
+        className={`fixed left-0 right-0 top-[40px] z-[45] border-b border-[rgba(10,22,40,0.10)] bg-white/95 backdrop-blur-md transition-transform duration-300 ${
+          showStickyCartBar ? 'translate-y-0' : '-translate-y-[120%]'
+        } max-[700px]:top-auto max-[700px]:bottom-0 max-[700px]:border-b-0 max-[700px]:border-t`}
+      >
+        <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-[52px] py-3 max-[1100px]:px-7 max-[700px]:flex-col max-[700px]:items-stretch max-[700px]:gap-3 max-[700px]:px-5">
+          <div className="min-w-0">
+            <div className="truncate font-display-title text-[24px] leading-[1.05] text-[#0A1628] max-[700px]:text-[18px]">
+              {product.name}
+            </div>
+            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] uppercase tracking-[0.14em] text-[#7A8496]">
+              {stickySummary ? <span>{stickySummary}</span> : null}
+              <span className="font-medium text-[#0A1628]">${activePrice.toLocaleString()}</span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleAddToCart}
+            className="inline-flex min-h-[48px] items-center justify-center rounded-[999px] bg-[#0A1628] px-7 text-[11px] font-semibold uppercase tracking-[0.22em] text-white transition hover:bg-[#20304A] max-[700px]:w-full"
+          >
+            Add To Cart
+          </button>
+        </div>
+      </div>
+
+        <section ref={pageTopRef} className="mx-auto max-w-[1400px] px-[52px] pb-[100px] pt-10 max-[1100px]:px-7 max-[700px]:px-5 max-[700px]:pb-[130px]">
         <ProductBreadcrumb
           productName={product.name}
           collectionHref={collectionHref}
@@ -258,7 +313,6 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
               </div>
 
               <ProductPriceBlock priceFrom={activePrice} />
-              <ProductDescription text={description} />
 
               <ProductConfigurator
                 product={configuredProduct}
@@ -287,31 +341,45 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
                 }}
               />
 
-              <ProductCTAs
-                product={activeProduct}
-                ctaMode={selectedMaterialValueMeta?.ctaMode || 'both'}
-                ctaLabel={selectedMaterialValueMeta?.ctaLabel || null}
-                onEnquire={() => setIsEnquireOpen(true)}
-                onAddToCart={handleAddToCart}
-                onCheckout={() => {
-                  setLoveLetterIntent('checkout');
-                  setIsLoveLetterOpen(true);
-                }}
-                checkoutHref={checkoutHref}
-              />
+              <div ref={ctaAnchorRef}>
+                <ProductCTAs
+                  product={activeProduct}
+                  ctaMode={selectedMaterialValueMeta?.ctaMode || 'both'}
+                  ctaLabel={selectedMaterialValueMeta?.ctaLabel || null}
+                  onEnquire={() => setIsEnquireOpen(true)}
+                  onAddToCart={handleAddToCart}
+                  onCheckout={() => {
+                    setLoveLetterIntent('checkout');
+                    setIsLoveLetterOpen(true);
+                  }}
+                  checkoutHref={checkoutHref}
+                />
+              </div>
 
               {showRingGuide ? <RingGuide /> : null}
 
               <ProductTrustRow />
-              <ProductTabs
-                specifications={product.specificationRows}
-                productDetails={product.productDetailRows}
-                detailSections={product.detailSections}
-                shippingContent={product.shippingContent}
-                careWarrantyContent={product.careWarrantyContent}
-              />
             </div>
           )}
+        />
+      </section>
+
+      <section className="mx-auto max-w-[1400px] border-t border-[rgba(10,22,40,0.10)] px-[52px] py-12 max-[1100px]:px-7 max-[700px]:px-5">
+        <ProductDescription text={description} />
+        <h2 className="mb-5 font-display-title text-[28px] font-normal leading-[1.1] tracking-[0.01em] text-[#0A1628]">
+          Know Your Setting
+        </h2>
+        <ProductTabs
+          specifications={product.specificationRows}
+          productDetails={product.productDetailRows}
+          detailSections={product.detailSections}
+          showPolicies={false}
+        />
+        <ProductMetalComposition composition={selectedMetalComposition} fallbackColor={selectedMetalMeta?.colorHex || '#D4AF37'} />
+        <ProductTabs
+          shippingContent={product.shippingContent}
+          careWarrantyContent={product.careWarrantyContent}
+          showSections={false}
         />
       </section>
 

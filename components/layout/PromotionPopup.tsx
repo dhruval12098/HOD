@@ -106,22 +106,26 @@ export default function PromotionPopup() {
   const versionToken = buildVersionToken(item)
   const imageSrc = appendCacheBuster(toPublicUrl(item.image_path || ''), versionToken)
   const imageOnlyMode = Boolean(item.image_only_mode)
+  const hasTextContent = Boolean(
+    item.label?.trim() || item.title?.trim() || item.description?.trim() || item.cta_text?.trim()
+  )
+  const useImageOnlyLayout = imageOnlyMode && !hasTextContent
 
   return (
     <div className="fixed inset-0 z-[1300] flex items-center justify-center bg-[rgba(10,22,40,0.48)] p-4 backdrop-blur-[6px] sm:p-5">
-      <div className="relative w-full max-w-[620px] overflow-hidden rounded-[30px] border border-[rgba(184,149,74,0.2)] bg-[linear-gradient(180deg,#fffdf9_0%,#f8f4ec_100%)] shadow-[0_24px_64px_rgba(10,22,40,0.22)]">
+      <div className="relative w-full max-w-[760px] overflow-hidden rounded-[12px] border border-[rgba(10,22,40,0.1)] bg-[#f7f3eb] shadow-[0_28px_80px_rgba(10,22,40,0.24)]">
         <button
           type="button"
           onClick={close}
           aria-label="Close promotion popup"
-          className="absolute right-4 top-4 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full border border-[rgba(10,22,40,0.14)] bg-white text-[var(--theme-ink)] shadow-[0_8px_24px_rgba(10,22,40,0.16)] transition hover:bg-[#f8f4ec]"
+          className="absolute right-4 top-4 z-20 inline-flex h-10 w-10 items-center justify-center text-[rgba(10,22,40,0.42)] transition hover:text-[var(--theme-ink)]"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <path d="M3 3L13 13M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
         </button>
 
-        {imageOnlyMode && imageSrc ? (
+        {useImageOnlyLayout && imageSrc ? (
           <div className="flex min-h-[500px] flex-col sm:min-h-[560px]">
             <div className="relative h-[320px] w-full shrink-0 overflow-hidden bg-[radial-gradient(circle_at_top,#f5e7c4_0%,#ebd8ad_42%,#dcc18d_100%)] sm:h-[380px]">
               <img
@@ -144,38 +148,62 @@ export default function PromotionPopup() {
             </div>
           </div>
         ) : (
-          <div className="flex min-h-[420px] flex-col p-6 sm:min-h-[500px] sm:p-8">
-            <div className="flex-1">
-              {item.cta_text && item.cta_link ? (
-                <div className="sr-only">{item.cta_text}</div>
-              ) : null}
-
-              {item.label ? (
-                <div className="mb-3 inline-flex items-center gap-3 text-[9px] font-medium uppercase tracking-[0.26em] text-[var(--theme-muted-2)]">
-                  <span className="inline-block h-px w-8 bg-[rgba(184,149,74,0.72)]" />
-                  {item.label}
+          <div className="grid min-h-[420px] grid-cols-1 md:grid-cols-[0.94fr_1.06fr]">
+            <div className="relative min-h-[220px] bg-[#eadfcb] md:min-h-full">
+              {imageSrc ? (
+                <img
+                  src={imageSrc}
+                  alt={item.image_alt || item.title || 'Promotion image'}
+                  className="absolute inset-0 h-full w-full object-cover object-center"
+                  loading="eager"
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center bg-[linear-gradient(135deg,#efe5d3_0%,#dcc8a6_100%)] p-8 text-center text-[13px] uppercase tracking-[0.24em] text-[rgba(10,22,40,0.5)]">
+                  Promotion Image
                 </div>
-              ) : null}
-
-              <h2 className="max-w-[15ch] text-[clamp(1.9rem,4vw,3rem)] leading-[0.96] text-[var(--theme-ink)]">
-                {item.title}
-              </h2>
-
-              <p className="mt-4 max-w-[44ch] text-[14px] leading-7 text-[var(--theme-muted)] sm:text-[15px]">
-                {item.description}
-              </p>
+              )}
             </div>
 
-            <div className="pt-8">
-              {item.cta_text && item.cta_link ? (
-                <Link
-                  href={item.cta_link}
-                  onClick={close}
-                  className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-[var(--theme-ink)] px-7 text-[10px] font-medium uppercase tracking-[0.24em] text-white transition hover:bg-[#13233b]"
+            <div className="flex min-h-full items-center justify-center bg-[linear-gradient(180deg,#fdfcf8_0%,#f5f0e6_100%)] px-7 py-8 sm:px-9 md:px-10">
+              <div className="w-full max-w-[300px] text-center">
+                {item.label ? (
+                  <p className="mb-4 text-[10px] uppercase tracking-[0.26em] text-[rgba(10,22,40,0.42)]">
+                    {item.label}
+                  </p>
+                ) : null}
+
+                <h2
+                  className="font-display-title text-[var(--theme-ink)]"
+                  style={{
+                    fontSize: 'clamp(2.1rem, 4vw, 3.9rem)',
+                    fontWeight: 400,
+                    lineHeight: 0.9,
+                    letterSpacing: '-0.025em',
+                  }}
                 >
-                  {item.cta_text}
-                </Link>
-              ) : null}
+                  {item.title}
+                </h2>
+
+                <p className="mx-auto mt-5 max-w-[28ch] text-[14px] leading-7 text-[rgba(10,22,40,0.62)] sm:text-[15px]">
+                  {item.description}
+                </p>
+
+                {item.cta_text && item.cta_link ? (
+                  <div className="mt-7">
+                    <Link
+                      href={item.cta_link}
+                      onClick={close}
+                      className="inline-flex h-[48px] w-full items-center justify-center bg-[var(--theme-ink)] px-6 text-[12px] font-medium text-white transition hover:bg-[#182a45]"
+                    >
+                      {item.cta_text}
+                    </Link>
+                  </div>
+                ) : null}
+
+                <p className="mx-auto mt-6 max-w-[30ch] text-[10px] leading-5 text-[rgba(10,22,40,0.42)]">
+                  Promotion only valid on select styles. This code cannot be used during sale periods or in combination with other promotion codes.
+                </p>
+              </div>
             </div>
           </div>
         )}

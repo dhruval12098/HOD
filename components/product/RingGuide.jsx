@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { ArrowRight, Ruler, X } from 'lucide-react';
 
 const GUIDE_TABS = [
   { id: 'metal', label: 'Metal' },
@@ -371,6 +372,7 @@ function FlowGuide({ label, steps, currentStep, answers, onStart, onBack, onRest
 
 export default function RingGuide() {
   const [activeGuide, setActiveGuide] = useState('metal');
+  const [isOpen, setIsOpen] = useState(false);
   const [metalStep, setMetalStep] = useState(0);
   const [shapeStep, setShapeStep] = useState(0);
   const [styleStep, setStyleStep] = useState(0);
@@ -413,7 +415,42 @@ export default function RingGuide() {
   };
 
   return (
-    <section className="mb-8 rounded-[18px] border border-[rgba(10,22,40,0.10)] bg-white px-4 py-5 shadow-[0_14px_36px_rgba(10,22,40,0.04)] sm:px-5">
+    <>
+      <button
+        type="button"
+        onClick={() => setIsOpen(true)}
+        className="mb-8 flex w-full items-center justify-between rounded-[16px] border border-[rgba(10,22,40,0.10)] bg-[#F7F9FC] px-5 py-5 text-left transition hover:border-[rgba(10,22,40,0.18)] hover:bg-white"
+        style={{ fontFamily: 'Manrope, var(--font-geist-sans), sans-serif' }}
+      >
+        <span className="flex items-center gap-4">
+          <span className="inline-flex h-14 w-14 items-center justify-center rounded-full border border-[rgba(10,22,40,0.10)] bg-white text-[#0A1628] shadow-[0_10px_24px_rgba(10,22,40,0.06)]">
+            <Ruler size={22} />
+          </span>
+          <span>
+            <span className="block text-[19px] leading-[1.1] text-[#0A1628] font-display-title">
+              Find your <em className="font-normal italic">ring size</em>
+            </span>
+            <span className="mt-1 block text-[12px] tracking-[0.04em] text-[#7A8496]">
+              Quick guided sizing — 4 methods
+            </span>
+          </span>
+        </span>
+        <ArrowRight size={22} className="text-[#7A8496]" />
+      </button>
+
+      {isOpen ? (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/45 px-4 py-6">
+          <div className="relative max-h-[88vh] w-full max-w-[1180px] overflow-y-auto rounded-[24px] bg-white p-5 shadow-[0_24px_90px_rgba(10,22,40,0.28)] sm:p-6">
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full border border-[rgba(10,22,40,0.10)] bg-white text-[#0A1628] transition hover:bg-[#FAFBFD]"
+              aria-label="Close ring guide"
+            >
+              <X size={18} />
+            </button>
+
+            <section className="rounded-[18px] border border-[rgba(10,22,40,0.10)] bg-white px-4 py-5 shadow-[0_14px_36px_rgba(10,22,40,0.04)] sm:px-5">
       <div className="flex flex-wrap items-end justify-between gap-4 border-b border-[rgba(10,22,40,0.08)] pb-4">
         <div>
           <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#B8972A]" style={{ fontFamily: 'Manrope, var(--font-geist-sans), sans-serif' }}>
@@ -635,6 +672,10 @@ export default function RingGuide() {
           </div>
         ) : null}
       </div>
-    </section>
+            </section>
+          </div>
+        </div>
+      ) : null}
+    </>
   );
 }

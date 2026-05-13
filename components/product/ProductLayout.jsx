@@ -20,7 +20,7 @@ export default function ProductLayout({ gallery, info }) {
       <div>{gallery}</div>
 
       {/* Right: product info */}
-      <div>{info}</div>
+      <div className="lg:sticky lg:top-[100px]">{info}</div>
     </div>
   );
 }

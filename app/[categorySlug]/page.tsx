@@ -15,6 +15,14 @@ function slugifyValue(value: string) {
     .replace(/-+/g, '-')
 }
 
+function toPublicUrl(path: string | null | undefined) {
+  if (!path) return null
+  if (/^https?:\/\//i.test(path)) return path
+  if (!supabaseUrl) return path
+  const bucket = process.env.NEXT_PUBLIC_SUPABASE_COLLECTION_BUCKET || 'hod'
+  return `${supabaseUrl}/storage/v1/object/public/${bucket}/${path}`
+}
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -111,7 +119,7 @@ export async function generateMetadata({
   const supabase = createSupabaseServerClient()
   const { data: category } = await supabase
     .from('catalog_categories')
-    .select('id, name, slug, status')
+    .select('id, name, slug, status, category_lane, banner_title, banner_subtitle')
     .eq('slug', categorySlug)
     .eq('status', 'active')
     .maybeSingle()
@@ -140,7 +148,7 @@ export default async function CategoryCollectionPage({
   const supabase = createSupabaseServerClient()
   const { data: category } = await supabase
     .from('catalog_categories')
-    .select('id, name, slug, status')
+    .select('id, name, slug, status, category_lane, banner_desktop_image_path, banner_mobile_image_path, banner_title, banner_subtitle, banner_cta_label, banner_cta_link, banner_enabled')
     .eq('slug', categorySlug)
     .eq('status', 'active')
     .maybeSingle()
@@ -151,8 +159,9 @@ export default async function CategoryCollectionPage({
 
   const query = await searchParams
   const products = await getStorefrontProducts()
+  const resolvedProductLane = category.category_lane ?? 'standard'
   const categoryProducts = filterStorefrontProducts(products, {
-    productLane: 'standard',
+    productLane: resolvedProductLane,
     categorySlug,
   })
   const publicNavbarClient = getPublicNavbarDataClient() ?? supabase
@@ -253,7 +262,36 @@ export default async function CategoryCollectionPage({
       }
     })
 
-    return uniqueBrowseSections(contentSections)
+    const navbarBrowseSections = uniqueBrowseSections(contentSections)
+
+    if (navbarBrowseSections.length > 0) {
+      return navbarBrowseSections
+    }
+
+    const fallbackSubcategories = subcategories
+      .filter((entry) => entry.category_id === category.id)
+      .sort((left, right) => left.display_order - right.display_order)
+
+    const fallbackSections = fallbackSubcategories.map((subcategory) => {
+      const subcategoryOptions = options
+        .filter((entry) => entry.subcategory_id === subcategory.id)
+        .sort((left, right) => left.display_order - right.display_order)
+
+      return {
+        id: `fallback-${subcategory.id}`,
+        title: subcategory.name,
+        iconUrl: toPublicUrl(subcategory.icon_svg_path) ?? null,
+        href: `/${categorySlug}?subcategory=${subcategory.slug}`,
+        options: subcategoryOptions.map((option) => ({
+          label: option.name,
+          href: `/${categorySlug}?subcategory=${subcategory.slug}&option=${option.slug}`,
+          type: option.icon_svg_path ? ('icon' as const) : ('default' as const),
+          iconUrl: toPublicUrl(option.icon_svg_path) ?? null,
+        })),
+      }
+    })
+
+    return uniqueBrowseSections(fallbackSections.filter((section) => section.options.length > 0))
   })()
 
   const certificateFilterValue =
@@ -262,7 +300,7 @@ export default async function CategoryCollectionPage({
       : null
 
   const filteredProducts = filterStorefrontProducts(categoryProducts, {
-    productLane: 'standard',
+    productLane: resolvedProductLane,
     categorySlug,
     subcategorySlug: typeof query.subcategory === 'string' ? query.subcategory : null,
     optionSlug: typeof query.option === 'string' ? query.option : null,
@@ -277,8 +315,13 @@ export default async function CategoryCollectionPage({
     <ShopClient
       products={filteredProducts}
       sourceProducts={categoryProducts}
-      heroTitle={category.name}
-      heroSubtitle={`Browse ${category.name} from the live catalog.`}
+      heroTitle={category.banner_title || category.name}
+      heroSubtitle={category.banner_subtitle || `Browse ${category.name} from the live catalog.`}
+      heroDesktopImageUrl={toPublicUrl(category.banner_desktop_image_path) || undefined}
+      heroMobileImageUrl={toPublicUrl(category.banner_mobile_image_path) || undefined}
+      heroCtaLabel={category.banner_cta_label || undefined}
+      heroCtaHref={category.banner_cta_link || undefined}
+      heroBannerEnabled={Boolean(category.banner_enabled)}
       headerBrowseSections={headerBrowseSections}
       initialFilters={{
         ...(typeof query.option === 'string' ? { option: [query.option] } : {}),

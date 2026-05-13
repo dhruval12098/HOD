@@ -132,6 +132,12 @@ export default function HipHopHero({
 
   const currentSlide = sortedSlides[activeSlide] ?? sortedSlides[0]
   const hasImageHero = Boolean(content.slider_enabled && currentSlide)
+  const goToPrevSlide = () => {
+    setActiveSlide((current) => (current - 1 + sortedSlides.length) % sortedSlides.length)
+  }
+  const goToNextSlide = () => {
+    setActiveSlide((current) => (current + 1) % sortedSlides.length)
+  }
 
   const handleImageReady = () => {
     if (readyReportedRef.current) return
@@ -156,6 +162,28 @@ export default function HipHopHero({
                 </div>
               ))}
             </div>
+            {sortedSlides.length > 1 ? (
+              <div className="absolute inset-x-0 top-1/2 z-20 flex -translate-y-1/2 items-center justify-between px-4 sm:px-6 lg:px-8">
+                <button
+                  type="button"
+                  onClick={goToPrevSlide}
+                  aria-label="Previous slide"
+                  className="flex h-11 w-11 items-center justify-center rounded-full border border-white/22 bg-white/12 text-white backdrop-blur-xl transition hover:bg-white/18 hover:border-white/34"
+                  style={{ boxShadow: '0 14px 38px rgba(10,22,40,0.18)' }}
+                >
+                  <span className="text-lg leading-none">&#8592;</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={goToNextSlide}
+                  aria-label="Next slide"
+                  className="flex h-11 w-11 items-center justify-center rounded-full border border-white/22 bg-white/12 text-white backdrop-blur-xl transition hover:bg-white/18 hover:border-white/34"
+                  style={{ boxShadow: '0 14px 38px rgba(10,22,40,0.18)' }}
+                >
+                  <span className="text-lg leading-none">&#8594;</span>
+                </button>
+              </div>
+            ) : null}
             <div className="absolute inset-x-0 bottom-0 z-20 flex items-end justify-between gap-6 px-4 pb-4 sm:px-6 sm:pb-6 lg:px-8 lg:pb-8">
               <div className="flex flex-col items-start gap-4">
                 <Link href={currentSlide.button_link || '/hiphop'} className="inline-flex items-center justify-center gap-2.5 bg-[#0A1628] px-[24px] py-3 text-[9px] uppercase tracking-[0.22em] text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#20304a] sm:px-[28px] sm:py-4 sm:text-[10px] sm:tracking-[0.28em]">

@@ -218,7 +218,7 @@ export default function Manufacturing({ initialItems = [] }: { initialItems?: Cm
             </div>
           </RevealDiv>
           <RevealDiv delay={200}>
-            <h2 className="font-serif font-light tracking-[0.02em] text-[#0A1628] leading-[1.05] mb-[18px] text-[clamp(40px,5.5vw,72px)]">
+            <h2 className="font-serif font-light tracking-[0.02em] text-[#0A1628] leading-[1.05] mb-[18px] text-[clamp(28px,5.5vw,72px)] max-md:text-[38px]">
               Inside the <em className="not-italic text-[#0A1628] font-normal">Workshop</em>
             </h2>
           </RevealDiv>
@@ -231,12 +231,6 @@ export default function Manufacturing({ initialItems = [] }: { initialItems?: Cm
 
         {/* Steps */}
         <div className="flex flex-col gap-16 relative">
-          {/* Center line */}
-          <div
-            className="absolute left-1/2 top-[60px] bottom-[60px] w-px -translate-x-px pointer-events-none max-lg:hidden"
-            style={{ background: 'linear-gradient(180deg, transparent, rgba(10,22,40,0.25) 8%, rgba(10,22,40,0.25) 92%, transparent)' }}
-          />
-
           {entries.map((step, idx) => (
             <RevealDiv key={step.key} delay={idx * 100} className="w-full">
               <div
@@ -247,7 +241,9 @@ export default function Manufacturing({ initialItems = [] }: { initialItems?: Cm
               >
                 {/* Visual — swap order on alt rows for desktop only */}
                 <div className={step.kind === 'cms' && step.alt ? 'lg:order-2' : ''}>
-                  <div className="relative aspect-[4/3] bg-white border border-[rgba(10,22,40,0.10)] flex items-center justify-center overflow-hidden transition-all duration-[600ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] group-hover:-translate-y-1 group-hover:shadow-[0_24px_60px_rgba(10,22,40,0.12)] group-hover:border-[rgba(10,22,40,0.25)] max-lg:aspect-video">
+                  <div
+                    className="relative isolate aspect-[4/3] bg-white flex items-center justify-center overflow-hidden transition-all duration-[600ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] group-hover:-translate-y-1 group-hover:shadow-[0_24px_60px_rgba(10,22,40,0.12)] max-lg:aspect-video"
+                  >
                     {/* BG */}
                     <div
                       className="absolute inset-0"
