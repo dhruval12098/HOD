@@ -49,9 +49,9 @@ export default function ProductMetalComposition({ composition, fallbackColor = '
                     })
                   : null}
               </svg>
-              <span className="absolute inset-[26px] rounded-full bg-white shadow-[inset_0_3px_8px_rgba(10,22,40,0.06)]" />
+              <span className="absolute inset-[26px] hidden rounded-full bg-white shadow-[inset_0_3px_8px_rgba(10,22,40,0.06)] sm:block" />
               <span
-                className="absolute inset-[40px] rounded-full shadow-[inset_0_6px_10px_rgba(255,255,255,0.45)]"
+                className="absolute left-1/2 top-1/2 hidden h-8 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full shadow-[inset_0_6px_10px_rgba(255,255,255,0.45)] sm:block"
                 style={{ backgroundColor: fallbackColor }}
               />
             </div>

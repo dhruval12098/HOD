@@ -73,7 +73,7 @@ export default function ProductGallery({
   const mainMediaClass =
     'absolute left-1/2 top-1/2 h-full w-full min-h-full min-w-full -translate-x-1/2 -translate-y-1/2 object-cover object-center transition-transform duration-700 ease-[cubic-bezier(.2,.7,.3,1)] group-hover:scale-[1.04]';
   const thumbMediaClass =
-    'absolute left-1/2 top-1/2 h-full w-full min-h-full min-w-full -translate-x-1/2 -translate-y-1/2 object-cover object-center';
+    'absolute left-1/2 top-1/2 h-full w-full max-h-[88%] max-w-[88%] -translate-x-1/2 -translate-y-1/2 object-contain object-center';
   const desktopGridAssets = assets.length > 0 ? assets : [];
 
   return (
@@ -173,8 +173,8 @@ export default function ProductGallery({
           </div>
         </div>
 
-        <div className="overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <div className="flex min-w-full justify-center gap-[10px]">
+        <div className="overflow-x-auto px-1 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex min-w-max items-center gap-[10px]">
             {thumbnailSlots.map((thumb, index) => {
               if (thumb.type === 'placeholder') {
                 return (
@@ -194,7 +194,7 @@ export default function ProductGallery({
                   className={`
                     aspect-square w-[62px] flex-none ${bgThumb} border rounded-[18px]
                     flex items-center justify-center cursor-pointer
-                    overflow-hidden transition-all duration-300
+                    overflow-hidden p-1.5 transition-all duration-300
                     sm:w-[72px] md:w-[82px]
                     ${isActive
                       ? 'border-[#0A1628] shadow-[0_0_0_1px_#0A1628_inset]'

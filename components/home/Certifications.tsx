@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
-import { loaderWordmarkFont } from '@/app/fonts'
 
 function RevealDiv({
   children,
@@ -148,20 +147,6 @@ const certificationItems = [
   { title: ['Elegant', 'Packaging'], icon: <PackagingIcon /> },
 ]
 
-function renderDisplayLine(line: string) {
-  const parts = line.split(/(\d+)/g)
-
-  return parts.map((part, index) =>
-    /^\d+$/.test(part) ? (
-      <span key={`${part}-${index}`} style={{ fontFamily: 'var(--numeric)' }}>
-        {part}
-      </span>
-    ) : (
-      <span key={`${part}-${index}`}>{part}</span>
-    )
-  )
-}
-
 export default function Certifications() {
   return (
     <section className="mx-auto max-w-[1400px] px-[52px] py-[110px] max-lg:px-7 max-md:px-4 max-md:py-[56px]">
@@ -171,7 +156,7 @@ export default function Certifications() {
         </p>
 
           <h2
-            className={`${loaderWordmarkFont.className} font-light tracking-[0.01em] text-[#0A0A0A] leading-[1.08] max-md:text-[28px]`}
+            className="font-display-title font-light leading-[1.08] tracking-[0.01em] text-[#0A0A0A] max-md:text-[28px]"
             style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}
           >
           Why Choose{' '}
@@ -195,12 +180,12 @@ export default function Certifications() {
               </div>
 
               <p
-                className={`${loaderWordmarkFont.className} max-w-[16ch] whitespace-pre-line text-[18px] font-normal leading-[1.5] tracking-[0.02em] text-[#0A0A0A] max-md:text-[11px] max-md:leading-[1.28]`}
+                className="font-display-title max-w-[16ch] whitespace-pre-line text-[18px] font-normal leading-[1.5] tracking-[0.02em] text-[#0A0A0A] max-md:text-[11px] max-md:leading-[1.28]"
                 style={{ fontWeight: 400 }}
               >
                 {item.title.map((line, index) => (
                   <span key={`${line}-${index}`} className="block">
-                    {renderDisplayLine(line)}
+                    {line}
                   </span>
                 ))}
               </p>

@@ -249,7 +249,9 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
       <div className="min-h-screen bg-(--bg) text-(--ink)">
       <div
         className={`fixed left-0 right-0 top-[40px] z-[45] border-b border-[rgba(10,22,40,0.10)] bg-white/95 backdrop-blur-md transition-transform duration-300 ${
-          showStickyCartBar ? 'translate-y-0' : '-translate-y-[120%]'
+          showStickyCartBar
+            ? 'translate-y-0'
+            : '-translate-y-[120%] max-[700px]:translate-y-[120%]'
         } max-[700px]:top-auto max-[700px]:bottom-0 max-[700px]:border-b-0 max-[700px]:border-t`}
       >
         <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-[52px] py-3 max-[1100px]:px-7 max-[700px]:flex-col max-[700px]:items-stretch max-[700px]:gap-3 max-[700px]:px-5">

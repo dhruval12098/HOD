@@ -118,10 +118,10 @@ export default function PromotionPopup() {
           type="button"
           onClick={close}
           aria-label="Close promotion popup"
-          className="absolute right-4 top-4 z-20 inline-flex h-10 w-10 items-center justify-center text-[rgba(10,22,40,0.42)] transition hover:text-[var(--theme-ink)]"
+          className="absolute right-3 top-3 z-20 inline-flex h-8 w-8 items-center justify-center rounded-full border border-[rgba(10,22,40,0.14)] bg-[rgba(255,255,255,0.92)] text-[var(--theme-ink)] shadow-[0_8px_22px_rgba(10,22,40,0.14)] transition hover:bg-white hover:scale-[1.04] sm:right-4 sm:top-4 sm:h-9 sm:w-9"
         >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M3 3L13 13M13 3L3 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
           </svg>
         </button>
 
