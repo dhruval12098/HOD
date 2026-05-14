@@ -1,24 +1,13 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import BlogSectionHeader from '@/components/blog/BlogSectionHeader';
 import Hero from '@/components/home/Hero';
-import TestimonialMarquee from '@/components/home/TestimonialMarquee';
 import BlogGrid from '@/components/blog/BlogGrid';
 import { posts } from '@/lib/data/blog-posts';
 import type { BlogPost } from '@/lib/data/blog-posts';
-import DiamondInfoSequence from '@/components/home/DiamondInfoSequence';
-import DiscoverRings from '@/components/home/DiscoverRings';
-import DiscoverShapes from '@/components/home/DiscoverShapes';
-import Collection from '@/components/home/Collection';
-import HipHopShowcase from '@/components/home/HipHopShowcase';
-import CollectionShowcase from '@/components/home/CollectionShowcase';
-import Certifications from '@/components/home/Certifications';
-import Testimonials from '@/components/home/Testimonials';
-import CouplesSection from '@/components/home/CouplesSection';
-import Newsletter from '@/components/home/Newsletter';
-import BestSellers from '@/components/home/BestSellers';
 import EnquireModal from '@/components/home/EnquireModal';
 import Toast from '@/components/home/Toast';
 import { useHomeLoader } from '@/components/layout/HomeLoaderContext';
@@ -34,6 +23,20 @@ import type {
   HomeMarqueeData,
   HomeTestimonialsData,
 } from '@/lib/home-data';
+
+const TestimonialMarquee = dynamic(() => import('@/components/home/TestimonialMarquee'), { loading: () => null });
+const Collection = dynamic(() => import('@/components/home/Collection'), { loading: () => null });
+const Certifications = dynamic(() => import('@/components/home/Certifications'), { loading: () => null });
+const DiscoverShapes = dynamic(() => import('@/components/home/DiscoverShapes'), { loading: () => null });
+const HipHopShowcase = dynamic(() => import('@/components/home/HipHopShowcase'), { loading: () => null });
+const BestSellers = dynamic(() => import('@/components/home/BestSellers'), { loading: () => null });
+const CollectionShowcase = dynamic(() => import('@/components/home/CollectionShowcase'), { loading: () => null });
+const DiscoverRings = dynamic(() => import('@/components/home/DiscoverRings'), { loading: () => null });
+const DiamondInfoSequence = dynamic(() => import('@/components/home/DiamondInfoSequence'), { loading: () => null });
+const Testimonials = dynamic(() => import('@/components/home/Testimonials'), { loading: () => null });
+const CouplesSection = dynamic(() => import('@/components/home/CouplesSection'), { loading: () => null });
+const Newsletter = dynamic(() => import('@/components/home/Newsletter'), { loading: () => null });
+const DeferredBlogGrid = dynamic(() => import('@/components/blog/BlogGrid'), { loading: () => null });
 
 type CollectionPageConfig = {
   pageEnabled: boolean
@@ -95,7 +98,7 @@ export default function HomeClient({
   bestSellerProducts?: HomeBestSellerProduct[]
 }) {
   const router = useRouter();
-  const { setIsHomeLoading, setIsHomeReady } = useHomeLoader();
+  const { isHomeReady, setIsHomeLoading, setIsHomeReady } = useHomeLoader();
   const [isEnquireOpen, setIsEnquireOpen] = useState(false);
   const [enquireGemName, setEnquireGemName] = useState('');
   const [toastMessage, setToastMessage] = useState('');
@@ -103,6 +106,7 @@ export default function HomeClient({
   const [heroReady, setHeroReady] = useState(false);
   const [fontsReady, setFontsReady] = useState(false);
   const [skipHomeLoader, setSkipHomeLoader] = useState(false);
+  const [showDeferredSections, setShowDeferredSections] = useState(false);
 
   useLayoutEffect(() => {
     if (typeof window === 'undefined') return;
@@ -193,6 +197,48 @@ export default function HomeClient({
     } catch {}
   }, [fontsReady, heroReady, setIsHomeReady, skipHomeLoader]);
 
+  useEffect(() => {
+    if (!skipHomeLoader && !isHomeReady) {
+      setShowDeferredSections(false);
+      return;
+    }
+
+    let cancelled = false;
+    let timeoutId: ReturnType<typeof globalThis.setTimeout> | null = null;
+    let idleId: number | null = null;
+
+    const revealDeferredSections = () => {
+      if (cancelled) return;
+      window.requestAnimationFrame(() => {
+        if (!cancelled) {
+          setShowDeferredSections(true);
+        }
+      });
+    };
+
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      idleId = (window as Window & {
+        requestIdleCallback: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
+      }).requestIdleCallback(() => revealDeferredSections(), { timeout: 1200 });
+    } else if (typeof window !== 'undefined') {
+      timeoutId = globalThis.setTimeout(revealDeferredSections, 180);
+    } else {
+      setShowDeferredSections(true);
+    }
+
+    return () => {
+      cancelled = true;
+      if (timeoutId) {
+        globalThis.clearTimeout(timeoutId);
+      }
+      if (idleId != null && typeof window !== 'undefined' && 'cancelIdleCallback' in window) {
+        (window as Window & {
+          cancelIdleCallback: (handle: number) => void;
+        }).cancelIdleCallback(idleId);
+      }
+    };
+  }, [isHomeReady, skipHomeLoader]);
+
   const handleEnquireClose = () => {
     setIsEnquireOpen(false);
     setEnquireGemName('');
@@ -212,30 +258,33 @@ export default function HomeClient({
           setHeroReady(true);
         }}
       />
-      <TestimonialMarquee initialData={marqueeData} />
-      <Collection items={collectionItems} />
-      <Certifications />
-      <DiscoverShapes initialItems={discoverShapesItems} />
-      
-      {/* <MaterialStrip items={materialItems} /> */}
-      <HipHopShowcase initialSection={hiphopSection} />
-      <BestSellers initialSection={bestSellerSection} initialProducts={bestSellerProducts} />
-      {collectionPageConfig.pageEnabled && collectionPageConfig.showHomeShowcase ? <CollectionShowcase config={collectionPageConfig} /> : null}
-      <DiscoverRings initialItems={discoverRingsItems} />
-      <DiamondInfoSequence items={diamondInfoItems} config={diamondInfoConfig} />
-      <Testimonials initialData={testimonialsData} />
-      <CouplesSection initialData={couplesData} />
+      {showDeferredSections ? (
+        <>
+          <TestimonialMarquee initialData={marqueeData} />
+          <Collection items={collectionItems} />
+          <Certifications />
+          <DiscoverShapes initialItems={discoverShapesItems} />
 
-      <section className="bg-[var(--theme-surface-warm)] px-5 py-16 md:px-8 lg:px-12">
-        <div className="mx-auto max-w-[1320px]">
-          <BlogSectionHeader title="Blogs" onViewAll={() => router.push('/blog')} />
-          <BlogGrid posts={blogPosts} onPostClick={(id) => {
-            const target = blogPosts.find((post) => post.id === id)
-            router.push(target?.slug ? `/blog?slug=${target.slug}` : `/blog?post=${id}`)
-          }} />
-        </div>
-      </section>
-      <Newsletter onToast={handleToast} />
+          <HipHopShowcase initialSection={hiphopSection} />
+          <BestSellers initialSection={bestSellerSection} initialProducts={bestSellerProducts} />
+          {collectionPageConfig.pageEnabled && collectionPageConfig.showHomeShowcase ? <CollectionShowcase config={collectionPageConfig} /> : null}
+          <DiscoverRings initialItems={discoverRingsItems} />
+          <DiamondInfoSequence items={diamondInfoItems} config={diamondInfoConfig} />
+          <Testimonials initialData={testimonialsData} />
+          <CouplesSection initialData={couplesData} />
+
+          <section className="bg-[var(--theme-surface-warm)] px-5 py-16 md:px-8 lg:px-12">
+            <div className="mx-auto max-w-[1320px]">
+              <BlogSectionHeader title="Blogs" onViewAll={() => router.push('/blog')} />
+              <DeferredBlogGrid posts={blogPosts} onPostClick={(id) => {
+                const target = blogPosts.find((post) => post.id === id)
+                router.push(target?.slug ? `/blog?slug=${target.slug}` : `/blog?post=${id}`)
+              }} />
+            </div>
+          </section>
+          <Newsletter onToast={handleToast} />
+        </>
+      ) : null}
 
       {isEnquireOpen && <EnquireModal open={isEnquireOpen} piece={enquireGemName} onClose={handleEnquireClose} />}
       <Toast message={toastMessage} visible={showToast} />
