@@ -208,14 +208,7 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
           font-size: 14px !important;
         }
         .shop-product-card-actions {
-          opacity: 1 !important;
-          transform: none !important;
-          pointer-events: auto !important;
-          max-height: 76px !important;
-          margin-top: 0 !important;
-          position: static !important;
-          padding: 10px 2px 4px !important;
-          box-shadow: none !important;
+          display: none !important;
         }
       }
     `}</style>
@@ -226,8 +219,8 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
         cursor: "pointer",
         position: "relative",
         zIndex: 1,
-        overflow: "visible",
-        transition: "transform .55s cubic-bezier(.16,1,.3,1), box-shadow .55s cubic-bezier(.16,1,.3,1), filter .55s cubic-bezier(.16,1,.3,1)",
+        overflow: "hidden",
+        transition: "transform .55s cubic-bezier(.16,1,.3,1), box-shadow .55s cubic-bezier(.16,1,.3,1), filter .55s cubic-bezier(.16,1,.3,1), border-radius .55s cubic-bezier(.16,1,.3,1), background-color .55s cubic-bezier(.16,1,.3,1)",
         textDecoration: "none",
         color: "inherit",
         display: "flex",
@@ -236,13 +229,15 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
         background: isDark ? "#0A1628" : "#FFFFFF",
         boxShadow: "0 0 0 rgba(10,22,40,0)",
         filter: "brightness(1)",
+        border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(10,22,40,0.06)",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "translateY(-10px)";
+        e.currentTarget.style.transform = "translateY(-10px) scale(1.01)";
         e.currentTarget.style.zIndex = "20";
+        e.currentTarget.style.borderRadius = "30px";
         e.currentTarget.style.boxShadow = isDark
-          ? "0 28px 56px rgba(0,0,0,0.32)"
-          : "0 30px 60px rgba(10,22,40,0.16)";
+          ? "0 30px 70px rgba(0,0,0,0.34)"
+          : "0 26px 70px rgba(10,22,40,0.14), 0 6px 18px rgba(10,22,40,0.06)";
         e.currentTarget.style.filter = "brightness(1.01)";
         const glow = e.currentTarget.querySelector(".card-glow");
         if (glow) glow.style.opacity = "1";
@@ -259,7 +254,13 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
           shell.style.borderColor = isDark ? "rgba(255,255,255,0.18)" : "rgba(10,22,40,0.10)";
           shell.style.boxShadow = isDark
             ? "inset 0 0 0 1px rgba(255,255,255,0.04)"
-            : "inset 0 0 0 1px rgba(255,255,255,0.75)";
+            : "inset 0 0 0 1px rgba(255,255,255,0.82)";
+          shell.style.borderRadius = "26px 26px 18px 18px";
+        }
+        const info = e.currentTarget.querySelector(".shop-product-card-info");
+        if (info) {
+          info.style.borderRadius = "0 0 26px 26px";
+          info.style.background = isDark ? "#0A1628" : "#FFFFFF";
         }
         const gem = e.currentTarget.querySelector(".card-gem");
         if (gem) gem.style.transform = "scale(1.08) rotate(-3deg)";
@@ -267,6 +268,7 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = "translateY(0)";
         e.currentTarget.style.zIndex = "1";
+        e.currentTarget.style.borderRadius = "0";
         e.currentTarget.style.boxShadow = "0 0 0 rgba(10,22,40,0)";
         e.currentTarget.style.filter = "brightness(1)";
         const glow = e.currentTarget.querySelector(".card-glow");
@@ -283,6 +285,12 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
         if (shell) {
           shell.style.borderColor = visualBorder;
           shell.style.boxShadow = isDark ? "none" : "inset 0 0 0 1px rgba(255,255,255,0.65)";
+          shell.style.borderRadius = "0";
+        }
+        const info = e.currentTarget.querySelector(".shop-product-card-info");
+        if (info) {
+          info.style.borderRadius = "0";
+          info.style.background = isDark ? "#0A1628" : "#FFFFFF";
         }
         const gem = e.currentTarget.querySelector(".card-gem");
         if (gem) gem.style.transform = "scale(1) rotate(0deg)";
@@ -304,7 +312,7 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
           borderRadius: "0",
           border: `1px solid ${visualBorder}`,
           boxShadow: isDark ? "none" : "inset 0 0 0 1px rgba(255,255,255,0.65)",
-          transition: "border-color .55s cubic-bezier(.16,1,.3,1), box-shadow .55s cubic-bezier(.16,1,.3,1)",
+          transition: "border-color .55s cubic-bezier(.16,1,.3,1), box-shadow .55s cubic-bezier(.16,1,.3,1), border-radius .55s cubic-bezier(.16,1,.3,1)",
         }}
       >
         {/* Glow overlay */}
@@ -426,6 +434,7 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
           zIndex: 2,
           overflow: "visible",
           borderRadius: "0",
+          transition: "border-radius .55s cubic-bezier(.16,1,.3,1), background-color .55s cubic-bezier(.16,1,.3,1)",
         }}
       >
         <div

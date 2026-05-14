@@ -112,8 +112,8 @@ export default function PromotionPopup() {
   const useImageOnlyLayout = imageOnlyMode && !hasTextContent
 
   return (
-    <div className="fixed inset-0 z-[1300] flex items-center justify-center bg-[rgba(10,22,40,0.48)] p-4 backdrop-blur-[6px] sm:p-5">
-      <div className="relative w-full max-w-[760px] overflow-hidden rounded-[12px] border border-[rgba(10,22,40,0.1)] bg-[#f7f3eb] shadow-[0_28px_80px_rgba(10,22,40,0.24)]">
+    <div className="fixed inset-0 z-[1300] flex items-center justify-center bg-[rgba(10,22,40,0.48)] p-3 backdrop-blur-[6px] sm:p-5">
+      <div className="relative w-full max-w-[calc(100vw-56px)] overflow-hidden rounded-[12px] border border-[rgba(10,22,40,0.1)] bg-[#f7f3eb] shadow-[0_28px_80px_rgba(10,22,40,0.24)] sm:max-w-[760px]">
         <button
           type="button"
           onClick={close}
@@ -126,8 +126,8 @@ export default function PromotionPopup() {
         </button>
 
         {useImageOnlyLayout && imageSrc ? (
-          <div className="flex min-h-[500px] flex-col sm:min-h-[560px]">
-            <div className="relative h-[320px] w-full shrink-0 overflow-hidden bg-[radial-gradient(circle_at_top,#f5e7c4_0%,#ebd8ad_42%,#dcc18d_100%)] sm:h-[380px]">
+          <div className="flex min-h-[300px] flex-col sm:min-h-[560px]">
+            <div className="relative h-[170px] w-full shrink-0 overflow-hidden bg-[radial-gradient(circle_at_top,#f5e7c4_0%,#ebd8ad_42%,#dcc18d_100%)] sm:h-[380px]">
               <img
                 src={imageSrc}
                 alt={item.image_alt || item.title || 'Promotion image'}
@@ -135,12 +135,12 @@ export default function PromotionPopup() {
                 loading="eager"
               />
             </div>
-            <div className="flex flex-1 items-end p-6 sm:p-8">
+            <div className="flex flex-1 items-end p-4 sm:p-8">
               {item.cta_text && item.cta_link ? (
                 <Link
                   href={item.cta_link}
                   onClick={close}
-                  className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-[var(--theme-ink)] px-7 text-[10px] font-medium uppercase tracking-[0.24em] text-white transition hover:bg-[#13233b]"
+                  className="inline-flex min-h-[40px] items-center justify-center rounded-full bg-[var(--theme-ink)] px-5 text-[9px] font-medium uppercase tracking-[0.2em] text-white transition hover:bg-[#13233b] sm:min-h-[46px] sm:px-7 sm:text-[10px] sm:tracking-[0.24em]"
                 >
                   {item.cta_text}
                 </Link>
@@ -148,8 +148,8 @@ export default function PromotionPopup() {
             </div>
           </div>
         ) : (
-          <div className="grid min-h-[420px] grid-cols-1 md:grid-cols-[0.94fr_1.06fr]">
-            <div className="relative min-h-[220px] bg-[#eadfcb] md:min-h-full">
+          <div className="grid min-h-[250px] grid-cols-1 md:grid-cols-[0.94fr_1.06fr] sm:min-h-[420px]">
+            <div className="relative min-h-[135px] bg-[#eadfcb] md:min-h-full">
               {imageSrc ? (
                 <img
                   src={imageSrc}
@@ -164,18 +164,17 @@ export default function PromotionPopup() {
               )}
             </div>
 
-            <div className="flex min-h-full items-center justify-center bg-[linear-gradient(180deg,#fdfcf8_0%,#f5f0e6_100%)] px-7 py-8 sm:px-9 md:px-10">
-              <div className="w-full max-w-[300px] text-center">
+            <div className="flex min-h-full items-center justify-center bg-[linear-gradient(180deg,#fdfcf8_0%,#f5f0e6_100%)] px-5 py-5 sm:px-9 sm:py-8 md:px-10">
+              <div className="w-full max-w-[240px] text-center sm:max-w-[300px]">
                 {item.label ? (
-                  <p className="mb-4 text-[10px] uppercase tracking-[0.26em] text-[rgba(10,22,40,0.42)]">
+                  <p className="mb-3 text-[9px] uppercase tracking-[0.22em] text-[rgba(10,22,40,0.42)] sm:mb-4 sm:text-[10px] sm:tracking-[0.26em]">
                     {item.label}
                   </p>
                 ) : null}
 
                 <h2
-                  className="font-display-title text-[var(--theme-ink)]"
+                  className="font-display-title text-[var(--theme-ink)] text-[clamp(1.35rem,8vw,2.35rem)] sm:text-[clamp(2.1rem,4vw,3.9rem)]"
                   style={{
-                    fontSize: 'clamp(2.1rem, 4vw, 3.9rem)',
                     fontWeight: 400,
                     lineHeight: 0.9,
                     letterSpacing: '-0.025em',
@@ -184,23 +183,23 @@ export default function PromotionPopup() {
                   {item.title}
                 </h2>
 
-                <p className="mx-auto mt-5 max-w-[28ch] text-[14px] leading-7 text-[rgba(10,22,40,0.62)] sm:text-[15px]">
+                <p className="mx-auto mt-3 max-w-[24ch] text-[12px] leading-5 text-[rgba(10,22,40,0.62)] sm:mt-5 sm:max-w-[28ch] sm:text-[15px] sm:leading-7">
                   {item.description}
                 </p>
 
                 {item.cta_text && item.cta_link ? (
-                  <div className="mt-7">
+                  <div className="mt-5 sm:mt-7">
                     <Link
                       href={item.cta_link}
                       onClick={close}
-                      className="inline-flex h-[48px] w-full items-center justify-center bg-[var(--theme-ink)] px-6 text-[12px] font-medium text-white transition hover:bg-[#182a45]"
+                      className="inline-flex h-[40px] w-full items-center justify-center bg-[var(--theme-ink)] px-5 text-[10px] font-medium text-white transition hover:bg-[#182a45] sm:h-[48px] sm:px-6 sm:text-[12px]"
                     >
                       {item.cta_text}
                     </Link>
                   </div>
                 ) : null}
 
-                <p className="mx-auto mt-6 max-w-[30ch] text-[10px] leading-5 text-[rgba(10,22,40,0.42)]">
+                <p className="mx-auto mt-4 max-w-[28ch] text-[9px] leading-4 text-[rgba(10,22,40,0.42)] sm:mt-6 sm:max-w-[30ch] sm:text-[10px] sm:leading-5">
                   Promotion only valid on select styles. This code cannot be used during sale periods or in combination with other promotion codes.
                 </p>
               </div>

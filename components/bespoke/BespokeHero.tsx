@@ -170,7 +170,16 @@ export default function BespokeHero({ onEnquireClick, initialHero = null, initia
               ))}
             </div>
             <div className="absolute inset-x-0 bottom-0 z-20 flex items-end justify-between gap-6 px-4 pb-4 sm:px-6 sm:pb-6 lg:px-8 lg:pb-8">
-              <div className="flex flex-col items-start gap-4">
+              <div className="flex min-h-[48px] items-end">
+                {sortedSlides.length > 1 ? (
+                  <div className="flex items-center gap-2">
+                    {sortedSlides.map((slide, index) => (
+                      <button key={`${slide.sort_order}-dot`} type="button" onClick={() => setActiveSlide(index)} className={`h-2.5 rounded-full transition-all ${index === activeSlide ? 'w-10 bg-white' : 'w-2.5 bg-white/45'}`} />
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+              <div className="flex min-h-[48px] items-end justify-end">
                 {currentSlideLink ? (
                   <Link
                     href={currentSlideLink}
@@ -186,13 +195,6 @@ export default function BespokeHero({ onEnquireClick, initialHero = null, initia
                     {currentSlide.button_text || hero.primary_cta_label}
                   </button>
                 )}
-                {sortedSlides.length > 1 ? (
-                  <div className="flex items-center gap-2">
-                    {sortedSlides.map((slide, index) => (
-                      <button key={`${slide.sort_order}-dot`} type="button" onClick={() => setActiveSlide(index)} className={`h-2.5 rounded-full transition-all ${index === activeSlide ? 'w-10 bg-white' : 'w-2.5 bg-white/45'}`} />
-                    ))}
-                  </div>
-                ) : null}
               </div>
             </div>
           </div>

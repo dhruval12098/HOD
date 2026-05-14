@@ -110,6 +110,8 @@ export default function BestSellers({
   )
   const [visibleCount, setVisibleCount] = useState(4)
   const [page, setPage] = useState(0)
+  const mobileScrollerRef = useRef<HTMLDivElement>(null)
+  const [mobilePage, setMobilePage] = useState(0)
 
   const headingParts = useMemo(() => {
     const parts = section.heading.trim().split(/\s+/)
@@ -140,6 +142,22 @@ export default function BestSellers({
     const maxPage = Math.max(0, Math.ceil(products.length / visibleCount) - 1)
     setPage((current) => Math.min(current, maxPage))
   }, [products.length, visibleCount])
+
+  useEffect(() => {
+    const node = mobileScrollerRef.current
+    if (!node) return
+
+    const handleScroll = () => {
+      const cardWidth = node.clientWidth * 0.84 + 16
+      if (!cardWidth) return
+      const nextPage = Math.round(node.scrollLeft / cardWidth)
+      setMobilePage(Math.max(0, Math.min(products.length - 1, nextPage)))
+    }
+
+    node.addEventListener('scroll', handleScroll, { passive: true })
+    handleScroll()
+    return () => node.removeEventListener('scroll', handleScroll)
+  }, [products.length])
 
   const totalPages = Math.max(1, Math.ceil(products.length / visibleCount))
   const showSliderControls = products.length > visibleCount
@@ -201,15 +219,15 @@ export default function BestSellers({
             </>
           ) : null}
 
-          <div className="overflow-hidden">
+          <div className="hidden overflow-hidden sm:block">
             <div
-              className="flex gap-0 transition-transform duration-500 ease-[cubic-bezier(.4,0,.2,1)] sm:gap-5"
+              className="flex gap-5 transition-transform duration-500 ease-[cubic-bezier(.4,0,.2,1)]"
               style={{ transform: `translateX(-${page * 100}%)` }}
             >
               {products.map((product) => (
                 <div
                   key={product.id}
-                  className="min-w-full sm:min-w-[calc(50%-10px)] lg:min-w-[calc(25%-15px)]"
+                  className="min-w-[calc(50%-10px)] lg:min-w-[calc(25%-15px)]"
                 >
                   <ProductCard
                     product={product}
@@ -223,37 +241,34 @@ export default function BestSellers({
             </div>
           </div>
 
-          {showSliderControls ? (
-            <div className="mt-5 flex items-center justify-center gap-2 lg:hidden">
-              <button
-                type="button"
-                onClick={() => setPage((current) => Math.max(0, current - 1))}
-                disabled={page === 0}
-                aria-label="Previous products"
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--theme-border-strong)] bg-white text-[var(--theme-ink)] disabled:opacity-35"
+          <div
+            ref={mobileScrollerRef}
+            className="sm:hidden -mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {products.map((product) => (
+              <div
+                key={product.id}
+                className="min-w-[84%] snap-center"
               >
-                <Chevron direction="left" />
-              </button>
-              <div className="flex items-center gap-2">
-                {Array.from({ length: totalPages }).map((_, index) => (
-                  <button
-                    key={index}
-                    type="button"
-                    onClick={() => setPage(index)}
-                    aria-label={`Go to product page ${index + 1}`}
-                    className={`h-2 rounded-full transition-all ${index === page ? 'w-8 bg-[var(--theme-ink)]' : 'w-2 bg-[var(--theme-border-strong)]'}`}
-                  />
-                ))}
+                <ProductCard
+                  product={product}
+                  wishlisted={wishlist.includes(getProductKey(product))}
+                  onWishlist={() => toggle(getProductKey(product))}
+                  onEnquire={() => {}}
+                  forceLight
+                />
               </div>
-              <button
-                type="button"
-                onClick={() => setPage((current) => Math.min(totalPages - 1, current + 1))}
-                disabled={page >= totalPages - 1}
-                aria-label="Next products"
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--theme-border-strong)] bg-white text-[var(--theme-ink)] disabled:opacity-35"
-              >
-                <Chevron direction="right" />
-              </button>
+            ))}
+          </div>
+
+          {products.length > 1 ? (
+            <div className="mt-5 flex items-center justify-center gap-2 sm:hidden">
+              {products.map((_, index) => (
+                <span
+                  key={index}
+                  className={`h-2 rounded-full transition-all ${index === mobilePage ? 'w-8 bg-[var(--theme-ink)]' : 'w-2 bg-[var(--theme-border-strong)]'}`}
+                />
+              ))}
             </div>
           ) : null}
         </div>

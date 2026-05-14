@@ -1,141 +1,85 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import Link from 'next/link';
 import type { HomeDiamondInfoConfig, HomeDiamondInfoItem } from '@/lib/home-data';
 
-gsap.registerPlugin(ScrollTrigger);
-
-type StageRow = {
-  label: string;
-  heading: string;
-  paragraph: string;
-};
-
-const FRAME_COUNT = 544;
-const FRAME_PATH = (index: number) => `/frames/frame_${String(index).padStart(4, '0')}.jpg`;
-const MIN_SECTION_HEIGHT_VH = 700;
-const HEIGHT_PER_STAGE_VH = 175;
-const PRELOAD_PROGRESS_EMIT_EVERY = 20;
-
-const FALLBACK_ROWS: StageRow[] = [
+const FALLBACK_FEATURES: HomeDiamondInfoItem[] = [
   {
-    label: '01 - Carat',
-    heading: 'Perfection by Weight',
-    paragraph:
-      'Every diamond is precision-cut to its exact carat and presented exactly as certified, with nothing hidden and nothing exaggerated.',
+    sort_order: 1,
+    iconSvg:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17.3l-5.2 3 1.4-5.9L3.5 10l6-.5L12 4l2.5 5.5 6 .5-4.7 4.4 1.4 5.9z"/></svg>',
+    title: 'Best rated jeweler',
+    description: 'Trusted by customers for quality, service, and craftsmanship.',
+    is_active: true,
   },
   {
-    label: '02 - Cut',
-    heading: 'Light Mastered',
-    paragraph:
-      'Each facet is crafted to capture and return light beautifully, giving the stone its depth, fire, and unmistakable brilliance.',
+    sort_order: 2,
+    iconSvg:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 10h6"/><path d="M12 7v10"/><path d="M9 14h6"/></svg>',
+    title: 'Best price guarantee',
+    description: 'Transparent pricing with no hidden surprises.',
+    is_active: true,
   },
   {
-    label: '03 - Clarity',
-    heading: 'Nothing Hidden',
-    paragraph:
-      'Every stone is graded with care so the eye sees only beauty, while craftsmanship and purity stay evident in every angle.',
+    sort_order: 3,
+    iconSvg:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/></svg>',
+    title: 'Guaranteed for life',
+    description: 'Made to last with long-term confidence and support.',
+    is_active: true,
   },
   {
-    label: '04 - Finish',
-    heading: 'Elegant by Design',
-    paragraph:
-      'From silhouette to setting, every detail is refined to feel timeless, balanced, and unmistakably House of Diams.',
+    sort_order: 4,
+    iconSvg:
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15a4 4 0 0 1 4-4h1"/><path d="M15 11h1a4 4 0 0 1 4 4"/><path d="M9 18h6"/><path d="M8 7a4 4 0 1 1 8 0v4H8z"/></svg>',
+    title: 'Unbiased human experts',
+    description: 'Real guidance from people, not pressure-driven selling.',
+    is_active: true,
   },
 ];
 
-function normalizeRows(items?: HomeDiamondInfoItem[]): StageRow[] {
-  if (!items?.length) return FALLBACK_ROWS;
-
-  return [...items]
-    .sort((a, b) => a.sort_order - b.sort_order)
-    .map((item, index) => {
-      const fallback = FALLBACK_ROWS[index % FALLBACK_ROWS.length];
-      return {
-        label: item.label?.trim() || fallback.label,
-        heading: item.heading?.trim() || fallback.heading,
-        paragraph: item.paragraph?.trim() || fallback.paragraph,
-      };
-    });
-}
-
-function splitHeadingRows(heading: string) {
-  const explicit = heading
-    .split(/\r?\n/)
-    .map((segment) => segment.trim())
-    .filter(Boolean);
-
-  if (explicit.length > 1) return explicit;
-
-  const words = heading.trim().split(/\s+/).filter(Boolean);
-  if (words.length <= 2) return words.length ? words : [heading.trim()];
-
-  const pivot = Math.ceil(words.length / 2);
-  return [words.slice(0, pivot).join(' '), words.slice(pivot).join(' ')];
-}
-
-const frameStore: {
-  frames: Array<HTMLImageElement | null>;
-  loaded: number;
-  ready: boolean;
-  firstReady: boolean;
-  listeners: Set<() => void>;
-} = {
-  frames: new Array(FRAME_COUNT + 1).fill(null),
-  loaded: 0,
-  ready: false,
-  firstReady: false,
-  listeners: new Set(),
+const FALLBACK_CONFIG: HomeDiamondInfoConfig = {
+  videoEnabled: true,
+  layoutMode: 'split_video_text',
+  eyebrow: 'Learn about the difference',
+  sectionHeading: 'This is the future of jewelry buying.',
+  sectionSubtext: 'We didn’t say that. Our customers did.',
+  ctaLabel: 'Learn about our peace of mind guarantee',
+  ctaLink: '/contact',
 };
 
-function notifyFrameListeners() {
-  frameStore.listeners.forEach((listener) => listener());
+function normalizeFeatures(items?: HomeDiamondInfoItem[]) {
+  const source = items?.filter((item) => item.is_active !== false && (item.title || item.description || item.iconSvg))?.length
+    ? items.filter((item) => item.is_active !== false && (item.title || item.description || item.iconSvg))
+    : FALLBACK_FEATURES;
+
+  return [...source]
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .slice(0, 4)
+    .map((item, index) => ({
+      ...FALLBACK_FEATURES[index],
+      ...item,
+      iconSvg: item.iconSvg?.trim() || FALLBACK_FEATURES[index].iconSvg,
+      title: item.title?.trim() || FALLBACK_FEATURES[index].title,
+      description: item.description?.trim() || FALLBACK_FEATURES[index].description,
+    }));
 }
 
-function preloadFrames() {
-  if (frameStore.ready || frameStore.loaded > 0) return;
-
-  const load = (index: number, priority: 'high' | 'low') => {
-    if (frameStore.frames[index]) return;
-
-    const image = new Image();
-    image.decoding = 'async';
-    try {
-      (image as HTMLImageElement & { fetchPriority?: string }).fetchPriority = priority;
-    } catch {
-      // Older browsers can ignore fetchPriority.
-    }
-
-    image.onload = () => {
-      frameStore.frames[index] = image;
-      frameStore.loaded += 1;
-
-      if (index === 1) {
-        frameStore.firstReady = true;
-        notifyFrameListeners();
-      } else if (frameStore.loaded % PRELOAD_PROGRESS_EMIT_EVERY === 0) {
-        notifyFrameListeners();
-      }
-
-      if (frameStore.loaded === FRAME_COUNT) {
-        frameStore.ready = true;
-        notifyFrameListeners();
-      }
-    };
-
-    image.src = FRAME_PATH(index);
-  };
-
-  load(1, 'high');
-  for (let index = 2; index <= FRAME_COUNT; index += 1) {
-    load(index, index <= 12 ? 'high' : 'low');
-  }
+function isExternalHref(href?: string) {
+  return !!href && /^(https?:)?\/\//.test(href);
 }
 
-if (typeof window !== 'undefined') {
-  preloadFrames();
+function isSvgMarkup(value?: string | null) {
+  return !!value && value.trim().startsWith('<svg');
+}
+
+function resolveIconSource(value?: string | null) {
+  if (!value) return '';
+  if (isSvgMarkup(value)) return '';
+  if (value.startsWith('http://') || value.startsWith('https://')) return value;
+  const bucket = process.env.NEXT_PUBLIC_SUPABASE_COLLECTION_BUCKET || 'hod';
+  const projectUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  return projectUrl ? `${projectUrl}/storage/v1/object/public/${bucket}/${value}` : value;
 }
 
 export default function DiamondInfoSequence({
@@ -145,253 +89,105 @@ export default function DiamondInfoSequence({
   items?: HomeDiamondInfoItem[];
   config?: HomeDiamondInfoConfig;
 }) {
-  void config;
+  const resolvedConfig = {
+    ...FALLBACK_CONFIG,
+    ...config,
+  };
 
-  const stages = useMemo(() => normalizeRows(items), [items]);
-  const sectionHeight = `${Math.max(MIN_SECTION_HEIGHT_VH, stages.length * HEIGHT_PER_STAGE_VH)}vh`;
-
-  const [activeStage, setActiveStage] = useState(0);
-  const [firstReady, setFirstReady] = useState(frameStore.firstReady);
-
-  const sectionRef = useRef<HTMLElement | null>(null);
-  const canvasWrapRef = useRef<HTMLDivElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const leftTextRefs = useRef<Array<HTMLDivElement | null>>([]);
-  const rightTextRefs = useRef<Array<HTMLDivElement | null>>([]);
-  const previousStageRef = useRef<number | null>(null);
-  const currentFrameRef = useRef(1);
-
-  useEffect(() => {
-    const onStoreUpdate = () => {
-      setFirstReady(frameStore.firstReady);
-    };
-
-    frameStore.listeners.add(onStoreUpdate);
-    return () => {
-      frameStore.listeners.delete(onStoreUpdate);
-    };
-  }, []);
-
-  useLayoutEffect(() => {
-    const leftBlocks = leftTextRefs.current.filter(Boolean) as HTMLDivElement[];
-    const rightBlocks = rightTextRefs.current.filter(Boolean) as HTMLDivElement[];
-    const previousStage = previousStageRef.current;
-    previousStageRef.current = activeStage;
-
-    const incoming = [leftBlocks[activeStage], rightBlocks[activeStage]].filter(Boolean);
-    const outgoing =
-      previousStage != null && previousStage !== activeStage
-        ? [leftBlocks[previousStage], rightBlocks[previousStage]].filter(Boolean)
-        : [];
-
-    gsap.killTweensOf([...leftBlocks, ...rightBlocks]);
-    gsap.set([...leftBlocks, ...rightBlocks], { autoAlpha: 0 });
-
-    const timeline = gsap.timeline({
-      defaults: { overwrite: 'auto' },
-    });
-
-    if (outgoing.length > 0) {
-      gsap.set(outgoing, { autoAlpha: 1 });
-      timeline.to(outgoing, {
-        autoAlpha: 0,
-        duration: 0.3,
-        ease: 'power2.out',
-      });
-    }
-
-    gsap.set(incoming, { autoAlpha: 0 });
-    timeline.to(
-      incoming,
-      {
-        autoAlpha: 1,
-        duration: 0.55,
-        ease: 'power2.out',
-      },
-      outgoing.length > 0 ? 0.12 : 0
-    );
-
-    return () => {
-      timeline.kill();
-    };
-  }, [activeStage, stages.length]);
-
-  useLayoutEffect(() => {
-    const section = sectionRef.current;
-    const canvasWrap = canvasWrapRef.current;
-    const canvas = canvasRef.current;
-    const context = canvas?.getContext('2d');
-    if (!section || !canvasWrap || !canvas || !context) return;
-
-    let destroyed = false;
-    let drawRaf = 0;
-    const size = { width: 0, height: 0, dpr: 0 };
-
-    const setCanvasSize = () => {
-      const width = Math.max(1, canvasWrap.clientWidth);
-      const height = Math.max(1, canvasWrap.clientHeight);
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-
-      if (size.width !== width || size.height !== height || size.dpr !== dpr) {
-        canvas.width = Math.round(width * dpr);
-        canvas.height = Math.round(height * dpr);
-        canvas.style.width = `${width}px`;
-        canvas.style.height = `${height}px`;
-        context.setTransform(dpr, 0, 0, dpr, 0, 0);
-        size.width = width;
-        size.height = height;
-        size.dpr = dpr;
-      }
-
-      return { width, height };
-    };
-
-    const drawFrame = (frameIndex: number) => {
-      const image = frameStore.frames[frameIndex];
-      if (!image) return;
-
-      const { width, height } = setCanvasSize();
-      const scale = Math.min(width / image.naturalWidth, height / image.naturalHeight);
-      const drawWidth = image.naturalWidth * scale;
-      const drawHeight = image.naturalHeight * scale;
-      const offsetX = (width - drawWidth) / 2;
-      const offsetY = (height - drawHeight) / 2;
-
-      context.clearRect(0, 0, width, height);
-      context.imageSmoothingEnabled = true;
-      context.imageSmoothingQuality = 'high';
-      context.drawImage(image, offsetX, offsetY, drawWidth, drawHeight);
-    };
-
-    const requestDraw = (frameIndex: number) => {
-      currentFrameRef.current = frameIndex;
-      if (drawRaf) return;
-
-      drawRaf = window.requestAnimationFrame(() => {
-        drawRaf = 0;
-        if (!destroyed) {
-          drawFrame(currentFrameRef.current);
-        }
-      });
-    };
-
-    if (frameStore.firstReady) {
-      drawFrame(1);
-    }
-
-    const onStoreUpdate = () => {
-      if (!destroyed) {
-        requestDraw(currentFrameRef.current);
-      }
-    };
-
-    frameStore.listeners.add(onStoreUpdate);
-
-    const trigger = ScrollTrigger.create({
-      trigger: section,
-      start: 'top top',
-      end: 'bottom bottom',
-      scrub: 0.5,
-      onUpdate(self) {
-        const frameIndex = Math.max(
-          1,
-          Math.min(FRAME_COUNT, Math.round(self.progress * (FRAME_COUNT - 1)) + 1)
-        );
-        requestDraw(frameIndex);
-
-        const stageIndex = Math.min(
-          Math.floor(self.progress * stages.length),
-          stages.length - 1
-        );
-        setActiveStage((current) => (current === stageIndex ? current : stageIndex));
-      },
-    });
-
-    const onResize = () => {
-      if (!destroyed) {
-        requestDraw(currentFrameRef.current);
-      }
-    };
-
-    window.addEventListener('resize', onResize);
-
-    return () => {
-      destroyed = true;
-      if (drawRaf) {
-        window.cancelAnimationFrame(drawRaf);
-      }
-      window.removeEventListener('resize', onResize);
-      frameStore.listeners.delete(onStoreUpdate);
-      trigger.kill();
-    };
-  }, [stages.length]);
+  const features = normalizeFeatures(items);
+  const hasVideo = Boolean(resolvedConfig.videoEnabled && resolvedConfig.videoUrl);
+  const ctaHref = resolvedConfig.ctaLink?.trim() || '';
+  const eyebrow = resolvedConfig.eyebrow?.trim() || FALLBACK_CONFIG.eyebrow;
+  const heading = resolvedConfig.sectionHeading?.trim() || FALLBACK_CONFIG.sectionHeading;
+  const subtext = resolvedConfig.sectionSubtext?.trim() || FALLBACK_CONFIG.sectionSubtext;
+  const ctaLabel = resolvedConfig.ctaLabel?.trim() || FALLBACK_CONFIG.ctaLabel;
 
   return (
-    <section
-      ref={sectionRef}
-      className="relative bg-white"
-      style={{ height: sectionHeight }}
-    >
-      <div className="sticky top-0 h-screen overflow-hidden bg-white">
-        <div className="mx-auto grid h-full w-full max-w-[1700px] grid-cols-1 grid-rows-[auto_auto_minmax(320px,48vh)] items-center gap-3 px-5 py-6 sm:gap-5 sm:px-8 sm:py-8 md:px-10 lg:grid-cols-[minmax(240px,1fr)_minmax(420px,52vw)_minmax(240px,1fr)] lg:grid-rows-1 lg:gap-8 lg:px-12 xl:px-16">
-          <div className="order-1 relative flex min-h-[156px] items-center justify-center sm:min-h-[190px] lg:min-h-[520px]">
-            {stages.map((stage, index) => (
-              <div
-                key={`left-${index}`}
-                ref={(node) => {
-                  leftTextRefs.current[index] = node;
-                }}
-                className="pointer-events-none absolute inset-0 flex flex-col items-center justify-start px-2 pt-2 text-center sm:justify-center sm:pt-0 lg:items-start lg:text-left"
-              >
-                <p
-                  className="text-[10px] uppercase tracking-[0.34em] text-[#8a8f99] sm:text-[11px]"
-                  style={{ fontFamily: 'var(--font-geist-sans), Arial, sans-serif' }}
-                >
-                  {stage.label}
+    <section className="bg-white py-12 md:py-14 lg:py-16">
+      <div className="w-full overflow-hidden border-y border-[#E7E2D8] bg-[#F8F5EE] shadow-[0_24px_80px_rgba(10,22,40,0.08)]">
+        <div className="grid lg:grid-cols-[minmax(0,1.02fr)_minmax(0,0.98fr)] lg:items-stretch">
+          <div className="relative min-h-[260px] overflow-hidden bg-[#111111] sm:min-h-[340px] lg:min-h-0 lg:h-full lg:self-stretch">
+            {hasVideo ? (
+              <video
+                className="absolute left-1/2 top-1/2 h-full w-full min-h-full min-w-full -translate-x-1/2 -translate-y-1/2 object-cover object-center"
+                src={resolvedConfig.videoUrl}
+                poster={resolvedConfig.videoPosterUrl}
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="metadata"
+              />
+            ) : resolvedConfig.videoPosterUrl ? (
+              <img
+                src={resolvedConfig.videoPosterUrl}
+                alt={heading}
+                className="absolute left-1/2 top-1/2 h-full w-full min-h-full min-w-full -translate-x-1/2 -translate-y-1/2 object-cover object-center"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.16),transparent_28%),linear-gradient(135deg,#141414,#2B231C)]" />
+            )}
+          </div>
+
+          <div className="flex items-center bg-[#FBF8F1]">
+            <div className="w-full px-5 py-6 sm:px-8 sm:py-8 lg:px-10 lg:py-8 xl:px-12">
+              <div className="mx-auto max-w-[520px]">
+                <p className="text-center text-[10px] uppercase tracking-[0.24em] text-[#6F7890] sm:text-[11px] lg:text-left">
+                  {eyebrow}
                 </p>
-                <h2
-                  className="mt-4 max-w-[12ch] text-[2.2rem] leading-[1.18] text-[#111111] sm:text-[2.75rem] sm:leading-[1.14] lg:text-[3.35rem] lg:leading-[1.08] xl:text-[3.8rem] xl:leading-[1.04]"
-                  style={{ fontFamily: 'var(--display-title)' }}
-                >
-                  {splitHeadingRows(stage.heading).map((row, rowIndex) => (
-                    <span key={`${index}-row-${rowIndex}`} className="block">
-                      {row}
-                    </span>
-                  ))}
+
+                <h2 className="mt-3 text-center font-display-title text-[clamp(30px,3.8vw,56px)] font-normal leading-[0.96] tracking-[0.01em] text-[#0A1628] lg:text-left">
+                  {heading}
                 </h2>
-              </div>
-            ))}
-          </div>
 
-          <div
-            ref={canvasWrapRef}
-            className="order-3 relative h-full min-h-[320px] overflow-hidden rounded-[28px] bg-white lg:order-2 lg:min-h-[70vh]"
-          >
-            <canvas ref={canvasRef} className="block h-full w-full" />
-            {!firstReady ? (
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(248,248,248,0.96)_0%,rgba(255,255,255,1)_68%)]" />
-            ) : null}
-          </div>
+                <p className="mt-4 text-center text-[14px] leading-[1.75] text-[#4E5667] sm:text-[15px] lg:text-left">
+                  {subtext}
+                </p>
 
-          <div className="order-2 relative flex min-h-[88px] items-center justify-center sm:min-h-[120px] lg:order-3 lg:min-h-[440px]">
-            {stages.map((stage, index) => (
-              <div
-                key={`right-${index}`}
-                ref={(node) => {
-                  rightTextRefs.current[index] = node;
-                }}
-                className="pointer-events-none absolute inset-0 flex items-start justify-center text-center sm:items-center lg:justify-end lg:text-left"
-              >
-                <div className="max-w-[320px] lg:max-w-[360px]">
-                  <p
-                    className="text-sm leading-[1.95] text-[#5f646d] sm:text-[15px] lg:text-base"
-                    style={{ fontFamily: 'var(--font-geist-sans), Arial, sans-serif' }}
-                  >
-                    {stage.paragraph}
-                  </p>
+                <div className="mt-6 grid gap-3 sm:grid-cols-2 sm:gap-4">
+                  {features.map((feature) => (
+                    <div key={`${feature.sort_order}-${feature.title}`} className="flex items-start gap-3 rounded-[20px] border border-[#E4DED3] bg-white/75 px-3.5 py-3.5">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#D5CEBF] bg-white text-[#0A1628]">
+                        {isSvgMarkup(feature.iconSvg) ? (
+                          <span
+                            className="block h-4.5 w-4.5 [&>svg]:h-4.5 [&>svg]:w-4.5"
+                            dangerouslySetInnerHTML={{ __html: feature.iconSvg ?? '' }}
+                          />
+                        ) : feature.iconSvg ? (
+                          <img src={resolveIconSource(feature.iconSvg)} alt={feature.title} className="h-4.5 w-4.5 object-contain" />
+                        ) : null}
+                      </div>
+                      <div>
+                        <h3 className="text-[15px] font-medium leading-[1.25] text-[#0A1628] sm:text-[16px]">{feature.title}</h3>
+                        <p className="mt-1 text-[13px] leading-[1.65] text-[#5F6676] sm:text-[13.5px]">{feature.description}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
+
+                {ctaHref && ctaLabel ? (
+                  <div className="mt-6 text-center lg:text-left">
+                    {isExternalHref(ctaHref) ? (
+                      <a
+                        href={ctaHref}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-2 text-[13px] font-medium text-[#506B9B] underline-offset-4 transition-colors hover:text-[#0A1628] hover:underline sm:text-[14px]"
+                      >
+                        {ctaLabel}
+                      </a>
+                    ) : (
+                      <Link
+                        href={ctaHref}
+                        className="inline-flex items-center gap-2 text-[13px] font-medium text-[#506B9B] underline-offset-4 transition-colors hover:text-[#0A1628] hover:underline sm:text-[14px]"
+                      >
+                        {ctaLabel}
+                      </Link>
+                    )}
+                  </div>
+                ) : null}
               </div>
-            ))}
+            </div>
           </div>
         </div>
       </div>

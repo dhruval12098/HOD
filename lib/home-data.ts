@@ -117,16 +117,24 @@ export type HomeTestimonialsData = {
 };
 
 export type HomeDiamondInfoItem = {
+  id?: string;
   sort_order: number;
-  label: string;
-  heading: string;
-  paragraph: string;
+  iconSvg?: string | null;
+  title: string;
+  description: string;
+  is_active?: boolean;
 };
 
 export type HomeDiamondInfoConfig = {
   videoEnabled: boolean;
   videoUrl?: string;
   videoPosterUrl?: string;
+  layoutMode?: string;
+  eyebrow?: string;
+  sectionHeading?: string;
+  sectionSubtext?: string;
+  ctaLabel?: string;
+  ctaLink?: string;
 };
 
 export type HomeBestSellerSection = {
@@ -576,12 +584,14 @@ const loadHomePageData = unstable_cache(
         .eq('section_key', 'home_couples')
         .maybeSingle(),
       supabase
-        .from('diamond_info_sections')
-        .select('sort_order, label, heading, paragraph')
+        .from('diamond_info_feature_items')
+        .select('id, sort_order, icon_svg, title, description, is_active')
+        .eq('section_key', 'home_diamond_info')
+        .eq('is_active', true)
         .order('sort_order', { ascending: true }),
       supabase
         .from('diamond_info_config')
-        .select('video_enabled, video_path, video_poster_path')
+        .select('video_enabled, video_path, video_poster_path, layout_mode, eyebrow, section_heading, section_subtext, cta_label, cta_link')
         .eq('section_key', 'home_diamond_info')
         .maybeSingle(),
       supabase
@@ -779,14 +789,21 @@ const loadHomePageData = unstable_cache(
     }
 
     const diamondInfoConfigError = diamondInfoConfigResult.error
+    const diamondInfoFeatureError = diamondInfoResult.error
     const collectionPageConfigError = collectionPageConfigResult.error
     const isMissingDiamondInfoConfigTable =
       diamondInfoConfigError?.code === 'PGRST205' ||
       diamondInfoConfigError?.message?.includes("Could not find the table 'public.diamond_info_config'")
+    const isMissingDiamondInfoFeatureTable =
+      diamondInfoFeatureError?.code === 'PGRST205' ||
+      diamondInfoFeatureError?.message?.includes("Could not find the table 'public.diamond_info_feature_items'")
     const isMissingCollectionPageConfigTable =
       collectionPageConfigError?.code === 'PGRST205' ||
       collectionPageConfigError?.message?.includes("Could not find the table 'public.collection_page_config'")
 
+    if (diamondInfoFeatureError && !isMissingDiamondInfoFeatureTable) {
+      throw diamondInfoFeatureError
+    }
     if (diamondInfoConfigError && !isMissingDiamondInfoConfigTable) {
       throw diamondInfoConfigError
     }
@@ -848,11 +865,26 @@ const loadHomePageData = unstable_cache(
           'Real couples. Real proposals. Real diamonds. Every ring tells a story.',
         items: couplesItems,
       },
-      diamondInfoItems: diamondInfoResult.data ?? [],
+      diamondInfoItems: isMissingDiamondInfoFeatureTable
+        ? []
+        : (diamondInfoResult.data ?? []).map((item) => ({
+            id: item.id,
+            sort_order: item.sort_order,
+            iconSvg: item.icon_svg ?? '',
+            title: item.title ?? '',
+            description: item.description ?? '',
+            is_active: item.is_active ?? true,
+          })),
       diamondInfoConfig: {
         videoEnabled: isMissingDiamondInfoConfigTable ? false : (diamondInfoConfigResult.data?.video_enabled ?? false),
         videoUrl: isMissingDiamondInfoConfigTable ? undefined : toPublicUrl(diamondInfoConfigResult.data?.video_path),
         videoPosterUrl: isMissingDiamondInfoConfigTable ? undefined : toPublicUrl(diamondInfoConfigResult.data?.video_poster_path),
+        layoutMode: isMissingDiamondInfoConfigTable ? 'split_video_text' : (diamondInfoConfigResult.data?.layout_mode ?? 'split_video_text'),
+        eyebrow: isMissingDiamondInfoConfigTable ? '' : (diamondInfoConfigResult.data?.eyebrow ?? ''),
+        sectionHeading: isMissingDiamondInfoConfigTable ? '' : (diamondInfoConfigResult.data?.section_heading ?? ''),
+        sectionSubtext: isMissingDiamondInfoConfigTable ? '' : (diamondInfoConfigResult.data?.section_subtext ?? ''),
+        ctaLabel: isMissingDiamondInfoConfigTable ? '' : (diamondInfoConfigResult.data?.cta_label ?? ''),
+        ctaLink: isMissingDiamondInfoConfigTable ? '' : (diamondInfoConfigResult.data?.cta_link ?? ''),
       },
       testimonialsData: {
         eyebrow: testimonialsSectionResult.data?.eyebrow ?? 'Client Stories',
@@ -872,8 +904,8 @@ const loadHomePageData = unstable_cache(
       bestSellerProducts,
     };
   },
-  ['home-page-data-v2'],
-  { revalidate: 300 }
+  ['home-page-data-v3'],
+  { revalidate: 30 }
 );
 
 export async function getHomePageData() {

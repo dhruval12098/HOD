@@ -156,7 +156,7 @@ function getMobileSectionEntries(section: NavbarRenderSection) {
 
 function getMegaMenuColumnCount(item: NavbarRenderItem) {
   const sectionCount = item.mega?.sections.length ?? 0;
-  return Math.max(1, Math.min(3, sectionCount || 1));
+  return Math.max(1, Math.min(4, sectionCount || 1));
 }
 
 export default function Navbar() {

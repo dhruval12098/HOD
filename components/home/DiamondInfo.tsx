@@ -538,7 +538,7 @@ export default function DiamondScroll({
       ? SECTIONS.map((section, index) => {
           const item = items.find((row) => row.sort_order === index + 1);
           return item
-            ? { ...section, label: item.label, title: item.heading, body: item.paragraph }
+            ? { ...section, title: item.title || section.title, body: item.description || section.body }
             : section;
         })
       : SECTIONS
@@ -574,7 +574,7 @@ export default function DiamondScroll({
       prev.map((section, index) => {
         const item = items.find((row) => row.sort_order === index + 1);
         return item
-          ? { ...section, label: item.label, title: item.heading, body: item.paragraph }
+          ? { ...section, title: item.title || section.title, body: item.description || section.body }
           : section;
       })
     );

@@ -106,7 +106,7 @@ export default function ShopHero({
     >
       <style>{`
         @media (max-width: 640px) {
-          .shop-hero-top { padding: ${hasBannerImage ? '120px 20px 40px' : '72px 20px 40px'} !important; }
+          .shop-hero-top { padding: ${hasBannerImage ? '88px 16px 28px' : '56px 16px 28px'} !important; }
           .shop-hero-browse { display: none !important; }
           .shop-hero-tabs-wrap { padding: 6px !important; }
           .shop-hero-tabs { gap: 6px !important; }

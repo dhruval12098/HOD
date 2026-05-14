@@ -263,15 +263,8 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
             ) : null}
 
             <div className="absolute inset-x-0 bottom-0 z-20 flex items-end justify-between gap-6 px-4 pb-4 sm:px-6 sm:pb-6 lg:px-8 lg:pb-8">
-              <div className="flex flex-col items-start gap-4">
-                <Link
-                  href={currentSlide.button_link || '#'}
-                  className="inline-flex items-center justify-center gap-2.5 bg-[var(--theme-ink)] px-[24px] py-3 text-[9px] uppercase tracking-[0.22em] text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#20304a] sm:px-[28px] sm:py-4 sm:text-[10px] sm:tracking-[0.28em]"
-                >
-                  {currentSlide.button_text || 'Explore'}
-                </Link>
-
-                {slides.length > 1 && (
+              <div className="flex min-h-[48px] items-end">
+                {slides.length > 1 ? (
                   <div className="flex items-center gap-2">
                     {slides.map((slide, index) => (
                       <button
@@ -283,7 +276,16 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
                       />
                     ))}
                   </div>
-                )}
+                ) : null}
+              </div>
+
+              <div className="flex min-h-[48px] items-end justify-end">
+                <Link
+                  href={currentSlide.button_link || '#'}
+                  className="inline-flex items-center justify-center gap-2.5 bg-[var(--theme-ink)] px-[24px] py-3 text-[9px] uppercase tracking-[0.22em] text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#20304a] sm:px-[28px] sm:py-4 sm:text-[10px] sm:tracking-[0.28em]"
+                >
+                  {currentSlide.button_text || 'Explore'}
+                </Link>
               </div>
             </div>
           </div>

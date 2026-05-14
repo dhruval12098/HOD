@@ -65,7 +65,7 @@ export default function HipHopClient({
       >
         <HipHopHero initialContent={hero.content} initialSlides={hero.slides} onReady={() => setHeroReady(true)} />
 
-        <div className="max-w-[1400px] mx-auto px-[52px] pt-[36px] max-[700px]:px-5">
+        <div className="mx-auto max-w-[1400px] px-[52px] pt-[24px] max-[700px]:px-[10px] max-[700px]:pt-[8px]">
           {/* <button
             type="button"
             onClick={() => setDrawerOpen(true)}

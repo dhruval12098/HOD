@@ -5,12 +5,17 @@ import { useEffect, useLayoutEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import BlogSectionHeader from '@/components/blog/BlogSectionHeader';
 import Hero from '@/components/home/Hero';
+import TestimonialMarquee from '@/components/home/TestimonialMarquee';
+import Collection from '@/components/home/Collection';
+import Certifications from '@/components/home/Certifications';
+import DiscoverShapes from '@/components/home/DiscoverShapes';
 import BlogGrid from '@/components/blog/BlogGrid';
 import { posts } from '@/lib/data/blog-posts';
 import type { BlogPost } from '@/lib/data/blog-posts';
 import EnquireModal from '@/components/home/EnquireModal';
 import Toast from '@/components/home/Toast';
 import { useHomeLoader } from '@/components/layout/HomeLoaderContext';
+import { persistHomeLoaderCache, shouldSkipHomeLoader } from '@/lib/home-loader-cache';
 import type {
   HomeBestSellerProduct,
   HomeBestSellerSection,
@@ -24,10 +29,6 @@ import type {
   HomeTestimonialsData,
 } from '@/lib/home-data';
 
-const TestimonialMarquee = dynamic(() => import('@/components/home/TestimonialMarquee'), { loading: () => null });
-const Collection = dynamic(() => import('@/components/home/Collection'), { loading: () => null });
-const Certifications = dynamic(() => import('@/components/home/Certifications'), { loading: () => null });
-const DiscoverShapes = dynamic(() => import('@/components/home/DiscoverShapes'), { loading: () => null });
 const HipHopShowcase = dynamic(() => import('@/components/home/HipHopShowcase'), { loading: () => null });
 const BestSellers = dynamic(() => import('@/components/home/BestSellers'), { loading: () => null });
 const CollectionShowcase = dynamic(() => import('@/components/home/CollectionShowcase'), { loading: () => null });
@@ -62,9 +63,6 @@ type HeroContent = {
     button_link: string;
   }>;
 };
-
-const HOME_LOADER_CACHE_KEY = 'hod_home_loader_v1';
-const HOME_LOADER_CACHE_TTL_MS = 1000 * 60 * 60 * 12;
 
 export default function HomeClient({
   heroContent,
@@ -107,21 +105,12 @@ export default function HomeClient({
   const [fontsReady, setFontsReady] = useState(false);
   const [skipHomeLoader, setSkipHomeLoader] = useState(false);
   const [showDeferredSections, setShowDeferredSections] = useState(false);
+  const showPrimarySections = skipHomeLoader || isHomeReady;
 
   useLayoutEffect(() => {
     if (typeof window === 'undefined') return;
 
-    let shouldSkipLoader = false;
-
-    try {
-      const cached = window.localStorage.getItem(HOME_LOADER_CACHE_KEY);
-      if (cached) {
-        const parsed = JSON.parse(cached) as { expiresAt?: number } | null;
-        if (parsed?.expiresAt && parsed.expiresAt > Date.now()) {
-          shouldSkipLoader = true;
-        }
-      }
-    } catch {}
+    const shouldSkipLoader = shouldSkipHomeLoader();
 
     setSkipHomeLoader(shouldSkipLoader);
     if (shouldSkipLoader) {
@@ -188,14 +177,33 @@ export default function HomeClient({
   useEffect(() => {
     if (!skipHomeLoader && (!heroReady || !fontsReady)) return;
 
-    setIsHomeReady(true);
-    try {
-      window.localStorage.setItem(
-        HOME_LOADER_CACHE_KEY,
-        JSON.stringify({ expiresAt: Date.now() + HOME_LOADER_CACHE_TTL_MS })
-      );
-    } catch {}
+    if (skipHomeLoader) {
+      setIsHomeReady(true);
+      persistHomeLoaderCache();
+      return;
+    }
+
+    let frameOne = 0;
+    let frameTwo = 0;
+
+    frameOne = window.requestAnimationFrame(() => {
+      frameTwo = window.requestAnimationFrame(() => {
+        setIsHomeReady(true);
+        persistHomeLoaderCache();
+      });
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameOne);
+      window.cancelAnimationFrame(frameTwo);
+    };
   }, [fontsReady, heroReady, setIsHomeReady, skipHomeLoader]);
+
+  useEffect(() => {
+    if (showPrimarySections) {
+      setShowDeferredSections((current) => current || skipHomeLoader);
+    }
+  }, [showPrimarySections, skipHomeLoader]);
 
   useEffect(() => {
     if (!skipHomeLoader && !isHomeReady) {
@@ -258,13 +266,16 @@ export default function HomeClient({
           setHeroReady(true);
         }}
       />
-      {showDeferredSections ? (
+      {showPrimarySections ? (
         <>
           <TestimonialMarquee initialData={marqueeData} />
           <Collection items={collectionItems} />
           <Certifications />
           <DiscoverShapes initialItems={discoverShapesItems} />
-
+        </>
+      ) : null}
+      {showDeferredSections ? (
+        <>
           <HipHopShowcase initialSection={hiphopSection} />
           <BestSellers initialSection={bestSellerSection} initialProducts={bestSellerProducts} />
           {collectionPageConfig.pageEnabled && collectionPageConfig.showHomeShowcase ? <CollectionShowcase config={collectionPageConfig} /> : null}

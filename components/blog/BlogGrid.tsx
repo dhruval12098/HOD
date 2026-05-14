@@ -1,6 +1,6 @@
- 'use client';
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BlogPost } from "@/lib/data/blog-posts";
 import BlogCardBig from "./BlogCardBig";
 import BlogCardSmall from "./BlogCardSmall";
@@ -10,27 +10,16 @@ interface BlogGridProps {
   onPostClick: (id: number) => void;
 }
 
-function Chevron({ direction }: { direction: "left" | "right" }) {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-      {direction === "left" ? (
-        <path d="M15 6L9 12L15 18" strokeLinecap="round" strokeLinejoin="round" />
-      ) : (
-        <path d="M9 6L15 12L9 18" strokeLinecap="round" strokeLinejoin="round" />
-      )}
-    </svg>
-  );
-}
-
 export default function BlogGrid({ posts, onPostClick }: BlogGridProps) {
   const [featured, ...rest] = posts;
   const smallCards = rest.slice(0, 4);
   const mobileCards = [featured, ...smallCards].filter(Boolean) as BlogPost[];
-  const [page, setPage] = useState(0);
+  const [mobilePage, setMobilePage] = useState(0);
+  const mobileScrollerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const maxPage = Math.max(0, mobileCards.length - 1);
-    setPage((current) => Math.min(current, maxPage));
+    setMobilePage((current) => Math.min(current, maxPage));
   }, [mobileCards.length]);
 
   return (
@@ -50,13 +39,22 @@ export default function BlogGrid({ posts, onPostClick }: BlogGridProps) {
       </div>
 
       <div className="md:hidden">
-        <div className="overflow-hidden">
-          <div
-            className="flex gap-0 transition-transform duration-500 ease-[cubic-bezier(.4,0,.2,1)]"
-            style={{ transform: `translateX(-${page * 100}%)` }}
-          >
+        <div
+          ref={mobileScrollerRef}
+          className="-mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          onScroll={(event) => {
+            const node = event.currentTarget;
+            const firstCard = node.querySelector<HTMLElement>('[data-blog-mobile-card]');
+            if (!firstCard) return;
+            const cardWidth = firstCard.offsetWidth + 16;
+            if (!cardWidth) return;
+            const nextPage = Math.round(node.scrollLeft / cardWidth);
+            setMobilePage(Math.max(0, Math.min(mobileCards.length - 1, nextPage)));
+          }}
+        >
+          <div className="contents">
             {mobileCards.map((post) => (
-              <div key={post.id} className="min-w-full">
+              <div key={post.id} data-blog-mobile-card className="min-w-[84%] snap-center">
                 <BlogCardSmall post={post} onClick={() => onPostClick(post.id)} />
               </div>
             ))}
@@ -65,35 +63,14 @@ export default function BlogGrid({ posts, onPostClick }: BlogGridProps) {
 
         {mobileCards.length > 1 ? (
           <div className="mt-5 flex items-center justify-center gap-2">
-            <button
-              type="button"
-              onClick={() => setPage((current) => Math.max(0, current - 1))}
-              disabled={page === 0}
-              aria-label="Previous blog posts"
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--theme-border-strong)] bg-white text-[var(--theme-ink)] disabled:opacity-35"
-            >
-              <Chevron direction="left" />
-            </button>
             <div className="flex items-center gap-2">
               {mobileCards.map((_, index) => (
-                <button
+                <span
                   key={index}
-                  type="button"
-                  onClick={() => setPage(index)}
-                  aria-label={`Go to blog slide ${index + 1}`}
-                  className={`h-2 rounded-full transition-all ${index === page ? 'w-8 bg-[var(--theme-ink)]' : 'w-2 bg-[var(--theme-border-strong)]'}`}
+                  className={`h-2 rounded-full transition-all ${index === mobilePage ? 'w-8 bg-[var(--theme-ink)]' : 'w-2 bg-[var(--theme-border-strong)]'}`}
                 />
               ))}
             </div>
-            <button
-              type="button"
-              onClick={() => setPage((current) => Math.min(mobileCards.length - 1, current + 1))}
-              disabled={page >= mobileCards.length - 1}
-              aria-label="Next blog posts"
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--theme-border-strong)] bg-white text-[var(--theme-ink)] disabled:opacity-35"
-            >
-              <Chevron direction="right" />
-            </button>
           </div>
         ) : null}
       </div>

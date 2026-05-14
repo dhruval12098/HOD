@@ -88,21 +88,28 @@ export default function TimelineSection({ initialItems = [] }) {
           .timeline-row {
             flex-direction: column !important;
             gap: 28px !important;
-            padding: 0 !important;
+            padding: 0 0 0 6px !important;
           }
-          .timeline-row::before {
-            top: 0 !important; bottom: 0 !important;
-            left: 7px !important; right: auto !important;
-            width: 1px !important; height: auto !important;
+          .timeline-connector {
+            top: 0 !important;
+            bottom: 0 !important;
+            left: 13px !important;
+            right: auto !important;
+            width: 1px !important;
+            height: auto !important;
           }
           .timeline-item {
             text-align: left !important;
             display: flex !important;
             gap: 18px !important;
-            align-items: center !important;
+            align-items: flex-start !important;
             flex: unset !important;
+            min-height: 82px !important;
           }
-          .timeline-dot { margin: 0 !important; }
+          .timeline-dot { margin: 5px 0 0 !important; flex-shrink: 0 !important; }
+          .timeline-copy { display: flex !important; flex-direction: column !important; gap: 6px !important; }
+          .timeline-year { margin-bottom: 0 !important; line-height: 1 !important; }
+          .timeline-label { max-width: 220px !important; line-height: 1.5 !important; }
         }
         @media (max-width: 640px) {
           .timeline-section { padding: 60px 20px !important; }
@@ -154,6 +161,7 @@ export default function TimelineSection({ initialItems = [] }) {
       >
         {/* Horizontal connector line */}
         <div
+          className="timeline-connector"
           style={{
             position: "absolute",
             top: "24px",
@@ -187,29 +195,33 @@ export default function TimelineSection({ initialItems = [] }) {
               }}
             />
 
-            {/* Year */}
-            <div
-              style={{
-                fontFamily: "var(--numeric)",
-                fontSize: "26px",
-                fontWeight: 400,
-                color: "#0A1628",
-                marginBottom: "4px",
-              }}
-            >
-              {m.year}
-            </div>
+            <div className="timeline-copy">
+              {/* Year */}
+              <div
+                className="timeline-year"
+                style={{
+                  fontFamily: "var(--numeric)",
+                  fontSize: "26px",
+                  fontWeight: 400,
+                  color: "#0A1628",
+                  marginBottom: "4px",
+                }}
+              >
+                {m.year}
+              </div>
 
-            {/* Label */}
-            <div
-              style={{
-                fontSize: "10px",
-                fontWeight: 300,
-                letterSpacing: ".14em",
-                color: "#6A6A6A",
-              }}
-            >
-              {m.label}
+              {/* Label */}
+              <div
+                className="timeline-label"
+                style={{
+                  fontSize: "10px",
+                  fontWeight: 300,
+                  letterSpacing: ".14em",
+                  color: "#6A6A6A",
+                }}
+              >
+                {m.label}
+              </div>
             </div>
           </div>
         ))}

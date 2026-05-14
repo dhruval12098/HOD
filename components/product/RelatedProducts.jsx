@@ -16,7 +16,7 @@ export default function RelatedProducts({ products, wishlist = [], onWishlist, o
         You May Also <em className="font-normal italic text-[#0A1628]">Love</em>
       </h2>
 
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-6 max-[700px]:grid-cols-2 max-[700px]:gap-3">
+      <div className="hidden grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-6 min-[701px]:grid">
         {products.map((product) => (
           <ProductCard
             key={product.id}
@@ -25,6 +25,19 @@ export default function RelatedProducts({ products, wishlist = [], onWishlist, o
             onWishlist={() => onWishlist?.(product)}
             onEnquire={onEnquire}
           />
+        ))}
+      </div>
+
+      <div className="-mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-2 min-[701px]:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {products.map((product) => (
+          <div key={product.id} className="min-w-[84%] snap-center">
+            <ProductCard
+              product={product}
+              wishlisted={wishlist.includes(getProductKey(product))}
+              onWishlist={() => onWishlist?.(product)}
+              onEnquire={onEnquire}
+            />
+          </div>
         ))}
       </div>
     </section>

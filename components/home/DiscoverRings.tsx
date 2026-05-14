@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { gsap } from 'gsap';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { houseOfDiamsWordmarkFont } from '@/app/fonts';
 
 type RingItem = {
   id: string;
@@ -328,7 +329,7 @@ export default function DiscoverRings({
                 <Link href={displayHref} className="inline-flex items-center justify-center transition-opacity hover:opacity-75">
                   <span
                     ref={nameRef}
-                    className="inline-block font-sans text-[28px] font-normal tracking-[0.01em] text-[#0A0A0A] md:text-[38px]"
+                    className={`${houseOfDiamsWordmarkFont.className} inline-block text-[28px] font-normal tracking-[0.04em] text-[#0A0A0A] md:text-[38px]`}
                   >
                     {displayName}
                   </span>
@@ -336,7 +337,7 @@ export default function DiscoverRings({
               ) : (
                 <span
                   ref={nameRef}
-                  className="inline-block font-sans text-[28px] font-normal tracking-[0.01em] text-[#0A0A0A] md:text-[38px]"
+                  className={`${houseOfDiamsWordmarkFont.className} inline-block text-[28px] font-normal tracking-[0.04em] text-[#0A0A0A] md:text-[38px]`}
                 >
                   {displayName}
                 </span>

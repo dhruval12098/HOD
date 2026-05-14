@@ -53,9 +53,9 @@ export default function HipHopCollection({
   }
 
   return (
-    <section className="px-[52px] pt-[60px] pb-[100px] max-w-[1400px] mx-auto md:px-7 sm:px-5">
+    <section className="mx-auto max-w-[1400px] px-[52px] pt-[44px] pb-[100px] max-[1100px]:px-7 max-[700px]:px-[10px] max-[700px]:pt-[20px]">
       {browseSections.length > 0 ? (
-        <div className="mb-12">
+        <div className="mb-8 sm:mb-6">
           <div className="flex flex-wrap justify-center gap-2 mb-6">
             {browseSections.map((section) => (
               <button
@@ -143,7 +143,7 @@ export default function HipHopCollection({
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-3 gap-7 max-[1100px]:grid-cols-2 max-[700px]:grid-cols-2 max-[700px]:gap-3">
+        <div className="grid grid-cols-4 gap-6 max-[1100px]:grid-cols-2 max-[700px]:grid-cols-2 max-[700px]:gap-2">
           {products.map((product) => (
             <ProductCard
               key={product.dbId}
