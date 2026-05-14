@@ -622,11 +622,13 @@ export default function Navbar() {
                       onMouseEnter={() => openMegaMenu(item.label)}
                       onMouseLeave={() => queueCloseMegaMenu(item.label)}
                     >
-                      <div className="max-w-[1280px] mx-auto px-[100px] py-[56px]">
+                      <div className="w-full px-[56px] py-[56px]">
                         <div
                           className="grid gap-y-10"
                           style={{
-                            gridTemplateColumns: `repeat(${getMegaMenuColumnCount(item)}, minmax(0, 1fr))`,
+                            gridTemplateColumns: item.mega.featuredImage?.imageUrl
+                              ? `repeat(${getMegaMenuColumnCount(item)}, minmax(0, 1fr)) minmax(420px, 1.1fr)`
+                              : `repeat(${getMegaMenuColumnCount(item)}, minmax(0, 1fr))`,
                           }}
                         >
                           {item.mega.sections.map((section, idx) => (
@@ -641,6 +643,17 @@ export default function Navbar() {
                               <MegaSection section={section} />
                             </div>
                           ))}
+                          {item.mega.featuredImage?.imageUrl ? (
+                            <div className="pl-[34px]">
+                              <div className="h-[300px] w-full overflow-hidden border border-black/[0.06] bg-[#F7F8FA]">
+                                <img
+                                  src={item.mega.featuredImage.imageUrl}
+                                  alt={item.mega.featuredImage.imageAlt || item.label}
+                                  className="h-full w-full object-cover"
+                                />
+                              </div>
+                            </div>
+                          ) : null}
                         </div>
                       </div>
                     </div>

@@ -49,7 +49,7 @@ export default function ShopClient({
   };
 
   return (
-    <div className="min-h-screen bg-(--bg) text-(--ink)">
+    <div className="min-h-screen bg-(--bg) text-(--ink) -mt-[118px] lg:-mt-[146px]">
       <ShopHero
         title={heroTitle}
         subtitle={heroSubtitle}

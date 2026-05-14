@@ -167,6 +167,12 @@ const SUPABASE_COLLECTION_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_COLLECTION_B
 function resolveStoragePublicUrl(path: string | null | undefined) {
   if (!path) return null
   if (/^https?:\/\//i.test(path)) return path
+  if (path.startsWith('/storage/v1/object/public/')) {
+    return SUPABASE_PUBLIC_BASE ? `${SUPABASE_PUBLIC_BASE}${path}` : path
+  }
+  if (path.startsWith('storage/v1/object/public/')) {
+    return SUPABASE_PUBLIC_BASE ? `${SUPABASE_PUBLIC_BASE}/${path}` : `/${path}`
+  }
   if (!SUPABASE_PUBLIC_BASE) return path
   return `${SUPABASE_PUBLIC_BASE}/storage/v1/object/public/${SUPABASE_COLLECTION_BUCKET}/${path}`
 }
@@ -531,7 +537,7 @@ export function buildNavbarRenderItems(args: {
           sections: itemSections,
           featuredImage: featuredCard?.image_path
             ? {
-                imageUrl: featuredCard.image_path,
+                imageUrl: resolveStoragePublicUrl(featuredCard.image_path) ?? featuredCard.image_path,
                 imageAlt: featuredCard.image_alt ?? item.label,
                 buttonLabel: featuredCard.button_label ?? '',
                 buttonUrl: featuredCard.button_url ?? buildItemBaseHref(item.slug),

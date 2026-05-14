@@ -161,11 +161,17 @@ export default function BespokeHero({ onEnquireClick, initialHero = null, initia
         <div className="relative z-[2] w-full">
           <div className="relative overflow-hidden rounded-none border-0 bg-transparent shadow-none backdrop-blur-0">
             <div className="absolute inset-0 z-10 bg-gradient-to-t from-[rgba(10,22,40,0.42)] via-[rgba(10,22,40,0.1)] to-transparent" />
-            <div className="relative h-[360px] sm:h-[440px] md:h-[520px] lg:h-[620px]">
+            <div className="relative h-[360px] sm:hidden">
               {sortedSlides.map((slide, index) => (
-                <div key={`${slide.sort_order}-${slide.image_path}`} className={`absolute inset-0 transition-opacity duration-700 ${index === activeSlide ? 'opacity-100' : 'opacity-0'}`}>
-                  <Image src={getPublicImageUrl(slide.mobile_image_path || slide.image_path)} alt={slide.button_text || `Bespoke slide ${index + 1}`} fill priority={index === 0} sizes="100vw" className="h-full w-full object-cover sm:hidden" />
-                  <Image src={getPublicImageUrl(slide.image_path)} alt={slide.button_text || `Bespoke slide ${index + 1}`} fill priority={index === 0} sizes="100vw" className="hidden h-full w-full object-cover sm:block" />
+                <div key={`${slide.sort_order}-${slide.image_path}-mobile`} className={`absolute inset-0 transition-opacity duration-700 ${index === activeSlide ? 'opacity-100' : 'opacity-0'}`}>
+                  <Image src={getPublicImageUrl(slide.mobile_image_path || slide.image_path)} alt={slide.button_text || `Bespoke slide ${index + 1}`} fill priority={index === 0} sizes="100vw" className="h-full w-full object-cover" />
+                </div>
+              ))}
+            </div>
+            <div className="relative hidden sm:grid">
+              {sortedSlides.map((slide, index) => (
+                <div key={`${slide.sort_order}-${slide.image_path}-desktop`} className={`col-start-1 row-start-1 transition-opacity duration-700 ${index === activeSlide ? 'opacity-100' : 'opacity-0'}`}>
+                  <Image src={getPublicImageUrl(slide.image_path)} alt={slide.button_text || `Bespoke slide ${index + 1}`} width={1920} height={620} priority={index === 0} sizes="100vw" style={{ width: '100%', height: 'auto' }} />
                 </div>
               ))}
             </div>
