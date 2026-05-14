@@ -12,6 +12,7 @@ type RingItem = {
   description: string;
   imageSrc: string;
   imageAlt: string;
+  aspectClass: string;
   href?: string | null;
 };
 
@@ -22,6 +23,7 @@ const ringItems: RingItem[] = [
     description: 'A timeless single-stone setting that lets the diamond speak for itself.',
     imageSrc: '/by-ring/ring-001.webp',
     imageAlt: 'Solitaire ring',
+    aspectClass: 'aspect-square',
     href: '/shop?option=solitaire',
   },
   {
@@ -30,6 +32,7 @@ const ringItems: RingItem[] = [
     description: 'A bold elongated silhouette with a crown that commands attention.',
     imageSrc: '/by-ring/ring-002.webp',
     imageAlt: 'Marquise ring',
+    aspectClass: 'aspect-square',
     href: '/shop?shape=marquise',
   },
   {
@@ -38,6 +41,7 @@ const ringItems: RingItem[] = [
     description: 'Past, present and future united in one elegant band.',
     imageSrc: '/by-ring/ring-003.webp',
     imageAlt: 'Three stone ring',
+    aspectClass: 'aspect-square',
     href: '/shop?option=three-stone',
   },
   {
@@ -46,6 +50,7 @@ const ringItems: RingItem[] = [
     description: 'A brilliant halo of diamonds that amplifies every ray of light.',
     imageSrc: '/by-ring/ring-004.webp',
     imageAlt: 'Halo ring',
+    aspectClass: 'aspect-square',
     href: '/shop?option=halo',
   },
   {
@@ -54,6 +59,7 @@ const ringItems: RingItem[] = [
     description: 'A teardrop centre embraced by a delicate halo of shimmering stones.',
     imageSrc: '/by-ring/ring-005.webp',
     imageAlt: 'Pear halo ring',
+    aspectClass: 'aspect-square',
     href: '/shop?option=halo&shape=pear',
   },
   {
@@ -62,6 +68,7 @@ const ringItems: RingItem[] = [
     description: 'Clean step-cut geometry with understated, architectural glamour.',
     imageSrc: '/by-ring/ring-006.webp',
     imageAlt: 'Emerald ring',
+    aspectClass: 'aspect-square',
     href: '/shop?shape=emerald',
   },
   {
@@ -70,6 +77,7 @@ const ringItems: RingItem[] = [
     description: 'Intricate detailing inspired by heritage craftsmanship and enduring style.',
     imageSrc: '/by-ring/ring-007.webp',
     imageAlt: 'Vintage ring',
+    aspectClass: 'aspect-square',
     href: '/shop?style=vintage',
   },
 ];
@@ -83,7 +91,7 @@ const SLOTS: Record<number, SlotConfig> = {
   [2]:  { xPercent: 155,  scale: 0.32, opacity: 0.4,  zIndex: 1 },
 };
 
-const BASE_PX = 320;
+const BASE_PX = 280;
 
 function Chevron({ direction }: { direction: 'left' | 'right' }) {
   return (
@@ -128,17 +136,19 @@ export default function DiscoverRings({
               description: item.description,
               imageSrc: item.image_path,
               imageAlt: item.image_alt || item.title,
+              aspectClass: 'aspect-square',
               href: item.href || '/shop',
             }))
         : ringItems,
     [initialItems]
   );
   const total = items.length;
-  const [current, setCurrent] = useState(0);
+  const initialIndex = Math.min(2, Math.max(0, total - 1));
+  const [current, setCurrent] = useState(initialIndex);
   const [animating, setAnimating] = useState(false);
-  const [displayName, setDisplayName] = useState(items[0]?.name || '');
-  const [displayDesc, setDisplayDesc] = useState(items[0]?.description || '');
-  const [displayHref, setDisplayHref] = useState(items[0]?.href || '/shop');
+  const [displayName, setDisplayName] = useState(items[initialIndex]?.name || '');
+  const [displayDesc, setDisplayDesc] = useState(items[initialIndex]?.description || '');
+  const [displayHref, setDisplayHref] = useState(items[initialIndex]?.href || '/shop');
 
   const itemRefs = useRef<(HTMLDivElement | null)[]>(Array(total).fill(null));
   const nameRef  = useRef<HTMLSpanElement>(null);
@@ -282,25 +292,25 @@ export default function DiscoverRings({
                 {isCenter && item.href ? (
                   <Link
                     href={item.href}
-                    className="relative block w-full aspect-square transition-opacity hover:opacity-90"
+                    className={`relative block w-full transition-opacity hover:opacity-90 ${item.aspectClass}`}
                     aria-label={`Browse ${item.name}`}
                   >
                     <Image
                       src={item.imageSrc}
                       alt={item.imageAlt}
                       fill
-                      sizes="(max-width: 768px) 220px, 320px"
+                      sizes="(max-width: 768px) 200px, 280px"
                       className="object-contain"
                       priority={isCenter}
                     />
                   </Link>
                 ) : (
-                  <div className="relative w-full aspect-square">
+                  <div className={`relative w-full ${item.aspectClass}`}>
                     <Image
                       src={item.imageSrc}
                       alt={item.imageAlt}
                       fill
-                      sizes="(max-width: 768px) 220px, 320px"
+                      sizes="(max-width: 768px) 200px, 280px"
                       className="object-contain"
                       priority={isCenter}
                     />

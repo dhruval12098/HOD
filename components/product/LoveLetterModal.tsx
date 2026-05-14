@@ -182,9 +182,6 @@ export default function LoveLetterModal({ onClose, onContinue }: LoveLetterModal
 
         {step === 'intro' ? (
           <div className="flex min-h-[400px] flex-col items-center justify-center px-4 pb-8 pt-14 text-center sm:px-7 sm:py-10">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full border border-[rgba(166,124,34,0.22)] bg-white text-[13px] tracking-[0.18em] text-[#A67C22]">
-              HOD
-            </div>
             <p className="mt-5 text-[10px] font-medium uppercase tracking-[0.32em] text-[#A67C22]">
               Complimentary with every order
             </p>

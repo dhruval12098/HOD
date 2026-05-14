@@ -221,22 +221,21 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
                 );
               })}
             </div>
-            <div className="relative hidden sm:grid">
+            <div className="relative hidden sm:block aspect-[1920/620]">
               {slides.map((slide, index) => {
                 const desktopImageUrl = getPublicImageUrl(slide.image_path);
                 return (
                   <div
                     key={`${slide.sort_order}-${slide.image_path}-desktop`}
-                    className={`col-start-1 row-start-1 transition-opacity duration-700 ${index === activeSlide ? 'opacity-100' : 'opacity-0'}`}
+                    className={`absolute inset-0 transition-opacity duration-700 ${index === activeSlide ? 'opacity-100' : 'opacity-0'}`}
                   >
                     <Image
                       src={desktopImageUrl}
                       alt={slide.button_text || `Hero slide ${index + 1}`}
-                      width={1920}
-                      height={620}
+                      fill
                       priority={index === 0}
                       sizes="100vw"
-                      style={{ width: '100%', height: 'auto' }}
+                      className="h-full w-full object-cover"
                       onLoad={() => {
                         if (index === 0) signalPrimaryVisualReady();
                       }}

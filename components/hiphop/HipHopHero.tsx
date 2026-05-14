@@ -161,10 +161,10 @@ export default function HipHopHero({
                 </div>
               ))}
             </div>
-            <div className="relative hidden sm:grid">
+            <div className="relative hidden sm:block aspect-[1920/620]">
               {sortedSlides.map((slide, index) => (
-                <div key={`${slide.sort_order}-${slide.image_path}-desktop`} className={`col-start-1 row-start-1 transition-opacity duration-700 ${index === activeSlide ? 'opacity-100' : 'opacity-0'}`}>
-                  <Image src={getPublicImageUrl(slide.image_path)} alt={slide.button_text || `Hip Hop slide ${index + 1}`} width={1920} height={620} priority={index === 0} sizes="100vw" style={{ width: '100%', height: 'auto' }} onLoadingComplete={index === 0 ? handleImageReady : undefined} />
+                <div key={`${slide.sort_order}-${slide.image_path}-desktop`} className={`absolute inset-0 transition-opacity duration-700 ${index === activeSlide ? 'opacity-100' : 'opacity-0'}`}>
+                  <Image src={getPublicImageUrl(slide.image_path)} alt={slide.button_text || `Hip Hop slide ${index + 1}`} fill priority={index === 0} sizes="100vw" className="h-full w-full object-cover" onLoadingComplete={index === 0 ? handleImageReady : undefined} />
                 </div>
               ))}
             </div>

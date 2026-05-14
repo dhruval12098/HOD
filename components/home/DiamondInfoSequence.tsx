@@ -165,27 +165,33 @@ export default function DiamondInfoSequence({
                   ))}
                 </div>
 
-                {ctaHref && ctaLabel ? (
-                  <div className="mt-6 text-center lg:text-left">
-                    {isExternalHref(ctaHref) ? (
+                <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
+                  <Link
+                    href="/about"
+                    className="inline-flex min-h-11 items-center justify-center rounded-full border border-[#0A1628] bg-[#0A1628] px-6 text-[13px] font-medium text-white transition-colors hover:bg-transparent hover:text-[#0A1628] sm:text-[14px]"
+                  >
+                    About Us
+                  </Link>
+                  {ctaHref && ctaLabel ? (
+                    isExternalHref(ctaHref) ? (
                       <a
                         href={ctaHref}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-2 text-[13px] font-medium text-[#506B9B] underline-offset-4 transition-colors hover:text-[#0A1628] hover:underline sm:text-[14px]"
+                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-[#CFC6B6] px-6 text-[13px] font-medium text-[#506B9B] underline-offset-4 transition-colors hover:border-[#0A1628] hover:text-[#0A1628] hover:underline sm:text-[14px]"
                       >
                         {ctaLabel}
                       </a>
                     ) : (
                       <Link
                         href={ctaHref}
-                        className="inline-flex items-center gap-2 text-[13px] font-medium text-[#506B9B] underline-offset-4 transition-colors hover:text-[#0A1628] hover:underline sm:text-[14px]"
+                        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-[#CFC6B6] px-6 text-[13px] font-medium text-[#506B9B] underline-offset-4 transition-colors hover:border-[#0A1628] hover:text-[#0A1628] hover:underline sm:text-[14px]"
                       >
                         {ctaLabel}
                       </Link>
-                    )}
-                  </div>
-                ) : null}
+                    )
+                  ) : null}
+                </div>
               </div>
             </div>
           </div>
