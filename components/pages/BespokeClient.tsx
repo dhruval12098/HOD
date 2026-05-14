@@ -17,6 +17,7 @@ function BespokeInner({
   processItems,
   portfolioCategories,
   portfolioItems,
+  manufacturingItems,
   formConfig,
 }: {
   hero?: any;
@@ -24,6 +25,7 @@ function BespokeInner({
   processItems?: any[];
   portfolioCategories?: any[];
   portfolioItems?: any[];
+  manufacturingItems?: any[];
   formConfig?: any;
 }) {
   const { showToast } = useToast();
@@ -62,6 +64,7 @@ export default function BespokeClient(props: {
   processItems?: any[];
   portfolioCategories?: any[];
   portfolioItems?: any[];
+  manufacturingItems?: any[];
   formConfig?: any;
 }) {
   return (

@@ -4,6 +4,23 @@ import { useMemo, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import SpecSection from './SpecSection';
 
+/**
+ * @typedef {{ key: string, value: string }} ProductTabRow
+ * @typedef {{ title?: string | null, body?: string | null }} ProductTabPolicy
+ * @typedef {{ title: string, rows?: ProductTabRow[], visible?: boolean }} ProductTabDetailSection
+ */
+
+/**
+ * @param {{
+ *  specifications?: ProductTabRow[]
+ *  productDetails?: ProductTabRow[]
+ *  detailSections?: ProductTabDetailSection[]
+ *  shippingContent?: ProductTabPolicy | null
+ *  careWarrantyContent?: ProductTabPolicy | null
+ *  showSections?: boolean
+ *  showPolicies?: boolean
+ * }} props
+ */
 export default function ProductTabs({
   specifications = [],
   productDetails = [],
