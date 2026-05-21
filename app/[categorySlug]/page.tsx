@@ -178,6 +178,7 @@ export default async function CategoryCollectionPage({
     metalsResult,
     stoneShapesResult,
     stylesResult,
+    gridPostersResult,
   ] =
     await Promise.all([
       publicNavbarClient.from('navbar_items').select('*').eq('status', 'active').order('display_order', { ascending: true }),
@@ -192,6 +193,12 @@ export default async function CategoryCollectionPage({
       publicNavbarClient.from('catalog_metals').select('*').eq('status', 'active').order('display_order', { ascending: true }),
       publicNavbarClient.from('catalog_stone_shapes').select('*').eq('status', 'active').order('display_order', { ascending: true }),
       publicNavbarClient.from('catalog_styles').select('*').eq('status', 'active').order('display_order', { ascending: true }),
+      supabase
+        .from('category_grid_posters')
+        .select('id, title, image_path, image_alt, link_url, insert_after, display_order, status, starts_at, ends_at')
+        .eq('category_id', category.id)
+        .eq('status', 'active')
+        .order('display_order', { ascending: true }),
     ])
 
   const headerBrowseSections = (() => {
@@ -307,7 +314,6 @@ export default async function CategoryCollectionPage({
     shapeSlug: typeof query.shape === 'string' ? query.shape : null,
     styleSlug: typeof query.style === 'string' ? query.style : null,
     metalSlug: typeof query.metal === 'string' ? query.metal : null,
-    purity: typeof query.purity === 'string' ? query.purity : null,
     certificate: typeof query.certificate === 'string' ? query.certificate : null,
   })
 
@@ -322,6 +328,22 @@ export default async function CategoryCollectionPage({
       heroCtaLabel={category.banner_cta_label || undefined}
       heroCtaHref={category.banner_cta_link || undefined}
       heroBannerEnabled={Boolean(category.banner_enabled)}
+      gridPosters={(gridPostersResult.error ? [] : gridPostersResult.data ?? [])
+        .filter((poster) => {
+          const now = Date.now()
+          const startsAt = poster.starts_at ? Date.parse(poster.starts_at) : null
+          const endsAt = poster.ends_at ? Date.parse(poster.ends_at) : null
+          return (!startsAt || startsAt <= now) && (!endsAt || endsAt >= now)
+        })
+        .map((poster) => ({
+          id: poster.id,
+          title: poster.title,
+          imageUrl: toPublicUrl(poster.image_path) || poster.image_path,
+          imageAlt: poster.image_alt,
+          linkUrl: poster.link_url,
+          insertAfter: poster.insert_after ?? 6,
+          displayOrder: poster.display_order ?? 0,
+        }))}
       headerBrowseSections={headerBrowseSections}
       initialFilters={{
         ...(typeof query.option === 'string' ? { option: [query.option] } : {}),

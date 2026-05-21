@@ -45,6 +45,10 @@ type CatalogMetal = {
   slug: string
   color_hex?: string | null
   composition_description?: string | null
+  purity_label?: string | null
+  base_metal_name?: string | null
+  display_label?: string | null
+  is_combined_option?: boolean | null
 }
 
 type CatalogMaterialValue = {
@@ -187,7 +191,6 @@ type ProductPurityPriceRow = {
   product_id: string
   purity_label: string
   price: number | null
-  compare_at_price?: number | null
   sort_order?: number | null
 }
 
@@ -201,6 +204,39 @@ type ProductMetalMediaRow = {
   image_4_path?: string | null
   video_path?: string | null
   is_default_fallback?: boolean | null
+}
+
+type ProductMetalVariantRow = {
+  id: string
+  product_id: string
+  metal_id: string
+  price: number | null
+  is_default?: boolean | null
+  sort_order?: number | null
+}
+
+type ProductVariantMediaItemRow = {
+  id: string
+  product_id: string
+  variant_id?: string | null
+  media_type: 'image' | 'video'
+  media_path: string
+  sort_order?: number | null
+  is_default_fallback?: boolean | null
+}
+
+type ProductSubcategoryLinkRow = {
+  product_id: string
+  subcategory_id: string
+  is_primary?: boolean | null
+  sort_order?: number | null
+}
+
+type ProductOptionLinkRow = {
+  product_id: string
+  option_id: string
+  is_primary?: boolean | null
+  sort_order?: number | null
 }
 
 type MetalCompositionPartRow = {
@@ -221,11 +257,23 @@ export type StorefrontProduct = Product & {
   mainCategorySlug: string
   subcategoryName?: string | null
   subcategorySlug?: string | null
+  linkedSubcategorySlugs: string[]
   optionName?: string | null
   optionSlug?: string | null
+  linkedOptionSlugs: string[]
   styleName?: string | null
   styleSlug?: string | null
-  metalsFull: { id: string; name: string; slug: string; colorHex?: string | null; compositionDescription?: string | null }[]
+  metalsFull: {
+    id: string
+    name: string
+    slug: string
+    colorHex?: string | null
+    compositionDescription?: string | null
+    purityLabel?: string | null
+    baseMetalName?: string | null
+    displayLabel?: string | null
+    isCombinedOption?: boolean
+  }[]
   metalCompositions: {
     metalId: string
     name: string
@@ -277,6 +325,18 @@ export type StorefrontProduct = Product & {
   selectedPrice: number
   metalMediaRows: ProductMetalMediaRow[]
   defaultMetalMedia: ProductMetalMediaRow | null
+  metalPurityVariants: {
+    id: string
+    metalId: string
+    metalSlug: string
+    label: string
+    purityLabel?: string | null
+    baseMetalName?: string | null
+    price: number
+    isDefault: boolean
+    mediaItems: { id: string; type: 'image' | 'video'; url: string; sortOrder: number }[]
+  }[]
+  defaultVariantMediaItems: { id: string; type: 'image' | 'video'; url: string; sortOrder: number }[]
 }
 
 function toPublicUrl(path: string | null | undefined) {
@@ -293,6 +353,21 @@ function normalizeType(value: string | null | undefined) {
   if (source.includes('chain')) return 'chain'
   if (source.includes('grill')) return 'grillz'
   return 'ring'
+}
+
+function buildCombinedMetalLabel(args: {
+  displayLabel?: string | null
+  purityLabel?: string | null
+  baseMetalName?: string | null
+  name: string
+}) {
+  const purity = args.purityLabel?.trim()
+  const baseMetal = args.baseMetalName?.trim() || args.name.trim()
+  const displayLabel = args.displayLabel?.trim()
+  if (displayLabel && (!purity || (displayLabel !== args.name.trim() && displayLabel !== baseMetal))) {
+    return displayLabel
+  }
+  return purity ? `${purity} ${baseMetal}`.trim() : baseMetal
 }
 
 function buildShortMeta(args: {
@@ -355,13 +430,13 @@ function resolveMetalMediaDefaults(
 const fetchStorefrontProducts = async () => {
   const supabase = createSupabaseServerClient()
 
-  const [productsResult, categoriesResult, subcategoriesResult, optionsResult, metalsResult, materialValuesResult, certificatesResult, stylesResult, ringCategoriesResult, ringCategorySizesResult, productContentRulesResult, metalSelectionsResult, materialValueSelectionsResult, shapeSelectionsResult, gstSlabsResult, purityPricesResult, metalMediaResult, metalCompositionPartsResult] =
+  const [productsResult, categoriesResult, subcategoriesResult, optionsResult, metalsResult, materialValuesResult, certificatesResult, stylesResult, ringCategoriesResult, ringCategorySizesResult, productContentRulesResult, metalSelectionsResult, materialValueSelectionsResult, shapeSelectionsResult, gstSlabsResult, purityPricesResult, metalMediaResult, metalCompositionPartsResult, subcategoryLinksResult, optionLinksResult, metalVariantsResult, variantMediaItemsResult] =
     await Promise.all([
       supabase.from('products').select('*').eq('status', 'active').order('created_at', { ascending: false }),
       supabase.from('catalog_categories').select('id, code, name, slug, category_lane'),
       supabase.from('catalog_subcategories').select('id, category_id, name, slug'),
       supabase.from('catalog_options').select('id, subcategory_id, name, slug'),
-      supabase.from('catalog_metals').select('id, name, slug, color_hex, composition_description'),
+      supabase.from('catalog_metals').select('id, name, slug, color_hex, composition_description, purity_label, base_metal_name, display_label, is_combined_option'),
       supabase.from('catalog_material_values').select('id, name, slug, cta_mode, cta_label').eq('status', 'active').order('display_order', { ascending: true }),
       supabase.from('catalog_certificates').select('id, name, code'),
       supabase.from('catalog_styles').select('id, name, slug').eq('status', 'active').order('display_order', { ascending: true }),
@@ -375,6 +450,10 @@ const fetchStorefrontProducts = async () => {
       supabase.from('product_purity_prices').select('*').order('sort_order', { ascending: true }),
       supabase.from('product_metal_media').select('*'),
       supabase.from('metal_composition_parts').select('*').order('sort_order', { ascending: true }),
+      supabase.from('product_subcategory_links').select('product_id, subcategory_id, is_primary, sort_order').order('sort_order', { ascending: true }),
+      supabase.from('product_option_links').select('product_id, option_id, is_primary, sort_order').order('sort_order', { ascending: true }),
+      supabase.from('product_metal_variants').select('*').order('sort_order', { ascending: true }),
+      supabase.from('product_variant_media_items').select('*').order('sort_order', { ascending: true }),
     ])
 
   const error =
@@ -383,7 +462,9 @@ const fetchStorefrontProducts = async () => {
     subcategoriesResult.error ||
     optionsResult.error ||
     metalsResult.error ||
-    metalSelectionsResult.error
+    metalSelectionsResult.error ||
+    metalVariantsResult.error ||
+    variantMediaItemsResult.error
 
   if (error) {
     throw new Error(error.message)
@@ -403,6 +484,10 @@ const fetchStorefrontProducts = async () => {
   const purityPriceRows = purityPricesResult.error ? ([] as ProductPurityPriceRow[]) : ((purityPricesResult.data || []) as ProductPurityPriceRow[])
   const metalMediaRows = metalMediaResult.error ? ([] as ProductMetalMediaRow[]) : ((metalMediaResult.data || []) as ProductMetalMediaRow[])
   const metalCompositionParts = metalCompositionPartsResult.error ? ([] as MetalCompositionPartRow[]) : ((metalCompositionPartsResult.data || []) as MetalCompositionPartRow[])
+  const subcategoryLinks = subcategoryLinksResult.error ? ([] as ProductSubcategoryLinkRow[]) : ((subcategoryLinksResult.data || []) as ProductSubcategoryLinkRow[])
+  const optionLinks = optionLinksResult.error ? ([] as ProductOptionLinkRow[]) : ((optionLinksResult.data || []) as ProductOptionLinkRow[])
+  const productMetalVariants = metalVariantsResult.error ? ([] as ProductMetalVariantRow[]) : ((metalVariantsResult.data || []) as ProductMetalVariantRow[])
+  const productVariantMediaItems = variantMediaItemsResult.error ? ([] as ProductVariantMediaItemRow[]) : ((variantMediaItemsResult.data || []) as ProductVariantMediaItemRow[])
   const products = (productsResult.data || []) as ProductRow[]
 
   return products.map((product, index) => {
@@ -410,6 +495,14 @@ const fetchStorefrontProducts = async () => {
     const category = categories.find((entry) => entry.id === product.main_category_id)
     const subcategory = subcategories.find((entry) => entry.id === product.subcategory_id)
     const option = options.find((entry) => entry.id === product.option_id)
+    const linkedSubcategories = subcategoryLinks
+      .filter((entry) => entry.product_id === product.id && !entry.is_primary)
+      .map((entry) => subcategories.find((subcategoryEntry) => subcategoryEntry.id === entry.subcategory_id))
+      .filter(Boolean) as CatalogSubcategory[]
+    const linkedOptions = optionLinks
+      .filter((entry) => entry.product_id === product.id && !entry.is_primary)
+      .map((entry) => options.find((optionEntry) => optionEntry.id === entry.option_id))
+      .filter(Boolean) as CatalogOption[]
     const style = styles.find((entry) => entry.id === product.style_id)
     const productMetalIds = (metalSelectionsResult.data || [])
       .filter((entry) => entry.product_id === product.id)
@@ -444,6 +537,7 @@ const fetchStorefrontProducts = async () => {
     const shippingRule = productContentRules.find((entry) => entry.id === product.shipping_rule_id && entry.kind === 'shipping')
     const careWarrantyRule = productContentRules.find((entry) => entry.id === product.care_warranty_rule_id && entry.kind === 'care_warranty')
     const productPurityPrices = purityPriceRows.filter((entry) => entry.product_id === product.id)
+    const productMetalVariantRows = productMetalVariants.filter((entry) => entry.product_id === product.id)
     const productMetalMediaRows = metalMediaRows
       .filter((entry) => entry.product_id === product.id)
       .map((entry) => ({
@@ -458,16 +552,131 @@ const fetchStorefrontProducts = async () => {
       productPurityPrices.find((entry) => entry.id === product.default_purity_price_id) ??
       productPurityPrices[0] ??
       null
-    const resolvedPrice = Number(defaultPurityPrice?.price ?? product.base_price ?? 0)
     const { fallbackMedia, source: resolvedMediaSource } = resolveMetalMediaDefaults(product, productMetalMediaRows)
+    const defaultVariantMediaItems = productVariantMediaItems
+      .filter((entry) => entry.product_id === product.id && entry.is_default_fallback && !entry.variant_id)
+      .map((entry) => ({
+        id: entry.id,
+        type: entry.media_type,
+        url: toPublicUrl(entry.media_path) ?? entry.media_path,
+        sortOrder: Number(entry.sort_order ?? 0),
+      }))
+      .filter((entry) => Boolean(entry.url))
+    const combinedVariants = productMetalVariantRows
+      .map((entry) => {
+        const metal = metals.find((metalEntry) => metalEntry.id === entry.metal_id)
+        if (!metal) return null
+        const mediaItems = productVariantMediaItems
+          .filter((mediaEntry) => mediaEntry.variant_id === entry.id)
+          .map((mediaEntry) => ({
+            id: mediaEntry.id,
+            type: mediaEntry.media_type,
+            url: toPublicUrl(mediaEntry.media_path) ?? mediaEntry.media_path,
+            sortOrder: Number(mediaEntry.sort_order ?? 0),
+          }))
+          .filter((mediaEntry) => Boolean(mediaEntry.url))
 
-    const visibleImages = [
+        return {
+          id: entry.id,
+          metalId: metal.id,
+          metalSlug: metal.slug,
+          label: buildCombinedMetalLabel({
+            displayLabel: metal.display_label,
+            purityLabel: metal.purity_label,
+            baseMetalName: metal.base_metal_name,
+            name: metal.name,
+          }),
+          purityLabel: metal.purity_label ?? null,
+          baseMetalName: metal.base_metal_name ?? metal.name,
+          price: Number(entry.price ?? 0),
+          isDefault: Boolean(entry.is_default),
+          mediaItems,
+        }
+      })
+      .filter(Boolean) as StorefrontProduct['metalPurityVariants']
+    const fallbackMetalId = fallbackMedia?.metal_id || selectedMetals[0]?.id || null
+    const legacyCombinedVariants =
+      combinedVariants.length > 0
+        ? []
+        : selectedMetals.flatMap((metal) => {
+            const metalSpecificMedia = productMetalMediaRows.find((entry) => entry.metal_id === metal.id) || fallbackMedia
+            const mediaItems = [
+              { id: `${product.id}-${metal.id}-legacy-image-1`, type: 'image' as const, url: metalSpecificMedia?.image_1_path || '' },
+              { id: `${product.id}-${metal.id}-legacy-image-2`, type: 'image' as const, url: metalSpecificMedia?.image_2_path || '' },
+              { id: `${product.id}-${metal.id}-legacy-image-3`, type: 'image' as const, url: metalSpecificMedia?.image_3_path || '' },
+              { id: `${product.id}-${metal.id}-legacy-image-4`, type: 'image' as const, url: metalSpecificMedia?.image_4_path || '' },
+              { id: `${product.id}-${metal.id}-legacy-video`, type: 'video' as const, url: metalSpecificMedia?.video_path || '' },
+            ]
+              .filter((entry) => Boolean(entry.url))
+              .map((entry, index) => ({ ...entry, sortOrder: index + 1 }))
+
+            const sourcePurityRows =
+              productPurityPrices.length > 0
+                ? productPurityPrices
+                : [
+                    {
+                      id: `${product.id}-${metal.id}-fallback-price`,
+                      purity_label: metal.purity_label ?? '',
+                      price: Number(product.base_price ?? 0),
+                      sort_order: 1,
+                    },
+                  ]
+
+            return sourcePurityRows
+              .filter((entry) => Number(entry.price ?? 0) > 0 || selectedMetals.length === 1)
+              .map((entry, purityIndex) => {
+                const purityLabel = entry.purity_label?.trim() || metal.purity_label?.trim() || ''
+                const label = buildCombinedMetalLabel({
+                  displayLabel: purityLabel ? null : metal.display_label,
+                  purityLabel,
+                  baseMetalName: metal.base_metal_name ?? metal.name,
+                  name: metal.name,
+                })
+
+                return {
+                  id: `legacy-${product.id}-${metal.id}-${entry.id || purityIndex + 1}`,
+                  metalId: metal.id,
+                  metalSlug: metal.slug,
+                  label,
+                  purityLabel: purityLabel || null,
+                  baseMetalName: metal.base_metal_name ?? metal.name,
+                  price: Number(entry.price ?? product.base_price ?? 0),
+                  isDefault:
+                    metal.id === fallbackMetalId &&
+                    (productPurityPrices.length < 1 || entry.id === defaultPurityPrice?.id || purityIndex === 0),
+                  mediaItems,
+                }
+              })
+          })
+    const effectiveCombinedVariants =
+      combinedVariants.length > 0
+        ? combinedVariants
+        : (legacyCombinedVariants as StorefrontProduct['metalPurityVariants'])
+    const defaultCombinedVariant = effectiveCombinedVariants.find((entry) => entry.isDefault) ?? effectiveCombinedVariants[0] ?? null
+    const resolvedPrice = Number(defaultCombinedVariant?.price ?? defaultPurityPrice?.price ?? product.base_price ?? 0)
+    const combinedVariantImages = (defaultCombinedVariant?.mediaItems ?? [])
+      .filter((entry) => entry.type === 'image')
+      .map((entry) => entry.url)
+      .filter(Boolean)
+    const fallbackVariantImages = defaultVariantMediaItems
+      .filter((entry) => entry.type === 'image')
+      .map((entry) => entry.url)
+      .filter(Boolean)
+    const legacyVisibleImages = [
       product.show_image_1 === false ? null : toPublicUrl(resolvedMediaSource.image_1_path),
       product.show_image_2 === false ? null : toPublicUrl(resolvedMediaSource.image_2_path),
       product.show_image_3 === false ? null : toPublicUrl(resolvedMediaSource.image_3_path),
       product.show_image_4 === false ? null : toPublicUrl(resolvedMediaSource.image_4_path),
     ].filter(Boolean) as string[]
-    const visibleVideoUrl = product.show_video === false ? undefined : toPublicUrl(resolvedMediaSource.video_path)
+    const visibleImages =
+      combinedVariantImages.length > 0
+        ? combinedVariantImages
+        : fallbackVariantImages.length > 0
+          ? fallbackVariantImages
+          : legacyVisibleImages
+    const combinedVariantVideo = (defaultCombinedVariant?.mediaItems ?? []).find((entry) => entry.type === 'video')?.url
+    const fallbackVariantVideo = defaultVariantMediaItems.find((entry) => entry.type === 'video')?.url
+    const visibleVideoUrl = combinedVariantVideo || fallbackVariantVideo || (product.show_video === false ? undefined : toPublicUrl(resolvedMediaSource.video_path))
 
     const typeSource = option?.name || subcategory?.name || category?.name
 
@@ -505,8 +714,10 @@ const fetchStorefrontProducts = async () => {
       mainCategorySlug: category?.slug || '',
       subcategoryName: subcategory?.name ?? null,
       subcategorySlug: subcategory?.slug ?? null,
+      linkedSubcategorySlugs: linkedSubcategories.map((entry) => entry.slug),
       optionName: option?.name ?? null,
       optionSlug: option?.slug ?? null,
+      linkedOptionSlugs: linkedOptions.map((entry) => entry.slug),
       styleName: style?.name ?? null,
       styleSlug: style?.slug ?? null,
       metalsFull: selectedMetals.map((entry) => ({
@@ -515,6 +726,10 @@ const fetchStorefrontProducts = async () => {
         slug: entry.slug,
         colorHex: entry.color_hex ?? null,
         compositionDescription: entry.composition_description ?? null,
+        purityLabel: entry.purity_label ?? null,
+        baseMetalName: entry.base_metal_name ?? null,
+        displayLabel: entry.display_label ?? null,
+        isCombinedOption: Boolean(entry.is_combined_option),
       })),
       metalCompositions: selectedMetals.map((entry) => ({
         metalId: entry.id,
@@ -528,7 +743,12 @@ const fetchStorefrontProducts = async () => {
             colorHex: part.color_hex ?? null,
           })),
       })),
-      purities: productPurityPrices.length > 0 ? productPurityPrices.map((entry) => entry.purity_label) : (product.purity_values ?? []),
+      purities:
+        effectiveCombinedVariants.length > 0
+          ? Array.from(new Set(effectiveCombinedVariants.map((entry) => entry.purityLabel).filter((entry): entry is string => typeof entry === 'string' && entry.length > 0)))
+          : productPurityPrices.length > 0
+            ? productPurityPrices.map((entry) => entry.purity_label)
+            : (product.purity_values ?? []),
       certificateNames: selectedCertificates,
       ringSizeNames: product.ring_enabled ? selectedRingSizes : [],
       ringEnabled: Boolean(product.ring_enabled),
@@ -555,7 +775,7 @@ const fetchStorefrontProducts = async () => {
         iconUrl: shape.svg_asset_url ?? null,
       })),
       primaryShapeSlug: selectedShapes[0]?.slug || '',
-      showPurity: product.show_purity ?? true,
+      showPurity: false,
       engravingEnabled: Boolean(product.engraving_enabled),
       engravingLabel: product.engraving_label || 'Complimentary Engraving',
       featuresList: product.features ?? [],
@@ -594,6 +814,8 @@ const fetchStorefrontProducts = async () => {
       selectedPrice: resolvedPrice,
       metalMediaRows: productMetalMediaRows,
       defaultMetalMedia: fallbackMedia,
+      metalPurityVariants: effectiveCombinedVariants,
+      defaultVariantMediaItems,
     }
 
     return storefrontProduct
@@ -640,8 +862,8 @@ export function filterStorefrontProducts(
   return products.filter((product) => {
     if (productLane && product.productLane !== productLane) return false
     if (categorySlug && product.mainCategorySlug !== categorySlug) return false
-    if (subcategorySlug && product.subcategorySlug !== subcategorySlug) return false
-    if (optionSlug && product.optionSlug !== optionSlug) return false
+    if (subcategorySlug && product.subcategorySlug !== subcategorySlug && !product.linkedSubcategorySlugs.includes(subcategorySlug)) return false
+    if (optionSlug && product.optionSlug !== optionSlug && !product.linkedOptionSlugs.includes(optionSlug)) return false
     if (shapeSlug && !product.shapeOptions.some((entry) => entry.slug === shapeSlug)) return false
     if (styleSlug && product.styleSlug !== styleSlug) return false
     if (metalSlug && !product.metalsFull.some((entry) => entry.slug === metalSlug)) return false

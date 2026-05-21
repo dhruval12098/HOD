@@ -42,6 +42,7 @@ export default async function Home() {
     diamondInfoConfig,
     testimonialsData,
     marqueeData,
+    trustedPartnersData,
     bestSellerSection,
     bestSellerProducts,
   } = await getHomePageData();
@@ -71,6 +72,7 @@ export default async function Home() {
       diamondInfoConfig={diamondInfoConfig}
       testimonialsData={testimonialsData}
       marqueeData={marqueeData}
+      trustedPartnersData={trustedPartnersData}
       bestSellerSection={bestSellerSection}
       bestSellerProducts={bestSellerProducts}
     />

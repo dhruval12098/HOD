@@ -20,8 +20,16 @@ interface HipHopCollectionProps {
 
 function getFiltered(products: StorefrontProduct[], activeSubcategory: string, activeOption: string): StorefrontProduct[] {
   return products.filter((product) => {
-    if (activeSubcategory !== 'all' && product.subcategorySlug !== activeSubcategory) return false
-    if (activeOption !== 'all' && product.optionSlug !== activeOption) return false
+    if (
+      activeSubcategory !== 'all' &&
+      product.subcategorySlug !== activeSubcategory &&
+      !product.linkedSubcategorySlugs.includes(activeSubcategory)
+    ) return false
+    if (
+      activeOption !== 'all' &&
+      product.optionSlug !== activeOption &&
+      !product.linkedOptionSlugs.includes(activeOption)
+    ) return false
     return true
   })
 }

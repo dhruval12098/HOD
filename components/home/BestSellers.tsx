@@ -174,8 +174,8 @@ export default function BestSellers({
           </p>
 
           <h2
-            className="font-serif font-light leading-[1.08] tracking-[0.01em] text-[var(--theme-heading)] max-md:text-[30px]"
-            style={{ fontSize: 'clamp(28px, 4vw, 50px)' }}
+            className="font-display-title font-light uppercase leading-[1.08] tracking-[0.01em] text-[var(--theme-heading)] max-md:text-[28px]"
+            style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}
           >
             {headingParts.start}{' '}
             {headingParts.emphasis ? (

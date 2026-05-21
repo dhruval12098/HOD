@@ -7,7 +7,8 @@ export default function CollectionShowcase({ config }: { config: CollectionPageC
   const imageUrl = config.showcaseImageUrl || config.showcaseMobileImageUrl || '';
 
   return (
-    <section className="relative isolate min-h-[360px] overflow-hidden md:min-h-[460px] lg:min-h-[560px]">
+    <section className="relative isolate overflow-hidden">
+      <div className="relative h-[360px] md:h-auto md:aspect-[1920/620]">
       {imageUrl ? (
         <picture>
           {config.showcaseMobileImageUrl ? <source media="(max-width: 960px)" srcSet={config.showcaseMobileImageUrl} /> : null}
@@ -24,7 +25,7 @@ export default function CollectionShowcase({ config }: { config: CollectionPageC
 
       <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(10,22,40,0.8)_0%,rgba(10,22,40,0.58)_34%,rgba(10,22,40,0.2)_64%,rgba(10,22,40,0)_100%)]" />
 
-      <div className="relative z-10 flex min-h-[360px] items-end px-5 py-12 md:min-h-[460px] md:px-8 md:py-16 lg:min-h-[560px] lg:px-12 lg:py-20">
+      <div className="relative z-10 flex h-full items-end px-5 py-12 md:px-8 md:py-16 lg:px-12 lg:py-20">
         <div className="max-w-[620px]">
           <p className="mb-5 font-sans text-[10px] uppercase tracking-[0.34em] text-white/72 md:mb-6">
             House of Diams Collection
@@ -49,6 +50,7 @@ export default function CollectionShowcase({ config }: { config: CollectionPageC
             <span className="text-sm">&rarr;</span>
           </Link>
         </div>
+      </div>
       </div>
     </section>
   );

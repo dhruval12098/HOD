@@ -23,7 +23,6 @@ export default async function ShopPage({
     shapeSlug: typeof params.shape === 'string' ? params.shape : null,
     styleSlug: typeof params.style === 'string' ? params.style : null,
     metalSlug: typeof params.metal === 'string' ? params.metal : null,
-    purity: typeof params.purity === 'string' ? params.purity : null,
     certificate: typeof params.certificate === 'string' ? params.certificate : null,
   })
 

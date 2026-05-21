@@ -35,6 +35,19 @@ export type HomeMarqueeData = {
   items: Array<{ quote: string; author: string }>;
 };
 
+export type HomeTrustedPartnersData = {
+  heading: string;
+  isEnabled: boolean;
+  logos: Array<{
+    id: string;
+    name: string;
+    logoUrl: string;
+    logoAlt?: string | null;
+    linkUrl?: string | null;
+    displayOrder: number;
+  }>;
+};
+
 export type HomeCollectionItem = {
   sort_order: number;
   label: string;
@@ -511,6 +524,7 @@ const loadHomePageData = unstable_cache(
       diamondInfoConfigResult,
       testimonialsSectionResult,
       marqueeSectionResult,
+      trustedPartnersSectionResult,
       bestSellerSectionResult,
       bestSellerProductSelectionsResult,
     ] = await Promise.all([
@@ -605,6 +619,11 @@ const loadHomePageData = unstable_cache(
         .eq('section_key', 'home_testimonial_marquee')
         .maybeSingle(),
       supabase
+        .from('home_trusted_partners_section')
+        .select('id, heading, is_enabled')
+        .eq('section_key', 'home_trusted_partners')
+        .maybeSingle(),
+      supabase
         .from('cms_home_bestsellers')
         .select('id, eyebrow, heading, cta_label, cta_href')
         .eq('status', 'active')
@@ -654,6 +673,24 @@ const loadHomePageData = unstable_cache(
         .eq('marquee_id', marqueeSectionResult.data.id)
         .order('sort_order', { ascending: true });
       marqueeItems = data ?? [];
+    }
+
+    let trustedPartnerLogos: HomeTrustedPartnersData['logos'] = [];
+    if (trustedPartnersSectionResult.data?.id && trustedPartnersSectionResult.data.is_enabled) {
+      const { data } = await supabase
+        .from('home_trusted_partner_logos')
+        .select('id, name, logo_path, logo_alt, link_url, display_order')
+        .eq('section_id', trustedPartnersSectionResult.data.id)
+        .eq('status', 'active')
+        .order('display_order', { ascending: true });
+      trustedPartnerLogos = (data ?? []).map((logo) => ({
+        id: logo.id,
+        name: logo.name,
+        logoUrl: toPublicUrl(logo.logo_path) || logo.logo_path,
+        logoAlt: logo.logo_alt,
+        linkUrl: logo.link_url,
+        displayOrder: logo.display_order ?? 0,
+      }));
     }
 
     let bestSellerProducts: HomeBestSellerProduct[] = [];
@@ -895,6 +932,11 @@ const loadHomePageData = unstable_cache(
         title: marqueeSectionResult.data?.title ?? 'Loved by Clients Worldwide',
         items: marqueeItems,
       },
+      trustedPartnersData: {
+        heading: trustedPartnersSectionResult.data?.heading ?? 'Trusted Partners',
+        isEnabled: trustedPartnersSectionResult.data?.is_enabled ?? true,
+        logos: trustedPartnerLogos,
+      },
       bestSellerSection: {
         eyebrow: bestSellerSectionResult.data?.eyebrow ?? 'House of Diams',
         heading: bestSellerSectionResult.data?.heading ?? 'Our Best Sellers',
@@ -904,7 +946,7 @@ const loadHomePageData = unstable_cache(
       bestSellerProducts,
     };
   },
-  ['home-page-data-v3'],
+  ['home-page-data-v4'],
   { revalidate: 30 }
 );
 

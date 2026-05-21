@@ -7,6 +7,7 @@ const bucket = process.env.NEXT_PUBLIC_SUPABASE_COLLECTION_BUCKET ?? 'hod'
 
 function buildPublicUrl(path: string | null) {
   if (!path || !supabaseUrl) return ''
+  if (path.startsWith('http://') || path.startsWith('https://')) return path
   return `${supabaseUrl}/storage/v1/object/public/${bucket}/${path}`
 }
 

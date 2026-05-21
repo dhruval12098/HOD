@@ -12,15 +12,103 @@ import { getProductKey } from "@/lib/product-keys";
  */
 
 /**
+ * @typedef {{ id: string; title?: string | null; imageUrl: string; imageAlt?: string | null; linkUrl?: string | null; insertAfter: number; displayOrder: number }} CategoryGridPoster
+ */
+function CategoryGridPosterCard({ poster }) {
+  const image = (
+    <img
+      src={poster.imageUrl}
+      alt={poster.imageAlt || poster.title || "Category poster"}
+      style={{
+        width: "100%",
+        height: "100%",
+        objectFit: "cover",
+        objectPosition: "center center",
+        display: "block",
+        transition: "transform .75s cubic-bezier(.16,1,.3,1)",
+      }}
+      loading="lazy"
+    />
+  );
+
+  const content = (
+    <div
+      className="shop-product-card shop-grid-poster-card"
+      style={{
+        cursor: poster.linkUrl ? "pointer" : "default",
+        position: "relative",
+        overflow: "hidden",
+        height: "100%",
+        background: "#FFFFFF",
+        border: "1px solid rgba(10,22,40,0.06)",
+        textDecoration: "none",
+        color: "inherit",
+      }}
+    >
+      <div
+        className="shop-product-card-visual"
+        style={{
+          height: "100%",
+          minHeight: "418px",
+          position: "relative",
+          overflow: "hidden",
+          background: "linear-gradient(135deg, #FFFFFF 0%, #F8F8FA 100%)",
+        }}
+      >
+        {image}
+      </div>
+    </div>
+  );
+
+  if (!poster.linkUrl) return content;
+
+  return (
+    <a href={poster.linkUrl} style={{ textDecoration: "none", color: "inherit" }} aria-label={poster.title || "Open category poster"}>
+      {content}
+    </a>
+  );
+}
+
+function buildGridItems(products, posters) {
+  const activePosters = (posters || [])
+    .filter((poster) => poster?.imageUrl)
+    .sort((left, right) => (left.insertAfter - right.insertAfter) || (left.displayOrder - right.displayOrder));
+
+  if (!activePosters.length) return products.map((product) => ({ type: "product", product }));
+
+  const posterBuckets = new Map();
+  activePosters.forEach((poster) => {
+    const key = Math.max(0, Number(poster.insertAfter) || 0);
+    const bucket = posterBuckets.get(key) || [];
+    bucket.push(poster);
+    posterBuckets.set(key, bucket);
+  });
+
+  const items = [];
+  const addPosters = (position) => {
+    (posterBuckets.get(position) || []).forEach((poster) => items.push({ type: "poster", poster }));
+  };
+
+  addPosters(0);
+  products.forEach((product, index) => {
+    items.push({ type: "product", product });
+    addPosters(index + 1);
+  });
+
+  return items;
+}
+
+/**
  * @param {{
  *   products: any[]
  *   sourceProducts?: any[]
  *   initialFilters?: Record<string, string[]>
  *   filterGroups?: ProductGridFilterGroup[]
+ *   gridPosters?: CategoryGridPoster[]
  *   onEnquire: (name?: string) => void
  * }} props
  */
-export default function ProductGrid({ products, sourceProducts = products, initialFilters = {}, filterGroups: externalFilterGroups = [], onEnquire }) {
+export default function ProductGrid({ products, sourceProducts = products, initialFilters = {}, filterGroups: externalFilterGroups = [], gridPosters = [], onEnquire }) {
   const { wishlist, toggle } = useWishlistStore();
   const [filters, setFilters] = useState(initialFilters);
   const [priceMin, setPriceMin] = useState("");
@@ -76,13 +164,8 @@ export default function ProductGrid({ products, sourceProducts = products, initi
         title: "Metal",
         options: unique(sourceProducts.flatMap((product) => product.metalsFull?.map((metal) => metal.slug) || [])).map((value) => {
           const match = sourceProducts.flatMap((product) => product.metalsFull || []).find((metal) => metal.slug === value);
-          return { value, label: match?.name || titleCase(value) };
+          return { value, label: match?.displayLabel || match?.name || titleCase(value) };
         }),
-      },
-      {
-        id: "purity",
-        title: "Purity",
-        options: unique(sourceProducts.flatMap((product) => product.purities || [])).map((value) => ({ value, label: value })),
       },
       {
         id: "certificate",
@@ -118,13 +201,20 @@ export default function ProductGrid({ products, sourceProducts = products, initi
       const list = products.filter((product) => {
       const productCategoryValue = product.mainCategorySlug || product.category;
       if (filters.category?.length && !filters.category.includes(productCategoryValue)) return false;
-      if (filters.subcategory?.length && !filters.subcategory.includes(product.subcategorySlug)) return false;
-      if (filters.option?.length && !filters.option.includes(product.optionSlug)) return false;
+      if (
+        filters.subcategory?.length &&
+        !filters.subcategory.includes(product.subcategorySlug) &&
+        !(product.linkedSubcategorySlugs || []).some((slug) => filters.subcategory.includes(slug))
+      ) return false;
+      if (
+        filters.option?.length &&
+        !filters.option.includes(product.optionSlug) &&
+        !(product.linkedOptionSlugs || []).some((slug) => filters.option.includes(slug))
+      ) return false;
       if (filters.shape?.length && !(product.shapeOptions || []).some((shape) => filters.shape.includes(shape.slug))) return false;
       if (filters.style?.length && !filters.style.includes(product.styleSlug)) return false;
       if (filters.type?.length && !filters.type.includes(product.type)) return false;
       if (filters.metal?.length && !product.metalsFull.some((metal) => filters.metal.includes(metal.slug))) return false;
-      if (filters.purity?.length && !(product.purities || []).some((purity) => filters.purity.includes(purity))) return false;
       if (filters.certificate?.length && !(product.certificateNames || []).some((certificate) => filters.certificate.includes(certificate))) return false;
       if (filters.size?.length && !(product.ringSizeNames || []).some((size) => filters.size.includes(size))) return false;
       if (product.priceFrom < pMin || product.priceFrom > pMax) return false;
@@ -290,11 +380,13 @@ export default function ProductGrid({ products, sourceProducts = products, initi
             </div>
           ) : (
             <div className="product-grid">
-              {filtered.map((product) => (
+              {buildGridItems(filtered, gridPosters).map((item) => item.type === "poster" ? (
+                <CategoryGridPosterCard key={`poster-${item.poster.id}`} poster={item.poster} />
+              ) : (
                 <ProductCard
-                  key={product.id}
-                  product={product}
-                  wishlisted={wishlist.includes(getProductKey(product))}
+                  key={item.product.id}
+                  product={item.product}
+                  wishlisted={wishlist.includes(getProductKey(item.product))}
                   onWishlist={handleWishlist}
                   onEnquire={onEnquire}
                 />

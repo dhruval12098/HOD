@@ -106,7 +106,8 @@ export default function ShopHero({
     >
       <style>{`
         @media (max-width: 640px) {
-          .shop-hero-top { padding: ${hasBannerImage ? '88px 16px 28px' : '56px 16px 28px'} !important; }
+          .shop-hero-top { padding: ${hasBannerImage ? '0' : '56px 16px 28px'} !important; }
+          .shop-hero-banner-content { padding: ${hasBannerImage ? '88px 16px 28px' : '0'} !important; }
           .shop-hero-browse { display: none !important; }
           .shop-hero-tabs-wrap { padding: 6px !important; }
           .shop-hero-tabs { gap: 6px !important; }
@@ -123,41 +124,74 @@ export default function ShopHero({
         style={{
           position: "relative",
           overflow: "hidden",
-          padding: hasBannerImage ? "140px 52px 46px" : "92px 52px 40px",
+          minHeight: hasBannerImage ? undefined : "auto",
+          padding: hasBannerImage ? "0" : "92px 52px 40px",
           background: hasBannerImage ? "#0A1628" : "linear-gradient(180deg, #FAFBFD 0%, #FAF7F2 100%)",
         }}
       >
         {hasBannerImage ? (
           <>
-            <picture>
-              {mobileImageUrl ? <source media="(max-width: 960px)" srcSet={mobileImageUrl} /> : null}
-              <img
-                src={desktopImageUrl || mobileImageUrl}
-                alt={title}
+            <div className="relative h-[360px] sm:hidden">
+              <picture>
+                {mobileImageUrl ? <source media="(max-width: 960px)" srcSet={mobileImageUrl} /> : null}
+                <img
+                  src={desktopImageUrl || mobileImageUrl}
+                  alt={title}
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    objectPosition: "center",
+                  }}
+                />
+              </picture>
+              <div
                 style={{
                   position: "absolute",
                   inset: 0,
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
-                  objectPosition: "center",
+                  background: "linear-gradient(90deg, rgba(10,22,40,0.82) 0%, rgba(10,22,40,0.58) 34%, rgba(10,22,40,0.18) 66%, rgba(10,22,40,0) 100%)",
                 }}
               />
-            </picture>
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                background: "linear-gradient(90deg, rgba(10,22,40,0.82) 0%, rgba(10,22,40,0.58) 34%, rgba(10,22,40,0.18) 66%, rgba(10,22,40,0) 100%)",
-              }}
-            />
+            </div>
+            <div className="relative hidden sm:block aspect-[1920/620]">
+              <picture>
+                <img
+                  src={desktopImageUrl || mobileImageUrl}
+                  alt={title}
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    objectPosition: "center",
+                  }}
+                />
+              </picture>
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  background: "linear-gradient(90deg, rgba(10,22,40,0.82) 0%, rgba(10,22,40,0.58) 34%, rgba(10,22,40,0.18) 66%, rgba(10,22,40,0) 100%)",
+                }}
+              />
+            </div>
           </>
         ) : null}
 
         <div
+          className="shop-hero-banner-content"
           style={{
             position: "relative",
             zIndex: 1,
+            padding: hasBannerImage ? "140px 52px 46px" : undefined,
+            inset: hasBannerImage ? 0 : undefined,
+            display: hasBannerImage ? "flex" : undefined,
+            flexDirection: hasBannerImage ? "column" : undefined,
+            justifyContent: hasBannerImage ? "flex-end" : undefined,
+            position: hasBannerImage ? "absolute" : "relative",
           }}
         >
           <div

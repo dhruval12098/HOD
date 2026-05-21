@@ -4,8 +4,8 @@ declare module '@/components/product/ProductConfigurator' {
 
   export interface ProductConfiguratorProps {
     product: StorefrontProduct
+    variantId?: string
     metal: string
-    purity: string
     sizeOrFit: string
     ringSize: string
     gemstoneValue: string
@@ -14,7 +14,7 @@ declare module '@/components/product/ProductConfigurator' {
     engravingMode: 'none' | 'custom'
     engravingText: string
     onMetalChange: (value: string) => void
-    onPurityChange: (value: string) => void
+    onVariantChange?: (value: string) => void
     onSizeOrFitChange: (value: string) => void
     onRingSizeChange?: (value: string) => void
     onGemstoneValueChange: (value: string) => void

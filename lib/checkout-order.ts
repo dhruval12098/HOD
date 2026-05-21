@@ -124,6 +124,14 @@ function isValidPostalCode(value: string) {
   return /^[A-Za-z0-9][A-Za-z0-9\s-]{2,11}$/.test(value.trim())
 }
 
+function buildSelectionLabel(metal?: string | null, purity?: string | null) {
+  const normalizedMetal = metal?.trim() || ''
+  const normalizedPurity = purity?.trim() || ''
+  if (!normalizedMetal) return normalizedPurity
+  if (!normalizedPurity || normalizedMetal.toLowerCase().includes(normalizedPurity.toLowerCase())) return normalizedMetal
+  return `${normalizedPurity} ${normalizedMetal}`.trim()
+}
+
 function buildGatewayPayload(input: {
   payload: CheckoutPayload
   prepared: PreparedCheckout
@@ -477,8 +485,8 @@ export async function createPendingOrder({
       quantity,
       unit_price: unitPrice,
       line_total: subtotalAmount,
-      selected_metal: entry.metal || null,
-      selected_purity: entry.purity || null,
+      selected_metal: buildSelectionLabel(entry.metal, entry.purity) || null,
+      selected_purity: null,
       selected_size_or_fit: entry.sizeOrFit || null,
       selected_gemstone: entry.gemstone || null,
       selected_carat: entry.carat || null,

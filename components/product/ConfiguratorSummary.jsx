@@ -4,12 +4,11 @@
  * "Your Selection" summary bar at the bottom of the configurator.
  * @param {object} props
  * @param {string} props.metal       - Metal name, e.g. '18K Rose'
- * @param {string} props.purity      - Purity, e.g. '18K'
  * @param {string} props.extra       - Generic secondary attribute
  * @param {string} props.fit         - Size or fit
  */
-export default function ConfiguratorSummary({ metal, purity, extra, fit }) {
-  const parts = [metal, purity, extra, fit].filter(Boolean);
+export default function ConfiguratorSummary({ metal, extra, fit }) {
+  const parts = [metal, extra, fit].filter(Boolean);
 
   return (
     <div className="mt-6 pt-5 border-t border-[rgba(10,22,40,0.10)] flex flex-wrap gap-x-6 gap-y-[18px]">

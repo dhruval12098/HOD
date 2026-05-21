@@ -42,7 +42,7 @@ export default function MaterialStrip({ items = [] }: { items?: HomeMaterialItem
         <div className="text-[10px] font-normal tracking-[0.32em] text-[#0A1628] uppercase mb-3.5 inline-flex items-center gap-3 before:content-[''] before:w-6 before:h-px before:bg-[#0A1628]">
           Precious Materials
         </div>
-        <h2 className="font-serif font-light tracking-[0.02em] text-[#0A1628] leading-[1.05] mb-[22px] text-[clamp(26px,5.5vw,72px)] max-md:text-[32px]">
+        <h2 className="font-display-title font-light uppercase tracking-[0.01em] text-[#0A1628] leading-[1.08] mb-[22px] max-md:text-[28px]" style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}>
           More Than <em className="not-italic text-[#0A1628] font-normal">Diamonds</em>
         </h2>
         <p className="text-[13px] font-light leading-[2] text-[#6A6A6A] tracking-[0.04em] mb-8">

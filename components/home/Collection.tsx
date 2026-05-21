@@ -98,7 +98,7 @@ export default function Collection({ items = [] }: CollectionProps) {
           Explore
           <span className="inline-block h-px w-6 bg-[#0A1628]" />
         </div>
-        <h2 className="mt-4 font-serif text-[clamp(26px,5vw,60px)] font-light leading-[1.02] text-[#0A1628] max-md:text-[32px]">
+        <h2 className="mt-4 font-display-title font-light uppercase leading-[1.08] tracking-[0.01em] text-[#0A1628] max-md:text-[28px]" style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}>
           Our <em className="not-italic italic">Collections</em>
         </h2>
         <p className="mx-auto mt-3 max-w-xl text-[12px] font-light tracking-[0.1em] text-[#6A6A6A] sm:text-[13px]">

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import BlogSectionHeader from '@/components/blog/BlogSectionHeader';
 import Hero from '@/components/home/Hero';
 import TestimonialMarquee from '@/components/home/TestimonialMarquee';
+import TrustedPartnersMarquee from '@/components/home/TrustedPartnersMarquee';
 import Collection from '@/components/home/Collection';
 import Certifications from '@/components/home/Certifications';
 import DiscoverShapes from '@/components/home/DiscoverShapes';
@@ -27,6 +28,7 @@ import type {
   HomeHipHopSection,
   HomeMarqueeData,
   HomeTestimonialsData,
+  HomeTrustedPartnersData,
 } from '@/lib/home-data';
 
 const HipHopShowcase = dynamic(() => import('@/components/home/HipHopShowcase'), { loading: () => null });
@@ -77,6 +79,7 @@ export default function HomeClient({
   diamondInfoConfig,
   testimonialsData,
   marqueeData,
+  trustedPartnersData,
   bestSellerSection,
   bestSellerProducts = [],
 }: {
@@ -92,6 +95,7 @@ export default function HomeClient({
   diamondInfoConfig?: HomeDiamondInfoConfig
   testimonialsData: HomeTestimonialsData
   marqueeData: HomeMarqueeData
+  trustedPartnersData?: HomeTrustedPartnersData
   bestSellerSection: HomeBestSellerSection
   bestSellerProducts?: HomeBestSellerProduct[]
 }) {
@@ -283,6 +287,7 @@ export default function HomeClient({
           <DiamondInfoSequence items={diamondInfoItems} config={diamondInfoConfig} />
           <Testimonials initialData={testimonialsData} />
           <CouplesSection initialData={couplesData} />
+          <TrustedPartnersMarquee data={trustedPartnersData} />
 
           <section className="bg-[var(--theme-surface-warm)] px-5 py-16 md:px-8 lg:px-12">
             <div className="mx-auto max-w-[1320px]">

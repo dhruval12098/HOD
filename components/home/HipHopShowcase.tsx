@@ -37,7 +37,8 @@ export default function HipHopShowcase({ initialSection }: { initialSection?: Ho
   const backgroundUrl = section.image_path ? buildImageUrl(section.image_path) : "";
 
   return (
-    <section className="relative isolate min-h-[360px] overflow-hidden md:min-h-[460px] lg:min-h-[560px]">
+    <section className="relative isolate overflow-hidden">
+      <div className="relative h-[360px] md:h-auto md:aspect-[1920/620]">
       {backgroundUrl ? (
         <img
           src={backgroundUrl}
@@ -49,7 +50,7 @@ export default function HipHopShowcase({ initialSection }: { initialSection?: Ho
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_22%,rgba(255,255,255,0.16),transparent_36%),linear-gradient(135deg,#0b1018_0%,#1f2937_42%,#0a1628_100%)]" />
       )}
 
-      <div className="relative z-10 flex min-h-[360px] items-end px-5 py-12 md:min-h-[460px] md:px-8 md:py-16 lg:min-h-[560px] lg:px-12 lg:py-20">
+      <div className="relative z-10 flex h-full items-end px-5 py-12 md:px-8 md:py-16 lg:px-12 lg:py-20">
         <div className="max-w-[620px]">
           <p className="mb-5 font-sans text-[10px] uppercase tracking-[0.34em] text-white/72 md:mb-6">
             {section.eyebrow}
@@ -74,6 +75,7 @@ export default function HipHopShowcase({ initialSection }: { initialSection?: Ho
             <span className="text-sm">→</span>
           </Link>
         </div>
+      </div>
       </div>
     </section>
   );

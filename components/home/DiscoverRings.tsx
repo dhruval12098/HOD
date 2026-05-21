@@ -16,72 +16,6 @@ type RingItem = {
   href?: string | null;
 };
 
-const ringItems: RingItem[] = [
-  {
-    id: 'ring-001',
-    name: 'Solitaire',
-    description: 'A timeless single-stone setting that lets the diamond speak for itself.',
-    imageSrc: '/by-ring/ring-001.webp',
-    imageAlt: 'Solitaire ring',
-    aspectClass: 'aspect-square',
-    href: '/shop?option=solitaire',
-  },
-  {
-    id: 'ring-002',
-    name: 'Marquise',
-    description: 'A bold elongated silhouette with a crown that commands attention.',
-    imageSrc: '/by-ring/ring-002.webp',
-    imageAlt: 'Marquise ring',
-    aspectClass: 'aspect-square',
-    href: '/shop?shape=marquise',
-  },
-  {
-    id: 'ring-003',
-    name: 'Three Stone',
-    description: 'Past, present and future united in one elegant band.',
-    imageSrc: '/by-ring/ring-003.webp',
-    imageAlt: 'Three stone ring',
-    aspectClass: 'aspect-square',
-    href: '/shop?option=three-stone',
-  },
-  {
-    id: 'ring-004',
-    name: 'Halo',
-    description: 'A brilliant halo of diamonds that amplifies every ray of light.',
-    imageSrc: '/by-ring/ring-004.webp',
-    imageAlt: 'Halo ring',
-    aspectClass: 'aspect-square',
-    href: '/shop?option=halo',
-  },
-  {
-    id: 'ring-005',
-    name: 'Pear Halo',
-    description: 'A teardrop centre embraced by a delicate halo of shimmering stones.',
-    imageSrc: '/by-ring/ring-005.webp',
-    imageAlt: 'Pear halo ring',
-    aspectClass: 'aspect-square',
-    href: '/shop?option=halo&shape=pear',
-  },
-  {
-    id: 'ring-006',
-    name: 'Emerald',
-    description: 'Clean step-cut geometry with understated, architectural glamour.',
-    imageSrc: '/by-ring/ring-006.webp',
-    imageAlt: 'Emerald ring',
-    aspectClass: 'aspect-square',
-    href: '/shop?shape=emerald',
-  },
-  {
-    id: 'ring-007',
-    name: 'Vintage',
-    description: 'Intricate detailing inspired by heritage craftsmanship and enduring style.',
-    imageSrc: '/by-ring/ring-007.webp',
-    imageAlt: 'Vintage ring',
-    aspectClass: 'aspect-square',
-    href: '/shop?style=vintage',
-  },
-];
-
 type SlotConfig = { xPercent: number; scale: number; opacity: number; zIndex: number };
 const SLOTS: Record<number, SlotConfig> = {
   [-2]: { xPercent: -155, scale: 0.32, opacity: 0.4,  zIndex: 1 },
@@ -92,7 +26,6 @@ const SLOTS: Record<number, SlotConfig> = {
 };
 
 const BASE_PX = 280;
-
 function Chevron({ direction }: { direction: 'left' | 'right' }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -126,20 +59,18 @@ export default function DiscoverRings({
 }) {
   const items = useMemo(
     () =>
-      initialItems.length > 0
-        ? initialItems
-            .slice()
-            .sort((left, right) => left.sort_order - right.sort_order)
-            .map((item, index) => ({
-              id: `ring-${index + 1}`,
-              name: item.title,
-              description: item.description,
-              imageSrc: item.image_path,
-              imageAlt: item.image_alt || item.title,
-              aspectClass: 'aspect-square',
-              href: item.href || '/shop',
-            }))
-        : ringItems,
+      initialItems
+        .slice()
+        .sort((left, right) => left.sort_order - right.sort_order)
+        .map((item, index) => ({
+          id: `ring-${index + 1}`,
+          name: item.title,
+          description: item.description,
+          imageSrc: item.image_path,
+          imageAlt: item.image_alt || item.title,
+          aspectClass: 'aspect-square',
+          href: item.href || '/shop',
+        })),
     [initialItems]
   );
   const total = items.length;
@@ -153,6 +84,8 @@ export default function DiscoverRings({
   const itemRefs = useRef<(HTMLDivElement | null)[]>(Array(total).fill(null));
   const nameRef  = useRef<HTMLSpanElement>(null);
   const descRef  = useRef<HTMLParagraphElement>(null);
+
+  if (!items.length) return null;
 
   useEffect(() => {
     itemRefs.current.forEach((el, i) => {
@@ -168,6 +101,7 @@ export default function DiscoverRings({
           display: 'flex',
         });
       } else {
+        // Hidden off to the right by default
         gsap.set(el, { x: BASE_PX * 2.5, opacity: 0, scale: 0.2, zIndex: 0, display: 'flex' });
       }
     });
@@ -180,6 +114,7 @@ export default function DiscoverRings({
 
     const newCurrent = (current + dir + total) % total;
 
+    // Snap entering items to correct offscreen side before animating
     itemRefs.current.forEach((el, i) => {
       if (!el) return;
       const oldOff = getOffset(i, current, total);
@@ -188,6 +123,7 @@ export default function DiscoverRings({
       const willVisible = SLOTS[newOff] !== undefined;
 
       if (!wasVisible && willVisible) {
+        // Snap to entry side: going right (dir=+1) -> enter from right, going left (dir=-1) -> enter from left
         gsap.set(el, {
           x: dir > 0 ? BASE_PX * 2.5 : -BASE_PX * 2.5,
           opacity: 0,
@@ -197,6 +133,7 @@ export default function DiscoverRings({
       }
 
       if (wasVisible && !willVisible) {
+        // Animate exit: going right -> exit left, going left -> exit right
         gsap.to(el, {
           x: dir > 0 ? -BASE_PX * 2.5 : BASE_PX * 2.5,
           opacity: 0,
@@ -208,6 +145,7 @@ export default function DiscoverRings({
       }
     });
 
+    // Animate all newly visible items into their target slots
     itemRefs.current.forEach((el, i) => {
       if (!el) return;
       const newOff = getOffset(i, newCurrent, total);
@@ -223,6 +161,7 @@ export default function DiscoverRings({
       });
     });
 
+    // Label animation
     if (nameRef.current && descRef.current) {
       gsap.to([nameRef.current, descRef.current], {
         x: dir > 0 ? -24 : 24,
@@ -253,8 +192,8 @@ export default function DiscoverRings({
         {/* Heading */}
         <div className="mx-auto max-w-[820px] text-center">
           <h2
-            className="font-serif font-light uppercase tracking-[0.02em] text-[#0A0A0A] max-md:text-[30px]"
-            style={{ fontSize: 'clamp(32px, 6vw, 68px)' }}
+            className="font-display-title font-light uppercase leading-[1.08] tracking-[0.01em] text-[#0A0A0A] max-md:text-[28px]"
+            style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}
           >
             Discover Rings
           </h2>

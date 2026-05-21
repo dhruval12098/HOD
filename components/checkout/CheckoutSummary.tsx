@@ -2,6 +2,14 @@ import type { CheckoutSummaryData } from '@/components/checkout/types';
 import { formatMoney } from '@/lib/currency';
 import { getLoveLetterOccasionLabel } from '@/lib/love-letter';
 
+function buildSelectionLabel(metal?: string, purity?: string) {
+  const normalizedMetal = metal?.trim() || ''
+  const normalizedPurity = purity?.trim() || ''
+  if (!normalizedMetal) return normalizedPurity
+  if (!normalizedPurity || normalizedMetal.toLowerCase().includes(normalizedPurity.toLowerCase())) return normalizedMetal
+  return `${normalizedPurity} ${normalizedMetal}`.trim()
+}
+
 export default function CheckoutSummary({ summary }: { summary: CheckoutSummaryData }) {
   const subtotal = summary.items.reduce((sum, item) => sum + (item.priceFrom * item.quantity), 0);
   const gstAmount = summary.items.reduce(
@@ -29,8 +37,7 @@ export default function CheckoutSummary({ summary }: { summary: CheckoutSummaryD
               <div className="min-w-0 flex-1">
                 <div className="text-base font-semibold text-[#101828]">{item.name}</div>
                 <div className="mt-2 grid gap-1 text-sm text-[#667085]">
-                  {item.metal ? <div>Metal: {item.metal}</div> : null}
-                  {item.purity ? <div>Purity: {item.purity}</div> : null}
+                  {buildSelectionLabel(item.metal, item.purity) ? <div>Metal: {buildSelectionLabel(item.metal, item.purity)}</div> : null}
                   {item.sizeOrFit ? <div>Size / Fit: {item.sizeOrFit}</div> : null}
                   {item.gemstone ? <div>Stone: {item.gemstone}</div> : null}
                   <div>Quantity: {item.quantity}</div>

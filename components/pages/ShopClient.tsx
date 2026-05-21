@@ -6,6 +6,16 @@ import ProductGrid from '@/components/shop/ProductGrid';
 import EnquireModal from '@/components/home/EnquireModal';
 import type { StorefrontProduct } from '@/lib/catalog-products';
 
+export type CategoryGridPoster = {
+  id: string
+  title?: string | null
+  imageUrl: string
+  imageAlt?: string | null
+  linkUrl?: string | null
+  insertAfter: number
+  displayOrder: number
+}
+
 export default function ShopClient({
   products,
   sourceProducts,
@@ -19,6 +29,7 @@ export default function ShopClient({
   initialFilters,
   filterGroups,
   headerBrowseSections,
+  gridPosters,
 }: {
   products: StorefrontProduct[]
   sourceProducts?: StorefrontProduct[]
@@ -31,6 +42,7 @@ export default function ShopClient({
   heroBannerEnabled?: boolean
   initialFilters?: Record<string, string[]>
   filterGroups?: { id: string; title: string; options: { value: string; label: string }[] }[]
+  gridPosters?: CategoryGridPoster[]
   headerBrowseSections?: {
     id: string
     title: string
@@ -65,6 +77,7 @@ export default function ShopClient({
         sourceProducts={sourceProducts ?? products}
         initialFilters={initialFilters}
         filterGroups={filterGroups}
+        gridPosters={gridPosters}
         onEnquire={handleEnquire}
       />
       <EnquireModal open={isEnquireOpen} piece={enquirePiece} onClose={() => setIsEnquireOpen(false)} />

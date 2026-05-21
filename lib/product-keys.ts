@@ -6,7 +6,9 @@ export function getProductKey(product: { dbId?: string | null; id?: string | num
 }
 
 export type CartItemSelection = {
+  metalVariantId?: string
   metal?: string
+  metalSlug?: string
   purity?: string
   resolvedPrice?: number
   resolvedImageUrl?: string
@@ -34,7 +36,9 @@ export function buildCartItemKey(product: { dbId?: string | null; id?: string | 
   return JSON.stringify({
     productKey: getProductKey(product),
     productSlug: product.slug || '',
+    metalVariantId: selection.metalVariantId || '',
     metal: selection.metal || '',
+    metalSlug: selection.metalSlug || '',
     purity: selection.purity || '',
     sizeOrFit: selection.sizeOrFit || '',
     ringSize: selection.ringSize || '',
@@ -65,8 +69,8 @@ export function buildCheckoutHrefFromCartItem(product: StorefrontProduct, item: 
   params.set('name', product.name)
   params.set('price', String(item.selection.resolvedPrice ?? product.priceFrom))
   if (item.selection.resolvedImageUrl || product.imageUrl) params.set('image', item.selection.resolvedImageUrl || product.imageUrl || '')
+  if (item.selection.metalVariantId) params.set('variant', item.selection.metalVariantId)
   if (item.selection.metal) params.set('metal', item.selection.metal)
-  if (item.selection.purity) params.set('purity', item.selection.purity)
   if (item.selection.hiphopCarat) params.set('carat', item.selection.hiphopCarat)
   if (item.selection.sizeOrFit) params.set('size', item.selection.sizeOrFit)
   if (item.selection.ringSize) params.set('ring_size', item.selection.ringSize)

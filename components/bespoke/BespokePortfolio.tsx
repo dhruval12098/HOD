@@ -83,7 +83,7 @@ function VideoModal({ item, onClose }: { item: PortfolioItem | null; onClose: ()
           <div className={`min-h-[220px] shrink-0 flex items-center justify-center overflow-hidden md:min-h-[420px] ${item.dark_theme ? 'bg-gradient-to-br from-[#0A1628] to-[#111F34]' : 'bg-[#f5f1ea]'}`}>
             {item.media_type === 'video' ? (
               item.media_url ? (
-                <video src={item.media_url} className="h-full w-full object-cover" controls autoPlay playsInline />
+                <video src={item.media_url} className="!h-full w-full object-cover" controls autoPlay loop playsInline />
               ) : (
                 <div className="flex h-full w-full items-center justify-center">
                   <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-[#0A1628] bg-white/90">
@@ -260,7 +260,7 @@ export default function BespokePortfolio({
                   {item.thumbnail_url || (item.media_type === 'image' && item.media_url) ? (
                     <img src={item.thumbnail_url || item.media_url} alt={item.title} className="h-full w-full object-cover" />
                   ) : item.media_type === 'video' && item.media_url ? (
-                    <video src={item.media_url} className="h-full w-full object-cover" muted autoPlay loop playsInline />
+                    <video src={item.media_url} className="!h-full w-full object-cover" muted autoPlay loop playsInline />
                   ) : (
                     <GemSVG style={item.gem_style ?? 'round'} size={140} color={item.gem_color ?? '#20304A'} />
                   )}

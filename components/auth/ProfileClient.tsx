@@ -45,6 +45,14 @@ type OrderRecord = {
   items: OrderItem[];
 };
 
+function buildSelectionLabel(metal?: string | null, purity?: string | null) {
+  const normalizedMetal = metal?.trim() || ''
+  const normalizedPurity = purity?.trim() || ''
+  if (!normalizedMetal) return normalizedPurity
+  if (!normalizedPurity || normalizedMetal.toLowerCase().includes(normalizedPurity.toLowerCase())) return normalizedMetal
+  return `${normalizedPurity} ${normalizedMetal}`.trim()
+}
+
 function getUsername(email: string | null | undefined, metadata: Record<string, unknown> | undefined) {
   const preferredKeys = ['username', 'full_name', 'name', 'given_name'];
 
@@ -406,8 +414,9 @@ export default function ProfileClient() {
                                     Qty {item.quantity}
                                   </div>
                                   <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-[#667085]">
-                                    {item.selected_metal ? <span>Metal: {item.selected_metal}</span> : null}
-                                    {item.selected_purity ? <span>Purity: {item.selected_purity}</span> : null}
+                                    {buildSelectionLabel(item.selected_metal, item.selected_purity) ? (
+                                      <span>Metal: {buildSelectionLabel(item.selected_metal, item.selected_purity)}</span>
+                                    ) : null}
                                     {item.selected_size_or_fit ? <span>Size/Fit: {item.selected_size_or_fit}</span> : null}
                                     {item.selected_gemstone ? <span>Stone: {item.selected_gemstone}</span> : null}
                                     {item.selected_carat ? <span>Carat: {item.selected_carat}</span> : null}

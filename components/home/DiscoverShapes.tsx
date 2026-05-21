@@ -289,8 +289,8 @@ export default function DiscoverShapes({
         {/* Heading */}
         <div className="mx-auto max-w-[820px] text-center">
           <h2
-            className="font-serif font-light uppercase tracking-[0.02em] text-[#0A0A0A] max-md:text-[30px]"
-            style={{ fontSize: 'clamp(32px, 6vw, 68px)' }}
+            className="font-display-title font-light uppercase leading-[1.08] tracking-[0.01em] text-[#0A0A0A] max-md:text-[28px]"
+            style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}
           >
             Discover Shapes
           </h2>

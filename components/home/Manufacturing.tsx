@@ -218,7 +218,7 @@ export default function Manufacturing({ initialItems = [] }: { initialItems?: Cm
             </div>
           </RevealDiv>
           <RevealDiv delay={200}>
-            <h2 className="font-serif font-light tracking-[0.02em] text-[#0A1628] leading-[1.05] mb-[18px] text-[clamp(28px,5.5vw,72px)] max-md:text-[38px]">
+            <h2 className="font-display-title font-light uppercase tracking-[0.01em] text-[#0A1628] leading-[1.08] mb-[18px] max-md:text-[28px]" style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}>
               Inside the <em className="not-italic text-[#0A1628] font-normal">Workshop</em>
             </h2>
           </RevealDiv>

@@ -18,7 +18,9 @@ export default async function BespokePage() {
   const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
   const bucket = process.env.NEXT_PUBLIC_SUPABASE_COLLECTION_BUCKET ?? 'hod';
   const buildPublicUrl = (path?: string | null) =>
-    path ? `${supabaseUrl}/storage/v1/object/public/${bucket}/${path}` : '';
+    !path ? '' : path.startsWith('http://') || path.startsWith('https://')
+      ? path
+      : `${supabaseUrl}/storage/v1/object/public/${bucket}/${path}`;
 
   const [heroResult, slidesResult, processResult, categoriesResult, portfolioItemsResult, manufacturingResult, settingsResult, guaranteesResult, pieceTypesResult, stoneOptionsResult, caratOptionsResult, metalOptionsResult] = await Promise.all([
     supabase.from('bespoke_hero_content').select('badge_text, eyebrow, heading_line_1, heading_line_2, subtitle, primary_cta_label, secondary_cta_label, secondary_cta_action, slider_enabled').eq('status', 'active').order('updated_at', { ascending: false }).limit(1).maybeSingle(),

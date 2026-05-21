@@ -38,8 +38,12 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
     hiphopCaratValues: string[];
   };
   const searchParams = useSearchParams();
+  const [selectedVariantId, setSelectedVariantId] = useState(
+    storefrontProduct.metalPurityVariants.find((entry) => entry.isDefault)?.id ||
+      storefrontProduct.metalPurityVariants[0]?.id ||
+      ''
+  );
   const [selectedMetal, setSelectedMetal] = useState(storefrontProduct.metals[0] ?? '');
-  const [purity, setPurity] = useState(storefrontProduct.purities[0] ?? '');
   const [selectedHiphopCarat, setSelectedHiphopCarat] = useState(storefrontProduct.hiphopCaratValues[0] ?? '');
   const [selectedRingCategoryId, setSelectedRingCategoryId] = useState(storefrontProduct.ringCategoryId || storefrontProduct.ringCategoryOptions?.[0]?.id || '');
   const activeRingCategory = storefrontProduct.ringCategoryOptions?.find((entry) => entry.id === selectedRingCategoryId) || storefrontProduct.ringCategoryOptions?.[0];
@@ -64,17 +68,39 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
   const showRingGuide = Boolean(storefrontProduct.ringEnabled || storefrontProduct.type === 'ring');
   const wishlistKey = getProductKey(product);
   const inWishlist = contains(wishlistKey);
+  const selectedCombinedVariant =
+    storefrontProduct.metalPurityVariants.find((entry) => entry.id === selectedVariantId) ||
+    storefrontProduct.metalPurityVariants.find((entry) => entry.isDefault) ||
+    storefrontProduct.metalPurityVariants[0] ||
+    null;
   const selectedMetalMeta = storefrontProduct.metalsFull.find((entry) => entry.slug === selectedMetal) || storefrontProduct.metalsFull[0];
   const selectedMaterialValueMeta =
     storefrontProduct.materialValueOptions?.find((entry) => entry.name === selectedGemstoneValue) ||
     storefrontProduct.materialValueOptions?.[0] ||
     null;
-  const selectedPurityPriceRow = storefrontProduct.purityPriceRows.find((entry) => entry.purity_label === purity) || storefrontProduct.purityPriceRows[0] || null;
+  const defaultPurityPriceRow =
+    storefrontProduct.purityPriceRows.find((entry) => entry.id === storefrontProduct.defaultPurityPriceId) ||
+    storefrontProduct.purityPriceRows[0] ||
+    null;
   const selectedMetalMedia = storefrontProduct.metalMediaRows.find((entry) => entry.metal_id === selectedMetalMeta?.id) || storefrontProduct.defaultMetalMedia || null;
   const selectedMetalComposition =
     storefrontProduct.metalCompositions.find((entry) => entry.metalId === selectedMetalMeta?.id) ||
     null;
   const activeImageUrls = useMemo<string[]>(() => {
+    if (selectedCombinedVariant) {
+      const variantImages = selectedCombinedVariant.mediaItems
+        .filter((entry) => entry.type === 'image')
+        .map((entry) => entry.url)
+        .filter(Boolean);
+      const fallbackImages = storefrontProduct.defaultVariantMediaItems
+        .filter((entry) => entry.type === 'image')
+        .map((entry) => entry.url)
+        .filter(Boolean);
+
+      if (variantImages.length > 0) return variantImages;
+      if (fallbackImages.length > 0) return fallbackImages;
+    }
+
     const metalImages = selectedMetalMedia
       ? [
           selectedMetalMedia.image_1_path,
@@ -86,9 +112,13 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
     return metalImages.length > 0
       ? metalImages
       : [storefrontProduct.imageUrl, ...(storefrontProduct.galleryUrls || [])].filter((entry): entry is string => typeof entry === 'string' && entry.length > 0);
-  }, [selectedMetalMedia, storefrontProduct.galleryUrls, storefrontProduct.imageUrl]);
-  const activeVideoUrl = selectedMetalMedia?.video_path || storefrontProduct.videoUrl;
-  const activePrice = Number(selectedPurityPriceRow?.price ?? storefrontProduct.priceFrom ?? 0);
+  }, [selectedCombinedVariant, selectedMetalMedia, storefrontProduct.defaultVariantMediaItems, storefrontProduct.galleryUrls, storefrontProduct.imageUrl]);
+  const activeVideoUrl =
+    selectedCombinedVariant?.mediaItems.find((entry) => entry.type === 'video')?.url ||
+    storefrontProduct.defaultVariantMediaItems.find((entry) => entry.type === 'video')?.url ||
+    selectedMetalMedia?.video_path ||
+    storefrontProduct.videoUrl;
+  const activePrice = Number(selectedCombinedVariant?.price ?? defaultPurityPriceRow?.price ?? storefrontProduct.priceFrom ?? 0);
   const activeProduct = useMemo(
     () => ({
       ...storefrontProduct,
@@ -108,6 +138,13 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
     }),
     [activeProduct, activeRingCategory, storefrontProduct]
   );
+
+  useEffect(() => {
+    if (!selectedCombinedVariant) return;
+    if (selectedCombinedVariant.metalSlug !== selectedMetal) {
+      setSelectedMetal(selectedCombinedVariant.metalSlug);
+    }
+  }, [selectedCombinedVariant, selectedMetal]);
 
   useEffect(() => {
     const nextDefaultRingSize = activeRingCategory?.sizes?.[0] ?? storefrontProduct.ringSizeNames[0] ?? '';
@@ -152,7 +189,11 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
     [storefrontProduct.mainCategorySlug]
   );
   const collectionLabel = storefrontProduct.mainCategoryName || 'Collection';
-  const stickySummary = [selectedMetalMeta?.name, purity].filter(Boolean).join(' · ');
+  const stickySummary = [
+    selectedCombinedVariant?.label || selectedMetalMeta?.name,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   const checkoutHref = useMemo(() => {
     const params = new URLSearchParams();
@@ -160,8 +201,12 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
     params.set('name', product.name);
     params.set('price', String(activePrice));
     if (activeProduct.imageUrl) params.set('image', activeProduct.imageUrl);
-    if (selectedMetal) params.set('metal', selectedMetal);
-    if (purity) params.set('purity', purity);
+    if (selectedVariantId) params.set('variant', selectedVariantId);
+    if (selectedCombinedVariant?.label) {
+      params.set('metal', selectedCombinedVariant.label);
+    } else if (selectedMetalMeta?.name) {
+      params.set('metal', selectedMetalMeta.name);
+    }
     if (selectedHiphopCarat) params.set('carat', selectedHiphopCarat);
     if (sizeOrFit) params.set('size', sizeOrFit);
     if (selectedRingSize) params.set('ring_size', selectedRingSize);
@@ -172,7 +217,7 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
     if (preserveCategory) params.set('category', preserveCategory);
 
     return `/checkout?${params.toString()}`;
-  }, [activePrice, activeProduct.imageUrl, product.name, product.slug, purity, searchParams, selectedGemstoneValue, selectedHiphopCarat, selectedMetal, selectedRingSize, selectedShapeSlug, sizeOrFit]);
+  }, [activePrice, activeProduct.imageUrl, product.name, product.slug, searchParams, selectedCombinedVariant?.label, selectedGemstoneValue, selectedHiphopCarat, selectedMetalMeta?.name, selectedRingSize, selectedShapeSlug, selectedVariantId, sizeOrFit]);
 
   const showToast = (message: string) => {
     setToastMessage(message);
@@ -186,8 +231,10 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
   };
 
   const buildCartSelection = (loveLetterDraft: LoveLetterDraft | null = null) => ({
-    metal: selectedMetal,
-    purity,
+    metalVariantId: selectedVariantId || undefined,
+    metal: selectedCombinedVariant?.label || selectedMetalMeta?.name || selectedMetal,
+    metalSlug: selectedCombinedVariant?.metalSlug || selectedMetal,
+    purity: '',
     resolvedPrice: activePrice,
     resolvedImageUrl: activeProduct.imageUrl || undefined,
     sizeOrFit,
@@ -318,8 +365,8 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
 
               <ProductConfigurator
                 product={configuredProduct}
+                variantId={selectedVariantId}
                 metal={selectedMetal}
-                purity={purity}
                 sizeOrFit={sizeOrFit}
                 ringSize={selectedRingSize}
                 gemstoneValue={selectedGemstoneValue}
@@ -328,7 +375,7 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
                 engravingMode={engravingMode}
                 engravingText={engravingText}
                 onMetalChange={handleMetalChange}
-                onPurityChange={setPurity}
+                onVariantChange={setSelectedVariantId}
                 onSizeOrFitChange={setSizeOrFit}
                 onRingSizeChange={setSelectedRingSize}
                 onGemstoneValueChange={setSelectedGemstoneValue}

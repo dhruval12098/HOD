@@ -12,8 +12,7 @@ import { Select } from '@/components/ui/select';
  * @param {{
  *   product: {
  *     metals: string[]
- *     purities: string[]
- *     showPurity: boolean
+ *     metalPurityVariants?: { id: string, label: string, metalSlug: string, purityLabel?: string | null, baseMetalName?: string | null }[]
  *     chainLengthOptions: string[]
  *     fitOptions: string[]
  *     ringSizeNames: string[]
@@ -32,7 +31,7 @@ import { Select } from '@/components/ui/select';
  *     engravingLabel: string
  *   }
  *   metal: string
- *   purity: string
+ *   variantId?: string
  *   sizeOrFit: string
  *   ringSize: string
  *   gemstoneValue: string
@@ -40,7 +39,7 @@ import { Select } from '@/components/ui/select';
  *   engravingMode: 'none' | 'custom'
  *   engravingText: string
  *   onMetalChange: (value: string) => void
- *   onPurityChange: (value: string) => void
+ *   onVariantChange?: (value: string) => void
  *   onSizeOrFitChange: (value: string) => void
  *   onRingSizeChange?: (value: string) => void
  *   onGemstoneValueChange: (value: string) => void
@@ -54,7 +53,7 @@ import { Select } from '@/components/ui/select';
 export default function ProductConfigurator({
   product,
   metal,
-  purity,
+  variantId,
   sizeOrFit,
   ringSize,
   gemstoneValue,
@@ -63,7 +62,7 @@ export default function ProductConfigurator({
   engravingMode,
   engravingText,
   onMetalChange,
-  onPurityChange,
+  onVariantChange,
   onSizeOrFitChange,
   onRingSizeChange,
   onGemstoneValueChange,
@@ -73,9 +72,11 @@ export default function ProductConfigurator({
   onEngravingTextChange,
   onRingCategoryChange,
 }) {
+  const combinedVariants = product.metalPurityVariants || [];
+  const showCombinedVariants = combinedVariants.length > 0;
+  const selectedCombinedVariant = combinedVariants.find((entry) => entry.id === variantId) || combinedVariants[0] || null;
   const metalName = product.metalsFull?.find((entry) => entry.slug === metal)?.name || METAL_META[metal]?.name || metal;
-  const showMetal = product.metals.length > 0;
-  const showPurity = product.showPurity && product.purities.length > 0;
+  const showMetal = !showCombinedVariants && product.metals.length > 0;
   const showPrimaryFit = product.chainLengthOptions.length > 0 || product.fitOptions.length > 0;
   const showRingSelector = Boolean(product.ringEnabled && product.ringSizeNames.length > 0);
   const showGemstoneSelector = product.gemstoneValues.length > 1;
@@ -108,17 +109,20 @@ export default function ProductConfigurator({
         Configure Your Piece
       </div>
 
-      {showMetal ? <ConfiguratorMetalSwatches metals={product.metals} metalOptions={product.metalsFull || []} active={metal} onChange={onMetalChange} /> : null}
-
-      {showPurity ? (
+      {showCombinedVariants ? (
         <ConfiguratorPillGroup
-          label="Metal Purity"
-          selectedLabel={purity}
-          options={product.purities}
-          active={purity}
-          onChange={onPurityChange}
+          label="Metal"
+          selectedLabel={selectedCombinedVariant?.label || ''}
+          options={combinedVariants.map((entry) => entry.label)}
+          active={selectedCombinedVariant?.label || ''}
+          onChange={(value) => {
+            const match = combinedVariants.find((entry) => entry.label === value);
+            if (match) onVariantChange?.(match.id);
+          }}
         />
       ) : null}
+
+      {showMetal ? <ConfiguratorMetalSwatches metals={product.metals} metalOptions={product.metalsFull || []} active={metal} onChange={onMetalChange} /> : null}
 
       {showGemstoneSelector ? (
         <ConfiguratorPillGroup
@@ -203,7 +207,11 @@ export default function ProductConfigurator({
         />
       ) : null}
 
-      <ConfiguratorSummary metal={metalName} purity={purity} extra={summaryLabel} fit={sizeOrFit || ringSize} />
+      <ConfiguratorSummary
+        metal={showCombinedVariants ? (selectedCombinedVariant?.label || metalName) : metalName}
+        extra={summaryLabel}
+        fit={sizeOrFit || ringSize}
+      />
 
       {showRingModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4">
