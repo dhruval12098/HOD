@@ -74,7 +74,7 @@ const COLLECTION_BUCKET_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
   : '';
 
 function mapPanels(items: CollectionApiItem[]): PanelData[] {
-  return items.slice(0, 4).map((item, index) => ({
+  return items.map((item, index) => ({
     index,
     name: item.title,
     label: item.label || `Collection ${String(index + 1).padStart(2, '0')}`,
@@ -106,7 +106,7 @@ export default function Collection({ items = [] }: CollectionProps) {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-4 lg:gap-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4 lg:gap-6">
         {panels.map((panel, index) => (
           <article
             key={`${panel.name}-${index}`}
