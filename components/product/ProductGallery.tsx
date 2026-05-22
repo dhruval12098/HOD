@@ -2,7 +2,6 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Play } from 'lucide-react';
 import type { GemStyle } from '@/lib/data/products';
 import GemSVG from '@/components/common/GemSVG';
 
@@ -90,22 +89,15 @@ export default function ProductGallery({
             >
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(10,22,40,0.1),transparent_70%)]" />
               {asset.type === 'video' ? (
-                <>
-                  <video
-                    src={asset.url}
-                    className={mainMediaClass}
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    preload="auto"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center bg-[rgba(10,22,40,0.14)]">
-                    <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/92 text-[#0A1628] shadow-[0_14px_28px_rgba(10,22,40,0.18)]">
-                      <Play size={18} className="translate-x-[1px] fill-current" />
-                    </span>
-                  </div>
-                </>
+                <video
+                  src={asset.url}
+                  className={mainMediaClass}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="auto"
+                />
               ) : (
                 <img
                   src={asset.url}
@@ -214,11 +206,6 @@ export default function ProductGallery({
                         playsInline
                         preload="auto"
                       />
-                      <div className="absolute inset-0 flex items-center justify-center bg-[rgba(10,22,40,0.18)]">
-                        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/92 text-[#0A1628] shadow-[0_12px_24px_rgba(10,22,40,0.16)]">
-                          <Play size={14} className="translate-x-[1px] fill-current" />
-                        </span>
-                      </div>
                     </div>
                   ) : thumb?.type === 'image' ? (
                     <div className="relative h-full w-full overflow-hidden">

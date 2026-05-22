@@ -113,7 +113,7 @@ export default function PromotionPopup() {
 
   return (
     <div className="fixed inset-0 z-[1300] flex items-center justify-center bg-[rgba(10,22,40,0.48)] p-3 backdrop-blur-[6px] sm:p-5">
-      <div className="relative w-full max-w-[calc(100vw-56px)] overflow-hidden rounded-[12px] border border-[rgba(10,22,40,0.1)] bg-[#f7f3eb] shadow-[0_28px_80px_rgba(10,22,40,0.24)] sm:max-w-[760px]">
+      <div className="relative max-h-[calc(100vh-24px)] w-full max-w-[calc(100vw-24px)] overflow-hidden rounded-[12px] border border-[rgba(10,22,40,0.1)] bg-[#f7f3eb] shadow-[0_28px_80px_rgba(10,22,40,0.24)] sm:max-h-[calc(100vh-40px)] sm:max-w-[760px]">
         <button
           type="button"
           onClick={close}
@@ -126,16 +126,16 @@ export default function PromotionPopup() {
         </button>
 
         {useImageOnlyLayout && imageSrc ? (
-          <div className="flex min-h-[300px] flex-col sm:min-h-[560px]">
-            <div className="relative h-[170px] w-full shrink-0 overflow-hidden bg-[radial-gradient(circle_at_top,#f5e7c4_0%,#ebd8ad_42%,#dcc18d_100%)] sm:h-[380px]">
+          <div className="flex max-h-[calc(100vh-24px)] min-h-[300px] flex-col sm:min-h-[560px]">
+            <div className="relative h-[68vh] max-h-[520px] w-full shrink overflow-hidden bg-[radial-gradient(circle_at_top,#f5e7c4_0%,#ebd8ad_42%,#dcc18d_100%)] sm:h-[380px]">
               <img
                 src={imageSrc}
                 alt={item.image_alt || item.title || 'Promotion image'}
-                className="h-full w-full object-cover object-center"
+                className="h-full w-full object-contain object-center sm:object-cover"
                 loading="eager"
               />
             </div>
-            <div className="flex flex-1 items-end p-4 sm:p-8">
+            <div className="flex shrink-0 items-end p-4 sm:p-8">
               {item.cta_text && item.cta_link ? (
                 <Link
                   href={item.cta_link}
@@ -154,7 +154,7 @@ export default function PromotionPopup() {
                 <img
                   src={imageSrc}
                   alt={item.image_alt || item.title || 'Promotion image'}
-                  className="absolute inset-0 h-full w-full object-cover object-center"
+                  className="absolute inset-0 h-full w-full object-contain object-center md:object-cover"
                   loading="eager"
                 />
               ) : (
