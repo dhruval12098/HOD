@@ -166,6 +166,13 @@ function getMetalImages(product, metalSwatch) {
   ].filter(Boolean);
 }
 
+function getMetalSwatchStyle(metal) {
+  const color = metal?.color || "#D9D9D9";
+  return {
+    background: `radial-gradient(circle at 30% 24%, #FFFFFF 0%, color-mix(in srgb, ${color} 42%, #FFFFFF) 24%, ${color} 58%, color-mix(in srgb, ${color} 72%, #000000) 100%)`,
+  };
+}
+
 export default function ProductCard({ product, wishlisted, onWishlist, onEnquire, forceLight = false }) {
   const isDark = !forceLight && product.category === "hiphop";
   const tag = product.isNew ? "New" : product.featured ? "Featured" : "Signature";
@@ -479,30 +486,54 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
               paddingTop: "2px",
             }}
           >
-            {metalSwatches.map((metal) => (
-              <button
-                type="button"
-                key={metal.id}
-                title={metal.name}
-                aria-label={metal.name}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setActiveMetalId(metal.id);
-                }}
-                style={{
-                  width: "20px",
-                  height: "20px",
-                  borderRadius: "999px",
-                  border: metal.id === activeMetalId ? "2px solid #0A1628" : "1px solid rgba(10,22,40,0.18)",
-                  background: metal.color,
-                  boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.4)",
-                  flex: "0 0 auto",
-                  cursor: "pointer",
-                  padding: 0,
-                }}
-              />
-            ))}
+            {metalSwatches.map((metal) => {
+              const isActive = metal.id === activeMetalSwatch?.id;
+              const swatchStyle = getMetalSwatchStyle(metal);
+
+              return (
+                <button
+                  type="button"
+                  key={metal.id}
+                  title={metal.name}
+                  aria-label={metal.name}
+                  aria-pressed={isActive}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setActiveMetalId(metal.id);
+                  }}
+                  style={{
+                    width: "24px",
+                    height: "24px",
+                    borderRadius: "999px",
+                    border: isActive ? `2px solid ${isDark ? "#FFFFFF" : "#0A1628"}` : "1px solid rgba(10,22,40,0.16)",
+                    background: "transparent",
+                    boxShadow: "none",
+                    flex: "0 0 auto",
+                    cursor: "pointer",
+                    padding: "2px",
+                    transition: "transform .25s ease, border-color .25s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-1px) scale(1.06)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0) scale(1)";
+                  }}
+                >
+                  <span
+                    style={{
+                      display: "block",
+                      width: "100%",
+                      height: "100%",
+                      borderRadius: "999px",
+                      background: swatchStyle.background,
+                      boxShadow: "inset 3px 3px 5px rgba(255,255,255,0.65), inset -4px -4px 6px rgba(10,22,40,0.16)",
+                    }}
+                  />
+                </button>
+              );
+            })}
           </div>
         ) : null}
         </div>

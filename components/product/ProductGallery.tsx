@@ -1,7 +1,7 @@
 // components/product/ProductGallery.tsx - House of Diams
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import type { GemStyle } from '@/lib/data/products';
 import GemSVG from '@/components/common/GemSVG';
 
@@ -12,10 +12,45 @@ interface ProductGalleryProps {
   imageUrl?: string;
   galleryUrls?: string[];
   videoUrl?: string;
+  model3dUrl?: string;
 }
 
-type MediaAsset = { type: 'image' | 'video'; url: string };
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      'model-viewer': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
+        src?: string;
+        poster?: string;
+        alt?: string;
+        'camera-controls'?: boolean;
+        'auto-rotate'?: boolean;
+        'auto-rotate-delay'?: string;
+        'rotation-per-second'?: string;
+        'interaction-prompt'?: string;
+        'touch-action'?: string;
+        loading?: string;
+      };
+    }
+  }
+}
+
+type MediaAsset = { type: 'image' | 'video' | 'model'; url: string };
 type ThumbnailSlot = MediaAsset | { type: 'placeholder'; key: string };
+
+function ModelViewer({ src }: { src: string }) {
+  return React.createElement('model-viewer', {
+    src,
+    alt: 'Interactive 3D jewellery model',
+    'camera-controls': true,
+    'auto-rotate': true,
+    'auto-rotate-delay': '0',
+    'rotation-per-second': '32deg',
+    'interaction-prompt': 'none',
+    'touch-action': 'pan-y',
+    loading: 'lazy',
+    className: 'absolute inset-0 h-full w-full',
+  });
+}
 
 export default function ProductGallery({
   gemStyle,
@@ -24,19 +59,34 @@ export default function ProductGallery({
   imageUrl,
   galleryUrls = [],
   videoUrl,
+  model3dUrl,
 }: ProductGalleryProps) {
+  useEffect(() => {
+    if (!model3dUrl || typeof document === 'undefined') return;
+    if (document.querySelector('script[data-model-viewer-script="true"]')) return;
+
+    const script = document.createElement('script');
+    script.type = 'module';
+    script.src = 'https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js';
+    script.dataset.modelViewerScript = 'true';
+    document.head.appendChild(script);
+  }, [model3dUrl]);
+
   const assets = useMemo<MediaAsset[]>(() => {
     const maxThumbs = 5;
-    const imageSlots = videoUrl ? maxThumbs - 1 : maxThumbs;
+    const reservedSlots = [videoUrl, model3dUrl].filter(Boolean).length;
+    const imageSlots = Math.max(1, maxThumbs - reservedSlots);
     const imageAssets = [imageUrl, ...galleryUrls]
       .filter((url): url is string => typeof url === 'string' && url.length > 0)
       .slice(0, imageSlots)
       .map((url) => ({ type: 'image' as const, url }));
 
-    if (!videoUrl) return imageAssets;
+    const nonImageAssets: MediaAsset[] = [];
+    if (videoUrl) nonImageAssets.push({ type: 'video', url: videoUrl });
+    if (model3dUrl) nonImageAssets.push({ type: 'model', url: model3dUrl });
 
-    return [...imageAssets, { type: 'video', url: videoUrl }];
-  }, [imageUrl, galleryUrls, videoUrl]);
+    return [...imageAssets, ...nonImageAssets];
+  }, [imageUrl, galleryUrls, videoUrl, model3dUrl]);
 
   const [activeIndex, setActiveIndex] = useState(0);
   const activeAsset = assets[activeIndex] ?? null;
@@ -88,7 +138,9 @@ export default function ProductGallery({
               `}
             >
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(10,22,40,0.1),transparent_70%)]" />
-              {asset.type === 'video' ? (
+              {asset.type === 'model' ? (
+                <ModelViewer src={asset.url} />
+              ) : asset.type === 'video' ? (
                 <video
                   src={asset.url}
                   className={mainMediaClass}
@@ -136,7 +188,11 @@ export default function ProductGallery({
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(10,22,40,0.1),transparent_70%)]" />
 
           <div key={activeKey} className="absolute inset-0 animate-[fadeUp_0.45s_ease]">
-            {activeAsset?.type === 'video' ? (
+            {activeAsset?.type === 'model' ? (
+              <div className="absolute inset-0 overflow-hidden">
+                <ModelViewer src={activeAsset.url} />
+              </div>
+            ) : activeAsset?.type === 'video' ? (
               <div className="absolute inset-0 overflow-hidden">
                 <video
                   src={activeAsset.url}
@@ -195,7 +251,11 @@ export default function ProductGallery({
                   `}
                   aria-label={`View media ${index + 1}`}
                 >
-                  {thumb?.type === 'video' ? (
+                  {thumb?.type === 'model' ? (
+                    <div className="flex h-full w-full items-center justify-center rounded-[14px] bg-[#0A1628] text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
+                      3D
+                    </div>
+                  ) : thumb?.type === 'video' ? (
                     <div className="relative h-full w-full overflow-hidden">
                       <video
                         src={thumb.url}

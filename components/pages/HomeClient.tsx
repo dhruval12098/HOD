@@ -280,7 +280,7 @@ export default function HomeClient({
       ) : null}
       {showDeferredSections ? (
         <>
-          <HipHopShowcase initialSection={hiphopSection} />
+          {hiphopSection.is_enabled ? <HipHopShowcase initialSection={hiphopSection} /> : null}
           <BestSellers initialSection={bestSellerSection} initialProducts={bestSellerProducts} />
           {collectionPageConfig.pageEnabled && collectionPageConfig.showHomeShowcase ? <CollectionShowcase config={collectionPageConfig} /> : null}
           <DiscoverRings initialItems={discoverRingsItems} />

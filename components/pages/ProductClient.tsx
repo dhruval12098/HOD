@@ -126,6 +126,7 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
       imageUrl: activeImageUrls[0] || storefrontProduct.imageUrl,
       galleryUrls: activeImageUrls.length > 1 ? activeImageUrls.slice(1) : [],
       videoUrl: activeVideoUrl,
+      model3dUrl: storefrontProduct.model3dUrl,
     }),
     [activeImageUrls, activePrice, activeVideoUrl, storefrontProduct]
   );
@@ -339,6 +340,7 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
               imageUrl={activeProduct.imageUrl}
               galleryUrls={activeProduct.galleryUrls}
               videoUrl={activeProduct.videoUrl}
+              model3dUrl={activeProduct.model3dUrl}
             />
           )}
           info={(

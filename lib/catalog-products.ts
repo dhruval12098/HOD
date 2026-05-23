@@ -137,6 +137,7 @@ type ProductRow = {
   image_3_path: string | null
   image_4_path: string | null
   video_path: string | null
+  model_3d_url?: string | null
   show_image_1?: boolean | null
   show_image_2?: boolean | null
   show_image_3?: boolean | null
@@ -709,6 +710,7 @@ const fetchStorefrontProducts = async () => {
       imageUrl: visibleImages[0],
       galleryUrls: visibleImages.length > 1 ? visibleImages.slice(1) : [],
       videoUrl: visibleVideoUrl,
+      model3dUrl: product.model_3d_url ?? undefined,
       mainCategoryCode: category?.code || '',
       mainCategoryName: category?.name || '',
       mainCategorySlug: category?.slug || '',

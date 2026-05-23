@@ -77,6 +77,7 @@ export type HomeDiscoverItem = {
 };
 
 export type HomeHipHopSection = {
+  is_enabled: boolean;
   eyebrow: string;
   heading_line_1: string;
   heading_line_2: string;
@@ -584,7 +585,7 @@ const loadHomePageData = unstable_cache(
         .order('display_order', { ascending: true }),
       supabase
         .from('hiphop_showcase_section')
-        .select('eyebrow, heading_line_1, heading_line_2, heading_emphasis, cta_label, cta_link, image_path, image_alt')
+        .select('*')
         .eq('section_key', 'home_hiphop_showcase')
         .maybeSingle(),
       supabase
@@ -872,17 +873,17 @@ const loadHomePageData = unstable_cache(
           styles: discoverStyles,
         }),
       })),
-      hiphopSection:
-        hiphopResult.data ?? {
-          eyebrow: 'Hip Hop Collection · House of Diams',
-          heading_line_1: 'Ice That',
-          heading_line_2: 'Speaks',
-          heading_emphasis: 'Louder.',
-          cta_label: 'Shop Iced Pieces',
-          cta_link: '/hiphop',
-          image_path: '',
-          image_alt: 'House of Diams Hip Hop Collection',
-        },
+      hiphopSection: {
+        is_enabled: hiphopResult.data?.is_enabled ?? true,
+        eyebrow: hiphopResult.data?.eyebrow ?? 'Hip Hop Collection · House of Diams',
+        heading_line_1: hiphopResult.data?.heading_line_1 ?? 'Ice That',
+        heading_line_2: hiphopResult.data?.heading_line_2 ?? 'Speaks',
+        heading_emphasis: hiphopResult.data?.heading_emphasis ?? 'Louder.',
+        cta_label: hiphopResult.data?.cta_label ?? 'Shop Iced Pieces',
+        cta_link: hiphopResult.data?.cta_link ?? '/hiphop',
+        image_path: hiphopResult.data?.image_path ?? '',
+        image_alt: hiphopResult.data?.image_alt ?? 'House of Diams Hip Hop Collection',
+      },
       collectionPageConfig: {
         pageEnabled: isMissingCollectionPageConfigTable ? false : (collectionPageConfigResult.data?.page_enabled ?? false),
         showInFooter: isMissingCollectionPageConfigTable ? false : (collectionPageConfigResult.data?.show_in_footer ?? false),

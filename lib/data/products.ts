@@ -22,6 +22,7 @@ export interface Product {
   imageUrl?: string;
   galleryUrls?: string[];
   videoUrl?: string;
+  model3dUrl?: string;
 }
 
 const BASE_PRODUCTS: Product[] = [
