@@ -10,6 +10,7 @@ type PromotionPopupData = {
   cta_text: string
   cta_link: string
   image_path?: string
+  mobile_image_path?: string
   image_alt?: string
   image_only_mode?: boolean
   is_active: boolean
@@ -31,6 +32,7 @@ function buildVersionToken(item: PromotionPopupData) {
       item.cta_text,
       item.cta_link,
       item.image_path,
+      item.mobile_image_path,
       item.image_alt,
       item.image_only_mode ? '1' : '0',
       item.is_active ? '1' : '0',
@@ -105,6 +107,7 @@ export default function PromotionPopup() {
 
   const versionToken = buildVersionToken(item)
   const imageSrc = appendCacheBuster(toPublicUrl(item.image_path || ''), versionToken)
+  const mobileImageSrc = appendCacheBuster(toPublicUrl(item.mobile_image_path || item.image_path || ''), versionToken)
   const imageOnlyMode = Boolean(item.image_only_mode)
   const hasTextContent = Boolean(
     item.label?.trim() || item.title?.trim() || item.description?.trim() || item.cta_text?.trim()
@@ -113,7 +116,7 @@ export default function PromotionPopup() {
 
   return (
     <div className="fixed inset-0 z-[1300] flex items-center justify-center bg-[rgba(10,22,40,0.48)] p-3 backdrop-blur-[6px] sm:p-5">
-      <div className="relative max-h-[calc(100vh-24px)] w-full max-w-[calc(100vw-24px)] overflow-hidden rounded-[12px] border border-[rgba(10,22,40,0.1)] bg-[#f7f3eb] shadow-[0_28px_80px_rgba(10,22,40,0.24)] sm:max-h-[calc(100vh-40px)] sm:max-w-[760px]">
+      <div className="relative max-h-[calc(100vh-24px)] w-full max-w-[calc(100vw-24px)] overflow-hidden rounded-[18px] border border-[rgba(10,22,40,0.1)] bg-[#f7f3eb] shadow-[0_28px_80px_rgba(10,22,40,0.24)] sm:max-h-[calc(100vh-40px)] sm:max-w-[760px] sm:rounded-[12px]">
         <button
           type="button"
           onClick={close}
@@ -127,11 +130,11 @@ export default function PromotionPopup() {
 
         {useImageOnlyLayout && imageSrc ? (
           <div className="flex max-h-[calc(100vh-24px)] min-h-[300px] flex-col sm:min-h-[560px]">
-            <div className="relative h-[68vh] max-h-[520px] w-full shrink overflow-hidden bg-[radial-gradient(circle_at_top,#f5e7c4_0%,#ebd8ad_42%,#dcc18d_100%)] sm:h-[380px]">
+            <div className="relative h-[50vh] max-h-[380px] min-h-[260px] w-full shrink overflow-hidden bg-[radial-gradient(circle_at_top,#f5e7c4_0%,#ebd8ad_42%,#dcc18d_100%)] sm:h-[380px] sm:max-h-[520px]">
               <img
-                src={imageSrc}
+                src={mobileImageSrc}
                 alt={item.image_alt || item.title || 'Promotion image'}
-                className="h-full w-full object-contain object-center sm:object-cover"
+                className="h-full w-full object-cover object-center"
                 loading="eager"
               />
             </div>
@@ -148,15 +151,18 @@ export default function PromotionPopup() {
             </div>
           </div>
         ) : (
-          <div className="grid min-h-[250px] grid-cols-1 md:grid-cols-[0.94fr_1.06fr] sm:min-h-[420px]">
-            <div className="relative min-h-[135px] bg-[#eadfcb] md:min-h-full">
+          <div className="grid max-h-[calc(100vh-24px)] min-h-[250px] grid-cols-1 overflow-y-auto md:max-h-none md:grid-cols-[0.94fr_1.06fr] md:overflow-hidden sm:min-h-[420px]">
+            <div className="relative h-[46vh] max-h-[360px] min-h-[240px] bg-[radial-gradient(circle_at_top,#f3e7d4_0%,#eadfcb_46%,#ddc8a6_100%)] md:h-auto md:max-h-none md:min-h-full">
               {imageSrc ? (
-                <img
-                  src={imageSrc}
-                  alt={item.image_alt || item.title || 'Promotion image'}
-                  className="absolute inset-0 h-full w-full object-contain object-center md:object-cover"
-                  loading="eager"
-                />
+                <picture>
+                  <source media="(max-width: 767px)" srcSet={mobileImageSrc} />
+                  <img
+                    src={imageSrc}
+                    alt={item.image_alt || item.title || 'Promotion image'}
+                    className="absolute inset-0 h-full w-full object-cover object-center"
+                    loading="eager"
+                  />
+                </picture>
               ) : (
                 <div className="flex h-full items-center justify-center bg-[linear-gradient(135deg,#efe5d3_0%,#dcc8a6_100%)] p-8 text-center text-[13px] uppercase tracking-[0.24em] text-[rgba(10,22,40,0.5)]">
                   Promotion Image

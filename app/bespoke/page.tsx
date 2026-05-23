@@ -7,6 +7,8 @@ export const metadata: Metadata = {
   description: 'Commission a bespoke piece. From CAD to setting, crafted in Surat with natural or CVD diamonds.',
 };
 
+export const revalidate = 30;
+
 export default async function BespokePage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -28,7 +30,7 @@ export default async function BespokePage() {
     supabase.from('bespoke_process_cards').select('id, sort_order, eyebrow, title, description').order('sort_order', { ascending: true }),
     supabase.from('bespoke_portfolio_categories').select('id, name, slug, display_order').eq('status', 'active').order('display_order', { ascending: true }),
     supabase.from('bespoke_portfolio_items').select('id, title, tag, category_id, media_type, media_path, thumbnail_path, gem_style, gem_color, dark_theme, short_description, display_order').eq('status', 'active').order('display_order', { ascending: true }),
-    supabase.from('bespoke_process_steps').select('id, sort_order, step, eyebrow, title, description, image_path').order('sort_order', { ascending: true }),
+    supabase.from('bespoke_process_steps').select('id, sort_order, step, eyebrow, title, description, image_path, media_type, media_path').order('sort_order', { ascending: true }),
     supabase.from('bespoke_form_settings').select('*').eq('status', 'active').order('updated_at', { ascending: false }).limit(1).maybeSingle(),
     supabase.from('bespoke_form_guarantees').select('id, label, display_order').eq('status', 'active').order('display_order', { ascending: true }),
     supabase.from('bespoke_form_piece_types').select('id, label, display_order').eq('status', 'active').order('display_order', { ascending: true }),
@@ -50,6 +52,9 @@ export default async function BespokePage() {
 
   const manufacturingItems = (manufacturingResult.data ?? []).map((item: any) => ({
     ...item,
+    media_type: item.media_type === 'video' ? 'video' : 'image',
+    media_path: item.media_path || item.image_path || '',
+    media_url: buildPublicUrl(item.media_path || item.image_path),
     image_url: buildPublicUrl(item.image_path),
   }));
 

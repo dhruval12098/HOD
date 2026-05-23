@@ -5,6 +5,7 @@ import ConfiguratorMetalSwatches from './ConfiguratorMetalSwatches';
 import ConfiguratorPillGroup from './ConfiguratorPillGroup';
 import ConfiguratorEngravingInput from './ConfiguratorEngravingInput';
 import ConfiguratorSummary from './ConfiguratorSummary';
+import ConfiguratorMaterialButtons from './ConfiguratorMaterialButtons';
 import { METAL_META } from '@/lib/data/product-config';
 import { Select } from '@/components/ui/select';
 
@@ -110,14 +111,16 @@ export default function ProductConfigurator({
       </div>
 
       {showCombinedVariants ? (
-        <ConfiguratorPillGroup
-          label="Metal"
+        <ConfiguratorMaterialButtons
+          label="Material"
           selectedLabel={selectedCombinedVariant?.label || ''}
-          options={combinedVariants.map((entry) => entry.label)}
-          active={selectedCombinedVariant?.label || ''}
+          options={combinedVariants.map((entry) => ({
+            value: entry.id,
+            label: entry.label,
+          }))}
+          active={selectedCombinedVariant?.id || ''}
           onChange={(value) => {
-            const match = combinedVariants.find((entry) => entry.label === value);
-            if (match) onVariantChange?.(match.id);
+            onVariantChange?.(value);
           }}
         />
       ) : null}

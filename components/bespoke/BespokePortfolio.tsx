@@ -308,7 +308,7 @@ export default function BespokePortfolio({
                   {item.tag}
                 </div>
 
-                <div className="absolute bottom-0 left-0 right-0 p-[22px] z-[4] transition-all duration-400 translate-y-[30%] opacity-70 group-hover:translate-y-0 group-hover:opacity-100" style={{ background: 'linear-gradient(0deg, rgba(10,22,40,0.85), transparent)' }}>
+                <div className="absolute bottom-0 left-0 right-0 z-[4] p-[22px] opacity-100 transition-all duration-400 group-hover:pb-7" style={{ background: 'linear-gradient(0deg, rgba(10,22,40,0.9), rgba(10,22,40,0.45) 58%, transparent)' }}>
                   <div className="font-serif text-[20px] font-normal text-white tracking-[0.02em] mb-1">
                     {item.title}
                   </div>

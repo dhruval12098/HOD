@@ -18,6 +18,9 @@ interface CmsManufacturingItem {
   eyebrow: string;
   title: string;
   description: string;
+  media_type?: 'image' | 'video';
+  media_path?: string;
+  media_url?: string;
   image_path: string;
   image_url?: string;
 }
@@ -162,6 +165,12 @@ function RevealDiv({ children, className = '', delay = 0 }: { children: React.Re
   );
 }
 
+function resolvePublicMediaUrl(path?: string) {
+  if (!path) return '';
+  if (/^https?:\/\//i.test(path)) return path;
+  return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${process.env.NEXT_PUBLIC_SUPABASE_COLLECTION_BUCKET || 'hod'}/${path}`;
+}
+
 export default function Manufacturing({ initialItems = [] }: { initialItems?: CmsManufacturingItem[] }) {
   const [items, setItems] = useState<CmsManufacturingItem[]>(initialItems);
 
@@ -253,11 +262,23 @@ export default function Manufacturing({ initialItems = [] }: { initialItems?: Cm
                     />
                     {step.kind === 'cms' ? (
                       <div className="absolute inset-0">
-                        <img
-                          src={step.image_url || `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${process.env.NEXT_PUBLIC_SUPABASE_COLLECTION_BUCKET || 'hod'}/${step.image_path}`}
-                          alt={step.title}
-                          className="absolute inset-0 h-full w-full object-cover"
-                        />
+                        {step.media_type === 'video' && (step.media_path || step.image_path) ? (
+                          <video
+                            src={step.media_url || resolvePublicMediaUrl(step.media_path || step.image_path)}
+                            className="absolute inset-0 h-full w-full object-cover"
+                            autoPlay
+                            muted
+                            loop
+                            playsInline
+                            preload="metadata"
+                          />
+                        ) : (
+                          <img
+                            src={step.image_url || step.media_url || resolvePublicMediaUrl(step.media_path || step.image_path)}
+                            alt={step.title}
+                            className="absolute inset-0 h-full w-full object-cover"
+                          />
+                        )}
                       </div>
                     ) : (
                       step.icon
