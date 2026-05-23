@@ -97,7 +97,6 @@ export default function DiamondInfoSequence({
   const features = normalizeFeatures(items);
   const hasVideo = Boolean(resolvedConfig.videoEnabled && resolvedConfig.videoUrl);
   const ctaHref = resolvedConfig.ctaLink?.trim() || '';
-  const eyebrow = resolvedConfig.eyebrow?.trim() || FALLBACK_CONFIG.eyebrow;
   const heading = resolvedConfig.sectionHeading?.trim() || FALLBACK_CONFIG.sectionHeading;
   const subtext = resolvedConfig.sectionSubtext?.trim() || FALLBACK_CONFIG.sectionSubtext;
   const ctaLabel = resolvedConfig.ctaLabel?.trim() || FALLBACK_CONFIG.ctaLabel;
@@ -132,11 +131,7 @@ export default function DiamondInfoSequence({
           <div className="flex items-center bg-[#FBF8F1]">
             <div className="w-full px-5 py-6 sm:px-8 sm:py-8 lg:px-10 lg:py-8 xl:px-12">
               <div className="mx-auto max-w-[520px]">
-                <p className="text-center text-[10px] uppercase tracking-[0.24em] text-[#6F7890] sm:text-[11px] lg:text-left">
-                  {eyebrow}
-                </p>
-
-                <h2 className="mt-3 text-center font-display-title font-light uppercase leading-[1.08] tracking-[0.01em] text-[#0A1628] max-md:text-[28px] lg:text-left" style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}>
+                <h2 className="text-center font-display-title font-light uppercase leading-[1.08] tracking-[0.01em] text-[#0A1628] max-md:text-[28px] lg:text-left" style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}>
                   {heading}
                 </h2>
 

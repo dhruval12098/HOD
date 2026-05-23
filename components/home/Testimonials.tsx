@@ -61,7 +61,6 @@ function Chevron({ direction }: { direction: 'left' | 'right' }) {
 }
 
 export default function Testimonials({ initialData }: { initialData?: HomeTestimonialsData }) {
-  const [eyebrow] = useState(initialData?.eyebrow || 'Client Stories');
   const [heading] = useState(initialData?.heading || 'What Our Clients Say');
   const [testimonials] = useState<TestimonialItem[]>(initialData?.items ?? []);
   const [cardsPerView, setCardsPerView] = useState(3);
@@ -119,12 +118,7 @@ export default function Testimonials({ initialData }: { initialData?: HomeTestim
   return (
     <section className="py-[110px] px-[52px] max-w-[1400px] mx-auto max-lg:px-7 max-md:px-5 max-md:py-[70px]">
       <div className="text-center mb-2">
-        <RevealDiv className="flex justify-center">
-          <div className="text-[10px] font-normal tracking-[0.32em] text-[#0A1628] uppercase mb-[18px] inline-flex items-center gap-3 before:content-[''] before:w-6 before:h-px before:bg-[#0A1628]">
-            {eyebrow}
-          </div>
-        </RevealDiv>
-        <RevealDiv delay={100}>
+        <RevealDiv>
           <h2
             className="font-display-title font-light uppercase leading-[1.08] tracking-[0.01em] text-[#0A1628] text-center max-md:text-[28px]"
             style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}

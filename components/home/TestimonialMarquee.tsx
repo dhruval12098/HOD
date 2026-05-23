@@ -20,7 +20,6 @@ const defaultQuotes: MarqueeItem[] = [
 ];
 
 export default function TestimonialMarquee({ initialData }: { initialData?: HomeMarqueeData }) {
-  const [title] = useState(initialData?.title || 'Loved by Clients Worldwide');
   const [quotes] = useState<MarqueeItem[]>(initialData?.items?.length ? initialData.items : defaultQuotes);
 
   const allQuotes = [...quotes, ...quotes];
@@ -29,12 +28,6 @@ export default function TestimonialMarquee({ initialData }: { initialData?: Home
     <div className="relative overflow-hidden border-b border-t border-[rgba(10,22,40,0.10)] bg-[#FAF7F2] py-[26px] sm:py-[34px]">
       <div className="absolute top-0 bottom-0 left-0 z-[2] w-[120px] pointer-events-none bg-gradient-to-r from-[#FAF7F2] to-transparent" />
       <div className="absolute top-0 bottom-0 right-0 z-[2] w-[120px] pointer-events-none bg-gradient-to-l from-[#FAF7F2] to-transparent" />
-
-      <div className="mb-4 flex items-center justify-center gap-3.5 text-center text-[10px] font-normal uppercase tracking-[0.32em] text-[#0A1628] sm:mb-5">
-        <span className="inline-block h-px w-10 bg-[#0A1628] opacity-50" />
-        {title}
-        <span className="inline-block h-px w-10 bg-[#0A1628] opacity-50" />
-      </div>
 
       <div className="flex w-max items-center gap-11 animate-marquee-slow">
         {allQuotes.map((item, i) => (

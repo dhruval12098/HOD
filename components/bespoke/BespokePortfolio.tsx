@@ -22,6 +22,52 @@ type PortfolioItem = {
   category: PortfolioCategory;
 };
 
+function isVideoUrl(value?: string) {
+  if (!value) return false;
+  return /\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(value);
+}
+
+function PortfolioMedia({ item }: { item: PortfolioItem }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const thumbnailUrl = item.thumbnail_url;
+  const mediaUrl = item.media_url;
+  const hasVideoThumbnail = isVideoUrl(thumbnailUrl);
+  const shouldShowVideo = hasVideoThumbnail || (item.media_type === 'video' && mediaUrl && !thumbnailUrl);
+  const videoUrl = hasVideoThumbnail ? thumbnailUrl : mediaUrl;
+
+  const playPreview = () => {
+    void videoRef.current?.play().catch(() => {});
+  };
+
+  const pausePreview = () => {
+    if (!videoRef.current) return;
+    videoRef.current.pause();
+    videoRef.current.currentTime = 0;
+  };
+
+  if (shouldShowVideo && videoUrl) {
+    return (
+      <video
+        ref={videoRef}
+        src={videoUrl}
+        className="!h-full w-full object-cover"
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        onMouseEnter={playPreview}
+        onMouseLeave={pausePreview}
+      />
+    );
+  }
+
+  if (thumbnailUrl || (item.media_type === 'image' && mediaUrl)) {
+    return <img src={thumbnailUrl || mediaUrl} alt={item.title} className="h-full w-full object-cover" />;
+  }
+
+  return <GemSVG style={item.gem_style ?? 'round'} size={140} color={item.gem_color ?? '#20304A'} />;
+}
+
 function GemSVG({ style, size = 140, color = '#20304A' }: { style: string; size?: number; color?: string }) {
   const cL = '#0A1628';
   const s = size;
@@ -86,9 +132,7 @@ function VideoModal({ item, onClose }: { item: PortfolioItem | null; onClose: ()
                 <video src={item.media_url} className="!h-full w-full object-cover" controls autoPlay loop playsInline />
               ) : (
                 <div className="flex h-full w-full items-center justify-center">
-                  <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-[#0A1628] bg-white/90">
-                    <div className="ml-1.5 h-0 w-0" style={{ borderLeft: '22px solid #0A1628', borderTop: '14px solid transparent', borderBottom: '14px solid transparent' }} />
-                  </div>
+                  <GemSVG style={item.gem_style ?? 'round'} size={180} color={item.gem_color ?? '#20304A'} />
                 </div>
               )
             ) : item.media_url ? (
@@ -257,31 +301,8 @@ export default function BespokePortfolio({
                     background: item.dark_theme ? undefined : 'radial-gradient(circle at 50% 40%, rgba(10,22,40,0.12), transparent 70%)',
                   }}
                 >
-                  {item.thumbnail_url || (item.media_type === 'image' && item.media_url) ? (
-                    <img src={item.thumbnail_url || item.media_url} alt={item.title} className="h-full w-full object-cover" />
-                  ) : item.media_type === 'video' && item.media_url ? (
-                    <video src={item.media_url} className="!h-full w-full object-cover" muted autoPlay loop playsInline />
-                  ) : (
-                    <GemSVG style={item.gem_style ?? 'round'} size={140} color={item.gem_color ?? '#20304A'} />
-                  )}
+                  <PortfolioMedia item={item} />
                 </div>
-
-                {item.media_type === 'video' && (
-                  <>
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[58px] h-[58px] rounded-full bg-[rgba(255,255,255,0.95)] shadow-[0_8px_24px_rgba(10,22,40,0.2)] z-[2] transition-transform duration-300 group-hover:scale-110" />
-                    <div
-                      className="absolute top-1/2 left-1/2 z-[3] pointer-events-none"
-                      style={{
-                        transform: 'translate(-35%, -50%)',
-                        width: 0,
-                        height: 0,
-                        borderLeft: '16px solid #0A1628',
-                        borderTop: '10px solid transparent',
-                        borderBottom: '10px solid transparent',
-                      }}
-                    />
-                  </>
-                )}
 
                 <div className="absolute top-3.5 left-3.5 text-[8px] font-medium tracking-[0.26em] uppercase bg-[rgba(255,255,255,0.95)] backdrop-blur-[10px] text-[#0A1628] border border-[rgba(10,22,40,0.25)] px-3 py-[5px] z-[4]">
                   {item.tag}

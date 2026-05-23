@@ -27,10 +27,6 @@ export default function CollectionShowcase({ config }: { config: CollectionPageC
 
       <div className="relative z-10 flex h-full items-end px-5 py-12 md:px-8 md:py-16 lg:px-12 lg:py-20">
         <div className="max-w-[620px]">
-          <p className="mb-5 font-sans text-[10px] uppercase tracking-[0.34em] text-white/72 md:mb-6">
-            House of Diams Collection
-          </p>
-
           <h2
             className="font-serif font-light leading-[0.96] tracking-[0.01em] text-white"
             style={{ fontSize: 'clamp(42px, 7vw, 88px)' }}

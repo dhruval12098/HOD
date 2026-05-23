@@ -301,12 +301,6 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
         </div>
       ) : (
         <div className="relative z-[2] max-w-[960px] text-center">
-          <div className="mb-9 inline-flex items-center gap-3.5 rounded-full border border-[var(--theme-border-strong)] bg-[rgba(255,255,255,0.5)] px-[22px] py-[9px] text-[10px] font-normal uppercase tracking-[0.32em] text-[var(--theme-ink)] backdrop-blur-[10px] animate-[fadeUp_1s_0.2s_ease_forwards]">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--theme-ink)]" />
-            {content.eyebrow}
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--theme-ink)]" />
-          </div>
-
           <h1 className="mb-8 animate-[fadeUp_1.2s_0.4s_ease_forwards] font-serif text-[clamp(40px,9vw,132px)] font-light leading-[0.95] tracking-[-0.01em] text-[var(--theme-heading)] max-md:text-[54px]">
             {line1}
             <br />

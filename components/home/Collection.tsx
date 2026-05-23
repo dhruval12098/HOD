@@ -93,12 +93,7 @@ export default function Collection({ items = [] }: CollectionProps) {
   return (
     <section className="mx-auto w-full max-w-[1440px] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
       <div className="mb-10 text-center sm:mb-14">
-        <div className="inline-flex items-center gap-3 text-[10px] font-medium uppercase tracking-[0.32em] text-[#0A1628]">
-          <span className="inline-block h-px w-6 bg-[#0A1628]" />
-          Explore
-          <span className="inline-block h-px w-6 bg-[#0A1628]" />
-        </div>
-        <h2 className="mt-4 font-display-title font-light uppercase leading-[1.08] tracking-[0.01em] text-[#0A1628] max-md:text-[28px]" style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}>
+        <h2 className="font-display-title font-light uppercase leading-[1.08] tracking-[0.01em] text-[#0A1628] max-md:text-[28px]" style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}>
           Our <em className="not-italic italic">Collections</em>
         </h2>
         <p className="mx-auto mt-3 max-w-xl text-[12px] font-light tracking-[0.1em] text-[#6A6A6A] sm:text-[13px]">

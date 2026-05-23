@@ -168,11 +168,6 @@ export default function BestSellers({
     <section className="mx-auto max-w-[1400px] px-[52px] py-[110px] max-lg:px-7 max-md:px-5 max-md:py-[70px]">
       <RevealDiv className="mb-12 flex flex-wrap items-end justify-between gap-6">
         <div>
-          <p className="mb-[14px] flex items-center gap-3 text-[8px] font-normal uppercase tracking-[0.28em] text-[var(--theme-ink)] opacity-60">
-            <span className="inline-block h-px w-7 bg-[var(--theme-ink)]" />
-            {section.eyebrow}
-          </p>
-
           <h2
             className="font-display-title font-light uppercase leading-[1.08] tracking-[0.01em] text-[var(--theme-heading)] max-md:text-[28px]"
             style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}
