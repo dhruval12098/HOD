@@ -178,6 +178,7 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
   const tag = product.isNew ? "New" : product.featured ? "Featured" : "Signature";
   const gemSize = LARGE_GEM_STYLES.includes(product.gemStyle) ? 140 : 110;
   const metalSwatches = getMetalSwatches(product);
+  const visibleMetalSwatches = metalSwatches.slice(0, 3);
   const [activeMetalId, setActiveMetalId] = useState("");
 
   const activeMetalSwatch = metalSwatches.find((metal) => metal.id === activeMetalId) || metalSwatches[0] || null;
@@ -486,7 +487,7 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
               paddingTop: "2px",
             }}
           >
-            {metalSwatches.map((metal) => {
+            {visibleMetalSwatches.map((metal) => {
               const isActive = metal.id === activeMetalSwatch?.id;
               const swatchStyle = getMetalSwatchStyle(metal);
 

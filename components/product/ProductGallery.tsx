@@ -124,17 +124,28 @@ export default function ProductGallery({
   const thumbMediaClass =
     'absolute left-1/2 top-1/2 h-full w-full max-h-[88%] max-w-[88%] -translate-x-1/2 -translate-y-1/2 object-contain object-center';
   const desktopGridAssets = assets.length > 0 ? assets : [];
+  const getDesktopTileRadius = (index: number) => {
+    const lastIndex = desktopGridAssets.length - 1;
+    const classes = [
+      index === 0 ? 'rounded-tl-[28px]' : '',
+      index === 1 ? 'rounded-tr-[28px]' : '',
+      index === lastIndex && index % 2 === 0 ? 'rounded-bl-[28px]' : '',
+      index === lastIndex ? 'rounded-br-[28px]' : '',
+      index === lastIndex - 1 && lastIndex % 2 === 1 ? 'rounded-bl-[28px]' : '',
+    ].filter(Boolean);
+
+    return classes.join(' ');
+  };
 
   return (
     <div>
       <div className="hidden lg:block">
-        <div className="grid grid-cols-2 gap-4 pr-2">
+        <div className="grid grid-cols-2 gap-1 overflow-hidden rounded-[28px]">
           {desktopGridAssets.map((asset, index) => (
             <div
               key={`${asset.type}-${asset.url}-${index}`}
               className={`
-                ${bgMain} relative aspect-square overflow-hidden rounded-[28px] border
-                shadow-[0_18px_50px_rgba(10,22,40,0.06)]
+                ${bgMain} relative aspect-square overflow-hidden border ${getDesktopTileRadius(index)}
               `}
             >
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(10,22,40,0.1),transparent_70%)]" />
@@ -165,10 +176,9 @@ export default function ProductGallery({
               className={`
                 ${bgMain} col-span-2 aspect-square rounded-[28px] border
                 flex items-center justify-center overflow-hidden
-                shadow-[0_18px_50px_rgba(10,22,40,0.06)]
               `}
             >
-              <div className="flex h-full w-full items-center justify-center drop-shadow-[0_16px_40px_rgba(10,22,40,0.25)]">
+              <div className="flex h-full w-full items-center justify-center">
                 <GemSVG style={gemStyle} size={260} color={gemColor} />
               </div>
             </div>
@@ -182,7 +192,6 @@ export default function ProductGallery({
             w-full aspect-square ${bgMain} border rounded-[28px]
             relative mb-4 overflow-hidden
             flex items-center justify-center group
-            shadow-[0_18px_50px_rgba(10,22,40,0.06)]
           `}
         >
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(10,22,40,0.1),transparent_70%)]" />
@@ -214,7 +223,7 @@ export default function ProductGallery({
                 />
               </div>
             ) : (
-              <div className="flex h-full w-full items-center justify-center transition-transform duration-700 ease-[cubic-bezier(.2,.7,.3,1)] group-hover:scale-105 drop-shadow-[0_16px_40px_rgba(10,22,40,0.25)]">
+              <div className="flex h-full w-full items-center justify-center transition-transform duration-700 ease-[cubic-bezier(.2,.7,.3,1)] group-hover:scale-105">
                 <GemSVG style={gemStyle} size={260} color={gemColor} />
               </div>
             )}

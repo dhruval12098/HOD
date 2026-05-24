@@ -8,8 +8,6 @@ import EnquireModal from '@/components/home/EnquireModal';
 import { Toast } from '@/components/home/Toast';
 import ProductBreadcrumb from '@/components/product/ProductBreadcrumb';
 import ProductGallery from '@/components/product/ProductGallery';
-import ProductTagLine from '@/components/product/ProductTagLine';
-import ProductCategoryPill from '@/components/product/ProductCategoryPill';
 import ProductPriceBlock from '@/components/product/ProductPriceBlock';
 import ProductDescription from '@/components/product/ProductDescription';
 import ProductMetalComposition from '@/components/product/ProductMetalComposition';
@@ -294,7 +292,18 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
   };
 
     return (
-      <div className="min-h-screen bg-(--bg) text-(--ink)">
+      <div className="hod-product-detail min-h-screen bg-(--bg) text-(--ink)">
+      <style>{`
+        .hod-product-detail,
+        .hod-product-detail .font-sans,
+        .hod-product-detail .font-numeric {
+          font-family: var(--font-plus-jakarta), Arial, Helvetica, sans-serif !important;
+        }
+
+        .hod-product-detail .font-display-title {
+          font-family: var(--display-title) !important;
+        }
+      `}</style>
       <div
         className={`fixed left-0 right-0 top-[40px] z-[45] border-b border-[rgba(10,22,40,0.10)] bg-white/95 backdrop-blur-md transition-transform duration-300 ${
           showStickyCartBar
@@ -345,23 +354,9 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
           )}
           info={(
             <div>
-              <ProductTagLine
-                isNew={storefrontProduct.isNew}
-                badges={storefrontProduct.hiphopBadges}
-                readyToShip={storefrontProduct.readyToShip}
-              />
-              <ProductCategoryPill
-                category={storefrontProduct.mainCategoryName}
-                carat={selectedHiphopCarat || storefrontProduct.gemstoneValue || storefrontProduct.optionName || storefrontProduct.subcategoryName || ''}
-              />
-
               <h1 className="font-display-title mb-[10px] text-[clamp(36px,4.5vw,56px)] font-normal leading-[1.1] tracking-[0.01em] text-[#0A1628]">
                 {product.name}
               </h1>
-
-              <div className="mb-6 font-sans text-[10px] font-light uppercase tracking-[0.3em] text-[#6A6A6A] font-numeric">
-                {product.shortMeta}
-              </div>
 
               <ProductPriceBlock priceFrom={activePrice} />
 

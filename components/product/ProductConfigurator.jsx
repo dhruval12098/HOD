@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import ConfiguratorMetalSwatches from './ConfiguratorMetalSwatches';
 import ConfiguratorPillGroup from './ConfiguratorPillGroup';
 import ConfiguratorEngravingInput from './ConfiguratorEngravingInput';
-import ConfiguratorSummary from './ConfiguratorSummary';
 import ConfiguratorMaterialButtons from './ConfiguratorMaterialButtons';
 import { METAL_META } from '@/lib/data/product-config';
 import { Select } from '@/components/ui/select';
@@ -96,16 +95,9 @@ export default function ProductConfigurator({
   useEffect(() => {
     setActiveRingCategoryId(product.ringCategoryId || product.ringCategoryOptions?.[0]?.id || '');
   }, [product.ringCategoryId, product.ringCategoryOptions]);
-  const summaryParts = [
-    showShapeSelector ? ['Shape', product.shapeOptions?.find((entry) => entry.slug === shapeSlug)?.name || product.shapeOptions?.[0]?.name || ''].filter(Boolean).join(': ') : '',
-    [product.gemstoneLabel, gemstoneValue].filter(Boolean).join(': '),
-    hiphopCarat ? `${product.hiphopCaratLabel || 'Diamond Carat'}: ${hiphopCarat}` : '',
-  ].filter(Boolean);
-  const summaryLabel = summaryParts.join(' · ');
-
   return (
     <div className="mb-8 mt-7 rounded-[24px] border border-[rgba(10,22,40,0.10)] bg-white p-7 shadow-[0_18px_50px_rgba(10,22,40,0.04)]">
-      <div className="mb-[6px] flex items-center gap-[10px] font-numeric text-[22px] font-medium tracking-[0.04em] text-[#0A1628]">
+      <div className="mb-[6px] flex items-center gap-[10px] text-[22px] font-bold tracking-[-0.01em] text-[#0A1628]" style={{ fontFamily: 'var(--font-plus-jakarta), Arial, Helvetica, sans-serif' }}>
         <span className="h-[6px] w-[6px] flex-shrink-0 rounded-full bg-[#0A1628]" />
         Configure Your Piece
       </div>
@@ -209,12 +201,6 @@ export default function ProductConfigurator({
           onTextChange={onEngravingTextChange}
         />
       ) : null}
-
-      <ConfiguratorSummary
-        metal={showCombinedVariants ? (selectedCombinedVariant?.label || metalName) : metalName}
-        extra={summaryLabel}
-        fit={sizeOrFit || ringSize}
-      />
 
       {showRingModal ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4">

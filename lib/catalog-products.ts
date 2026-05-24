@@ -505,11 +505,14 @@ const fetchStorefrontProducts = async () => {
       .map((entry) => options.find((optionEntry) => optionEntry.id === entry.option_id))
       .filter(Boolean) as CatalogOption[]
     const style = styles.find((entry) => entry.id === product.style_id)
-    const productMetalIds = (metalSelectionsResult.data || [])
+    const productMetalSelections = (metalSelectionsResult.data || [])
       .filter((entry) => entry.product_id === product.id)
-      .map((entry) => entry.metal_id)
+      .sort((left, right) => (left.sort_order ?? 0) - (right.sort_order ?? 0))
+    const productMetalIds = productMetalSelections.map((entry) => entry.metal_id)
 
-    const selectedMetals = metals.filter((entry) => productMetalIds.includes(entry.id))
+    const selectedMetals = productMetalSelections
+      .map((selection) => metals.find((entry) => entry.id === selection.metal_id))
+      .filter(Boolean) as CatalogMetal[]
     const productMaterialValueSelections = (materialValueSelectionsResult.error ? [] : ((materialValueSelectionsResult.data || []) as ProductMaterialValueSelectionRow[]))
       .filter((entry) => entry.product_id === product.id)
       .sort((left, right) => (left.sort_order ?? 0) - (right.sort_order ?? 0))

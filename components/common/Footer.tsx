@@ -50,8 +50,8 @@ function ColLink({ href, children }: { href: string; children: React.ReactNode }
   return (
     <a
       href={href}
-      className="group block py-[7px] text-[11px] font-light tracking-[0.08em] text-[var(--theme-muted)] no-underline transition-all duration-300 hover:text-white hover:pl-1.5"
-      style={{ fontFamily: 'var(--font-geist-sans), Arial, Helvetica, sans-serif' }}
+      className="group block py-[7px] text-[11px] font-light tracking-[0.08em] text-white no-underline transition-all duration-300 hover:pl-1.5 hover:text-white/80"
+      style={{ fontFamily: 'var(--font-plus-jakarta), Arial, Helvetica, sans-serif' }}
     >
       {children}
     </a>
@@ -61,8 +61,8 @@ function ColLink({ href, children }: { href: string; children: React.ReactNode }
 function ColText({ children }: { children: React.ReactNode }) {
   return (
     <p
-      className="m-0 py-[7px] text-[11px] font-light leading-[1.9] tracking-[0.08em] text-[var(--theme-muted)]"
-      style={{ fontFamily: 'var(--font-geist-sans), Arial, Helvetica, sans-serif' }}
+      className="m-0 py-[7px] text-[11px] font-light leading-[1.9] tracking-[0.08em] text-white"
+      style={{ fontFamily: 'var(--font-plus-jakarta), Arial, Helvetica, sans-serif' }}
     >
       {children}
     </p>
@@ -73,7 +73,7 @@ function ColTitle({ children }: { children: React.ReactNode }) {
   return (
     <p
       className="m-0 mb-[22px] text-[14px] font-medium uppercase tracking-[0.28em] text-white"
-      style={{ fontFamily: 'var(--serif)' }}
+      style={{ fontFamily: 'var(--font-plus-jakarta), Arial, Helvetica, sans-serif' }}
     >
       {children}
     </p>
@@ -82,7 +82,7 @@ function ColTitle({ children }: { children: React.ReactNode }) {
 
 function BottomLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
-    <a href={href} className="text-[var(--theme-muted)] no-underline transition-colors duration-300 hover:text-white">
+    <a href={href} className="text-white no-underline transition-colors duration-300 hover:text-white/80">
       {children}
     </a>
   );
@@ -129,7 +129,7 @@ export default function Footer() {
   return (
     <footer
       className="relative px-5 pt-20 sm:px-7 lg:px-[52px]"
-      style={{ background: 'var(--theme-ink)', color: 'rgba(255,255,255,0.72)', fontFamily: 'var(--font-geist-sans), Arial, Helvetica, sans-serif' }}
+      style={{ background: 'var(--theme-ink)', color: '#FFFFFF', fontFamily: 'var(--font-plus-jakarta), Arial, Helvetica, sans-serif' }}
     >
       <div
         className="pointer-events-none absolute top-0 left-0 right-0 h-px"
@@ -179,7 +179,7 @@ export default function Footer() {
         </div>
 
         <div>
-          <ColTitle>Navigate</ColTitle>
+          <ColTitle>NAVIGATE</ColTitle>
           <ColLink href="/">Home</ColLink>
           {showCollectionLink ? <ColLink href={collectionHref}>{collectionLabel}</ColLink> : null}
           <ColLink href="/about">About Us</ColLink>
@@ -188,7 +188,7 @@ export default function Footer() {
         </div>
 
         <div>
-          <ColTitle>Services</ColTitle>
+          <ColTitle>JEWELLERY</ColTitle>
           {visibleServiceCategories.length > 0 ? (
             visibleServiceCategories.map((category) => (
               <ColLink key={category.id} href={`/${encodeURIComponent(category.slug)}`}>
@@ -201,7 +201,7 @@ export default function Footer() {
         </div>
 
         <div>
-          <ColTitle>Support</ColTitle>
+          <ColTitle>SUPPORT</ColTitle>
           <ColLink href="/faq">FAQ</ColLink>
           <ColLink href="/shipping">Shipping</ColLink>
           <ColLink href="/returns">Returns</ColLink>
@@ -210,7 +210,7 @@ export default function Footer() {
         </div>
 
         <div>
-          <ColTitle>Contact</ColTitle>
+          <ColTitle>CONTACT</ColTitle>
           <ColLink href="mailto:info@houseofdiams.com">info@houseofdiams.com</ColLink>
           <ColLink href="tel:+919328536178">+91 93285 36178</ColLink>
           <ColText>Surat, Gujarat, India</ColText>
