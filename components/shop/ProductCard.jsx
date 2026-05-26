@@ -175,7 +175,6 @@ function getMetalSwatchStyle(metal) {
 
 export default function ProductCard({ product, wishlisted, onWishlist, onEnquire, forceLight = false }) {
   const isDark = !forceLight && product.category === "hiphop";
-  const tag = product.isNew ? "New" : product.featured ? "Featured" : "Signature";
   const gemSize = LARGE_GEM_STYLES.includes(product.gemStyle) ? 140 : 110;
   const metalSwatches = getMetalSwatches(product);
   const visibleMetalSwatches = metalSwatches.slice(0, 3);
@@ -334,27 +333,6 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
             transition: "opacity .55s cubic-bezier(.16,1,.3,1)",
           }}
         />
-
-        {/* Tag */}
-        <div
-          style={{
-            position: "absolute",
-            top: "14px",
-            left: "14px",
-            fontSize: "8px",
-            fontWeight: 500,
-            letterSpacing: ".26em",
-            padding: "5px 12px",
-            textTransform: "uppercase",
-            background: isDark ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.92)",
-            color: isDark ? "#FFFFFF" : "#0A1628",
-            border: isDark ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(10,22,40,0.25)",
-            backdropFilter: "blur(10px)",
-            zIndex: 2,
-          }}
-        >
-          {tag}
-        </div>
 
         {/* Wishlist button */}
         <button

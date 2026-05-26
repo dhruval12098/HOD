@@ -2,49 +2,38 @@
 
 const TRUST_ITEMS = [
   {
-    title: 'IGI Certified',
-    sub: 'Included',
-    icon: (
-      <svg viewBox="0 0 22 22" fill="none" className="w-[22px] h-[22px] mb-2">
-        <polygon points="11,3 17,6 17,15 11,19 5,15 5,6" stroke="#0A1628" strokeWidth="1" />
-        <path d="M8 11L10 13L14 9" stroke="#0A1628" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
-  {
-    title: 'Insured Delivery',
+    title: 'Overnight Shipping',
     sub: 'Worldwide',
-    icon: (
-      <svg viewBox="0 0 22 22" fill="none" className="w-[22px] h-[22px] mb-2">
-        <rect x="2" y="5" width="18" height="12" rx="2" stroke="#0A1628" strokeWidth="1" />
-        <path d="M2 9H20" stroke="#0A1628" strokeWidth="1" />
-      </svg>
-    ),
+    iconPath: '/produc page svgs/01-overnight-shipping.svg',
   },
   {
-    title: 'Conflict Free',
-    sub: '100% Traceable',
-    icon: (
-      <svg viewBox="0 0 22 22" fill="none" className="w-[22px] h-[22px] mb-2">
-        <path d="M11 3L17 6V12C17 15 14 17 11 18C8 17 5 15 5 12V6L11 3Z" stroke="#0A1628" strokeWidth="1" />
-      </svg>
-    ),
+    title: 'Lifetime Warranty',
+    sub: 'Included',
+    iconPath: '/produc page svgs/02-lifetime-warranty.svg',
+  },
+  {
+    title: '15 Days Return',
+    sub: 'Free Return',
+    iconPath: '/produc page svgs/03-15-days-free-return.svg',
+  },
+  {
+    title: 'Certificate',
+    sub: '& Appraisal',
+    iconPath: '/produc page svgs/04-certificate-appraisal.svg',
   },
 ];
 
 /**
- * Three-column trust strip below the CTA buttons.
+ * Trust strip below the CTA buttons.
  */
 export default function ProductTrustRow() {
   return (
-    <div className="mb-8 grid grid-cols-3 gap-4 rounded-[24px] border border-[rgba(10,22,40,0.10)] bg-white px-5 py-[22px] shadow-[0_18px_50px_rgba(10,22,40,0.04)]">
-      {TRUST_ITEMS.map(({ title, sub, icon }) => (
+    <div className="mb-8 grid grid-cols-2 gap-6 bg-white py-[26px] sm:grid-cols-4">
+      {TRUST_ITEMS.map(({ title, sub, iconPath }) => (
         <div key={title} className="text-center">
-          <div className="flex justify-center">{icon}</div>
-          <div className="font-sans text-[10px] font-medium tracking-[0.12em] uppercase text-[#0A1628] mb-[2px]">
-            {title}
+          <div className="flex justify-center">
+            <img src={iconPath} alt={title} className="h-[86px] w-[86px] object-contain" />
           </div>
-          <div className="font-sans text-[9px] text-[#6A6A6A] tracking-[0.06em]">{sub}</div>
         </div>
       ))}
     </div>

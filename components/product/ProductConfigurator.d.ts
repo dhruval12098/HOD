@@ -23,6 +23,9 @@ declare module '@/components/product/ProductConfigurator' {
     onEngravingModeChange: (value: string) => void
     onEngravingTextChange: (value: string) => void
     onRingCategoryChange?: (value: string) => void
+    priceFrom?: number
+    metalComposition?: unknown
+    metalCompositionColor?: string
   }
 
   const ProductConfigurator: ComponentType<ProductConfiguratorProps>

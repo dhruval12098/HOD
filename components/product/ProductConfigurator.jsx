@@ -5,7 +5,9 @@ import ConfiguratorMetalSwatches from './ConfiguratorMetalSwatches';
 import ConfiguratorPillGroup from './ConfiguratorPillGroup';
 import ConfiguratorEngravingInput from './ConfiguratorEngravingInput';
 import ConfiguratorMaterialButtons from './ConfiguratorMaterialButtons';
+import ProductMetalComposition from './ProductMetalComposition';
 import { METAL_META } from '@/lib/data/product-config';
+import { formatUsdNumber } from '@/lib/money';
 import { Select } from '@/components/ui/select';
 
 /**
@@ -71,6 +73,9 @@ export default function ProductConfigurator({
   onEngravingModeChange,
   onEngravingTextChange,
   onRingCategoryChange,
+  priceFrom,
+  metalComposition,
+  metalCompositionColor,
 }) {
   const combinedVariants = product.metalPurityVariants || [];
   const showCombinedVariants = combinedVariants.length > 0;
@@ -96,7 +101,7 @@ export default function ProductConfigurator({
     setActiveRingCategoryId(product.ringCategoryId || product.ringCategoryOptions?.[0]?.id || '');
   }, [product.ringCategoryId, product.ringCategoryOptions]);
   return (
-    <div className="mb-8 mt-7 rounded-[24px] border border-[rgba(10,22,40,0.10)] bg-white p-7 shadow-[0_18px_50px_rgba(10,22,40,0.04)]">
+    <div className="mb-8 mt-6 rounded-[24px] border border-[rgba(10,22,40,0.10)] bg-white p-7 shadow-[0_18px_50px_rgba(10,22,40,0.04)]">
       <div className="mb-[6px] flex items-center gap-[10px] text-[22px] font-bold tracking-[-0.01em] text-[#0A1628]" style={{ fontFamily: 'var(--font-plus-jakarta), Arial, Helvetica, sans-serif' }}>
         <span className="h-[6px] w-[6px] flex-shrink-0 rounded-full bg-[#0A1628]" />
         Configure Your Piece
@@ -119,6 +124,12 @@ export default function ProductConfigurator({
 
       {showMetal ? <ConfiguratorMetalSwatches metals={product.metals} metalOptions={product.metalsFull || []} active={metal} onChange={onMetalChange} /> : null}
 
+      <ProductMetalComposition
+        composition={metalComposition}
+        fallbackColor={metalCompositionColor || '#D4AF37'}
+        compact
+      />
+
       {showGemstoneSelector ? (
         <ConfiguratorPillGroup
           label={product.gemstoneLabel || 'Stone Type'}
@@ -128,7 +139,7 @@ export default function ProductConfigurator({
           onChange={onGemstoneValueChange}
         />
       ) : product.gemstoneValue ? (
-        <div className="mb-5 rounded-[18px] border border-[rgba(10,22,40,0.10)] bg-[#FAFBFD] px-4 py-3">
+        <div className="mb-5 px-1 py-2">
           <div className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-[#0A1628]">
             {product.gemstoneLabel || 'Stone Type'}
           </div>
@@ -190,6 +201,18 @@ export default function ProductConfigurator({
             </button>
           ) : null}
         </>
+      ) : null}
+
+      {typeof priceFrom === 'number' ? (
+        <div className="mb-6 mt-1 text-center">
+          <div className="font-sans text-[17px] font-light tracking-[0.01em] text-[#8B94A5]">Total Price</div>
+          <div className="mt-1 text-[30px] font-bold leading-none tracking-[-0.03em] text-[#0A1628]" style={{ fontFamily: 'var(--font-plus-jakarta), Arial, Helvetica, sans-serif' }}>
+            ${formatUsdNumber(priceFrom)}
+          </div>
+          <div className="mx-auto mt-4 inline-flex items-center rounded-full bg-[#F7F7F4] px-4 py-2 font-sans text-[12px] font-medium text-[#253246]">
+            Ships in 3-4 weeks
+          </div>
+        </div>
       ) : null}
 
       {product.engravingEnabled ? (

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { createSupabaseServerClient } from '@/lib/server-supabase'
 
 type ZippopotamPlace = {
   'place name'?: string
@@ -10,6 +11,14 @@ type ZippopotamResponse = {
   country?: string
   'country abbreviation'?: string
   places?: ZippopotamPlace[]
+}
+
+type IndiaPincodeRow = {
+  pincode: string
+  office_name?: string | null
+  district?: string | null
+  state?: string | null
+  region?: string | null
 }
 
 const COUNTRY_ALIASES: Record<string, string> = {
@@ -63,6 +72,58 @@ function normalizePostalCode(input: string | null) {
   return normalized
 }
 
+function isIndiaCountry(countryCode: string) {
+  return countryCode === 'IN'
+}
+
+function normalizeIndianPincode(input: string) {
+  const digits = input.replace(/\D/g, '')
+  return /^\d{6}$/.test(digits) ? digits : null
+}
+
+async function lookupIndianPincode(postalCode: string) {
+  const pincode = normalizeIndianPincode(postalCode)
+  if (!pincode) {
+    return NextResponse.json({ error: 'Enter a valid 6-digit Indian PIN code.' }, { status: 400 })
+  }
+
+  const supabase = createSupabaseServerClient()
+  const { data, error } = await supabase
+    .from('india_pincodes')
+    .select('pincode, office_name, district, state, region')
+    .eq('pincode', pincode)
+    .order('office_name', { ascending: true })
+    .limit(25)
+
+  if (error) {
+    return NextResponse.json({ error: 'PIN code lookup table is not ready. Please import the India PIN code dataset first.' }, { status: 503 })
+  }
+
+  const rows = (data || []) as IndiaPincodeRow[]
+  if (rows.length < 1) {
+    return NextResponse.json({ error: 'PIN code not found in the India PIN code database.' }, { status: 404 })
+  }
+
+  const first = rows[0]
+  const officeNames = [...new Set(rows.map((row) => row.office_name?.trim()).filter(Boolean) as string[])]
+  const district = first.district?.trim() || ''
+  const state = first.state?.trim() || ''
+  const city = officeNames[0] || district
+
+  return NextResponse.json({
+    lookup: {
+      country: 'India',
+      countryCode: 'IN',
+      city,
+      district,
+      state,
+      postalCode: pincode,
+      postOffices: officeNames,
+      source: 'india_pincodes',
+    },
+  })
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const country = searchParams.get('country')
@@ -73,6 +134,10 @@ export async function GET(request: Request) {
 
   if (!countryCode || !normalizedPostalCode) {
     return NextResponse.json({ error: 'A supported country and postal code are required.' }, { status: 400 })
+  }
+
+  if (isIndiaCountry(countryCode)) {
+    return lookupIndianPincode(normalizedPostalCode)
   }
 
   try {

@@ -19,6 +19,7 @@ import SpecSection from './SpecSection';
  *  careWarrantyContent?: ProductTabPolicy | null
  *  showSections?: boolean
  *  showPolicies?: boolean
+ *  cardGrid?: boolean
  * }} props
  */
 export default function ProductTabs({
@@ -29,6 +30,7 @@ export default function ProductTabs({
   careWarrantyContent = null,
   showSections = true,
   showPolicies = true,
+  cardGrid = false,
 }) {
   const [openPanels, setOpenPanels] = useState({
     care: false,
@@ -74,12 +76,35 @@ export default function ProductTabs({
     }));
   };
 
+  const gridRows = useMemo(
+    () => visibleSections.flatMap((section) => section.rows.map(([label, value]) => ({ label, value }))).slice(0, 9),
+    [visibleSections]
+  );
+
   return (
     <div className="mt-6 overflow-hidden">
       <div className="min-w-0">
         {showSections ? (
           <div className="animate-[fadeUp_0.4s_ease]">
-            {visibleSections.length > 0 ? (
+            {cardGrid && gridRows.length > 0 ? (
+              <div className="rounded-[28px] bg-[#F5F6F9] p-5 shadow-[0_18px_45px_rgba(10,22,40,0.04)] sm:p-6">
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {gridRows.map((row, index) => (
+                  <div
+                    key={`${row.label}-${index}`}
+                    className="min-h-[150px] rounded-[14px] border border-[rgba(10,22,40,0.08)] bg-white p-5 shadow-[0_10px_28px_rgba(10,22,40,0.05)]"
+                  >
+                    <div className="mb-3 font-sans text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8B94A5]">
+                      {row.label}
+                    </div>
+                    <div className="font-sans text-[22px] font-semibold leading-[1.25] text-[#0A1628]">
+                      {row.value}
+                    </div>
+                  </div>
+                ))}
+                </div>
+              </div>
+            ) : visibleSections.length > 0 ? (
               visibleSections.map((section) => (
                 <SpecSection
                   key={section.title}

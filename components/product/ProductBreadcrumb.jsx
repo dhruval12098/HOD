@@ -17,7 +17,7 @@ export default function ProductBreadcrumb({
   onWishlist,
 }) {
   return (
-    <div className="mb-5 flex items-center justify-between gap-4">
+    <div className="mb-3 flex items-center justify-between gap-4">
       <nav
         className="flex flex-wrap items-center font-sans text-[9px] font-light tracking-[0.3em] uppercase text-[#6A6A6A]"
         aria-label="Breadcrumb"

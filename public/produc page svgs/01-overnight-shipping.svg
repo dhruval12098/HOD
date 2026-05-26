@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="140" height="130" viewBox="0 0 140 130" fill="none">
+  <g transform="translate(51.25, 15) scale(1.25)" stroke="#0A1628" fill="none">
+    <path d="M19.8637 8.49689L4.02783 5.19775V7.32439L11.2859 11.1362L13.9252 14.4353L19.8637 8.49689Z" stroke-linejoin="round"/>
+    <path d="M25.8025 26.9721H23.823L19.8641 19.714L16.5649 17.0747L22.5034 11.1362L25.8025 26.9721Z" stroke-linejoin="round"/>
+    <path d="M12.6056 21.0337L13.9253 26.9721L11.9458 27.632L9.96631 23.673L12.6056 21.0337Z" stroke-linejoin="round"/>
+    <path d="M9.96644 18.3944L4.02799 17.0747L3.36816 19.0542L7.32713 21.0337L9.96644 18.3944Z" stroke-linejoin="round"/>
+    <path d="M0.478516 15.1642L4.06584 11.7583" stroke-miterlimit="10"/>
+    <path d="M15.9048 24.3332L18.5441 21.6938" stroke-miterlimit="10"/>
+    <path d="M14.9946 31.0001L19.8636 26.3125" stroke-miterlimit="10"/>
+    <path d="M8.31726 20.0441C8.31726 20.0441 21.1839 7.17748 23.4933 4.86808C25.8027 2.55869 28.442 1.23903 29.1019 1.89886C29.7617 2.55869 28.442 5.198 26.1326 7.50739C23.1634 10.4766 16.0152 17.6247 10.9566 22.6834C9.06343 24.3184 7.32751 24.9928 6.66768 24.333C6.00785 23.6732 6.6823 21.9373 8.31725 20.0441L8.31726 20.0441Z" stroke-miterlimit="10"/>
+    <path d="M17.7124 5.10437L22.1171 1" stroke-miterlimit="10"/>
+    <path d="M23.6157 15.0037L26.9149 11.7046" stroke-miterlimit="10"/>
+    <path d="M6.41699 13.8444L9.89818 10.3628" stroke-miterlimit="10"/>
+  </g>
+  <text x="70" y="88" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" fill="#0A1628">Overnight</text>
+  <text x="70" y="108" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" fill="#0A1628">Shipping</text>
+</svg>

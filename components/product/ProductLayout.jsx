@@ -11,8 +11,8 @@ export default function ProductLayout({ gallery, info }) {
   return (
     <div
       className="
-        grid gap-[70px] items-start
-        grid-cols-[1.2fr_1fr]
+        grid gap-[44px] items-start
+        grid-cols-[minmax(0,1.55fr)_minmax(420px,0.85fr)]
         max-[1100px]:grid-cols-1 max-[1100px]:gap-10
       "
     >

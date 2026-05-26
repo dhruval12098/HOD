@@ -365,10 +365,20 @@ function buildCombinedMetalLabel(args: {
   const purity = args.purityLabel?.trim()
   const baseMetal = args.baseMetalName?.trim() || args.name.trim()
   const displayLabel = args.displayLabel?.trim()
-  if (displayLabel && (!purity || (displayLabel !== args.name.trim() && displayLabel !== baseMetal))) {
+  const generatedLabel = (() => {
+    if (!purity) return baseMetal
+
+    const normalizedPurity = purity.toLowerCase()
+    const normalizedBaseMetal = baseMetal.toLowerCase()
+    return normalizedBaseMetal === normalizedPurity || normalizedBaseMetal.startsWith(`${normalizedPurity} `)
+      ? baseMetal
+      : `${purity} ${baseMetal}`.trim()
+  })()
+
+  if (displayLabel && displayLabel !== args.name.trim() && displayLabel !== baseMetal) {
     return displayLabel
   }
-  return purity ? `${purity} ${baseMetal}`.trim() : baseMetal
+  return generatedLabel
 }
 
 function buildShortMeta(args: {

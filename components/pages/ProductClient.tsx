@@ -331,7 +331,7 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
         </div>
       </div>
 
-        <section ref={pageTopRef} className="mx-auto max-w-[1400px] px-[52px] pb-[100px] pt-10 max-[1100px]:px-7 max-[700px]:px-5 max-[700px]:pb-[130px]">
+        <section ref={pageTopRef} className="mx-auto max-w-[1400px] px-[52px] pb-[100px] pt-4 max-[1100px]:px-7 max-[700px]:px-5 max-[700px]:pb-[130px] max-[700px]:pt-3">
         <ProductBreadcrumb
           productName={product.name}
           collectionHref={collectionHref}
@@ -354,11 +354,12 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
           )}
           info={(
             <div>
-              <h1 className="font-display-title mb-[10px] text-[clamp(36px,4.5vw,56px)] font-normal leading-[1.1] tracking-[0.01em] text-[#0A1628]">
+              <h1 className="font-display-title mb-[10px] text-[clamp(25px,2.8vw,34px)] font-normal leading-[1.12] tracking-[0.01em] text-[#0A1628]">
                 {product.name}
               </h1>
 
-              <ProductPriceBlock priceFrom={activePrice} />
+              <ProductPriceBlock priceFrom={activePrice} compact />
+              <ProductDescription text={description} compact />
 
               <ProductConfigurator
                 product={configuredProduct}
@@ -380,6 +381,9 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
                 onHiphopCaratChange={setSelectedHiphopCarat}
                 onEngravingModeChange={handleEngravingModeChange}
                 onEngravingTextChange={setEngravingText}
+                priceFrom={activePrice}
+                metalComposition={selectedMetalComposition}
+                metalCompositionColor={selectedMetalMeta?.colorHex || '#D4AF37'}
                 onRingCategoryChange={(value: string) => {
                   setSelectedRingCategoryId(value);
                   const nextCategory = storefrontProduct.ringCategoryOptions?.find((entry) => entry.id === value);
@@ -411,7 +415,6 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
       </section>
 
       <section className="mx-auto max-w-[1400px] border-t border-[rgba(10,22,40,0.10)] px-[52px] py-12 max-[1100px]:px-7 max-[700px]:px-5">
-        <ProductDescription text={description} />
         <h2 className="mb-5 font-display-title text-[28px] font-normal leading-[1.1] tracking-[0.01em] text-[#0A1628]">
           Know Your Setting
         </h2>
@@ -419,9 +422,9 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
           specifications={product.specificationRows}
           productDetails={product.productDetailRows}
           detailSections={product.detailSections}
+          cardGrid
           showPolicies={false}
         />
-        <ProductMetalComposition composition={selectedMetalComposition} fallbackColor={selectedMetalMeta?.colorHex || '#D4AF37'} />
         <ProductTabs
           shippingContent={product.shippingContent}
           careWarrantyContent={product.careWarrantyContent}

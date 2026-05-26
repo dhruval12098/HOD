@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="140" height="130" viewBox="0 0 140 130" fill="none">
+  <g transform="translate(54.12, 12) scale(1.176)" stroke="#0A1628" fill="none">
+    <path d="M4.14111 28.4867L11.0918 16.481" stroke-miterlimit="10"/>
+    <path d="M20.3799 29.7988L13.4292 17.1611" stroke-miterlimit="10"/>
+    <path d="M17.1868 13.3218L13.6253 14.6769L10.0639 13.3218L1.61377 28.4886L6.13355 27.9537L7.94724 32.2783L13.6253 22.0675L19.3035 32.2783L21.1171 27.9537L25.6369 28.4886L17.1868 13.3218Z" stroke-miterlimit="10"/>
+    <path d="M17.1098 1.31592H10.1292L4.48182 5.419L2.32471 12.0579L4.48182 18.6969L10.1292 22.7999H17.1098L22.7572 18.6969L24.9143 12.0579L22.7572 5.419L17.1098 1.31592Z" fill="white" stroke-miterlimit="10"/>
+    <path d="M13.625 20.1646C18.132 20.1646 21.7857 16.5109 21.7857 12.0039C21.7857 7.49691 18.132 3.84326 13.625 3.84326C9.118 3.84326 5.46436 7.49691 5.46436 12.0039C5.46436 16.5109 9.118 20.1646 13.625 20.1646Z" fill="white" stroke-miterlimit="10"/>
+    <path d="M18.0423 5.73926L7.30029 16.4813" stroke-miterlimit="10"/>
+    <path d="M15.5149 4.47559L6.03662 13.9538" stroke-miterlimit="10"/>
+  </g>
+  <text x="70" y="88" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" fill="#0A1628">Lifetime</text>
+  <text x="70" y="108" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" fill="#0A1628">Warranty</text>
+</svg>
