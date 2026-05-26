@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { formatUsdNumber } from "@/lib/money";
 import { METAL_META } from "@/lib/data/product-config";
 
@@ -151,11 +151,13 @@ function getMetalSwatches(product) {
 function getMetalImages(product, metalSwatch) {
   if (!metalSwatch?.metalId || !Array.isArray(product?.metalMediaRows)) return [];
 
-  const match = product.metalMediaRows.find((entry) => entry.metal_id === metalSwatch.metalId);
-  const fallback = product.defaultMetalMedia && product.defaultMetalMedia.metal_id === metalSwatch.metalId
-    ? product.defaultMetalMedia
-    : match;
-  const source = match || fallback;
+  const match = product.metalMediaRows.find((entry) => (
+    entry.metal_id === metalSwatch.metalId ||
+    entry.metalId === metalSwatch.metalId ||
+    entry.metal_slug === metalSwatch.slug ||
+    entry.metalSlug === metalSwatch.slug
+  ));
+  const source = match || null;
   if (!source) return [];
 
   return [
@@ -179,6 +181,10 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
   const metalSwatches = getMetalSwatches(product);
   const visibleMetalSwatches = metalSwatches.slice(0, 3);
   const [activeMetalId, setActiveMetalId] = useState("");
+
+  useEffect(() => {
+    setActiveMetalId("");
+  }, [product?.id, product?.slug]);
 
   const activeMetalSwatch = metalSwatches.find((metal) => metal.id === activeMetalId) || metalSwatches[0] || null;
   const activeImageUrl = getMetalImages(product, activeMetalSwatch)[0] || product.imageUrl;

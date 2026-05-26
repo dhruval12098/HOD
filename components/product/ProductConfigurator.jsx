@@ -5,7 +5,6 @@ import ConfiguratorMetalSwatches from './ConfiguratorMetalSwatches';
 import ConfiguratorPillGroup from './ConfiguratorPillGroup';
 import ConfiguratorEngravingInput from './ConfiguratorEngravingInput';
 import ConfiguratorMaterialButtons from './ConfiguratorMaterialButtons';
-import ProductMetalComposition from './ProductMetalComposition';
 import { METAL_META } from '@/lib/data/product-config';
 import { formatUsdNumber } from '@/lib/money';
 import { Select } from '@/components/ui/select';
@@ -123,12 +122,6 @@ export default function ProductConfigurator({
       ) : null}
 
       {showMetal ? <ConfiguratorMetalSwatches metals={product.metals} metalOptions={product.metalsFull || []} active={metal} onChange={onMetalChange} /> : null}
-
-      <ProductMetalComposition
-        composition={metalComposition}
-        fallbackColor={metalCompositionColor || '#D4AF37'}
-        compact
-      />
 
       {showGemstoneSelector ? (
         <ConfiguratorPillGroup

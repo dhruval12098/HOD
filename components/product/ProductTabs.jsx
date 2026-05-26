@@ -20,6 +20,7 @@ import SpecSection from './SpecSection';
  *  showSections?: boolean
  *  showPolicies?: boolean
  *  cardGrid?: boolean
+ *  detailsAccordion?: boolean
  * }} props
  */
 export default function ProductTabs({
@@ -31,6 +32,7 @@ export default function ProductTabs({
   showSections = true,
   showPolicies = true,
   cardGrid = false,
+  detailsAccordion = false,
 }) {
   const [openPanels, setOpenPanels] = useState({
     care: false,
@@ -76,8 +78,8 @@ export default function ProductTabs({
     }));
   };
 
-  const gridRows = useMemo(
-    () => visibleSections.flatMap((section) => section.rows.map(([label, value]) => ({ label, value }))).slice(0, 9),
+  const detailsRows = useMemo(
+    () => visibleSections.flatMap((section) => section.rows.map(([label, value]) => ({ label, value, section: section.title }))),
     [visibleSections]
   );
 
@@ -86,10 +88,31 @@ export default function ProductTabs({
       <div className="min-w-0">
         {showSections ? (
           <div className="animate-[fadeUp_0.4s_ease]">
-            {cardGrid && gridRows.length > 0 ? (
+            {detailsAccordion && detailsRows.length > 0 ? (
+              <div className="overflow-hidden border-y border-[rgba(10,22,40,0.10)] bg-transparent">
+                <div className="flex items-center justify-between border-b border-[rgba(10,22,40,0.08)] px-1 py-4">
+                  <div className="flex items-center gap-3 font-sans text-[16px] font-medium text-[#0A1628]">
+                    <span className="text-[18px] leading-none">✣</span>
+                    Details
+                  </div>
+                  <ChevronDown className="h-5 w-5 rotate-180 text-[#8B94A5]" />
+                </div>
+                <div className="px-1 py-5">
+                  <div className="mb-5 font-sans text-[13px] font-semibold text-[#0A1628]">Details</div>
+                  <div className="space-y-3">
+                    {detailsRows.map((row, index) => (
+                      <div key={`${row.label}-${index}`} className="grid grid-cols-[minmax(120px,0.9fr)_minmax(0,1.2fr)] gap-5 font-sans text-[13px] leading-[1.35]">
+                        <div className="text-[#6A6A6A]">{row.label}</div>
+                        <div className="font-medium text-[#0A1628]">{row.value}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : cardGrid && detailsRows.length > 0 ? (
               <div className="rounded-[28px] bg-[#F5F6F9] p-5 shadow-[0_18px_45px_rgba(10,22,40,0.04)] sm:p-6">
                 <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                {gridRows.map((row, index) => (
+                {detailsRows.slice(0, 9).map((row, index) => (
                   <div
                     key={`${row.label}-${index}`}
                     className="min-h-[150px] rounded-[14px] border border-[rgba(10,22,40,0.08)] bg-white p-5 shadow-[0_10px_28px_rgba(10,22,40,0.05)]"

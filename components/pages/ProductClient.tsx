@@ -382,8 +382,6 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
                 onEngravingModeChange={handleEngravingModeChange}
                 onEngravingTextChange={setEngravingText}
                 priceFrom={activePrice}
-                metalComposition={selectedMetalComposition}
-                metalCompositionColor={selectedMetalMeta?.colorHex || '#D4AF37'}
                 onRingCategoryChange={(value: string) => {
                   setSelectedRingCategoryId(value);
                   const nextCategory = storefrontProduct.ringCategoryOptions?.find((entry) => entry.id === value);
@@ -406,25 +404,34 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
                 />
               </div>
 
+              <ProductMetalComposition
+                composition={selectedMetalComposition}
+                fallbackColor={selectedMetalMeta?.colorHex || '#D4AF37'}
+                compact
+              />
+
               {showRingGuide ? <RingGuide /> : null}
 
               <ProductTrustRow />
+
+              <div className="mb-8">
+                <h2 className="mb-5 font-display-title text-[28px] font-normal leading-[1.1] tracking-[0.01em] text-[#0A1628]">
+                  Know Your Setting
+                </h2>
+                <ProductTabs
+                  specifications={product.specificationRows}
+                  productDetails={product.productDetailRows}
+                  detailSections={product.detailSections}
+                  detailsAccordion
+                  showPolicies={false}
+                />
+              </div>
             </div>
           )}
         />
       </section>
 
       <section className="mx-auto max-w-[1400px] border-t border-[rgba(10,22,40,0.10)] px-[52px] py-12 max-[1100px]:px-7 max-[700px]:px-5">
-        <h2 className="mb-5 font-display-title text-[28px] font-normal leading-[1.1] tracking-[0.01em] text-[#0A1628]">
-          Know Your Setting
-        </h2>
-        <ProductTabs
-          specifications={product.specificationRows}
-          productDetails={product.productDetailRows}
-          detailSections={product.detailSections}
-          cardGrid
-          showPolicies={false}
-        />
         <ProductTabs
           shippingContent={product.shippingContent}
           careWarrantyContent={product.careWarrantyContent}
