@@ -267,7 +267,7 @@ export async function prepareCheckoutPayload({
   const gstById = new Map((gstSlabs || []).map((slab: any) => [slab.id, slab]))
   const fallbackGstSlab = (gstSlabs || [])[0] ?? fallbackGstSlabResponse?.data ?? null
 
-  const normalizedItems: PreparedItem[] = checkoutItems.map((entry) => {
+  let normalizedItems: PreparedItem[] = checkoutItems.map((entry) => {
     const product = (productBySlug.get(entry.slug) || null) as ProductRow | null
     const gstSlab =
       (product?.gst_slab_id ? gstById.get(product.gst_slab_id) : null) ||
@@ -278,7 +278,6 @@ export async function prepareCheckoutPayload({
     const subtotalAmount = Number((unitPrice * quantity).toFixed(2))
     const gstPercentage = Number(gstSlab?.percentage ?? entry.gstPercentage ?? 0)
     const gstLabel = gstSlab?.name || entry.gstLabel || 'Taxes'
-    const gstAmount = Number((subtotalAmount * (gstPercentage / 100)).toFixed(2))
 
     return {
       entry,
@@ -288,13 +287,12 @@ export async function prepareCheckoutPayload({
       subtotalAmount,
       gstPercentage,
       gstLabel,
-      gstAmount,
+      gstAmount: 0,
       gstSlabId: product?.gst_slab_id ?? null,
     }
   })
 
   const subtotalAmount = Number(normalizedItems.reduce((sum, entry) => sum + entry.subtotalAmount, 0).toFixed(2))
-  const gstAmount = Number(normalizedItems.reduce((sum, entry) => sum + entry.gstAmount, 0).toFixed(2))
   const gstLabel = normalizedItems.length === 1 ? normalizedItems[0]?.gstLabel || 'Taxes' : 'Taxes'
 
   let couponId: number | null = null
@@ -332,7 +330,17 @@ export async function prepareCheckoutPayload({
     couponCode = coupon.code
   }
 
-  const totalAmount = subtotalAmount + gstAmount - couponDiscountAmount
+  normalizedItems = normalizedItems.map((item) => {
+    const discountShare = subtotalAmount > 0 ? couponDiscountAmount * (item.subtotalAmount / subtotalAmount) : 0
+    const taxableAmount = Math.max(0, item.subtotalAmount - discountShare)
+    return {
+      ...item,
+      gstAmount: Number((taxableAmount * (item.gstPercentage / 100)).toFixed(2)),
+    }
+  })
+
+  const gstAmount = Number(normalizedItems.reduce((sum, entry) => sum + entry.gstAmount, 0).toFixed(2))
+  const totalAmount = Math.max(0, subtotalAmount - couponDiscountAmount) + gstAmount
   const loveLetter = payload?.loveLetter ?? null
   const customer = payload?.customer ?? {}
   const resolvedCustomer = {

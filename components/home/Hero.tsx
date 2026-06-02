@@ -221,7 +221,7 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
                 );
               })}
             </div>
-            <div className="relative hidden sm:block aspect-[1920/620]">
+            <div className="relative hidden sm:block aspect-[1440/720]">
               {slides.map((slide, index) => {
                 const desktopImageUrl = getPublicImageUrl(slide.image_path);
                 return (

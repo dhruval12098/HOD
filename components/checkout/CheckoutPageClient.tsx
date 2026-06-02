@@ -308,12 +308,17 @@ export default function CheckoutPageClient() {
     () => checkoutItems.reduce((sum, item) => sum + (item.priceFrom * item.quantity), 0),
     [checkoutItems]
   );
-  const gstTotal = useMemo(
-    () => checkoutItems.reduce((sum, item) => sum + (item.priceFrom * item.quantity * ((item.gstPercentage ?? 0) / 100)), 0),
-    [checkoutItems]
-  )
   const couponDiscount = appliedCoupon?.discountAmount ?? 0
-  const totalPayable = subtotal + gstTotal - couponDiscount
+  const gstTotal = useMemo(
+    () => checkoutItems.reduce((sum, item) => {
+      const lineSubtotal = item.priceFrom * item.quantity
+      const discountShare = subtotal > 0 ? couponDiscount * (lineSubtotal / subtotal) : 0
+      const taxableLineAmount = Math.max(0, lineSubtotal - discountShare)
+      return sum + (taxableLineAmount * ((item.gstPercentage ?? 0) / 100))
+    }, 0),
+    [checkoutItems, couponDiscount, subtotal]
+  )
+  const totalPayable = Math.max(0, subtotal - couponDiscount) + gstTotal
 
   const paymentSessionSignature = useMemo(
     () =>

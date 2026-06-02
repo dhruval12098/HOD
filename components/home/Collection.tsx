@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { HomeCollectionItem } from '@/lib/home-data';
 
@@ -91,7 +90,7 @@ export default function Collection({ items = [] }: CollectionProps) {
   const panels = items.length ? mapPanels(items) : PANELS;
 
   return (
-    <section className="mx-auto w-full max-w-[1440px] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+    <section className="mx-auto w-full max-w-[1440px] px-5 py-16 sm:px-8 sm:py-20 lg:px-12">
       <div className="mb-10 text-center sm:mb-14">
         <h2 className="font-display-title font-light uppercase leading-[1.08] tracking-[0.01em] text-[#0A1628] max-md:text-[28px]" style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}>
           Our <em className="not-italic italic">Collections</em>
@@ -105,14 +104,14 @@ export default function Collection({ items = [] }: CollectionProps) {
         {panels.map((panel, index) => (
           <article
             key={`${panel.name}-${index}`}
-            className="group overflow-hidden rounded-[24px] border border-white/30 bg-white shadow-[0_18px_48px_rgba(10,22,40,0.08)] transition duration-500 hover:-translate-y-1 hover:shadow-[0_24px_56px_rgba(10,22,40,0.14)]"
+            className="group overflow-hidden rounded-none border border-white/30 bg-white shadow-[0_18px_48px_rgba(10,22,40,0.08)] transition duration-500 hover:-translate-y-1 hover:shadow-[0_24px_56px_rgba(10,22,40,0.14)]"
           >
             <button
               type="button"
               onClick={() => router.push(panel.ctaHref)}
               className="block w-full text-left"
             >
-              <div className={`relative aspect-[0.9] overflow-hidden ${panel.bgClass}`}>
+              <div className={`relative aspect-[4/5] overflow-hidden ${panel.bgClass}`}>
                 {panel.imageSrc ? (
                   <img
                     src={panel.imageSrc}

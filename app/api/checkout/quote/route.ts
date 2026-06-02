@@ -20,14 +20,17 @@ export async function POST(request: Request) {
   }
 
   const subtotalUsd = items.reduce((sum, item) => sum + Number(item.priceFrom || 0) * Number(item.quantity || 0), 0)
-  const gstUsd = items.reduce(
-    (sum, item) => sum + Number(item.priceFrom || 0) * Number(item.quantity || 0) * (Number(item.gstPercentage || 0) / 100),
-    0
-  )
+  const couponDiscountUsd = Math.max(0, Math.min(subtotalUsd, Number(payload?.couponDiscountAmount || 0)))
+  const gstUsd = items.reduce((sum, item) => {
+    const lineSubtotal = Number(item.priceFrom || 0) * Number(item.quantity || 0)
+    const discountShare = subtotalUsd > 0 ? couponDiscountUsd * (lineSubtotal / subtotalUsd) : 0
+    const taxableLineAmount = Math.max(0, lineSubtotal - discountShare)
+    return sum + taxableLineAmount * (Number(item.gstPercentage || 0) / 100)
+  }, 0)
   const quote = await buildCheckoutChargeQuote({
     subtotalUsd,
     gstUsd,
-    couponDiscountUsd: Number(payload?.couponDiscountAmount || 0),
+    couponDiscountUsd,
     country: payload?.country || null,
   })
 

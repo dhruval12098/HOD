@@ -12,13 +12,16 @@ function buildSelectionLabel(metal?: string, purity?: string) {
 
 export default function CheckoutSummary({ summary }: { summary: CheckoutSummaryData }) {
   const subtotal = summary.items.reduce((sum, item) => sum + (item.priceFrom * item.quantity), 0);
-  const gstAmount = summary.items.reduce(
-    (sum, item) => sum + (item.priceFrom * item.quantity * ((item.gstPercentage ?? 0) / 100)),
-    0
-  );
   const shipping = 0;
   const couponDiscount = Math.max(0, summary.couponDiscount ?? 0);
-  const total = subtotal + shipping + gstAmount - couponDiscount;
+  const taxableSubtotal = Math.max(0, subtotal - couponDiscount);
+  const gstAmount = summary.items.reduce((sum, item) => {
+    const lineSubtotal = item.priceFrom * item.quantity;
+    const discountShare = subtotal > 0 ? couponDiscount * (lineSubtotal / subtotal) : 0;
+    const taxableLineAmount = Math.max(0, lineSubtotal - discountShare);
+    return sum + (taxableLineAmount * ((item.gstPercentage ?? 0) / 100));
+  }, 0);
+  const total = taxableSubtotal + shipping + gstAmount;
   const singleItem = summary.items[0];
 
   return (

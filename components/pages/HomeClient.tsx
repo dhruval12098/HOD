@@ -272,7 +272,8 @@ export default function HomeClient({
       />
       {showPrimarySections ? (
         <>
-          <TestimonialMarquee initialData={marqueeData} />
+          <TrustedPartnersMarquee data={trustedPartnersData} />
+          {/* <TestimonialMarquee initialData={marqueeData} /> */}
           <Collection items={collectionItems} />
           <Certifications />
           <DiscoverShapes initialItems={discoverShapesItems} />
@@ -287,7 +288,6 @@ export default function HomeClient({
           <DiamondInfoSequence items={diamondInfoItems} config={diamondInfoConfig} />
           <Testimonials initialData={testimonialsData} />
           <CouplesSection initialData={couplesData} />
-          <TrustedPartnersMarquee data={trustedPartnersData} />
 
           <section className="bg-[var(--theme-surface-warm)] px-5 py-16 md:px-8 lg:px-12">
             <div className="mx-auto max-w-[1320px]">

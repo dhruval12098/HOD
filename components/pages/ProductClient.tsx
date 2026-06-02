@@ -331,7 +331,7 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
         </div>
       </div>
 
-        <section ref={pageTopRef} className="mx-auto max-w-[1400px] px-[52px] pb-[100px] pt-4 max-[1100px]:px-7 max-[700px]:px-5 max-[700px]:pb-[130px] max-[700px]:pt-3">
+        <section ref={pageTopRef} className="mx-auto -mt-14 max-w-[1400px] px-[52px] pb-[100px] pt-4 max-[1100px]:-mt-10 max-[1100px]:px-7 max-[700px]:-mt-6 max-[700px]:px-5 max-[700px]:pb-[130px] max-[700px]:pt-3">
         <ProductBreadcrumb
           productName={product.name}
           collectionHref={collectionHref}
@@ -404,13 +404,13 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
                 />
               </div>
 
+              {showRingGuide ? <RingGuide /> : null}
+
               <ProductMetalComposition
                 composition={selectedMetalComposition}
                 fallbackColor={selectedMetalMeta?.colorHex || '#D4AF37'}
                 compact
               />
-
-              {showRingGuide ? <RingGuide /> : null}
 
               <ProductTrustRow />
 
@@ -422,20 +422,13 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
                   specifications={product.specificationRows}
                   productDetails={product.productDetailRows}
                   detailSections={product.detailSections}
+                  shippingContent={product.shippingContent}
+                  careWarrantyContent={product.careWarrantyContent}
                   detailsAccordion
-                  showPolicies={false}
                 />
               </div>
             </div>
           )}
-        />
-      </section>
-
-      <section className="mx-auto max-w-[1400px] border-t border-[rgba(10,22,40,0.10)] px-[52px] py-12 max-[1100px]:px-7 max-[700px]:px-5">
-        <ProductTabs
-          shippingContent={product.shippingContent}
-          careWarrantyContent={product.careWarrantyContent}
-          showSections={false}
         />
       </section>
 

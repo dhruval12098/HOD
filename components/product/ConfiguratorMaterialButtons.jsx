@@ -10,10 +10,10 @@ const FALLBACK_COLORS = {
 
 function getMaterialParts(label = '', fallbackColor) {
   const normalized = label.toLowerCase();
-  const purityMatch = label.match(/\b(10k|14k|18k|22k|24k|pt|platinum)\b/i);
+  const purityMatch = label.match(/\b(10k|12k|14k|18k|22k|24k|pt|platinum)\b/i);
   const purity = normalized.includes('platinum') ? 'PT' : (purityMatch?.[1] || '').toUpperCase();
   const baseName = label
-    .replace(/\b(10k|14k|18k|22k|24k|pt)\b/gi, '')
+    .replace(/\b(10k|12k|14k|18k|22k|24k|pt)\b/gi, '')
     .replace(/\s+/g, ' ')
     .trim() || label;
   const family = normalized.includes('platinum')

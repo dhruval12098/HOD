@@ -38,7 +38,10 @@ export default function CartClient() {
     [items, products]
   )
 
-  const total = resolvedItems.reduce((sum, entry) => sum + ((entry.product?.priceFrom || 0) * entry.item.quantity), 0)
+  const total = resolvedItems.reduce(
+    (sum, entry) => sum + ((entry.item.selection.resolvedPrice ?? entry.product?.priceFrom ?? 0) * entry.item.quantity),
+    0
+  )
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0)
 
   return (

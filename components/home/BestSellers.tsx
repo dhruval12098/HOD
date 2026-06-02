@@ -148,7 +148,7 @@ export default function BestSellers({
     if (!node) return
 
     const handleScroll = () => {
-      const cardWidth = node.clientWidth * 0.84 + 16
+      const cardWidth = (node.clientWidth - 16) / 2 + 16
       if (!cardWidth) return
       const nextPage = Math.round(node.scrollLeft / cardWidth)
       setMobilePage(Math.max(0, Math.min(products.length - 1, nextPage)))
@@ -216,13 +216,13 @@ export default function BestSellers({
 
           <div className="hidden overflow-hidden sm:block">
             <div
-              className="flex gap-5 transition-transform duration-500 ease-[cubic-bezier(.4,0,.2,1)]"
+              className="flex gap-5 transition-transform duration-500 ease-[cubic-bezier(.4,0,.2,1)] lg:gap-6"
               style={{ transform: `translateX(-${page * 100}%)` }}
             >
               {products.map((product) => (
                 <div
                   key={product.id}
-                  className="min-w-[calc(50%-10px)] lg:min-w-[calc(25%-15px)]"
+                  className="w-[calc((100%_-_20px)/2)] min-w-[calc((100%_-_20px)/2)] max-w-[calc((100%_-_20px)/2)] flex-none lg:w-[calc((100%_-_72px)/4)] lg:min-w-[calc((100%_-_72px)/4)] lg:max-w-[calc((100%_-_72px)/4)]"
                 >
                   <ProductCard
                     product={product}
@@ -243,7 +243,7 @@ export default function BestSellers({
             {products.map((product) => (
               <div
                 key={product.id}
-                className="min-w-[84%] snap-center"
+                className="min-w-[calc((100%_-_16px)/2)] snap-start"
               >
                 <ProductCard
                   product={product}

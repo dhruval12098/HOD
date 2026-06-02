@@ -461,32 +461,30 @@ export default function Navbar() {
 
       {announcementActive ? (
         <div
-          className="fixed top-0 left-0 right-0 z-[1001] overflow-hidden whitespace-nowrap bg-[var(--theme-ink)] px-5 py-[9px] text-[10px] font-light uppercase tracking-[0.24em] text-white select-none"
+          className="fixed top-0 left-0 right-0 z-[1001] bg-[var(--theme-ink)] px-5 py-[9px] text-left text-[10px] font-light uppercase tracking-[0.24em] text-white select-none"
           style={{
             fontFamily: "'Montserrat', sans-serif",
             ['--announcement-speed' as string]: `${Math.max(announcementSpeed, 10)}s`,
           }}
         >
-          <div className="animate-marquee-slow">
-            {[0, 1].map((dupIndex) => (
-              <span key={dupIndex} className="flex items-center pr-4">
-                {announcementItems.map((item, itemIndex) => (
-                  <span key={`${dupIndex}-${itemIndex}`} className="flex items-center">
-                    {item.link_url ? (
-                      <Link
-                        href={item.link_url}
-                        target={item.open_in_new_tab ? '_blank' : undefined}
-                        rel={item.open_in_new_tab ? 'noreferrer' : undefined}
-                        className="transition-opacity duration-200 hover:opacity-70"
-                      >
-                        {item.message}
-                      </Link>
-                    ) : (
-                      <span>{item.message}</span>
-                    )}
-                    <span className="mx-[14px] inline-block h-1 w-1 rounded-full bg-[var(--theme-surface-soft)] align-middle" />
-                  </span>
-                ))}
+          <div className="flex flex-wrap items-center justify-start gap-x-[14px] gap-y-1">
+            {announcementItems.map((item, itemIndex) => (
+              <span key={itemIndex} className="flex items-center">
+                {item.link_url ? (
+                  <Link
+                    href={item.link_url}
+                    target={item.open_in_new_tab ? '_blank' : undefined}
+                    rel={item.open_in_new_tab ? 'noreferrer' : undefined}
+                    className="transition-opacity duration-200 hover:opacity-70"
+                  >
+                    {item.message}
+                  </Link>
+                ) : (
+                  <span>{item.message}</span>
+                )}
+                {itemIndex < announcementItems.length - 1 ? (
+                  <span className="ml-[14px] inline-block h-1 w-1 rounded-full bg-[var(--theme-surface-soft)] align-middle" />
+                ) : null}
               </span>
             ))}
           </div>
