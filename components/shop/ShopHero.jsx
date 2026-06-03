@@ -322,21 +322,25 @@ export default function ShopHero({
                     background: "#0A1628",
                     transform: `translateX(calc(${activeSectionIndex} * (100% + 5px)))`,
                     transition: "transform .38s cubic-bezier(0.22, 1, 0.36, 1)",
+                    pointerEvents: "none",
                     zIndex: 0,
                   }}
                 />
               ) : null}
               {browseSections.map((section) => {
-                let sectionRouteKey = '';
-                if (section.href) {
-                  try {
-                    const target = new URL(section.href, 'https://houseofdiams.local');
-                    sectionRouteKey = `${target.pathname}?${target.searchParams.toString()}`;
-                  } catch {}
-                }
-                const isActive = sectionRouteKey ? sectionRouteKey === currentRouteKey : section.id === activeSection.id;
+                const isActive = section.id === activeSection.id;
                 const tabContent = (
-                  <>
+                  <span
+                    style={{
+                      position: "relative",
+                      zIndex: 1,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
+                      minWidth: 0,
+                    }}
+                  >
                     {section.iconUrl ? (
                       <img
                         src={section.iconUrl}
@@ -359,7 +363,7 @@ export default function ShopHero({
                     >
                       {section.title}
                     </span>
-                  </>
+                  </span>
                 );
 
                 const commonTabStyle = {
