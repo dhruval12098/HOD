@@ -41,7 +41,7 @@ export default function CheckoutField({
             inputMode={inputMode}
             placeholder={placeholder}
             readOnly={readOnly}
-            className="h-10 w-full border-0 bg-transparent p-0 text-sm font-medium text-[#101828] outline-none placeholder:text-[#98a2b3] read-only:cursor-not-allowed read-only:text-[#667085]"
+            className="checkout-input h-10 w-full border-0 bg-transparent p-0 text-sm font-medium text-[#101828] outline-none placeholder:text-[#98a2b3] read-only:cursor-not-allowed read-only:text-[#667085]"
           />
           {trailing ? <div className="flex h-5 w-5 flex-none items-center justify-center text-[#98a2b3]">{trailing}</div> : null}
         </div>

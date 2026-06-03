@@ -1189,7 +1189,7 @@ export default function CheckoutPageClient() {
                     value={couponCodeInput}
                     onChange={(event) => setCouponCodeInput(event.target.value.toUpperCase())}
                     placeholder="Enter coupon code"
-                    className="h-11 flex-1 rounded-full border border-[#d0d5dd] px-4 text-sm text-[#101828] outline-none transition-colors focus:border-[#101828]"
+                    className="checkout-input h-11 flex-1 rounded-full border border-[#d0d5dd] px-4 text-sm text-[#101828] outline-none transition-colors focus:border-[#101828]"
                   />
                   {appliedCoupon ? (
                     <button

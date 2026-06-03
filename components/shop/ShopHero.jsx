@@ -32,7 +32,6 @@ export default function ShopHero({
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const currentRouteKey = `${pathname}?${searchParams?.toString() ?? ''}`;
 
   const matchedSectionId = useMemo(() => {
     const currentParams = searchParams?.toString() ?? '';

@@ -139,6 +139,47 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--display-title) !important;
 }
 
+@media (max-width: 767px) {
+  .font-display-title[class*="max-md:text-[28px]"] {
+    font-size: 20px !important;
+  }
+}
+
+.checkout-input {
+  color: #101828 !important;
+  background-color: transparent;
+  caret-color: #101828;
+  opacity: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  -webkit-text-fill-color: #101828;
+}
+
+.checkout-input::placeholder {
+  color: #98a2b3 !important;
+  opacity: 1;
+  -webkit-text-fill-color: #98a2b3;
+}
+
+.checkout-input:read-only {
+  color: #667085 !important;
+  -webkit-text-fill-color: #667085;
+}
+
+.checkout-input:-webkit-autofill,
+.checkout-input:-webkit-autofill:hover,
+.checkout-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #101828 !important;
+  caret-color: #101828;
+  box-shadow: 0 0 0 1000px #fcfcfd inset;
+}
+
+@media (max-width: 767px) {
+  .checkout-input {
+    font-size: 16px !important;
+  }
+}
+
 ::selection {
   background: rgba(10, 22, 40, 0.14);
   color: var(--theme-heading);

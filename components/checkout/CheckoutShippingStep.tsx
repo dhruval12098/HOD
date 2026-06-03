@@ -59,7 +59,7 @@ export default function CheckoutShippingStep({
             Select Post Office / Area
           </span>
           <select
-            className="mt-2 h-10 w-full border-0 bg-transparent p-0 text-sm font-medium text-[#101828] outline-none"
+            className="checkout-input mt-2 h-10 w-full border-0 bg-transparent p-0 text-sm font-medium text-[#101828] outline-none"
             onChange={(event) => onPostalAreaSelect?.(event.target.value)}
             defaultValue={postalAreaOptions[0]?.id}
           >
