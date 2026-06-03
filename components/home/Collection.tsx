@@ -100,7 +100,7 @@ export default function Collection({ items = [] }: CollectionProps) {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4 lg:gap-6">
+      <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4 lg:gap-6">
         {panels.map((panel, index) => (
           <article
             key={`${panel.name}-${index}`}
@@ -125,14 +125,14 @@ export default function Collection({ items = [] }: CollectionProps) {
 
                 <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,22,40,0.06)_0%,rgba(10,22,40,0.18)_48%,rgba(10,22,40,0.76)_100%)]" />
 
-                <div className="absolute inset-x-0 bottom-0 z-[1] p-4 sm:p-5">
-                  <div className="text-[8px] font-medium uppercase tracking-[0.24em] text-white/72 sm:text-[9px]">
+                <div className="absolute inset-x-0 bottom-0 z-[1] p-3 sm:p-5">
+                  <div className="text-[7px] font-medium uppercase tracking-[0.18em] text-white/72 sm:text-[9px]">
                     {panel.label}
                   </div>
-                  <h3 className="mt-1.5 font-serif text-[28px] font-normal leading-[0.98] text-white sm:text-[36px]">
+                  <h3 className="mt-1 font-serif text-[18px] font-normal leading-[0.98] text-white min-[420px]:text-[22px] sm:mt-1.5 sm:text-[36px]">
                     {panel.name}
                   </h3>
-                  <div className="mt-2 inline-flex items-center gap-2.5 text-[9px] font-medium uppercase tracking-[0.22em] text-white/92 sm:text-[10px]">
+                  <div className="mt-1.5 inline-flex items-center gap-1.5 text-[7px] font-medium uppercase tracking-[0.16em] text-white/92 sm:mt-2 sm:gap-2.5 sm:text-[10px]">
                     <span>{panel.cta}</span>
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
                       <path d="M4 3L9 7L4 11" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
