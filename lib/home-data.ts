@@ -169,6 +169,7 @@ export type HomeBestSellerProduct = {
   detailTemplate?: 'standard' | 'hiphop';
   image?: string;
   metalsFull?: Array<{ id: string; name: string; slug: string; colorHex?: string | null }>;
+  metalMediaRows?: Array<{ product_id: string; metal_id: string; image_1_path?: string | null; is_default_fallback?: boolean | null }>;
 };
 
 type BestSellerProductRow = {
@@ -821,6 +822,10 @@ const loadHomePageData = unstable_cache(
               detailTemplate: product.detail_template === 'hiphop' ? 'hiphop' : 'standard',
               image: toPublicUrl(fallbackMedia?.image_1_path || product.image_1_path),
               metalsFull: selectedMetals,
+              metalMediaRows: (mediaByProduct.get(product.id) ?? []).map((entry) => ({
+                ...entry,
+                image_1_path: toPublicUrl(entry.image_1_path) ?? null,
+              })),
             };
           });
       }

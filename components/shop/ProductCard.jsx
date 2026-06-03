@@ -149,7 +149,28 @@ function getMetalSwatches(product) {
 }
 
 function getMetalImages(product, metalSwatch) {
-  if (!metalSwatch?.metalId || !Array.isArray(product?.metalMediaRows)) return [];
+  if (!metalSwatch?.metalId) return [];
+
+  if (Array.isArray(product?.metalPurityVariants)) {
+    const variant = product.metalPurityVariants
+      .filter((entry) => (
+        entry.metalId === metalSwatch.metalId ||
+        entry.metal_id === metalSwatch.metalId ||
+        entry.metalSlug === metalSwatch.slug ||
+        entry.metal_slug === metalSwatch.slug
+      ))
+      .sort((left, right) => Number(Boolean(right.isDefault)) - Number(Boolean(left.isDefault)))
+      .find((entry) => Array.isArray(entry.mediaItems) && entry.mediaItems.some((media) => media.type === "image" && media.url));
+
+    const variantImages = (variant?.mediaItems || [])
+      .filter((media) => media.type === "image" && media.url)
+      .sort((left, right) => Number(left.sortOrder || 0) - Number(right.sortOrder || 0))
+      .map((media) => media.url);
+
+    if (variantImages.length > 0) return variantImages;
+  }
+
+  if (!Array.isArray(product?.metalMediaRows)) return [];
 
   const match = product.metalMediaRows.find((entry) => (
     entry.metal_id === metalSwatch.metalId ||
@@ -386,6 +407,7 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
 
         {activeImageUrl ? (
           <img
+            key={activeImageUrl}
             src={activeImageUrl}
             alt={`${product.name} jewellery`}
             className="card-gem"

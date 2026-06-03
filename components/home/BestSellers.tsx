@@ -18,6 +18,7 @@ type Product = {
   category?: string
   imageUrl?: string
   metalsFull?: { id: string; name: string; slug: string; colorHex?: string | null }[]
+  metalMediaRows?: { product_id: string; metal_id: string; image_1_path?: string | null; is_default_fallback?: boolean | null }[]
 }
 
 type SectionData = {
@@ -106,6 +107,7 @@ export default function BestSellers({
       category: product.detailTemplate === 'hiphop' ? 'hiphop' : 'fine-jewellery',
       imageUrl: product.image,
       metalsFull: product.metalsFull,
+      metalMediaRows: product.metalMediaRows,
     }))
   )
   const [visibleCount, setVisibleCount] = useState(4)
