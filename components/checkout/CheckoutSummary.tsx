@@ -1,4 +1,5 @@
 import type { CheckoutSummaryData } from '@/components/checkout/types';
+import { useCurrency } from '@/context/CurrencyContext';
 import { formatMoney } from '@/lib/currency';
 import { getLoveLetterOccasionLabel } from '@/lib/love-letter';
 
@@ -11,6 +12,7 @@ function buildSelectionLabel(metal?: string, purity?: string) {
 }
 
 export default function CheckoutSummary({ summary }: { summary: CheckoutSummaryData }) {
+  const { format } = useCurrency();
   const subtotal = summary.items.reduce((sum, item) => sum + (item.priceFrom * item.quantity), 0);
   const shipping = 0;
   const couponDiscount = Math.max(0, summary.couponDiscount ?? 0);
@@ -71,7 +73,7 @@ export default function CheckoutSummary({ summary }: { summary: CheckoutSummaryD
       <div className="mt-5 space-y-3 text-sm">
         <div className="flex items-center justify-between text-[#667085]">
           <span>Subtotal</span>
-          <span className="font-medium text-[#101828]">{formatMoney(subtotal, 'USD')}</span>
+          <span className="font-medium text-[#101828]">{format(subtotal)}</span>
         </div>
         <div className="flex items-center justify-between text-[#667085]">
           <span>Shipping</span>
@@ -80,27 +82,25 @@ export default function CheckoutSummary({ summary }: { summary: CheckoutSummaryD
         <div className="flex items-center justify-between text-[#667085]">
           <span>{summary.items.length === 1 ? singleItem?.gstLabel || 'Taxes' : 'Taxes'}</span>
           <span className="font-medium text-[#101828]">
-            {gstAmount > 0 ? formatMoney(gstAmount, 'USD') : 'Free'}
+            {gstAmount > 0 ? format(gstAmount) : 'Free'}
           </span>
         </div>
         {couponDiscount > 0 ? (
           <div className="flex items-center justify-between text-[#12b76a]">
             <span>Coupon {summary.couponCode ? `(${summary.couponCode})` : ''}</span>
-            <span className="font-medium">-{formatMoney(couponDiscount, 'USD')}</span>
+            <span className="font-medium">-{format(couponDiscount)}</span>
           </div>
         ) : null}
         <div className="h-px bg-[#eaecf0]" />
         <div className="flex items-center justify-between text-base font-semibold text-[#101828]">
           <span>Total</span>
-          <span>{formatMoney(total, 'USD')}</span>
+          <span>{format(total)}</span>
         </div>
         {summary.chargeQuote ? (
           <div className="rounded-[18px] border border-[#eaecf0] bg-[#fcfcfd] p-4 text-sm text-[#667085]">
             <div className="text-[11px] font-medium uppercase tracking-[0.24em] text-[#98a2b3]">Payment Currency</div>
             <div className="mt-2">
-              {summary.chargeQuote.chargeCurrency === 'INR'
-                ? `You will be charged ${formatMoney(summary.chargeQuote.totalCharged, 'INR')} at checkout.`
-                : `You will be charged ${formatMoney(summary.chargeQuote.totalCharged, 'USD')} at checkout.`}
+              You will be charged {formatMoney(summary.chargeQuote.totalCharged, summary.chargeQuote.chargeCurrency)} at checkout.
             </div>
           </div>
         ) : null}

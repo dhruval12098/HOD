@@ -404,6 +404,8 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
                 />
               </div>
 
+              <ProductTrustRow />
+
               {showRingGuide ? <RingGuide /> : null}
 
               <ProductMetalComposition
@@ -411,8 +413,6 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
                 fallbackColor={selectedMetalMeta?.colorHex || '#D4AF37'}
                 compact
               />
-
-              <ProductTrustRow />
 
               <div className="mb-8">
                 <h2 className="mb-5 font-display-title text-[28px] font-normal leading-[1.1] tracking-[0.01em] text-[#0A1628]">

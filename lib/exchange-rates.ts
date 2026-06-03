@@ -1,27 +1,30 @@
-import { normalizeCurrency, type SupportedCurrency } from '@/lib/currency'
+import { FALLBACK_USD_RATES, normalizeCurrency, type SupportedCurrency } from '@/lib/currency'
 
 type ExchangeRateResult = {
   baseCurrency: 'USD'
   targetCurrency: SupportedCurrency
   rate: number
-  source: 'currencyapi' | 'fallback'
+  source: 'fastforex' | 'fallback'
   fetchedAt: string
 }
 
-const DEFAULT_USD_TO_INR_RATE = Number(process.env.USD_TO_INR_FALLBACK_RATE || 83.5)
-const CURRENCY_API_KEY = process.env.CURRENCY_API_KEY
 const CACHE_TTL_MS = 30 * 60 * 1000
-
+const FASTFOREX_API_KEY = process.env.FASTFOREX_API_KEY
 const rateCache = new Map<string, ExchangeRateResult>()
 
 function getFallbackRate(targetCurrency: SupportedCurrency) {
-  if (targetCurrency === 'INR') return DEFAULT_USD_TO_INR_RATE
-  return 1
+  return FALLBACK_USD_RATES[targetCurrency] || 1
 }
 
-export function resolveCheckoutCurrency(country: string | null | undefined): SupportedCurrency {
-  const normalizedCountry = country?.trim().toLowerCase() || ''
-  return normalizedCountry === 'india' || normalizedCountry === 'in' ? 'INR' : 'USD'
+export function resolveCheckoutCurrency(input: {
+  country?: string | null
+  currencyCode?: string | null
+}): SupportedCurrency {
+  if (input.currencyCode) return normalizeCurrency(input.currencyCode)
+
+  const normalizedCountry = input.country?.trim().toLowerCase() || ''
+  if (normalizedCountry === 'india' || normalizedCountry === 'in') return 'INR'
+  return 'USD'
 }
 
 export async function getUsdExchangeRate(targetCurrency: string | null | undefined): Promise<ExchangeRateResult> {
@@ -43,21 +46,21 @@ export async function getUsdExchangeRate(targetCurrency: string | null | undefin
     return cached
   }
 
-  if (CURRENCY_API_KEY) {
+  if (FASTFOREX_API_KEY) {
     try {
       const response = await fetch(
-        `https://api.currencyapi.com/v3/latest?apikey=${encodeURIComponent(CURRENCY_API_KEY)}&base_currency=USD&currencies=${resolvedCurrency}`,
+        `https://api.fastforex.io/fetch-multi?from=USD&to=${encodeURIComponent(resolvedCurrency)}&api_key=${encodeURIComponent(FASTFOREX_API_KEY)}`,
         { next: { revalidate: 1800 } }
       )
       const payload = await response.json().catch(() => null)
-      const liveRate = Number(payload?.data?.[resolvedCurrency]?.value)
+      const liveRate = Number(payload?.results?.[resolvedCurrency])
 
       if (response.ok && Number.isFinite(liveRate) && liveRate > 0) {
         const result: ExchangeRateResult = {
           baseCurrency: 'USD',
           targetCurrency: resolvedCurrency,
           rate: liveRate,
-          source: 'currencyapi',
+          source: 'fastforex',
           fetchedAt: new Date().toISOString(),
         }
         rateCache.set(cacheKey, result)
@@ -84,9 +87,13 @@ export async function buildCheckoutChargeQuote(input: {
   gstUsd: number
   shippingUsd?: number
   couponDiscountUsd?: number
-  country: string | null | undefined
+  country?: string | null
+  currencyCode?: string | null
 }) {
-  const currency = resolveCheckoutCurrency(input.country)
+  const currency = resolveCheckoutCurrency({
+    country: input.country,
+    currencyCode: input.currencyCode,
+  })
   const exchange = await getUsdExchangeRate(currency)
 
   const subtotalCharged = Number((input.subtotalUsd * exchange.rate).toFixed(2))

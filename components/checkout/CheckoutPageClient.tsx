@@ -11,7 +11,8 @@ import CheckoutReviewStep from '@/components/checkout/CheckoutReviewStep';
 import CheckoutShippingStep from '@/components/checkout/CheckoutShippingStep';
 import CheckoutStepper from '@/components/checkout/CheckoutStepper';
 import CheckoutSummary from '@/components/checkout/CheckoutSummary';
-import type { CheckoutDisplayItem, CheckoutPostalLookupState, CheckoutProfileForm } from '@/components/checkout/types';
+import type { CheckoutChargeQuote, CheckoutDisplayItem, CheckoutPostalAreaOption, CheckoutPostalLookupState, CheckoutProfileForm } from '@/components/checkout/types';
+import { useCurrency } from '@/context/CurrencyContext';
 import { getCollectionHref } from '@/lib/browse-context';
 import { supabase } from '@/lib/supabase';
 import { useCart } from '@/lib/hooks/useCart';
@@ -91,37 +92,63 @@ type PendingPaymentSession = {
   }
 }
 
-type CheckoutChargeQuote = {
-  baseCurrency: 'USD'
-  chargeCurrency: 'USD' | 'INR'
-  exchangeRate: number
-  exchangeRateSource: 'currencyapi' | 'fallback'
-  exchangeRateFetchedAt: string
-  totalUsd: number
-  totalCharged: number
-}
-
 type PaymentUiStage = 'idle' | 'starting' | 'confirming'
 
-type PostalLookupResponse = {
-  lookup?: {
-    country?: string
-    countryCode?: string
-    city?: string
-    state?: string
-    postalCode?: string
-  }
-  error?: string
+type GoogleAddressComponent = {
+  long_name: string
+  short_name: string
+  types: string[]
 }
 
-const POSTAL_CODE_PATTERN = /^[A-Za-z0-9][A-Za-z0-9\s-]{2,11}$/
+type GoogleGeocodeResult = {
+  formatted_address?: string
+  place_id?: string
+  address_components?: GoogleAddressComponent[]
+}
+
+type GoogleGeocodeResponse = {
+  status?: string
+  results?: GoogleGeocodeResult[]
+  error_message?: string
+}
+
+const POSTAL_CODE_LOOKUP_PATTERN = /^[A-Za-z0-9][A-Za-z0-9\s-]{2,11}$/
 
 function normalizePostalCodeValue(value: string) {
-  return value.trim()
+  return value.trim().replace(/\s+/g, ' ').slice(0, 12)
 }
 
 function isLookupReadyAfterTyping(postalCode: string) {
-  return postalCode.replace(/[\s-]/g, '').length >= 6
+  return POSTAL_CODE_LOOKUP_PATTERN.test(normalizePostalCodeValue(postalCode))
+}
+
+function getAddressPart(components: GoogleAddressComponent[] = [], types: string[]) {
+  return components.find((component) => types.some((type) => component.types.includes(type)))?.long_name?.trim() || ''
+}
+
+function mapGoogleResultToPostalArea(result: GoogleGeocodeResult, index: number) {
+  const components = result.address_components ?? []
+  const city =
+    getAddressPart(components, ['locality']) ||
+    getAddressPart(components, ['administrative_area_level_2'])
+  const district = getAddressPart(components, ['administrative_area_level_2'])
+  const state = getAddressPart(components, ['administrative_area_level_1'])
+  const country = getAddressPart(components, ['country'])
+  const area =
+    getAddressPart(components, ['sublocality_level_1', 'sublocality', 'neighborhood', 'premise']) ||
+    result.formatted_address?.split(',')[0]?.trim() ||
+    city ||
+    district ||
+    `Area ${index + 1}`
+
+  return {
+    id: result.place_id || `${area}-${index}`,
+    label: [area, district || city, state].filter(Boolean).join(', '),
+    city,
+    district,
+    state,
+    country,
+  }
 }
 
 function loadRazorpayCheckoutScript() {
@@ -166,6 +193,7 @@ const EMPTY_PROFILE_FORM: CheckoutProfileForm = {
   phone: '',
   country: '',
   state: '',
+  district: '',
   city: '',
   postal_code: '',
   address_line_1: '',
@@ -176,6 +204,7 @@ export default function CheckoutPageClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { items: cartItems, clearCart } = useCart();
+  const { currencyCode, format } = useCurrency();
   const [currentStep, setCurrentStep] = useState(0);
   const [sessionLoading, setSessionLoading] = useState(true);
   const [sessionReady, setSessionReady] = useState(false);
@@ -199,12 +228,14 @@ export default function CheckoutPageClient() {
   const [pendingPaymentSession, setPendingPaymentSession] = useState<PendingPaymentSession | null>(null)
   const [chargeQuote, setChargeQuote] = useState<CheckoutChargeQuote | null>(null)
   const [postalLookup, setPostalLookup] = useState<CheckoutPostalLookupState | null>(null)
+  const [postalAreaOptions, setPostalAreaOptions] = useState<CheckoutPostalAreaOption[]>([])
   const [cartProducts, setCartProducts] = useState<Array<Pick<StorefrontProduct, 'id' | 'dbId' | 'slug' | 'name' | 'imageUrl' | 'priceFrom'>>>([]);
   const [taxMap, setTaxMap] = useState<Record<string, { gstLabel: string; gstPercentage: number }>>({});
   const lastPostalAutofillRef = useRef<{
     country: string
     postalCode: string
     city: string
+    district: string
     state: string
   } | null>(null)
   const postalLookupAbortRef = useRef<AbortController | null>(null)
@@ -328,8 +359,9 @@ export default function CheckoutPageClient() {
         couponId: appliedCoupon?.id ?? null,
         couponAmount: appliedCoupon?.discountAmount ?? 0,
         loveLetter: loveLetterDraft,
+        currencyCode,
       }),
-    [appliedCoupon?.discountAmount, appliedCoupon?.id, checkoutItems, customerForm, loveLetterDraft]
+    [appliedCoupon?.discountAmount, appliedCoupon?.id, checkoutItems, currencyCode, customerForm, loveLetterDraft]
   )
 
   useEffect(() => {
@@ -362,6 +394,7 @@ export default function CheckoutPageClient() {
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
             country: customerForm.country,
+            currencyCode,
             couponDiscountAmount: couponDiscount,
             items: checkoutItems.map((item) => ({
               priceFrom: item.priceFrom,
@@ -380,7 +413,7 @@ export default function CheckoutPageClient() {
     return () => {
       ignore = true
     }
-  }, [checkoutItems, couponDiscount, customerForm.country])
+  }, [checkoutItems, couponDiscount, currencyCode, customerForm.country])
 
   const setPostalCodeFieldError = useCallback((message?: string) => {
     setFieldErrors((current) => {
@@ -396,32 +429,65 @@ export default function CheckoutPageClient() {
     })
   }, [])
 
+  const applyPostalArea = useCallback((area: CheckoutPostalAreaOption, postalCode: string) => {
+    setCustomerForm((current) => ({
+      ...current,
+      city: area.city,
+      district: area.district,
+      state: area.state,
+      country: area.country,
+    }))
+
+    setFieldErrors((current) => {
+      const next = { ...current }
+      delete next.city
+      delete next.district
+      delete next.state
+      delete next.country
+      delete next.postal_code
+      return next
+    })
+
+    lastPostalAutofillRef.current = {
+      country: area.country,
+      postalCode,
+      city: area.city,
+      district: area.district,
+      state: area.state,
+    }
+
+    setPostalLookup({
+      status: 'success',
+      message: 'Location filled from postal code.',
+      city: area.city || undefined,
+      district: area.district || undefined,
+      state: area.state || undefined,
+      country: area.country || undefined,
+      countryCode: area.country === 'India' ? 'IN' : undefined,
+      locked: true,
+    })
+  }, [])
+
   const lookupPostalCode = useCallback(
-    async (country: string, postalCode: string) => {
+    async (postalCode: string) => {
       const normalizedPostalCode = normalizePostalCodeValue(postalCode)
-      const normalizedCountry = country.trim()
-      const lookupKey = `${normalizedCountry.toLowerCase()}::${normalizedPostalCode.toUpperCase()}`
+      const lookupKey = normalizedPostalCode.toUpperCase()
 
-      if (!normalizedPostalCode) {
+      if (!normalizedPostalCode || normalizedPostalCode.length < 3) {
         setPostalLookup(null)
+        setPostalAreaOptions([])
         setPostalCodeFieldError()
+        lastPostalLookupKeyRef.current = ''
         return
       }
 
-      if (!normalizedCountry) {
-        setPostalLookup({
-          status: 'idle',
-          message: 'Enter country and postal code to auto-fill city and state when available.',
-        })
-        return
-      }
-
-      if (!POSTAL_CODE_PATTERN.test(normalizedPostalCode)) {
+      if (!POSTAL_CODE_LOOKUP_PATTERN.test(normalizedPostalCode)) {
         setPostalLookup({
           status: 'error',
-          message: 'Enter a valid postal code or pincode to auto-fill the address.',
+          message: 'Invalid postal code, please check',
         })
-        setPostalCodeFieldError('Enter a valid postal code or pincode.')
+        setPostalAreaOptions([])
+        setPostalCodeFieldError('Invalid postal code, please check')
         return
       }
 
@@ -435,13 +501,26 @@ export default function CheckoutPageClient() {
 
       setPostalLookup({
         status: 'loading',
-        message: 'Looking up city and state from the postal code...',
+        message: 'Looking up city, district, state, and country...',
       })
+      setPostalAreaOptions([])
+      setCustomerForm((current) => ({
+        ...current,
+        city: '',
+        district: '',
+        state: '',
+        country: '',
+      }))
       setPostalCodeFieldError()
 
       try {
+        const key = process.env.NEXT_PUBLIC_GOOGLE_GEOCODING_KEY
+        if (!key) {
+          throw new Error('Missing Google Geocoding key')
+        }
+
         const response = await fetch(
-          `/api/checkout/postal-lookup?country=${encodeURIComponent(normalizedCountry)}&postalCode=${encodeURIComponent(normalizedPostalCode)}`,
+          `https://maps.googleapis.com/maps/api/geocode/json?components=postal_code:${encodeURIComponent(normalizedPostalCode)}&key=${encodeURIComponent(key)}`,
           {
           cache: 'no-store',
           signal: controller.signal,
@@ -449,101 +528,44 @@ export default function CheckoutPageClient() {
           headers: { accept: 'application/json' },
           }
         )
-        const payload = (await response.json().catch(() => null)) as PostalLookupResponse | null
+        const payload = (await response.json().catch(() => null)) as GoogleGeocodeResponse | null
 
-        if (!response.ok || !payload?.lookup) {
-          const message = payload?.error || 'We could not match that postal code. You can continue manually.'
+        if (!response.ok) {
+          throw new Error('Network error')
+        }
+
+        if (payload?.status && payload.status !== 'OK' && payload.status !== 'ZERO_RESULTS') {
+          throw new Error(payload.error_message || payload.status)
+        }
+
+        const results = payload?.status === 'OK' && Array.isArray(payload.results) ? payload.results : []
+        const areas = results
+          .map(mapGoogleResultToPostalArea)
+          .filter((area) => area.city || area.district || area.state || area.country)
+
+        if (!areas.length) {
+          const message = 'Invalid postal code, please check'
           setPostalLookup({
             status: 'error',
             message,
           })
+          setPostalAreaOptions([])
           setPostalCodeFieldError(message)
           return
         }
 
-        const nextCity = (payload.lookup.city || '').trim()
-        const nextState = (payload.lookup.state || '').trim()
-        const nextCountry = (payload.lookup.country || normalizedCountry).trim()
-
-        setCustomerForm((current) => {
-          const patch: Partial<CheckoutProfileForm> = {}
-          const currentCity = current.city.trim()
-          const currentState = current.state.trim()
-          const currentCountry = current.country.trim()
-
-          if (nextCity && (!currentCity || currentCity === lastPostalAutofillRef.current?.city)) {
-            patch.city = nextCity
-          }
-
-          if (nextState && (!currentState || currentState === lastPostalAutofillRef.current?.state)) {
-            patch.state = nextState
-          }
-
-          if (nextCountry && (!currentCountry || currentCountry === lastPostalAutofillRef.current?.country)) {
-            patch.country = nextCountry
-          }
-
-          if (!Object.keys(patch).length) {
-            return current
-          }
-
-          return { ...current, ...patch }
-        })
-
-        setFieldErrors((current) => {
-          const next = { ...current }
-          let changed = false
-
-          if (nextCity && current.city) {
-            delete next.city
-            changed = true
-          }
-
-          if (nextState && current.state) {
-            delete next.state
-            changed = true
-          }
-
-          if (nextCountry && current.country) {
-            delete next.country
-            changed = true
-          }
-
-          if (current.postal_code) {
-            delete next.postal_code
-            changed = true
-          }
-
-          return changed ? next : current
-        })
-
-        lastPostalAutofillRef.current = {
-          country: nextCountry || normalizedCountry,
-          postalCode: normalizedPostalCode,
-          city: nextCity,
-          state: nextState,
-        }
+        setPostalAreaOptions(areas)
+        applyPostalArea(areas[0], normalizedPostalCode)
         lastPostalLookupKeyRef.current = lookupKey
-
-        setPostalLookup({
-          status: 'success',
-          message:
-            nextCity || nextState
-              ? `Found ${[nextCity, nextState].filter(Boolean).join(', ')}. You can still edit the address if needed.`
-              : 'Postal code found. You can continue editing the address manually if needed.',
-          city: nextCity || undefined,
-          state: nextState || undefined,
-          country: nextCountry || undefined,
-          countryCode: payload.lookup.countryCode || undefined,
-        })
       } catch (error) {
         if (controller.signal.aborted) return
         console.error('Postal lookup failed:', error)
-        const message = 'Postal lookup is unavailable right now. You can continue filling the address manually.'
+        const message = 'Could not fetch location, try again'
         setPostalLookup({
           status: 'error',
           message,
         })
+        setPostalAreaOptions([])
         setPostalCodeFieldError(message)
       } finally {
         if (postalLookupAbortRef.current === controller) {
@@ -551,65 +573,60 @@ export default function CheckoutPageClient() {
         }
       }
     },
-    [setPostalCodeFieldError]
+    [applyPostalArea, setPostalCodeFieldError]
   )
 
   const handlePostalCodeBlur = useCallback(() => {
-    const country = customerForm.country.trim()
     const postalCode = normalizePostalCodeValue(customerForm.postal_code)
 
     if (!postalCode) {
       setPostalLookup(null)
+      setPostalAreaOptions([])
       setPostalCodeFieldError()
       return
     }
 
-    if (!country) {
-      setPostalLookup({
-        status: 'idle',
-        message: 'Enter country and postal code to auto-fill city and state when available.',
-      })
-      return
+    if (isLookupReadyAfterTyping(postalCode)) {
+      void lookupPostalCode(postalCode)
     }
-
-    void lookupPostalCode(country, postalCode)
-  }, [customerForm.country, customerForm.postal_code, lookupPostalCode, setPostalCodeFieldError])
+  }, [customerForm.postal_code, lookupPostalCode, setPostalCodeFieldError])
 
   useEffect(() => {
-    const country = customerForm.country.trim()
     const postalCode = normalizePostalCodeValue(customerForm.postal_code)
 
-    if (!postalCode) {
+    if (!postalCode || postalCode.length < 3) {
       postalLookupAbortRef.current?.abort()
       lastPostalLookupKeyRef.current = ''
       setPostalLookup(null)
+      setPostalAreaOptions([])
       setPostalCodeFieldError()
+      lastPostalAutofillRef.current = null
+      if (customerForm.city || customerForm.district || customerForm.state || customerForm.country) {
+        setCustomerForm((current) => ({
+          ...current,
+          city: '',
+          district: '',
+          state: '',
+          country: '',
+        }))
+      }
       return
     }
 
-    if (!country) {
-      postalLookupAbortRef.current?.abort()
-      setPostalLookup({
-        status: 'idle',
-        message: 'Enter country and postal code to auto-fill city and state when available.',
-      })
-      return
-    }
-
-    if (!POSTAL_CODE_PATTERN.test(postalCode) || !isLookupReadyAfterTyping(postalCode)) {
+    if (!isLookupReadyAfterTyping(postalCode)) {
       postalLookupAbortRef.current?.abort()
       setPostalLookup(null)
       return
     }
 
     const timeoutId = window.setTimeout(() => {
-      void lookupPostalCode(country, postalCode)
-    }, 450)
+      void lookupPostalCode(postalCode)
+    }, 400)
 
     return () => {
       window.clearTimeout(timeoutId)
     }
-  }, [customerForm.country, customerForm.postal_code, lookupPostalCode, setPostalCodeFieldError])
+  }, [customerForm.city, customerForm.country, customerForm.district, customerForm.postal_code, customerForm.state, lookupPostalCode, setPostalCodeFieldError])
 
   useEffect(() => {
     if (cartMode || !singleItem.slug) return;
@@ -678,6 +695,7 @@ export default function CheckoutPageClient() {
           phone: nextProfile?.phone ?? '',
           country: nextProfile?.country ?? '',
           state: nextProfile?.state ?? '',
+          district: '',
           city: nextProfile?.city ?? '',
           postal_code: nextProfile?.postal_code ?? '',
           address_line_1: nextProfile?.address_line_1 ?? '',
@@ -722,6 +740,15 @@ export default function CheckoutPageClient() {
     patchCustomerForm({ [field]: value })
   };
 
+  const handlePostalAreaSelect = useCallback(
+    (id: string) => {
+      const postalCode = normalizePostalCodeValue(customerForm.postal_code)
+      const area = postalAreaOptions.find((option) => option.id === id)
+      if (area) applyPostalArea(area, postalCode)
+    },
+    [applyPostalArea, customerForm.postal_code, postalAreaOptions]
+  )
+
   const validateCheckoutForm = () => {
     const nextErrors: Partial<Record<keyof CheckoutProfileForm, string>> = {}
     const trimmed = {
@@ -731,6 +758,7 @@ export default function CheckoutPageClient() {
       phone: customerForm.phone.trim(),
       country: customerForm.country.trim(),
       state: customerForm.state.trim(),
+      district: customerForm.district.trim(),
       city: customerForm.city.trim(),
       postal_code: customerForm.postal_code.trim(),
       address_line_1: customerForm.address_line_1.trim(),
@@ -835,6 +863,7 @@ export default function CheckoutPageClient() {
               items: cartMode ? checkoutItems : undefined,
               customer: customerForm,
               loveLetter: loveLetterDraft,
+              currencyCode,
               coupon: appliedCoupon
                 ? {
                     id: appliedCoupon.id,
@@ -1088,7 +1117,17 @@ export default function CheckoutPageClient() {
 
               <div className="animate-[fadeUp_0.35s_ease]">
                 {currentStep === 0 ? <CheckoutCustomerStep form={customerForm} onChange={updateCustomerForm} errors={fieldErrors} /> : null}
-               {currentStep === 1 ? <CheckoutShippingStep form={customerForm} onChange={updateCustomerForm} errors={fieldErrors} postalLookup={postalLookup} onPostalBlur={handlePostalCodeBlur} /> : null}
+               {currentStep === 1 ? (
+                 <CheckoutShippingStep
+                   form={customerForm}
+                   onChange={updateCustomerForm}
+                   errors={fieldErrors}
+                   postalLookup={postalLookup}
+                   onPostalBlur={handlePostalCodeBlur}
+                   postalAreaOptions={postalAreaOptions}
+                   onPostalAreaSelect={handlePostalAreaSelect}
+                 />
+               ) : null}
                 {currentStep === 2 ? <CheckoutDeliveryStep /> : null}
                 {currentStep === 3 ? <CheckoutPaymentStep totalAmount={totalPayable} chargeQuote={chargeQuote} /> : null}
                 {currentStep === 4 ? <CheckoutReviewStep onPayNow={handlePayNow} isProcessingPayment={processingPayment} paymentButtonLabel={paymentButtonLabel} continueHref={continueHref} loveLetter={loveLetterDraft} totalAmount={totalPayable} chargeQuote={chargeQuote} /> : null}
@@ -1173,7 +1212,7 @@ export default function CheckoutPageClient() {
                 </div>
                 {appliedCoupon ? (
                   <div className="mt-3 text-sm text-[#12b76a]">
-                    {appliedCoupon.code} applied. You saved ${Math.round(appliedCoupon.discountAmount)}.
+                    {appliedCoupon.code} applied. You saved {format(appliedCoupon.discountAmount)}.
                   </div>
                 ) : null}
               </div>

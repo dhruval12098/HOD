@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useCart } from '@/lib/hooks/useCart'
+import { useCurrency } from '@/context/CurrencyContext'
 import { getProductKey } from '@/lib/product-keys'
 import type { StorefrontProduct } from '@/lib/catalog-products'
 
@@ -10,6 +11,7 @@ type SearchProduct = Pick<StorefrontProduct, 'id' | 'dbId' | 'slug' | 'name' | '
 
 export default function CartClient() {
   const { items, updateQuantity, removeItem, clearCart } = useCart()
+  const { format } = useCurrency()
   const [products, setProducts] = useState<SearchProduct[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
@@ -85,7 +87,7 @@ export default function CartClient() {
                   <div className="mt-4 flex flex-wrap items-center justify-between gap-4 border-t border-[rgba(10,22,40,0.08)] pt-4">
                     <div>
                       <span className="block text-[8px] uppercase tracking-[0.24em] text-[#7F8898]">Price</span>
-                      <span className="mt-1 block text-[18px] font-medium text-[#0A1628]">${(item.selection.resolvedPrice ?? product?.priceFrom ?? 0).toLocaleString('en-US')}</span>
+                      <span className="mt-1 block text-[18px] font-medium text-[#0A1628]">{format(item.selection.resolvedPrice ?? product?.priceFrom ?? 0)}</span>
                       <span className="mt-2 block text-[8px] uppercase tracking-[0.24em] text-[#7F8898]">Love Letter</span>
                       <span className="mt-1 block text-[12px] text-[#6A6A6A]">
                         {item.selection.loveLetter?.wantsLetter
@@ -117,7 +119,7 @@ export default function CartClient() {
             </div>
             <div className="mt-3 flex items-center justify-between text-[22px] font-medium text-[#0A1628]">
               <span>Total</span>
-              <span>${total.toLocaleString('en-US')}</span>
+              <span>{format(total)}</span>
             </div>
             {resolvedItems.length ? (
               <Link href="/checkout?mode=cart" className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-[#0A1628] px-6 py-4 text-[10px] uppercase tracking-[0.24em] text-white">

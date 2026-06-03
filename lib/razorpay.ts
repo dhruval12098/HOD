@@ -4,15 +4,15 @@ import Razorpay from 'razorpay'
 export const RAZORPAY_CURRENCY = process.env.RAZORPAY_CURRENCY || 'INR'
 
 export function getRazorpayKeyId() {
-  return process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || ''
+  return process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || ''
 }
 
 export function isRazorpayConfigured() {
-  return Boolean(process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET)
+  return Boolean(getRazorpayKeyId() && process.env.RAZORPAY_KEY_SECRET)
 }
 
 export function getRazorpayClient() {
-  const key_id = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID
+  const key_id = getRazorpayKeyId()
   const key_secret = process.env.RAZORPAY_KEY_SECRET
 
   if (!key_id || !key_secret) {

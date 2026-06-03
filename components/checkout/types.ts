@@ -1,10 +1,11 @@
 import type { LoveLetterDraft } from '@/lib/love-letter'
+import type { SupportedCurrency } from '@/lib/currency'
 
 export type CheckoutChargeQuote = {
   baseCurrency: 'USD'
-  chargeCurrency: 'USD' | 'INR'
+  chargeCurrency: SupportedCurrency
   exchangeRate: number
-  exchangeRateSource: 'currencyapi' | 'fallback'
+  exchangeRateSource: 'fastforex' | 'fallback'
   exchangeRateFetchedAt: string
   totalUsd: number
   totalCharged: number
@@ -40,17 +41,29 @@ export type CheckoutProfileForm = {
   phone: string
   country: string
   state: string
+  district: string
   city: string
   postal_code: string
   address_line_1: string
   address_line_2: string
 }
 
+export type CheckoutPostalAreaOption = {
+  id: string
+  label: string
+  city: string
+  district: string
+  state: string
+  country: string
+}
+
 export type CheckoutPostalLookupState = {
   status: 'idle' | 'loading' | 'success' | 'error'
   message: string
   city?: string
+  district?: string
   state?: string
   country?: string
   countryCode?: string
+  locked?: boolean
 }

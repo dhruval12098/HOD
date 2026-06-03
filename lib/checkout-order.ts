@@ -22,6 +22,7 @@ export type CheckoutPayload = {
     code?: string
     discountAmount?: number
   } | null
+  currencyCode?: string | null
   loveLetter?: {
     wantsLetter?: boolean
     letterType?: 'generate_for_me' | 'write_myself' | 'no_letter'
@@ -166,6 +167,9 @@ function buildGatewayPayload(input: {
       gstPercentage: input.prepared.gstPercentage,
       couponDiscountAmount: input.prepared.couponDiscountAmount,
       totalAmount: input.prepared.totalAmount,
+      price_usd: input.prepared.totalAmount,
+      price_local: input.prepared.chargeQuote.totalCharged,
+      currency_charged: input.prepared.chargeQuote.chargeCurrency,
       baseCurrency: 'USD',
       chargeCurrency: input.prepared.chargeQuote.chargeCurrency,
       exchangeRate: input.prepared.chargeQuote.exchangeRate,
@@ -384,6 +388,7 @@ export async function prepareCheckoutPayload({
     gstUsd: gstAmount,
     couponDiscountUsd: couponDiscountAmount,
     country: resolvedCustomer.country,
+    currencyCode: payload?.currencyCode || null,
   })
 
   return {

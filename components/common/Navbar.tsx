@@ -9,6 +9,7 @@ import {
   type NavbarRenderSection,
 } from '@/lib/navbar';
 import type { User } from '@supabase/supabase-js';
+import { useCurrency } from '@/context/CurrencyContext';
 import { useWishlistStore } from '@/lib/hooks/useWishlistStore';
 import { useCart } from '@/lib/hooks/useCart';
 
@@ -164,6 +165,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const { count: wishlistCount } = useWishlistStore();
   const { count: cartCount } = useCart();
+  const { format } = useCurrency();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileOpenItem, setMobileOpenItem] = useState<string | null>(null);
@@ -703,7 +705,7 @@ export default function Navbar() {
                         <div className="min-w-0 flex-1">
                           <div className="truncate text-[13px] font-medium text-[#0A1628]">{item.name}</div>
                           <div className="mt-1 truncate text-[10px] uppercase tracking-[0.18em] text-[#8B94A5]">{item.shortMeta}</div>
-                          <div className="mt-1 text-[12px] text-[#253246]">${item.priceFrom.toLocaleString('en-US')}</div>
+                          <div className="mt-1 text-[12px] text-[#253246]">{format(item.priceFrom)}</div>
                         </div>
                       </Link>
                     ))}

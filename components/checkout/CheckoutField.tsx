@@ -11,6 +11,7 @@ export default function CheckoutField({
   onBlur,
   inputMode,
   trailing,
+  readOnly = false,
 }: {
   label: string
   value: string
@@ -22,6 +23,7 @@ export default function CheckoutField({
   onBlur?: () => void
   inputMode?: InputHTMLAttributes<HTMLInputElement>['inputMode']
   trailing?: ReactNode
+  readOnly?: boolean
 }) {
   return (
     <div className={`rounded-[18px] border bg-[#fcfcfd] px-4 py-3 ${error ? 'border-red-300' : 'border-[#eaecf0]'}`}>
@@ -38,7 +40,8 @@ export default function CheckoutField({
             onBlur={onBlur}
             inputMode={inputMode}
             placeholder={placeholder}
-            className="h-10 w-full border-0 bg-transparent p-0 text-sm font-medium text-[#101828] outline-none placeholder:text-[#98a2b3]"
+            readOnly={readOnly}
+            className="h-10 w-full border-0 bg-transparent p-0 text-sm font-medium text-[#101828] outline-none placeholder:text-[#98a2b3] read-only:cursor-not-allowed read-only:text-[#667085]"
           />
           {trailing ? <div className="flex h-5 w-5 flex-none items-center justify-center text-[#98a2b3]">{trailing}</div> : null}
         </div>

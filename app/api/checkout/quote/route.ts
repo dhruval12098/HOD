@@ -3,6 +3,7 @@ import { buildCheckoutChargeQuote } from '@/lib/exchange-rates'
 
 type QuotePayload = {
   country?: string | null
+  currencyCode?: string | null
   items?: Array<{
     priceFrom: number
     quantity: number
@@ -32,6 +33,7 @@ export async function POST(request: Request) {
     gstUsd,
     couponDiscountUsd,
     country: payload?.country || null,
+    currencyCode: payload?.currencyCode || null,
   })
 
   return NextResponse.json({ quote })

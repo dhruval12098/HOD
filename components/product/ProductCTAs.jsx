@@ -1,7 +1,7 @@
 // components/product/ProductCTAs.jsx — House of Diams
 'use client';
 import Link from 'next/link';
-import { formatUsdNumber } from '@/lib/money';
+import { useCurrency } from '@/context/CurrencyContext';
 
 /**
  * CTA button row: primary purchase and enquiry actions.
@@ -15,8 +15,9 @@ import { formatUsdNumber } from '@/lib/money';
  * @param {string|null} [props.ctaLabel] - Optional CTA label override from material rules
  */
 export default function ProductCTAs({ product, ctaMode = 'both', ctaLabel = null, onEnquire, checkoutHref, onAddToCart, onCheckout }) {
+  const { format } = useCurrency();
   const waText = encodeURIComponent(
-    `Hi, I'd like to enquire about the ${product.name} (from $${formatUsdNumber(product.priceFrom)})`
+    `Hi, I'd like to enquire about the ${product.name} (from ${format(product.priceFrom)})`
   );
   const isCollectionProduct = product.productLane === 'collection';
   const canCheckoutDirectly = !isCollectionProduct && (product.category !== 'hiphop' || Boolean(product.allowCheckout));

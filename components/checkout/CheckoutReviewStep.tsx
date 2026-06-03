@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import CheckoutSectionCard from '@/components/checkout/CheckoutSectionCard';
+import { useCurrency } from '@/context/CurrencyContext';
 import { getCollectionHref } from '@/lib/browse-context';
 import { getLoveLetterOccasionLabel, type LoveLetterDraft } from '@/lib/love-letter';
 import { formatMoney } from '@/lib/currency';
@@ -22,6 +23,8 @@ export default function CheckoutReviewStep({
   totalAmount: number
   chargeQuote?: CheckoutChargeQuote | null
 }) {
+  const { format } = useCurrency();
+
   return (
     <CheckoutSectionCard
       title="Review"
@@ -50,7 +53,7 @@ export default function CheckoutReviewStep({
         </p>
         <div className="mt-3 space-y-1 text-sm text-[#667085]">
           <div>
-            Catalog total: <span className="font-medium text-[#101828]">{formatMoney(totalAmount, 'USD')}</span>
+            Catalog total: <span className="font-medium text-[#101828]">{format(totalAmount)}</span>
           </div>
           <div>
             Amount to pay now:{' '}
@@ -58,9 +61,9 @@ export default function CheckoutReviewStep({
               {formatMoney(chargeQuote?.totalCharged ?? totalAmount, chargeQuote?.chargeCurrency || 'USD')}
             </span>
           </div>
-          {chargeQuote?.chargeCurrency === 'INR' ? (
+          {chargeQuote ? (
             <div>
-              India checkout is charged in INR using the live USD to INR rate locked for this payment.
+              Checkout is charged in {chargeQuote.chargeCurrency} using the latest USD exchange rate locked for this payment.
             </div>
           ) : null}
         </div>

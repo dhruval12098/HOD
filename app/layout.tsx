@@ -4,6 +4,7 @@ import "./globals.css";
 import LenisProvider from "@/app/LenisProvider";
 import SiteChrome from "@/components/layout/SiteChrome";
 import { houseOfDiamsWordmarkFont, loaderWordmarkFont } from "@/app/fonts";
+import { CurrencyProvider } from "@/context/CurrencyContext";
 import { CartProvider } from "@/lib/hooks/useCart";
 import { WishlistProvider } from "@/lib/hooks/useWishlistStore";
 
@@ -47,9 +48,11 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <LenisProvider>
           <WishlistProvider>
-            <CartProvider>
-              <SiteChrome>{children}</SiteChrome>
-            </CartProvider>
+            <CurrencyProvider>
+              <CartProvider>
+                <SiteChrome>{children}</SiteChrome>
+              </CartProvider>
+            </CurrencyProvider>
           </WishlistProvider>
         </LenisProvider>
       </body>

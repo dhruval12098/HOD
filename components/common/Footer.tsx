@@ -1,6 +1,10 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import * as SelectPrimitive from '@radix-ui/react-select';
+import { Check, ChevronUp } from 'lucide-react';
+import ReactCountryFlag from 'react-country-flag';
+import { useCurrency } from '@/context/CurrencyContext';
 import { supabase } from '@/lib/supabase';
 
 const SOCIAL = [
@@ -85,6 +89,98 @@ function BottomLink({ href, children }: { href: string; children: React.ReactNod
     <a href={href} className="text-white no-underline transition-colors duration-300 hover:text-white/80">
       {children}
     </a>
+  );
+}
+
+function CurrencySelector() {
+  const { currencies, selected, changeCurrency, isLoadingRate } = useCurrency();
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-white">
+      <SelectPrimitive.Root value={selected.code} onValueChange={changeCurrency}>
+        <SelectPrimitive.Trigger
+          aria-label="Select country and currency"
+          className="group inline-flex h-11 min-w-[250px] items-center justify-between gap-3 rounded-[12px] border border-white/15 bg-white/[0.07] px-3.5 text-left shadow-[0_14px_34px_rgba(0,0,0,0.16)] outline-none backdrop-blur-md transition-all duration-300 hover:border-white/28 hover:bg-white/[0.1] focus:border-white/45 focus:ring-2 focus:ring-white/10 max-sm:min-w-full"
+        >
+          <span className="flex min-w-0 items-center gap-3">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/10">
+              <ReactCountryFlag
+                countryCode={selected.countryCode}
+                svg
+                aria-label={selected.label}
+                style={{ width: '18px', height: '18px', borderRadius: '999px' }}
+              />
+            </span>
+            <span className="min-w-0">
+              <span className="block truncate text-[12px] font-medium normal-case tracking-[0.02em] text-white">
+                {selected.label}
+              </span>
+              <span className="mt-0.5 block text-[9px] uppercase tracking-[0.2em] text-white/48">
+                {selected.code} {selected.symbol}
+              </span>
+            </span>
+          </span>
+          <SelectPrimitive.Icon asChild>
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.08] text-white/72 transition group-data-[state=open]:rotate-180">
+              <ChevronUp className="h-3.5 w-3.5" strokeWidth={1.8} />
+            </span>
+          </SelectPrimitive.Icon>
+        </SelectPrimitive.Trigger>
+
+        <SelectPrimitive.Portal>
+          <SelectPrimitive.Content
+            position="popper"
+            side="top"
+            sideOffset={10}
+            align="start"
+            onWheel={(event) => event.stopPropagation()}
+            onTouchMove={(event) => event.stopPropagation()}
+            className="z-[1500] max-h-[320px] min-w-[var(--radix-select-trigger-width)] touch-pan-y overflow-hidden rounded-[16px] border border-[rgba(10,22,40,0.10)] bg-white p-1.5 text-[#0A1628] shadow-[0_28px_70px_rgba(0,0,0,0.26)]"
+          >
+            <SelectPrimitive.ScrollUpButton className="flex h-7 cursor-default items-center justify-center rounded-[10px] text-[#667085]">
+              <ChevronUp className="h-3.5 w-3.5" strokeWidth={1.8} />
+            </SelectPrimitive.ScrollUpButton>
+            <SelectPrimitive.Viewport
+              onWheel={(event) => event.stopPropagation()}
+              onTouchMove={(event) => event.stopPropagation()}
+              className="max-h-[260px] touch-pan-y overflow-y-auto overscroll-contain"
+            >
+              {currencies.map((option) => (
+                <SelectPrimitive.Item
+                  key={option.code}
+                  value={option.code}
+                  className="relative flex cursor-pointer select-none items-center gap-3 rounded-[12px] px-3 py-2.5 pr-9 outline-none transition-colors duration-200 focus:bg-[#F4F6F8] data-[state=checked]:bg-[#0A1628] data-[state=checked]:text-white"
+                >
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[rgba(10,22,40,0.08)] bg-white shadow-[0_6px_14px_rgba(10,22,40,0.06)]">
+                    <ReactCountryFlag
+                      countryCode={option.countryCode}
+                      svg
+                      aria-label={option.label}
+                      style={{ width: '18px', height: '18px', borderRadius: '999px' }}
+                    />
+                  </span>
+                  <SelectPrimitive.ItemText>
+                    <span className="flex min-w-0 flex-col">
+                      <span className="text-[13px] font-medium normal-case tracking-[0.01em]">{option.label}</span>
+                      <span className="mt-0.5 text-[10px] uppercase tracking-[0.16em] opacity-60">
+                        {option.code} {option.symbol}
+                      </span>
+                    </span>
+                  </SelectPrimitive.ItemText>
+                  <SelectPrimitive.ItemIndicator className="absolute right-3 flex h-5 w-5 items-center justify-center">
+                    <Check className="h-4 w-4" strokeWidth={1.8} />
+                  </SelectPrimitive.ItemIndicator>
+                </SelectPrimitive.Item>
+              ))}
+            </SelectPrimitive.Viewport>
+            <SelectPrimitive.ScrollDownButton className="flex h-7 cursor-default items-center justify-center rounded-[10px] text-[#667085]">
+              <ChevronUp className="h-3.5 w-3.5 rotate-180" strokeWidth={1.8} />
+            </SelectPrimitive.ScrollDownButton>
+          </SelectPrimitive.Content>
+        </SelectPrimitive.Portal>
+      </SelectPrimitive.Root>
+      {isLoadingRate ? <span className="text-[10px] uppercase tracking-[0.16em] text-white/45">Updating</span> : null}
+    </div>
   );
 }
 
@@ -222,7 +318,10 @@ export default function Footer() {
         className="mx-auto flex max-w-[1400px] flex-wrap justify-between gap-3.5 py-7 text-[10px] uppercase tracking-[0.18em] text-[rgba(255,255,255,0.5)]"
         style={{ borderTop: '1px solid rgba(255,255,255,0.12)' }}
       >
-        <span>© 2025 House of Diams. All rights reserved.</span>
+        <div className="flex flex-col gap-3">
+          <CurrencySelector />
+          <span>© 2025 House of Diams. All rights reserved.</span>
+        </div>
         <div className="flex items-center gap-0">
           <BottomLink href="/privacy-policy">Privacy</BottomLink>
           <span className="mx-2">·</span>

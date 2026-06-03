@@ -110,6 +110,21 @@ function resolveMasterFilterHref(args: {
   return href
 }
 
+function deriveSectionFilterHref(
+  options: { href: string }[],
+  currentCategorySlug: string
+) {
+  for (const option of options) {
+    try {
+      const target = new URL(option.href, 'https://houseofdiams.local')
+      const subcategory = target.searchParams.get('subcategory')
+      if (subcategory) return `/${currentCategorySlug}?subcategory=${subcategory}`
+    } catch {}
+  }
+
+  return null
+}
+
 export async function generateMetadata({
   params,
 }: {
@@ -265,6 +280,7 @@ export default async function CategoryCollectionPage({
         id: section.id,
         title: section.title,
         iconUrl: section.iconUrl,
+        href: deriveSectionFilterHref(allOptions, categorySlug),
         options: allOptions,
       }
     })
@@ -346,6 +362,7 @@ export default async function CategoryCollectionPage({
         }))}
       headerBrowseSections={headerBrowseSections}
       initialFilters={{
+        ...(typeof query.subcategory === 'string' ? { subcategory: [query.subcategory] } : {}),
         ...(typeof query.option === 'string' ? { option: [query.option] } : {}),
         ...(typeof query.shape === 'string' ? { shape: [query.shape] } : {}),
         ...(typeof query.style === 'string' ? { style: [query.style] } : {}),

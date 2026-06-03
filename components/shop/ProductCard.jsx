@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { formatUsdNumber } from "@/lib/money";
+import { useCurrency } from "@/context/CurrencyContext";
 import { METAL_META } from "@/lib/data/product-config";
 
 // ── Gem SVG renderer ──────────────────────────────────────────────────────────
@@ -176,6 +176,7 @@ function getMetalSwatchStyle(metal) {
 }
 
 export default function ProductCard({ product, wishlisted, onWishlist, onEnquire, forceLight = false }) {
+  const { format } = useCurrency();
   const isDark = !forceLight && product.category === "hiphop";
   const gemSize = LARGE_GEM_STYLES.includes(product.gemStyle) ? 140 : 110;
   const metalSwatches = getMetalSwatches(product);
@@ -528,7 +529,7 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
         >
           <div>
             <span className="shop-product-card-price" style={{ fontFamily: "var(--font-plus-jakarta)", fontSize: "14px", fontWeight: 700, color: isDark ? "#FFFFFF" : "#0A1628", letterSpacing: ".02em" }}>
-              ${formatUsdNumber(product.priceFrom)}
+              {format(product.priceFrom)}
             </span>
           </div>
         </div>

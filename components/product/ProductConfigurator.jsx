@@ -5,8 +5,8 @@ import ConfiguratorMetalSwatches from './ConfiguratorMetalSwatches';
 import ConfiguratorPillGroup from './ConfiguratorPillGroup';
 import ConfiguratorEngravingInput from './ConfiguratorEngravingInput';
 import ConfiguratorMaterialButtons from './ConfiguratorMaterialButtons';
+import { useCurrency } from '@/context/CurrencyContext';
 import { METAL_META } from '@/lib/data/product-config';
-import { formatUsdNumber } from '@/lib/money';
 import { Select } from '@/components/ui/select';
 
 /**
@@ -76,6 +76,7 @@ export default function ProductConfigurator({
   metalComposition,
   metalCompositionColor,
 }) {
+  const { format } = useCurrency();
   const combinedVariants = product.metalPurityVariants || [];
   const showCombinedVariants = combinedVariants.length > 0;
   const selectedCombinedVariant = combinedVariants.find((entry) => entry.id === variantId) || combinedVariants[0] || null;
@@ -200,7 +201,7 @@ export default function ProductConfigurator({
         <div className="mb-6 mt-1 text-center">
           <div className="font-sans text-[17px] font-light tracking-[0.01em] text-[#8B94A5]">Total Price</div>
           <div className="mt-1 text-[30px] font-bold leading-none tracking-[-0.03em] text-[#0A1628]" style={{ fontFamily: 'var(--font-plus-jakarta), Arial, Helvetica, sans-serif' }}>
-            ${formatUsdNumber(priceFrom)}
+            {format(priceFrom)}
           </div>
           <div className="mx-auto mt-4 inline-flex items-center rounded-full bg-[#F7F7F4] px-4 py-2 font-sans text-[12px] font-medium text-[#253246]">
             Ships in 3-4 weeks

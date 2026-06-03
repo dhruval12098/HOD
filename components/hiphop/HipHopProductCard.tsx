@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import type { StorefrontProduct } from '@/lib/catalog-products'
 import GemSVG from '@/components/common/GemSVG'
-import { formatUsdNumber } from '@/lib/money'
+import { useCurrency } from '@/context/CurrencyContext'
 
 interface HipHopProductCardProps {
   product: StorefrontProduct
@@ -18,6 +18,7 @@ export default function HipHopProductCard({
   onWishlistToggle,
   onEnquire,
 }: HipHopProductCardProps) {
+  const { format } = useCurrency()
   const tag = product.readyToShip ? 'Ready To Ship' : product.isNew ? 'New' : 'Featured'
   const cardImage = product.imageUrl || product.galleryUrls?.[0]
   const svgSize =
@@ -106,7 +107,7 @@ export default function HipHopProductCard({
               From
             </span>
             <span className="font-numeric text-[14px] font-bold tracking-[0.02em] text-white">
-              ${formatUsdNumber(product.priceFrom)}
+              {format(product.priceFrom)}
             </span>
           </div>
           <button
