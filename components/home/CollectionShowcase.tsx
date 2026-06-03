@@ -21,7 +21,6 @@ export default function CollectionShowcase({ config }: { config: CollectionPageC
               />
             </picture>
           ) : null}
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.2)_0%,rgba(10,22,40,0.03)_54%,rgba(10,22,40,0.12)_100%)]" />
         </div>
 
         <div className="pb-0 md:pb-16 lg:pb-20">
