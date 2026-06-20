@@ -206,7 +206,7 @@ export default function Manufacturing({ initialItems = [] }: { initialItems?: Cm
 
   return (
     <section
-      className="py-[120px] max-lg:py-[80px] relative overflow-hidden"
+      className="pt-8 pb-[120px] max-lg:pt-6 max-lg:pb-[80px] relative overflow-hidden"
       style={{
         background: 'linear-gradient(180deg, #FAFBFD 0%, #FAF7F2 50%, #FAFBFD 100%)',
       }}
@@ -251,7 +251,7 @@ export default function Manufacturing({ initialItems = [] }: { initialItems?: Cm
                 {/* Visual — swap order on alt rows for desktop only */}
                 <div className={step.kind === 'cms' && step.alt ? 'lg:order-2' : ''}>
                   <div
-                    className="relative isolate aspect-[4/3] bg-white flex items-center justify-center overflow-hidden transition-all duration-[600ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] group-hover:-translate-y-1 group-hover:shadow-[0_24px_60px_rgba(10,22,40,0.12)] max-lg:aspect-video"
+                    className="relative isolate aspect-video bg-white flex items-center justify-center overflow-hidden transition-all duration-[600ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] group-hover:-translate-y-1 group-hover:shadow-[0_24px_60px_rgba(10,22,40,0.12)]"
                   >
                     {/* BG */}
                     <div

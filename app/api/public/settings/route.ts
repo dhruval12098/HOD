@@ -12,7 +12,7 @@ export async function GET() {
   const supabase = createClient(supabaseUrl, supabaseAnonKey)
   const { data, error } = await supabase
     .from('site_settings')
-    .select('whatsapp_number')
+    .select('whatsapp_number, maintenance_mode_enabled, maintenance_mode_message')
     .eq('settings_key', 'global_site_settings')
     .maybeSingle()
 
@@ -23,6 +23,8 @@ export async function GET() {
   return NextResponse.json({
     item: {
       whatsapp_number: data?.whatsapp_number ?? '',
+      maintenance_mode_enabled: Boolean(data?.maintenance_mode_enabled),
+      maintenance_mode_message: data?.maintenance_mode_message ?? '',
     },
   })
 }
