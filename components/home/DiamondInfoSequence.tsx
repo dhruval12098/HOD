@@ -102,8 +102,8 @@ export default function DiamondInfoSequence({
   const ctaLabel = resolvedConfig.ctaLabel?.trim() || FALLBACK_CONFIG.ctaLabel;
 
   return (
-    <section className="bg-white py-12 md:py-14 lg:py-16">
-      <div className="w-full overflow-hidden border-y border-[#E7E2D8] bg-[#F8F5EE] shadow-[0_24px_80px_rgba(10,22,40,0.08)]">
+    <section className="bg-white py-0 md:py-0 lg:py-0">
+      <div className="w-full overflow-hidden border-y border-[#E7E2D8] bg-[#F8F5EE]">
         <div className="grid lg:grid-cols-[minmax(0,1.02fr)_minmax(0,0.98fr)] lg:items-stretch">
           <div className="relative min-h-[260px] overflow-hidden bg-[#111111] sm:min-h-[340px] lg:min-h-0 lg:h-full lg:self-stretch">
             {hasVideo ? (

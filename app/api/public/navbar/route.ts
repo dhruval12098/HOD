@@ -21,6 +21,25 @@ function getServerClient() {
   return null
 }
 
+async function loadNavbarItems(supabase: any) {
+  return supabase
+    .from('navbar_items')
+    .select('*')
+    .eq('status', 'active')
+    .order('display_order', { ascending: true })
+}
+
+async function loadHiddenDirectNavSlugs(supabase: any) {
+  const result = await supabase
+    .from('navbar_items')
+    .select('slug')
+    .in('slug', ['hiphop', 'bespoke'])
+    .eq('status', 'hidden')
+
+  if (result.error) return new Set<string>()
+  return new Set((result.data ?? []).map((item: { slug: string }) => item.slug))
+}
+
 export async function GET() {
   noStore()
 
@@ -42,8 +61,9 @@ export async function GET() {
     stoneShapesResult,
     certificatesResult,
     stylesResult,
+    hiddenDirectSlugs,
   ] = await Promise.all([
-    supabase.from('navbar_items').select('*').eq('status', 'active').order('display_order', { ascending: true }),
+    loadNavbarItems(supabase),
     supabase.from('navbar_sections').select('*').eq('status', 'active').order('column_number', { ascending: true }).order('display_order', { ascending: true }),
     supabase.from('navbar_section_links').select('*').eq('status', 'active').order('display_order', { ascending: true }),
     supabase.from('navbar_section_source_items').select('*').eq('is_active', true).order('sort_order', { ascending: true }),
@@ -55,6 +75,7 @@ export async function GET() {
     supabase.from('catalog_stone_shapes').select('*').eq('status', 'active').order('display_order', { ascending: true }),
     supabase.from('catalog_certificates').select('*').order('display_order', { ascending: true }),
     supabase.from('catalog_styles').select('*').eq('status', 'active').order('display_order', { ascending: true }),
+    loadHiddenDirectNavSlugs(supabase),
   ])
 
   const error =
@@ -116,6 +137,7 @@ export async function GET() {
       return activeCategoryIds.has(item.linkedCategoryId)
     }
 
+    if (item.slug && hiddenDirectSlugs.has(item.slug)) return false
     if (!item.href) return true
     if (alwaysAllowedHrefs.has(item.href)) return true
 

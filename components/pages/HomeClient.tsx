@@ -289,7 +289,7 @@ export default function HomeClient({
           <Testimonials initialData={testimonialsData} />
           <CouplesSection initialData={couplesData} />
 
-          <section className="bg-[var(--theme-surface-warm)] px-5 py-16 md:px-8 lg:px-12">
+          <section className="bg-[var(--theme-surface-warm)] px-5 py-8 md:px-8 lg:px-12">
             <div className="mx-auto max-w-[1320px]">
               <BlogSectionHeader title="Blogs" onViewAll={() => router.push('/blog')} />
               <DeferredBlogGrid posts={blogPosts} onPostClick={(id) => {

@@ -41,6 +41,14 @@ function getPublicNavbarDataClient() {
   return null
 }
 
+async function loadNavbarItems(client: any) {
+  return client
+    .from('navbar_items')
+    .select('*')
+    .eq('status', 'active')
+    .order('display_order', { ascending: true })
+}
+
 function uniqueSectionOptions(
   options: { label: string; href: string; type?: 'default' | 'swatch' | 'icon'; iconUrl?: string | null; colorHex?: string | null }[]
 ) {
@@ -196,7 +204,7 @@ export default async function CategoryCollectionPage({
     gridPostersResult,
   ] =
     await Promise.all([
-      publicNavbarClient.from('navbar_items').select('*').eq('status', 'active').order('display_order', { ascending: true }),
+      loadNavbarItems(publicNavbarClient),
       publicNavbarClient.from('navbar_sections').select('*').eq('status', 'active').order('column_number', { ascending: true }).order('display_order', { ascending: true }),
       publicNavbarClient.from('navbar_section_links').select('*').eq('status', 'active').order('display_order', { ascending: true }),
       publicNavbarClient.from('navbar_section_source_items').select('*').eq('is_active', true).order('sort_order', { ascending: true }),

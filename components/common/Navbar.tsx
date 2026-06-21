@@ -47,10 +47,18 @@ function MegaSection({ section }: { section: NavbarRenderSection }) {
   return (
     <div className="flex flex-col">
       <div
-        className="text-[11px] font-semibold tracking-[0.2em] uppercase text-[#0A1628] mb-[22px] pb-3 border-b border-black/[0.06]"
+        className="mb-[22px] flex items-center gap-2 border-b border-black/[0.06] pb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#0A1628]"
         style={{ fontFamily: "'Montserrat', sans-serif" }}
       >
-        {section.title}
+        {section.iconUrl ? (
+          <img
+            src={section.iconUrl}
+            alt=""
+            aria-hidden="true"
+            className="h-4 w-4 flex-shrink-0 object-contain"
+          />
+        ) : null}
+        <span>{section.title}</span>
       </div>
 
       {section.metals && (
@@ -441,6 +449,9 @@ export default function Navbar() {
           width: max-content;
           animation: marquee var(--announcement-speed, 40s) linear infinite;
         }
+        .announcement-marquee:hover {
+          animation-play-state: paused;
+        }
         .mega-parent:hover .mega-drop {
           opacity: 1 !important;
           visibility: visible !important;
@@ -463,31 +474,33 @@ export default function Navbar() {
 
       {announcementActive ? (
         <div
-          className="fixed top-0 left-0 right-0 z-[1001] bg-[var(--theme-ink)] px-5 py-[9px] text-left text-[10px] font-light uppercase tracking-[0.24em] text-white select-none"
+          className="fixed top-0 left-0 right-0 z-[1001] overflow-hidden bg-[var(--theme-ink)] py-[9px] text-left text-[10px] font-light uppercase tracking-[0.24em] text-white select-none"
           style={{
             fontFamily: "'Montserrat', sans-serif",
             ['--announcement-speed' as string]: `${Math.max(announcementSpeed, 10)}s`,
           }}
         >
-          <div className="flex flex-wrap items-center justify-start gap-x-[14px] gap-y-1">
-            {announcementItems.map((item, itemIndex) => (
-              <span key={itemIndex} className="flex items-center">
-                {item.link_url ? (
-                  <Link
-                    href={item.link_url}
-                    target={item.open_in_new_tab ? '_blank' : undefined}
-                    rel={item.open_in_new_tab ? 'noreferrer' : undefined}
-                    className="transition-opacity duration-200 hover:opacity-70"
-                  >
-                    {item.message}
-                  </Link>
-                ) : (
-                  <span>{item.message}</span>
-                )}
-                {itemIndex < announcementItems.length - 1 ? (
-                  <span className="ml-[14px] inline-block h-1 w-1 rounded-full bg-[var(--theme-surface-soft)] align-middle" />
-                ) : null}
-              </span>
+          <div className="announcement-marquee animate-marquee-slow items-center">
+            {[0, 1].map((groupIndex) => (
+              <div key={groupIndex} className="flex shrink-0 items-center gap-x-[28px] px-[14px]">
+                {announcementItems.map((item, itemIndex) => (
+                  <span key={`${groupIndex}-${itemIndex}`} className="flex items-center gap-x-[28px] whitespace-nowrap">
+                    {item.link_url ? (
+                      <Link
+                        href={item.link_url}
+                        target={item.open_in_new_tab ? '_blank' : undefined}
+                        rel={item.open_in_new_tab ? 'noreferrer' : undefined}
+                        className="transition-opacity duration-200 hover:opacity-70"
+                      >
+                        {item.message}
+                      </Link>
+                    ) : (
+                      <span>{item.message}</span>
+                    )}
+                    <span className="inline-block h-1 w-1 rounded-full bg-[var(--theme-surface-soft)] align-middle" />
+                  </span>
+                ))}
+              </div>
             ))}
           </div>
         </div>
@@ -881,10 +894,18 @@ export default function Navbar() {
                     return (
                       <div key={`${item.label}-${section.id}`} className="pb-3 last:pb-0">
                         <div
-                          className="pb-2 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#6A6A6A]"
+                          className="flex items-center gap-2 pb-2 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#6A6A6A]"
                           style={{ fontFamily: 'var(--display-title)' }}
                         >
-                          {section.title}
+                          {section.iconUrl ? (
+                            <img
+                              src={section.iconUrl}
+                              alt=""
+                              aria-hidden="true"
+                              className="h-4 w-4 flex-shrink-0 object-contain"
+                            />
+                          ) : null}
+                          <span>{section.title}</span>
                         </div>
                         <div className="flex flex-col gap-1">
                           {entries.map((entry) => (

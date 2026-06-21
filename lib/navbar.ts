@@ -196,6 +196,11 @@ const METAL_TYPE_MAP: Record<string, 'yellow' | 'rose' | 'white' | 'platinum'> =
   platinum: 'platinum',
 }
 
+const DEFAULT_DIRECT_NAV_ITEMS: NavbarRenderItem[] = [
+  { slug: 'hiphop', label: 'Hip Hop', href: '/hiphop' },
+  { slug: 'bespoke', label: 'Bespoke', href: '/bespoke' },
+]
+
 function getMetalType(entry: Pick<PublicMetalRow, 'slug' | 'name'>): 'yellow' | 'rose' | 'white' | 'platinum' | 'default' {
   const candidates = [
     entry.slug,
@@ -525,6 +530,26 @@ export function buildNavbarRenderItems(args: {
           return (section.links?.length ?? 0) > 0
         })
 
+      const fallbackSections =
+        itemSections.length === 0 && item.linked_category_id
+          ? subcategories
+              .filter((entry) => entry.category_id === item.linked_category_id && entry.status === 'active')
+              .sort((left, right) => left.display_order - right.display_order)
+              .map((subcategory, index) => ({
+                id: `fallback-${item.id}-${subcategory.id}`,
+                title: subcategory.name,
+                iconUrl: resolveStoragePublicUrl(subcategory.icon_svg_path),
+                type: 'category_list' as const,
+                links: buildCategoryListLinks({
+                  itemHref,
+                  subcategory,
+                  options: optionsBySubcategory.get(subcategory.id) ?? [],
+                }),
+                showAsFilter: false,
+              }))
+              .filter((section) => (section.links?.length ?? 0) > 0)
+          : []
+      const renderedSections = itemSections.length > 0 ? itemSections : fallbackSections
       const featuredCard = featuredCards.find((entry) => entry.navbar_item_id === item.id && entry.enabled)
 
       return {
@@ -533,8 +558,8 @@ export function buildNavbarRenderItems(args: {
         label: item.label,
         href: itemHref,
         mega: {
-          cols: Math.max(1, ...itemSections.map((_, index) => visibleSections[index]?.column_number ?? 1)),
-          sections: itemSections,
+          cols: Math.max(1, ...renderedSections.map((_, index) => visibleSections[index]?.column_number ?? index + 1)),
+          sections: renderedSections,
           featuredImage: featuredCard?.image_path
             ? {
                 imageUrl: resolveStoragePublicUrl(featuredCard.image_path) ?? featuredCard.image_path,
@@ -547,9 +572,8 @@ export function buildNavbarRenderItems(args: {
       }
     })
 
-  return [
-    ...dynamicItems,
-    { label: 'Hip Hop', href: '/hiphop' },
-    { label: 'Bespoke', href: '/bespoke' },
-  ]
+  const configuredSlugs = new Set(items.map((item) => item.slug))
+  const missingDefaultDirectItems = DEFAULT_DIRECT_NAV_ITEMS.filter((item) => item.slug && !configuredSlugs.has(item.slug))
+
+  return [...dynamicItems, ...missingDefaultDirectItems]
 }
