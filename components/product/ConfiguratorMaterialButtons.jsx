@@ -72,7 +72,7 @@ export default function ConfiguratorMaterialButtons({ label = 'Material', select
         <span className="text-[#777]">{selectedLabel}</span>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
         {options.map((option, index) => {
           const optionLabel = option.label || option.name || option.value;
           const { baseName } = getMaterialParts(optionLabel, option.color);
@@ -86,7 +86,7 @@ export default function ConfiguratorMaterialButtons({ label = 'Material', select
                 if (!isActive) onChange(option.value);
               }}
               className={[
-                'flex h-24 w-24 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg bg-white p-2 text-[#000] transition-colors',
+                'flex h-20 w-full cursor-pointer flex-col items-center justify-center gap-1 rounded-lg bg-white p-1.5 text-[#000] transition-colors sm:h-24 sm:w-24 sm:p-2',
                 isActive
                   ? 'border-2 border-[#000]'
                   : 'border border-[#D1D1D1] hover:bg-[#F5F5F5]',
@@ -94,10 +94,10 @@ export default function ConfiguratorMaterialButtons({ label = 'Material', select
               aria-pressed={isActive}
               aria-label={optionLabel}
             >
-              <span className="block h-11 w-11">
+              <span className="block h-9 w-9 sm:h-11 sm:w-11">
                 <MaterialIcon label={optionLabel} color={option.color} id={`${index}-${option.value}`.replace(/[^a-zA-Z0-9_-]/g, '')} />
               </span>
-              <span className="text-center text-[13px] font-medium leading-[1.2]">
+              <span className="text-center text-[11px] font-medium leading-[1.15] sm:text-[13px] sm:leading-[1.2]">
                 {baseName}
               </span>
             </button>
