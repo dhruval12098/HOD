@@ -125,6 +125,7 @@ function FilterGroup({ group, checked, onChange }) {
 
 export default function ShopSidebar({ filterGroups, filters, onFiltersChange, priceMin, priceMax, onPriceChange, onClear, isOpen, onClose, topOffset = 146 }) {
   const sidebarRef = useRef(null);
+  const touchStartYRef = useRef(0);
   const selectedCount = Object.values(filters).reduce((sum, values) => sum + (Array.isArray(values) ? values.length : 0), 0);
 
   const handleCheck = (groupId, value) => {
@@ -156,6 +157,29 @@ export default function ShopSidebar({ filterGroups, filters, onFiltersChange, pr
       node.removeEventListener("wheel", handleWheel);
     };
   }, [isOpen]);
+
+  const handleTouchStart = (event) => {
+    touchStartYRef.current = event.touches?.[0]?.clientY ?? 0;
+  };
+
+  const handleTouchMove = (event) => {
+    const node = sidebarRef.current;
+    if (!node) return;
+
+    const currentY = event.touches?.[0]?.clientY ?? touchStartYRef.current;
+    const deltaY = touchStartYRef.current - currentY;
+    const maxScrollTop = node.scrollHeight - node.clientHeight;
+    if (maxScrollTop <= 0) return;
+
+    const canScrollUp = node.scrollTop > 0;
+    const canScrollDown = node.scrollTop < maxScrollTop;
+    if ((deltaY < 0 && canScrollUp) || (deltaY > 0 && canScrollDown)) {
+      event.stopPropagation();
+      node.scrollTop = Math.max(0, Math.min(maxScrollTop, node.scrollTop + deltaY));
+    }
+
+    touchStartYRef.current = currentY;
+  };
 
   return (
     <>
@@ -197,10 +221,15 @@ export default function ShopSidebar({ filterGroups, filters, onFiltersChange, pr
             width: 100% !important;
             max-width: none !important;
             height: min(78dvh, 720px) !important;
+            max-height: calc(100dvh - 24px) !important;
             transform: translateY(100%) !important;
             border-radius: 28px 28px 0 0 !important;
             padding: 16px 18px 22px !important;
             box-shadow: 0 -18px 48px rgba(10,22,40,0.18) !important;
+            overflow-y: auto !important;
+            overscroll-behavior-y: contain !important;
+            -webkit-overflow-scrolling: touch !important;
+            touch-action: pan-y !important;
           }
           .shop-sidebar.open { transform: translateY(0) !important; }
           .shop-filter-grid {
@@ -238,6 +267,8 @@ export default function ShopSidebar({ filterGroups, filters, onFiltersChange, pr
       <aside
         ref={sidebarRef}
         className={`shop-sidebar${isOpen ? " open" : ""}`}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
         style={{
           padding: "32px 28px",
           background: "#fff",

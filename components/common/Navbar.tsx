@@ -867,7 +867,14 @@ export default function Navbar() {
             <div key={item.label} className="border-b border-black/[0.06]">
               <button
                 type="button"
-                onClick={() => setMobileOpenItem((current) => (current === item.label ? null : item.label))}
+                onClick={() => {
+                  if (isOpen && item.href) {
+                    closeMenu();
+                    router.push(item.href);
+                    return;
+                  }
+                  setMobileOpenItem(item.label);
+                }}
                 className="flex w-full items-center justify-between py-3.5 text-left text-[20px] font-normal tracking-[0.04em] text-[#0A1628]"
                 style={{ fontFamily: 'var(--display-title)' }}
               >
