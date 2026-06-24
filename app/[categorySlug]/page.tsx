@@ -5,6 +5,9 @@ import ShopClient from '@/components/pages/ShopClient'
 import { buildNavbarRenderItems } from '@/lib/navbar'
 import { createSupabaseServerClient } from '@/lib/server-supabase'
 import { filterStorefrontProducts, getStorefrontProducts } from '@/lib/catalog-products'
+import { createPageMetadata } from '@/lib/seo'
+import JsonLd from '@/components/seo/JsonLd'
+import { createBreadcrumbSchema } from '@/lib/structured-data'
 
 function slugifyValue(value: string) {
   return value
@@ -142,7 +145,7 @@ export async function generateMetadata({
   const supabase = createSupabaseServerClient()
   const { data: category } = await supabase
     .from('catalog_categories')
-    .select('id, name, slug, status, category_lane, banner_title, banner_subtitle')
+    .select('id, name, slug, status, category_lane, banner_title, banner_subtitle, banner_desktop_image_path')
     .eq('slug', categorySlug)
     .eq('status', 'active')
     .maybeSingle()
@@ -154,10 +157,12 @@ export async function generateMetadata({
     }
   }
 
-  return {
+  return createPageMetadata({
     title: category.name,
-    description: `Browse ${category.name} from the live catalog.`,
-  }
+    description: category.banner_subtitle || `Browse ${category.name} from the live catalog.`,
+    path: `/${category.slug}`,
+    image: toPublicUrl(category.banner_desktop_image_path),
+  })
 }
 
 export default async function CategoryCollectionPage({
@@ -342,41 +347,49 @@ export default async function CategoryCollectionPage({
   })
 
   return (
-    <ShopClient
-      products={filteredProducts}
-      sourceProducts={categoryProducts}
-      heroTitle={category.banner_title || category.name}
-      heroSubtitle={category.banner_subtitle || `Browse ${category.name} from the live catalog.`}
-      heroDesktopImageUrl={toPublicUrl(category.banner_desktop_image_path) || undefined}
-      heroMobileImageUrl={toPublicUrl(category.banner_mobile_image_path) || undefined}
-      heroCtaLabel={category.banner_cta_label || undefined}
-      heroCtaHref={category.banner_cta_link || undefined}
-      heroBannerEnabled={Boolean(category.banner_enabled)}
-      gridPosters={(gridPostersResult.error ? [] : gridPostersResult.data ?? [])
-        .filter((poster) => {
-          const now = Date.now()
-          const startsAt = poster.starts_at ? Date.parse(poster.starts_at) : null
-          const endsAt = poster.ends_at ? Date.parse(poster.ends_at) : null
-          return (!startsAt || startsAt <= now) && (!endsAt || endsAt >= now)
-        })
-        .map((poster) => ({
-          id: poster.id,
-          title: poster.title,
-          imageUrl: toPublicUrl(poster.image_path) || poster.image_path,
-          imageAlt: poster.image_alt,
-          linkUrl: poster.link_url,
-          insertAfter: poster.insert_after ?? 6,
-          displayOrder: poster.display_order ?? 0,
-        }))}
-      headerBrowseSections={headerBrowseSections}
-      initialFilters={{
-        ...(typeof query.subcategory === 'string' ? { subcategory: [query.subcategory] } : {}),
-        ...(typeof query.option === 'string' ? { option: [query.option] } : {}),
-        ...(typeof query.shape === 'string' ? { shape: [query.shape] } : {}),
-        ...(typeof query.style === 'string' ? { style: [query.style] } : {}),
-        ...(typeof query.metal === 'string' ? { metal: [query.metal] } : {}),
-        ...(certificateFilterValue ? { certificate: [certificateFilterValue] } : {}),
-      }}
-    />
+    <>
+      <JsonLd
+        data={createBreadcrumbSchema([
+          { name: 'Home', path: '/' },
+          { name: category.name, path: `/${category.slug}` },
+        ])}
+      />
+      <ShopClient
+        products={filteredProducts}
+        sourceProducts={categoryProducts}
+        heroTitle={category.banner_title || category.name}
+        heroSubtitle={category.banner_subtitle || `Browse ${category.name} from the live catalog.`}
+        heroDesktopImageUrl={toPublicUrl(category.banner_desktop_image_path) || undefined}
+        heroMobileImageUrl={toPublicUrl(category.banner_mobile_image_path) || undefined}
+        heroCtaLabel={category.banner_cta_label || undefined}
+        heroCtaHref={category.banner_cta_link || undefined}
+        heroBannerEnabled={Boolean(category.banner_enabled)}
+        gridPosters={(gridPostersResult.error ? [] : gridPostersResult.data ?? [])
+          .filter((poster) => {
+            const now = Date.now()
+            const startsAt = poster.starts_at ? Date.parse(poster.starts_at) : null
+            const endsAt = poster.ends_at ? Date.parse(poster.ends_at) : null
+            return (!startsAt || startsAt <= now) && (!endsAt || endsAt >= now)
+          })
+          .map((poster) => ({
+            id: poster.id,
+            title: poster.title,
+            imageUrl: toPublicUrl(poster.image_path) || poster.image_path,
+            imageAlt: poster.image_alt,
+            linkUrl: poster.link_url,
+            insertAfter: poster.insert_after ?? 6,
+            displayOrder: poster.display_order ?? 0,
+          }))}
+        headerBrowseSections={headerBrowseSections}
+        initialFilters={{
+          ...(typeof query.subcategory === 'string' ? { subcategory: [query.subcategory] } : {}),
+          ...(typeof query.option === 'string' ? { option: [query.option] } : {}),
+          ...(typeof query.shape === 'string' ? { shape: [query.shape] } : {}),
+          ...(typeof query.style === 'string' ? { style: [query.style] } : {}),
+          ...(typeof query.metal === 'string' ? { metal: [query.metal] } : {}),
+          ...(certificateFilterValue ? { certificate: [certificateFilterValue] } : {}),
+        }}
+      />
+    </>
   )
 }

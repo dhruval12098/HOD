@@ -28,41 +28,41 @@ function isVideoUrl(value?: string) {
 }
 
 function PortfolioMedia({ item }: { item: PortfolioItem }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
   const thumbnailUrl = item.thumbnail_url;
   const mediaUrl = item.media_url;
-  const hasVideoThumbnail = isVideoUrl(thumbnailUrl);
-  const shouldShowVideo = hasVideoThumbnail || (item.media_type === 'video' && mediaUrl && !thumbnailUrl);
-  const videoUrl = hasVideoThumbnail ? thumbnailUrl : mediaUrl;
+  const thumbnailIsVideo = isVideoUrl(thumbnailUrl);
+  const mediaIsVideo = isVideoUrl(mediaUrl);
 
-  const playPreview = () => {
-    void videoRef.current?.play().catch(() => {});
-  };
+  if (item.media_type === 'video' || mediaIsVideo) {
+    if (thumbnailUrl && !thumbnailIsVideo) {
+      return (
+        <div className="relative h-full w-full">
+          <img src={thumbnailUrl} alt={item.title} loading="lazy" decoding="async" className="h-full w-full object-cover" />
+          <span className="absolute left-1/2 top-1/2 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-[#0A1628] shadow-[0_12px_32px_rgba(10,22,40,0.2)] transition-transform duration-300 group-hover:scale-110">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <path d="M4.5 2.7v10.6L12.8 8 4.5 2.7Z" />
+            </svg>
+          </span>
+        </div>
+      );
+    }
 
-  const pausePreview = () => {
-    if (!videoRef.current) return;
-    videoRef.current.pause();
-    videoRef.current.currentTime = 0;
-  };
-
-  if (shouldShowVideo && videoUrl) {
     return (
-      <video
-        ref={videoRef}
-        src={videoUrl}
-        className="!h-full w-full object-cover"
-        muted
-        loop
-        playsInline
-        preload="metadata"
-        onMouseEnter={playPreview}
-        onMouseLeave={pausePreview}
-      />
+      <div className="relative flex h-full w-full items-center justify-center">
+        <GemSVG style={item.gem_style ?? 'round'} size={140} color={item.gem_color ?? '#20304A'} />
+        {mediaUrl ? (
+          <span className="absolute left-1/2 top-1/2 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-[#0A1628] shadow-[0_12px_32px_rgba(10,22,40,0.2)] transition-transform duration-300 group-hover:scale-110">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <path d="M4.5 2.7v10.6L12.8 8 4.5 2.7Z" />
+            </svg>
+          </span>
+        ) : null}
+      </div>
     );
   }
 
-  if (thumbnailUrl || (item.media_type === 'image' && mediaUrl)) {
-    return <img src={thumbnailUrl || mediaUrl} alt={item.title} className="h-full w-full object-cover" />;
+  if ((thumbnailUrl && !thumbnailIsVideo) || (mediaUrl && !mediaIsVideo)) {
+    return <img src={thumbnailUrl || mediaUrl} alt={item.title} loading="lazy" decoding="async" className="h-full w-full object-cover" />;
   }
 
   return <GemSVG style={item.gem_style ?? 'round'} size={140} color={item.gem_color ?? '#20304A'} />;
@@ -129,7 +129,7 @@ function VideoModal({ item, onClose }: { item: PortfolioItem | null; onClose: ()
           <div className={`min-h-[220px] shrink-0 flex items-center justify-center overflow-hidden md:min-h-[420px] ${item.dark_theme ? 'bg-gradient-to-br from-[#0A1628] to-[#111F34]' : 'bg-[#f5f1ea]'}`}>
             {item.media_type === 'video' ? (
               item.media_url ? (
-                <video src={item.media_url} className="!h-full w-full object-cover" controls autoPlay loop playsInline />
+                <video src={item.media_url} className="!h-full w-full object-cover" controls playsInline preload="metadata" />
               ) : (
                 <div className="flex h-full w-full items-center justify-center">
                   <GemSVG style={item.gem_style ?? 'round'} size={180} color={item.gem_color ?? '#20304A'} />
@@ -219,6 +219,7 @@ export default function BespokePortfolio({
   const [items, setItems] = useState<PortfolioItem[]>(initialItems);
   const [activeFilter, setActiveFilter] = useState('all');
   const [activeItem, setActiveItem] = useState<PortfolioItem | null>(null);
+  const [visibleCount, setVisibleCount] = useState(9);
 
   useEffect(() => {
     if (initialCategories.length || initialItems.length) return;
@@ -247,6 +248,12 @@ export default function BespokePortfolio({
   ];
 
   const filtered = activeFilter === 'all' ? items : items.filter((item) => item.category?.slug === activeFilter);
+  const visibleItems = filtered.slice(0, visibleCount);
+
+  const changeFilter = (key: string) => {
+    setActiveFilter(key);
+    setVisibleCount(9);
+  };
 
   if (!items.length && !categories.length) return null;
 
@@ -275,7 +282,7 @@ export default function BespokePortfolio({
           {filters.map((filter) => (
             <button
               key={filter.key}
-              onClick={() => setActiveFilter(filter.key)}
+              onClick={() => changeFilter(filter.key)}
               className={`px-[22px] py-2.5 text-[10px] font-normal tracking-[0.24em] uppercase border cursor-pointer transition-all duration-300 ${
                 activeFilter === filter.key
                   ? 'bg-[#0A1628] text-[#FAFBFD] border-[#0A1628]'
@@ -288,7 +295,7 @@ export default function BespokePortfolio({
         </RevealDiv>
 
         <div className="grid grid-cols-3 gap-6 max-lg:grid-cols-2 max-md:grid-cols-1">
-          {filtered.map((item, i) => (
+          {visibleItems.map((item, i) => (
             <RevealDiv key={item.id} delay={i * 60}>
               <div
                 onClick={() => setActiveItem(item)}
@@ -320,6 +327,18 @@ export default function BespokePortfolio({
             </RevealDiv>
           ))}
         </div>
+
+        {filtered.length > visibleItems.length ? (
+          <RevealDiv className="mt-10 flex justify-center">
+            <button
+              type="button"
+              onClick={() => setVisibleCount((count) => count + 9)}
+              className="border border-[#0A1628] bg-transparent px-8 py-3 text-[10px] uppercase tracking-[0.28em] text-[#0A1628] transition-all duration-300 hover:bg-[#0A1628] hover:text-white"
+            >
+              Load More
+            </button>
+          </RevealDiv>
+        ) : null}
 
         <RevealDiv className="text-center mt-12">
           <p className="text-[12px] text-[#6A6A6A] tracking-[0.06em] leading-[1.9] max-w-[520px] mx-auto">

@@ -53,7 +53,7 @@ export default function BlogClient({ blogPosts = posts }: { blogPosts?: BlogPost
         posts={relatedPosts}
         onPostClick={(id) => {
           const target = safePosts.find((post) => post.id === id)
-          router.push(target?.slug ? `/blog?slug=${target.slug}` : `/blog?post=${id}`)
+          router.push(target?.slug ? `/blog/${target.slug}` : `/blog?post=${id}`)
         }}
       />
     </div>

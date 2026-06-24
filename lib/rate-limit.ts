@@ -1,0 +1,191 @@
+import { NextResponse } from 'next/server'
+import { createClient, type RedisClientType } from 'redis'
+
+type RateLimitConfig = {
+  key: string
+  limit: number
+  windowSeconds: number
+}
+
+type RateLimitResult = {
+  ok: boolean
+  limit: number
+  remaining: number
+  resetAt: number
+  response?: NextResponse
+}
+
+type MemoryEntry = {
+  count: number
+  resetAt: number
+}
+
+const RATE_LIMIT_ERROR_MESSAGE = 'Too many requests. Please wait a bit and try again.'
+const IP_HEADER_CANDIDATES = [
+  'x-forwarded-for',
+  'x-real-ip',
+  'cf-connecting-ip',
+  'x-vercel-forwarded-for',
+]
+
+const memoryStore = globalThis as typeof globalThis & {
+  __hodRateLimitMemory?: Map<string, MemoryEntry>
+  __hodRedisClient?: RedisClientType | null
+  __hodRedisConnectPromise?: Promise<RedisClientType | null> | null
+}
+
+function getMemoryStore() {
+  if (!memoryStore.__hodRateLimitMemory) {
+    memoryStore.__hodRateLimitMemory = new Map<string, MemoryEntry>()
+  }
+  return memoryStore.__hodRateLimitMemory
+}
+
+function getClientIp(request: Request) {
+  for (const headerName of IP_HEADER_CANDIDATES) {
+    const value = request.headers.get(headerName)
+    if (!value) continue
+    const first = value.split(',')[0]?.trim()
+    if (first) return first
+  }
+
+  return 'unknown'
+}
+
+function createRateLimitHeaders(result: Pick<RateLimitResult, 'limit' | 'remaining' | 'resetAt'>) {
+  return {
+    'X-RateLimit-Limit': String(result.limit),
+    'X-RateLimit-Remaining': String(Math.max(0, result.remaining)),
+    'X-RateLimit-Reset': String(Math.ceil(result.resetAt / 1000)),
+    'Retry-After': String(Math.max(1, Math.ceil((result.resetAt - Date.now()) / 1000))),
+  }
+}
+
+async function getRedisClient() {
+  if (memoryStore.__hodRedisClient) {
+    return memoryStore.__hodRedisClient
+  }
+
+  if (memoryStore.__hodRedisConnectPromise) {
+    return memoryStore.__hodRedisConnectPromise
+  }
+
+  const redisUrl = process.env.REDIS_URL?.trim()
+  if (!redisUrl) {
+    return null
+  }
+
+  memoryStore.__hodRedisConnectPromise = (async () => {
+    try {
+      const client = createClient({ url: redisUrl })
+      client.on('error', (error) => {
+        console.error('Redis rate limit client error:', error)
+      })
+      await client.connect()
+      memoryStore.__hodRedisClient = client
+      return client
+    } catch (error) {
+      console.error('Redis rate limit connection failed:', error)
+      return null
+    } finally {
+      memoryStore.__hodRedisConnectPromise = null
+    }
+  })()
+
+  return memoryStore.__hodRedisConnectPromise
+}
+
+async function consumeRedisLimit(key: string, limit: number, windowSeconds: number): Promise<RateLimitResult | null> {
+  const client = await getRedisClient()
+  if (!client) return null
+
+  const now = Date.now()
+  const script = `
+    local current = redis.call("INCR", KEYS[1])
+    if current == 1 then
+      redis.call("EXPIRE", KEYS[1], ARGV[1])
+    end
+    local ttl = redis.call("TTL", KEYS[1])
+    return {current, ttl}
+  `
+
+  const raw = (await client.eval(script, {
+    keys: [key],
+    arguments: [String(windowSeconds)],
+  })) as [number | string, number | string] | null
+
+  if (!raw || raw.length < 2) {
+    return null
+  }
+
+  const count = Number(raw[0] || 0)
+  const ttlSeconds = Math.max(0, Number(raw[1] || windowSeconds))
+  const resetAt = now + ttlSeconds * 1000
+  const remaining = Math.max(0, limit - count)
+  const ok = count <= limit
+
+  return {
+    ok,
+    limit,
+    remaining,
+    resetAt,
+    response: ok
+      ? undefined
+      : NextResponse.json(
+          { error: RATE_LIMIT_ERROR_MESSAGE },
+          { status: 429, headers: createRateLimitHeaders({ limit, remaining, resetAt }) }
+        ),
+  }
+}
+
+function consumeMemoryLimit(key: string, limit: number, windowSeconds: number): RateLimitResult {
+  const store = getMemoryStore()
+  const now = Date.now()
+  const current = store.get(key)
+
+  if (!current || current.resetAt <= now) {
+    const resetAt = now + windowSeconds * 1000
+    store.set(key, { count: 1, resetAt })
+    return {
+      ok: true,
+      limit,
+      remaining: limit - 1,
+      resetAt,
+    }
+  }
+
+  current.count += 1
+  store.set(key, current)
+  const remaining = Math.max(0, limit - current.count)
+  const ok = current.count <= limit
+
+  return {
+    ok,
+    limit,
+    remaining,
+    resetAt: current.resetAt,
+    response: ok
+      ? undefined
+      : NextResponse.json(
+          { error: RATE_LIMIT_ERROR_MESSAGE },
+          { status: 429, headers: createRateLimitHeaders({ limit, remaining, resetAt: current.resetAt }) }
+        ),
+  }
+}
+
+export async function enforceRateLimit(request: Request, config: RateLimitConfig) {
+  const clientIp = getClientIp(request)
+  const key = `rate_limit:${config.key}:${clientIp}`
+
+  try {
+    const redisResult = await consumeRedisLimit(key, config.limit, config.windowSeconds)
+    if (redisResult) {
+      return redisResult
+    }
+  } catch (error) {
+    console.error('Redis rate limit check failed, using memory fallback:', error)
+  }
+
+  return consumeMemoryLimit(key, config.limit, config.windowSeconds)
+}
+

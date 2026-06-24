@@ -294,7 +294,7 @@ export default function HomeClient({
               <BlogSectionHeader title="Blogs" onViewAll={() => router.push('/blog')} />
               <DeferredBlogGrid posts={blogPosts} onPostClick={(id) => {
                 const target = blogPosts.find((post) => post.id === id)
-                router.push(target?.slug ? `/blog?slug=${target.slug}` : `/blog?post=${id}`)
+                router.push(target?.slug ? `/blog/${target.slug}` : `/blog?post=${id}`)
               }} />
             </div>
           </section>

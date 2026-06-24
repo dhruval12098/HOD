@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
 import BespokeClient from '@/components/pages/BespokeClient';
 import { createClient } from '@supabase/supabase-js';
+import { createPageMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: 'Bespoke',
   description: 'Commission a bespoke piece. From CAD to setting, crafted in Surat with natural or CVD diamonds.',
-};
+  path: '/bespoke',
+});
 
 export const revalidate = 30;
 

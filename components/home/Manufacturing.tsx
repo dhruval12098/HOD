@@ -171,6 +171,43 @@ function resolvePublicMediaUrl(path?: string) {
   return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${process.env.NEXT_PUBLIC_SUPABASE_COLLECTION_BUCKET || 'hod'}/${path}`;
 }
 
+function LazyManufacturingVideo({ src, poster, title }: { src: string; poster?: string; title: string }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  const [shouldLoad, setShouldLoad] = useState(false);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        setShouldLoad(true);
+        observer.disconnect();
+      },
+      { rootMargin: '300px 0px', threshold: 0.01 }
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <video
+      ref={ref}
+      src={shouldLoad ? src : undefined}
+      poster={poster || undefined}
+      aria-label={title}
+      className="absolute inset-0 h-full w-full object-cover"
+      autoPlay={shouldLoad}
+      muted
+      loop
+      playsInline
+      preload="none"
+    />
+  );
+}
+
 export default function Manufacturing({ initialItems = [] }: { initialItems?: CmsManufacturingItem[] }) {
   const [items, setItems] = useState<CmsManufacturingItem[]>(initialItems);
 
@@ -263,14 +300,10 @@ export default function Manufacturing({ initialItems = [] }: { initialItems?: Cm
                     {step.kind === 'cms' ? (
                       <div className="absolute inset-0">
                         {step.media_type === 'video' && (step.media_path || step.image_path) ? (
-                          <video
+                          <LazyManufacturingVideo
                             src={step.media_url || resolvePublicMediaUrl(step.media_path || step.image_path)}
-                            className="absolute inset-0 h-full w-full object-cover"
-                            autoPlay
-                            muted
-                            loop
-                            playsInline
-                            preload="metadata"
+                            poster={step.image_url || resolvePublicMediaUrl(step.image_path)}
+                            title={step.title}
                           />
                         ) : (
                           <img

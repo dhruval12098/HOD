@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/server-supabase'
+import { enforceRateLimit } from '@/lib/rate-limit'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function isMissingRelationError(error: { code?: string; message?: string } | null) {
   return error?.code === 'PGRST205' || error?.message?.includes('schema cache') || error?.message?.includes('does not exist')
@@ -12,14 +14,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Missing Supabase env vars.' }, { status: 500 })
   }
 
+  const rateLimit = await enforceRateLimit(request, { key: 'public-newsletter-submit', limit: 6, windowSeconds: 60 })
+  if (!rateLimit.ok && rateLimit.response) return rateLimit.response
+
   const body = await request.json().catch(() => null)
   if (!body || typeof body.email !== 'string') {
     return NextResponse.json({ error: 'Invalid payload.' }, { status: 400 })
   }
 
   const email = body.email.trim().toLowerCase()
-  if (!email) {
-    return NextResponse.json({ error: 'Email is required.' }, { status: 400 })
+  if (!email || email.length > 254 || !EMAIL_RE.test(email)) {
+    return NextResponse.json({ error: 'Enter a valid email address.' }, { status: 400 })
   }
 
   const supabase = createSupabaseServerClient()

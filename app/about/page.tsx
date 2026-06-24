@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
 import AboutClient from '@/components/pages/AboutClient';
 import { createClient } from '@supabase/supabase-js';
+import { createPageMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: 'About',
   description: 'Learn about House of Diams: our founders, milestones, and values.',
-};
+  path: '/about',
+});
 
 export const revalidate = 30;
 

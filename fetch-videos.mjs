@@ -1,6 +1,10 @@
 import https from 'https';
 
-const API_KEY = process.env.PEXELS_API_KEY || 'Gg7RFCF7Ujm37EBnCs9PueZqEddV8TfjirGvuslrh6IjZpHWkGPKt9B0';
+const API_KEY = process.env.PEXELS_API_KEY;
+
+if (!API_KEY) {
+  throw new Error('Missing PEXELS_API_KEY environment variable.');
+}
 
 const options = {
   hostname: 'api.pexels.com',

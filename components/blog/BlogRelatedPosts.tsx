@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { BlogPost, getStorageImageUrl } from "@/lib/data/blog-posts";
 import GemPlaceholder from "./GemPlaceholder";
 
@@ -15,6 +16,10 @@ export default function BlogRelatedPosts({ posts, onPostClick }: BlogRelatedPost
 
       <div className="grid grid-cols-3 gap-5 max-md:grid-cols-1">
         {posts.map((post) => (
+          (() => {
+            const imageUrl = getStorageImageUrl(post.heroImagePath);
+
+            return (
           <div
             key={post.id}
             onClick={() => onPostClick(post.id)}
@@ -24,10 +29,12 @@ export default function BlogRelatedPosts({ posts, onPostClick }: BlogRelatedPost
               className="relative overflow-hidden flex items-center justify-center"
               style={{ aspectRatio: "16/10", background: post.bgColor }}
             >
-              {getStorageImageUrl(post.heroImagePath) ? (
-                <img
-                  src={getStorageImageUrl(post.heroImagePath)}
+              {imageUrl ? (
+                <Image
+                  src={imageUrl}
                   alt={post.titleRaw}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 33vw"
                   className="absolute inset-0 block h-full w-full object-cover object-center"
                 />
               ) : null}
@@ -36,7 +43,7 @@ export default function BlogRelatedPosts({ posts, onPostClick }: BlogRelatedPost
               <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[rgba(10,22,40,0.45)] pointer-events-none z-10" />
 
               {/* Gem */}
-              {!getStorageImageUrl(post.heroImagePath) ? (
+              {!imageUrl ? (
                 <div className="absolute inset-0 flex items-center justify-center transition-transform duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:scale-[1.05]">
                   <GemPlaceholder size={60} variant="diamond" />
                 </div>
@@ -54,6 +61,8 @@ export default function BlogRelatedPosts({ posts, onPostClick }: BlogRelatedPost
               </div>
             </div>
           </div>
+            );
+          })()
         ))}
       </div>
     </div>

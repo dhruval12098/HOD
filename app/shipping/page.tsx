@@ -1,11 +1,13 @@
 import type { Metadata } from 'next'
 import { createClient } from '@supabase/supabase-js'
 import DocsPage from '@/components/docs/DocsPage'
+import { createPageMetadata } from '@/lib/seo'
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: 'Shipping',
   description: 'Shipping timelines and delivery details from House of Diams.',
-}
+  path: '/shipping',
+})
 
 export default async function ShippingPage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useCurrency } from "@/context/CurrencyContext";
 import { METAL_META } from "@/lib/data/product-config";
 
@@ -406,21 +407,20 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
         </button>
 
         {activeImageUrl ? (
-          <img
+          <Image
             key={activeImageUrl}
             src={activeImageUrl}
             alt={`${product.name} jewellery`}
+            fill
+            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
             className="card-gem"
             style={{
-              width: "100%",
-              height: "100%",
               objectFit: "cover",
               objectPosition: "center center",
               padding: "0",
               transform: "scale(1.04)",
               transition: "transform .75s cubic-bezier(.16,1,.3,1)",
             }}
-            loading="lazy"
           />
         ) : (
           <div

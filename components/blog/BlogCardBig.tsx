@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { BlogPost, getStorageImageUrl } from "@/lib/data/blog-posts";
 import GemPlaceholder from "./GemPlaceholder";
 
@@ -19,9 +20,11 @@ export default function BlogCardBig({ post, onClick }: BlogCardBigProps) {
         style={{ background: post.bgColor }}
       >
         {imageUrl ? (
-          <img
+          <Image
             src={imageUrl}
             alt={post.titleRaw}
+            fill
+            sizes="(max-width: 768px) 100vw, 50vw"
             className="absolute inset-0 block h-full min-h-full w-full min-w-full object-cover object-center transition-transform duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:scale-[1.04]"
           />
         ) : (

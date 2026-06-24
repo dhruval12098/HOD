@@ -2,11 +2,15 @@ import type { Metadata } from 'next';
 import { unstable_noStore as noStore } from 'next/cache';
 import ShopClient from '@/components/pages/ShopClient';
 import { filterStorefrontProducts, getStorefrontProducts } from '@/lib/catalog-products';
+import { createPageMetadata } from '@/lib/seo';
+import JsonLd from '@/components/seo/JsonLd';
+import { createBreadcrumbSchema } from '@/lib/structured-data';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: 'Shop',
   description: 'Browse our collection of fine jewellery and hip hop jewellery with natural and CVD diamonds.',
-};
+  path: '/shop',
+});
 
 export default async function ShopPage({
   searchParams,
@@ -27,18 +31,21 @@ export default async function ShopPage({
   })
 
   return (
-    <ShopClient
-      products={filteredProducts}
-      sourceProducts={products.filter((product) => product.productLane === 'standard')}
-      heroTitle="Our Collection"
-      heroSubtitle="Browse our curated selection of fine jewellery, engagement rings, and wedding bands."
-      initialFilters={{
-        ...(typeof params.category === 'string' ? { category: [params.category] } : {}),
-        ...(typeof params.shape === 'string' ? { shape: [params.shape] } : {}),
-        ...(typeof params.style === 'string' ? { style: [params.style] } : {}),
-        ...(typeof params.metal === 'string' ? { metal: [params.metal] } : {}),
-        ...(typeof params.certificate === 'string' ? { certificate: [params.certificate] } : {}),
-      }}
-    />
+    <>
+      <JsonLd data={createBreadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Shop', path: '/shop' }])} />
+      <ShopClient
+        products={filteredProducts}
+        sourceProducts={products.filter((product) => product.productLane === 'standard')}
+        heroTitle="Our Collection"
+        heroSubtitle="Browse our curated selection of fine jewellery, engagement rings, and wedding bands."
+        initialFilters={{
+          ...(typeof params.category === 'string' ? { category: [params.category] } : {}),
+          ...(typeof params.shape === 'string' ? { shape: [params.shape] } : {}),
+          ...(typeof params.style === 'string' ? { style: [params.style] } : {}),
+          ...(typeof params.metal === 'string' ? { metal: [params.metal] } : {}),
+          ...(typeof params.certificate === 'string' ? { certificate: [params.certificate] } : {}),
+        }}
+      />
+    </>
   );
 }

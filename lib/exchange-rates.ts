@@ -4,13 +4,95 @@ type ExchangeRateResult = {
   baseCurrency: 'USD'
   targetCurrency: SupportedCurrency
   rate: number
-  source: 'fastforex' | 'fallback'
+  source: 'fixer' | 'fallback'
   fetchedAt: string
 }
 
-const CACHE_TTL_MS = 30 * 60 * 1000
-const FASTFOREX_API_KEY = process.env.FASTFOREX_API_KEY
-const rateCache = new Map<string, ExchangeRateResult>()
+type CachedExchangeRateResult = ExchangeRateResult & {
+  expiresAt: number
+}
+
+const LIVE_CACHE_TTL_MS = 30 * 60 * 1000
+const FALLBACK_CACHE_TTL_MS = 60 * 1000
+const FIXER_API_KEY = process.env.APILAYER_FIXER_API_KEY || process.env.FIXER_API_KEY
+const rateCache = new Map<string, CachedExchangeRateResult>()
+
+function createExchangeRateResult(
+  targetCurrency: SupportedCurrency,
+  rate: number,
+  source: 'fixer' | 'fallback'
+): ExchangeRateResult {
+  return {
+    baseCurrency: 'USD',
+    targetCurrency,
+    rate,
+    source,
+    fetchedAt: new Date().toISOString(),
+  }
+}
+
+function setRateCache(result: ExchangeRateResult) {
+  rateCache.set(`USD:${result.targetCurrency}`, {
+    ...result,
+    expiresAt: Date.now() + (result.source === 'fixer' ? LIVE_CACHE_TTL_MS : FALLBACK_CACHE_TTL_MS),
+  })
+}
+
+function getCachedRate(targetCurrency: SupportedCurrency) {
+  const cached = rateCache.get(`USD:${targetCurrency}`)
+  if (!cached) return null
+  if (cached.expiresAt <= Date.now()) {
+    rateCache.delete(`USD:${targetCurrency}`)
+    return null
+  }
+  return cached
+}
+
+async function fetchFixerRates(targetCurrencies: SupportedCurrency[]) {
+  if (!FIXER_API_KEY || targetCurrencies.length < 1) {
+    return null
+  }
+
+  const targets = targetCurrencies.filter((currency) => currency !== 'USD')
+  if (targets.length < 1) {
+    return {}
+  }
+
+  const symbols = Array.from(new Set(['USD', ...targets]))
+
+  const response = await fetch(
+    `https://data.fixer.io/api/latest?access_key=${encodeURIComponent(FIXER_API_KEY)}&symbols=${encodeURIComponent(symbols.join(','))}`,
+    {
+      cache: 'no-store',
+      headers: {
+        accept: 'application/json',
+      },
+    }
+  )
+
+  if (!response.ok) {
+    throw new Error(`Fixer returned ${response.status}`)
+  }
+
+  const payload = await response.json().catch(() => null)
+  const rates = payload?.rates
+  if (!payload?.success || !rates || typeof rates !== 'object') {
+    throw new Error(payload?.error?.info || 'Fixer response did not include usable rates.')
+  }
+
+  const usdPerEur = Number(rates.USD)
+  if (!Number.isFinite(usdPerEur) || usdPerEur <= 0) {
+    throw new Error('Fixer response did not include a usable USD rate.')
+  }
+
+  return Object.fromEntries(
+    targets.map((currency) => {
+      const eurBasedRate = Number(rates[currency])
+      const usdBasedRate = eurBasedRate / usdPerEur
+      return [currency, usdBasedRate]
+    })
+  ) as Partial<Record<SupportedCurrency, number>>
+}
 
 function getFallbackRate(targetCurrency: SupportedCurrency) {
   return FALLBACK_USD_RATES[targetCurrency] || 1
@@ -31,55 +113,77 @@ export async function getUsdExchangeRate(targetCurrency: string | null | undefin
   const resolvedCurrency = normalizeCurrency(targetCurrency)
 
   if (resolvedCurrency === 'USD') {
-    return {
-      baseCurrency: 'USD',
-      targetCurrency: 'USD',
-      rate: 1,
-      source: 'fallback',
-      fetchedAt: new Date().toISOString(),
-    }
+    return createExchangeRateResult('USD', 1, 'fallback')
   }
 
-  const cacheKey = `USD:${resolvedCurrency}`
-  const cached = rateCache.get(cacheKey)
-  if (cached && Date.now() - new Date(cached.fetchedAt).getTime() < CACHE_TTL_MS) {
+  const cached = getCachedRate(resolvedCurrency)
+  if (cached) {
     return cached
   }
 
-  if (FASTFOREX_API_KEY) {
-    try {
-      const response = await fetch(
-        `https://api.fastforex.io/fetch-multi?from=USD&to=${encodeURIComponent(resolvedCurrency)}&api_key=${encodeURIComponent(FASTFOREX_API_KEY)}`,
-        { next: { revalidate: 1800 } }
-      )
-      const payload = await response.json().catch(() => null)
-      const liveRate = Number(payload?.results?.[resolvedCurrency])
+  try {
+    const fixerRates = await fetchFixerRates([resolvedCurrency])
+    const fixerRate = Number(fixerRates?.[resolvedCurrency])
 
-      if (response.ok && Number.isFinite(liveRate) && liveRate > 0) {
-        const result: ExchangeRateResult = {
-          baseCurrency: 'USD',
-          targetCurrency: resolvedCurrency,
-          rate: liveRate,
-          source: 'fastforex',
-          fetchedAt: new Date().toISOString(),
+    if (Number.isFinite(fixerRate) && fixerRate > 0) {
+      const result = createExchangeRateResult(resolvedCurrency, fixerRate, 'fixer')
+      setRateCache(result)
+      return result
+    }
+  } catch (error) {
+    console.error(`Fixer lookup failed for ${resolvedCurrency}, using fallback rate:`, error)
+  }
+
+  const fallbackResult = createExchangeRateResult(resolvedCurrency, getFallbackRate(resolvedCurrency), 'fallback')
+  setRateCache(fallbackResult)
+  return fallbackResult
+}
+
+export async function getUsdExchangeRates(targetCurrencies: SupportedCurrency[]) {
+  const uniqueCurrencies = Array.from(new Set(targetCurrencies.map((currency) => normalizeCurrency(currency))))
+  const results = new Map<SupportedCurrency, ExchangeRateResult>()
+  const missingCurrencies: SupportedCurrency[] = []
+
+  for (const currency of uniqueCurrencies) {
+    if (currency === 'USD') {
+      results.set(currency, createExchangeRateResult('USD', 1, 'fallback'))
+      continue
+    }
+
+    const cached = getCachedRate(currency)
+    if (cached) {
+      results.set(currency, cached)
+      continue
+    }
+
+    missingCurrencies.push(currency)
+  }
+
+  if (missingCurrencies.length > 0) {
+    try {
+      const fixerRates = await fetchFixerRates(missingCurrencies)
+
+      for (const currency of missingCurrencies) {
+        const fixerRate = Number(fixerRates?.[currency])
+        if (Number.isFinite(fixerRate) && fixerRate > 0) {
+          const result = createExchangeRateResult(currency, fixerRate, 'fixer')
+          setRateCache(result)
+          results.set(currency, result)
         }
-        rateCache.set(cacheKey, result)
-        return result
       }
     } catch (error) {
-      console.error('Live FX lookup failed, using fallback rate:', error)
+      console.error('Bulk Fixer lookup failed, using fallback rates:', error)
+    }
+
+    for (const currency of missingCurrencies) {
+      if (results.has(currency)) continue
+      const fallbackResult = createExchangeRateResult(currency, getFallbackRate(currency), 'fallback')
+      setRateCache(fallbackResult)
+      results.set(currency, fallbackResult)
     }
   }
 
-  const fallbackResult: ExchangeRateResult = {
-    baseCurrency: 'USD',
-    targetCurrency: resolvedCurrency,
-    rate: getFallbackRate(resolvedCurrency),
-    source: 'fallback',
-    fetchedAt: new Date().toISOString(),
-  }
-  rateCache.set(cacheKey, fallbackResult)
-  return fallbackResult
+  return Object.fromEntries(uniqueCurrencies.map((currency) => [currency, results.get(currency)!])) as Record<SupportedCurrency, ExchangeRateResult>
 }
 
 export async function buildCheckoutChargeQuote(input: {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import ProductCard from "./ProductCard";
 import ShopSidebar from "./ShopSidebar";
 import ShopToolbar from "./ShopToolbar";
@@ -16,18 +17,16 @@ import { getProductKey } from "@/lib/product-keys";
  */
 function CategoryGridPosterCard({ poster }) {
   const image = (
-    <img
+    <Image
       src={poster.imageUrl}
       alt={poster.imageAlt || poster.title || "Category poster"}
+      fill
+      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 50vw"
       style={{
-        width: "100%",
-        height: "100%",
         objectFit: "cover",
         objectPosition: "center center",
-        display: "block",
         transition: "transform .75s cubic-bezier(.16,1,.3,1)",
       }}
-      loading="lazy"
     />
   );
 

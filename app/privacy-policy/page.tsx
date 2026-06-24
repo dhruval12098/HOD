@@ -1,11 +1,13 @@
 import type { Metadata } from 'next'
 import { createClient } from '@supabase/supabase-js'
 import DocsPage from '@/components/docs/DocsPage'
+import { createPageMetadata } from '@/lib/seo'
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: 'Privacy Policy',
   description: 'Privacy policy for House of Diams.',
-}
+  path: '/privacy-policy',
+})
 
 export default async function PrivacyPolicyPage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL

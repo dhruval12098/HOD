@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import HomeClient from '@/components/pages/HomeClient';
 import { mapBlogPostRecord, posts as fallbackPosts } from '@/lib/data/blog-posts';
 import { getHomePageData } from '@/lib/home-data';
+import { createPageMetadata } from '@/lib/seo';
 
 type BlogTagRow = { tag: string; sort_order: number | null }
 type BlogPostRow = {
@@ -23,10 +24,11 @@ type BlogPostRow = {
   blog_post_tags: BlogTagRow[] | null
 }
 
-export const metadata: Metadata = {
-  title: 'Home',
-  description: 'Luxury diamond jewellery, natural and CVD diamonds, crafted in Surat, India.',
-};
+export const metadata: Metadata = createPageMetadata({
+  title: 'Luxury Diamond Jewellery',
+  description: 'House of Diams creates natural and CVD diamond jewellery, crafted in Surat for fine, bespoke, and hip hop collections.',
+  path: '/',
+});
 
 export default async function Home() {
   const {

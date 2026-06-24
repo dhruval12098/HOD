@@ -5,7 +5,7 @@ export type CheckoutChargeQuote = {
   baseCurrency: 'USD'
   chargeCurrency: SupportedCurrency
   exchangeRate: number
-  exchangeRateSource: 'fastforex' | 'fallback'
+  exchangeRateSource: 'fixer' | 'fallback'
   exchangeRateFetchedAt: string
   totalUsd: number
   totalCharged: number

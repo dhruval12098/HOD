@@ -28,7 +28,6 @@ type CurrencyContextValue = {
 }
 
 const STORAGE_KEY = 'selected_currency'
-const RATE_TARGETS = CURRENCIES.filter((currency) => currency.code !== 'USD').map((currency) => currency.code).join(',')
 
 const CurrencyContext = createContext<CurrencyContextValue | null>(null)
 
@@ -43,23 +42,14 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
       setSelected(getCurrencyOption(storedCurrency))
     }
 
-    const key = process.env.NEXT_PUBLIC_FASTFOREX_API_KEY
-    if (!key) {
-      setRates({ ...FALLBACK_USD_RATES })
-      return
-    }
-
     let ignore = false
     setIsLoadingRate(true)
 
     void (async () => {
       try {
-        const response = await fetch(
-          `https://api.fastforex.io/fetch-multi?from=USD&to=${RATE_TARGETS}&api_key=${encodeURIComponent(key)}`,
-          { cache: 'no-store' }
-        )
+        const response = await fetch('/api/public/exchange-rates', { cache: 'no-store' })
         const data = await response.json().catch(() => null)
-        const results = data?.results || {}
+        const results = data?.rates || {}
 
         if (!ignore && response.ok && results && typeof results === 'object') {
           setRates({

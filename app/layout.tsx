@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Geist, Geist_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import LenisProvider from "@/app/LenisProvider";
@@ -7,6 +8,10 @@ import { houseOfDiamsWordmarkFont, loaderWordmarkFont } from "@/app/fonts";
 import { CurrencyProvider } from "@/context/CurrencyContext";
 import { CartProvider } from "@/lib/hooks/useCart";
 import { WishlistProvider } from "@/lib/hooks/useWishlistStore";
+import { getSiteUrl } from "@/lib/site-url";
+import JsonLd from "@/components/seo/JsonLd";
+import { createOrganizationSchema } from "@/lib/structured-data";
+import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,6 +29,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(getSiteUrl()),
   title: {
     default: "House of Diams",
     template: "%s | House of Diams",
@@ -31,6 +37,11 @@ export const metadata: Metadata = {
   description: "Luxury diamond jewellery, crafted in Surat, India.",
   icons: {
     icon: "/house-of-diams-favicon.ico",
+  },
+  verification: {
+    other: {
+      'msvalidate.01': '4B163F684E5979CF3BB4A6CE96FA16F8',
+    },
   },
 };
 
@@ -46,6 +57,10 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
+        <JsonLd data={createOrganizationSchema()} />
+        <Suspense fallback={null}>
+          <GoogleAnalytics />
+        </Suspense>
         <LenisProvider>
           <WishlistProvider>
             <CurrencyProvider>

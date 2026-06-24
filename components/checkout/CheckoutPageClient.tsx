@@ -382,7 +382,7 @@ export default function CheckoutPageClient() {
   useEffect(() => {
     let ignore = false
     if (!checkoutItems.length) return
-    if (!customerForm.country.trim()) {
+    if (!currencyCode && !customerForm.country.trim()) {
       setChargeQuote(null)
       return
     }

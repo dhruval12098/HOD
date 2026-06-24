@@ -3,11 +3,13 @@ import HipHopClient from '@/components/pages/HipHopClient';
 import { getStorefrontProducts } from '@/lib/catalog-products';
 import { getHipHopHeroData } from '@/lib/hiphop-hero';
 import { createSupabaseServerClient } from '@/lib/server-supabase';
+import { createPageMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
   title: 'Hip Hop',
   description: 'Explore House of Diams hip hop jewellery, including chains, grillz, pendants, and rings.',
-};
+  path: '/hiphop',
+});
 
 export default async function HipHopPage() {
   const supabase = createSupabaseServerClient()

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { enforceRateLimit } from '@/lib/rate-limit'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -15,11 +16,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Missing Supabase environment variables.' }, { status: 500 })
   }
 
+  const rateLimit = await enforceRateLimit(request, { key: 'checkout-coupon', limit: 12, windowSeconds: 60 })
+  if (!rateLimit.ok && rateLimit.response) return rateLimit.response
+
   const body = (await request.json().catch(() => null)) as CouponPayload | null
   const code = body?.code?.trim().toUpperCase()
   const subtotal = Number(body?.subtotal ?? 0)
 
-  if (!code || !Number.isFinite(subtotal) || subtotal <= 0) {
+  if (!code || code.length > 64 || !/^[A-Z0-9_-]+$/.test(code) || !Number.isFinite(subtotal) || subtotal <= 0 || subtotal > 1000000) {
     return NextResponse.json({ error: 'Invalid coupon request.' }, { status: 400 })
   }
 
