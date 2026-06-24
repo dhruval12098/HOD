@@ -27,6 +27,66 @@ function isVideoUrl(value?: string) {
   return /\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(value);
 }
 
+function VideoPreviewPlaceholder({ item }: { item: PortfolioItem }) {
+  return (
+    <>
+      <GemSVG style={item.gem_style ?? 'round'} size={140} color={item.gem_color ?? '#20304A'} />
+      <span className="absolute left-1/2 top-1/2 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-[#0A1628] shadow-[0_12px_32px_rgba(10,22,40,0.2)] transition-transform duration-300 group-hover:scale-110">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+          <path d="M4.5 2.7v10.6L12.8 8 4.5 2.7Z" />
+        </svg>
+      </span>
+    </>
+  );
+}
+
+function HoverVideoPreview({ item, src, poster }: { item: PortfolioItem; src: string; poster?: string }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [shouldLoad, setShouldLoad] = useState(false);
+
+  const playPreview = () => {
+    setShouldLoad(true);
+    window.requestAnimationFrame(() => {
+      void videoRef.current?.play().catch(() => {});
+    });
+  };
+
+  const pausePreview = () => {
+    if (!videoRef.current) return;
+    videoRef.current.pause();
+    videoRef.current.currentTime = 0;
+  };
+
+  return (
+    <div className="relative h-full w-full" onMouseEnter={playPreview} onMouseLeave={pausePreview} onFocus={playPreview}>
+      {poster ? (
+        <img src={poster} alt={item.title} loading="lazy" decoding="async" className="h-full w-full object-cover" />
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <VideoPreviewPlaceholder item={item} />
+        </div>
+      )}
+      {shouldLoad ? (
+        <video
+          ref={videoRef}
+          src={src}
+          poster={poster || undefined}
+          className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+          muted
+          loop
+          playsInline
+          preload="none"
+        />
+      ) : null}
+      <span className="absolute left-1/2 top-1/2 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-[#0A1628] shadow-[0_12px_32px_rgba(10,22,40,0.2)] transition-transform duration-300 group-hover:scale-110 group-hover:opacity-0">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+          <path d="M4.5 2.7v10.6L12.8 8 4.5 2.7Z" />
+        </svg>
+      </span>
+    </div>
+  );
+}
+
 function PortfolioMedia({ item }: { item: PortfolioItem }) {
   const thumbnailUrl = item.thumbnail_url;
   const mediaUrl = item.media_url;
@@ -34,29 +94,16 @@ function PortfolioMedia({ item }: { item: PortfolioItem }) {
   const mediaIsVideo = isVideoUrl(mediaUrl);
 
   if (item.media_type === 'video' || mediaIsVideo) {
-    if (thumbnailUrl && !thumbnailIsVideo) {
-      return (
-        <div className="relative h-full w-full">
-          <img src={thumbnailUrl} alt={item.title} loading="lazy" decoding="async" className="h-full w-full object-cover" />
-          <span className="absolute left-1/2 top-1/2 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-[#0A1628] shadow-[0_12px_32px_rgba(10,22,40,0.2)] transition-transform duration-300 group-hover:scale-110">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-              <path d="M4.5 2.7v10.6L12.8 8 4.5 2.7Z" />
-            </svg>
-          </span>
-        </div>
-      );
+    const previewSrc = mediaIsVideo ? mediaUrl : thumbnailIsVideo ? thumbnailUrl : '';
+    const poster = thumbnailUrl && !thumbnailIsVideo ? thumbnailUrl : '';
+
+    if (previewSrc) {
+      return <HoverVideoPreview item={item} src={previewSrc} poster={poster} />;
     }
 
     return (
       <div className="relative flex h-full w-full items-center justify-center">
-        <GemSVG style={item.gem_style ?? 'round'} size={140} color={item.gem_color ?? '#20304A'} />
-        {mediaUrl ? (
-          <span className="absolute left-1/2 top-1/2 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-[#0A1628] shadow-[0_12px_32px_rgba(10,22,40,0.2)] transition-transform duration-300 group-hover:scale-110">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-              <path d="M4.5 2.7v10.6L12.8 8 4.5 2.7Z" />
-            </svg>
-          </span>
-        ) : null}
+        <VideoPreviewPlaceholder item={item} />
       </div>
     );
   }

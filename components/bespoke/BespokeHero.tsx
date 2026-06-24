@@ -162,18 +162,26 @@ export default function BespokeHero({ onEnquireClick, initialHero = null, initia
           <div className="relative overflow-hidden rounded-none border-0 bg-transparent shadow-none backdrop-blur-0">
             <div className="absolute inset-0 z-10 bg-gradient-to-t from-[rgba(10,22,40,0.42)] via-[rgba(10,22,40,0.1)] to-transparent" />
             <div className="relative h-[360px] sm:hidden">
-              {sortedSlides.map((slide, index) => (
-                <div key={`${slide.sort_order}-${slide.image_path}-mobile`} className={`absolute inset-0 transition-opacity duration-700 ${index === activeSlide ? 'opacity-100' : 'opacity-0'}`}>
-                  <Image src={getPublicImageUrl(slide.mobile_image_path || slide.image_path)} alt={slide.button_text || `Bespoke slide ${index + 1}`} fill priority={index === 0} sizes="100vw" className="h-full w-full object-cover" />
-                </div>
-              ))}
+              <Image
+                key={`${currentSlide.sort_order}-${currentSlide.mobile_image_path || currentSlide.image_path}-mobile`}
+                src={getPublicImageUrl(currentSlide.mobile_image_path || currentSlide.image_path)}
+                alt={currentSlide.button_text || `Bespoke slide ${activeSlide + 1}`}
+                fill
+                priority={activeSlide === 0}
+                sizes="100vw"
+                className="h-full w-full object-cover"
+              />
             </div>
             <div className="relative hidden sm:block aspect-[1920/620]">
-              {sortedSlides.map((slide, index) => (
-                <div key={`${slide.sort_order}-${slide.image_path}-desktop`} className={`absolute inset-0 transition-opacity duration-700 ${index === activeSlide ? 'opacity-100' : 'opacity-0'}`}>
-                  <Image src={getPublicImageUrl(slide.image_path)} alt={slide.button_text || `Bespoke slide ${index + 1}`} fill priority={index === 0} sizes="100vw" className="h-full w-full object-cover" />
-                </div>
-              ))}
+              <Image
+                key={`${currentSlide.sort_order}-${currentSlide.image_path}-desktop`}
+                src={getPublicImageUrl(currentSlide.image_path)}
+                alt={currentSlide.button_text || `Bespoke slide ${activeSlide + 1}`}
+                fill
+                priority={activeSlide === 0}
+                sizes="100vw"
+                className="h-full w-full object-cover"
+              />
             </div>
             <div className="absolute inset-x-0 bottom-0 z-20 flex items-end justify-between gap-6 px-4 pb-4 sm:px-6 sm:pb-6 lg:px-8 lg:pb-8">
               <div className="flex min-h-[48px] items-end">
