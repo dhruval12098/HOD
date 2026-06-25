@@ -12,6 +12,8 @@ import { getSiteUrl } from "@/lib/site-url";
 import JsonLd from "@/components/seo/JsonLd";
 import { createOrganizationSchema } from "@/lib/structured-data";
 import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
+import MaintenanceScreen from "@/components/layout/MaintenanceScreen";
+import { getMaintenanceMode } from "@/lib/maintenance";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -45,11 +47,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const maintenanceMode = await getMaintenanceMode()
+
   return (
     <html
       lang="en"
@@ -61,15 +65,19 @@ export default function RootLayout({
         <Suspense fallback={null}>
           <GoogleAnalytics />
         </Suspense>
-        <LenisProvider>
-          <WishlistProvider>
-            <CurrencyProvider>
-              <CartProvider>
-                <SiteChrome>{children}</SiteChrome>
-              </CartProvider>
-            </CurrencyProvider>
-          </WishlistProvider>
-        </LenisProvider>
+        {maintenanceMode.enabled ? (
+          <MaintenanceScreen message={maintenanceMode.message} />
+        ) : (
+          <LenisProvider>
+            <WishlistProvider>
+              <CurrencyProvider>
+                <CartProvider>
+                  <SiteChrome>{children}</SiteChrome>
+                </CartProvider>
+              </CurrencyProvider>
+            </WishlistProvider>
+          </LenisProvider>
+        )}
       </body>
     </html>
   );
