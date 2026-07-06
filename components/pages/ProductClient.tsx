@@ -9,7 +9,6 @@ import { Toast } from '@/components/home/Toast';
 import ProductBreadcrumb from '@/components/product/ProductBreadcrumb';
 import ProductGallery from '@/components/product/ProductGallery';
 import ProductPriceBlock from '@/components/product/ProductPriceBlock';
-import ProductDescription from '@/components/product/ProductDescription';
 import ProductMetalComposition from '@/components/product/ProductMetalComposition';
 import ProductConfigurator from '@/components/product/ProductConfigurator';
 import RingGuide from '@/components/product/RingGuide';
@@ -359,7 +358,6 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
               </h1>
 
               <ProductPriceBlock priceFrom={activePrice} compact />
-              <ProductDescription text={description} compact />
 
               <ProductConfigurator
                 product={configuredProduct}
@@ -419,6 +417,7 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
                   Know Your Setting
                 </h2>
                 <ProductTabs
+                  description={description}
                   specifications={product.specificationRows}
                   productDetails={product.productDetailRows}
                   detailSections={product.detailSections}

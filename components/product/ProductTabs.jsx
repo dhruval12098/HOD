@@ -12,6 +12,7 @@ import SpecSection from './SpecSection';
 
 /**
  * @param {{
+ *  description?: string
  *  specifications?: ProductTabRow[]
  *  productDetails?: ProductTabRow[]
  *  detailSections?: ProductTabDetailSection[]
@@ -24,6 +25,7 @@ import SpecSection from './SpecSection';
  * }} props
  */
 export default function ProductTabs({
+  description = '',
   specifications = [],
   productDetails = [],
   detailSections = [],
@@ -35,6 +37,7 @@ export default function ProductTabs({
   detailsAccordion = false,
 }) {
   const [openPanels, setOpenPanels] = useState({
+    description: true,
     details: true,
     shipping: false,
     care: false,
@@ -118,13 +121,35 @@ export default function ProductTabs({
           <div className="animate-[fadeUp_0.4s_ease]">
             {detailsAccordion && detailsRows.length > 0 ? (
               <div className="overflow-hidden border-y border-[rgba(10,22,40,0.10)] bg-transparent">
+                {description ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => togglePanel('description')}
+                      className="flex w-full items-center justify-between border-b border-[rgba(10,22,40,0.08)] px-1 py-4 text-left"
+                    >
+                      <div className="flex items-center font-sans text-[16px] font-medium text-[#0A1628]">
+                        Description
+                      </div>
+                      <ChevronDown className={`h-5 w-5 text-[#8B94A5] transition-transform duration-300 ${openPanels.description ? 'rotate-180' : ''}`} />
+                    </button>
+                    <div className={`${openPanels.description ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'} grid transition-all duration-300`}>
+                      <div className="overflow-hidden">
+                        <div className="px-1 py-5">
+                          <p className="max-w-[58ch] font-sans text-[13px] font-light leading-[1.9] tracking-[0.02em] text-[#253246]">
+                            {description}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : null}
                 <button
                   type="button"
                   onClick={() => togglePanel('details')}
                   className="flex w-full items-center justify-between border-b border-[rgba(10,22,40,0.08)] px-1 py-4 text-left"
                 >
-                  <div className="flex items-center gap-3 font-sans text-[16px] font-medium text-[#0A1628]">
-                    <span className="text-[18px] leading-none">+</span>
+                  <div className="flex items-center font-sans text-[16px] font-medium text-[#0A1628]">
                     Details
                   </div>
                   <ChevronDown className={`h-5 w-5 text-[#8B94A5] transition-transform duration-300 ${openPanels.details ? 'rotate-180' : ''}`} />
