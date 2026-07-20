@@ -17,10 +17,14 @@ export interface Product {
   featured: boolean;
   isNew: boolean;
   shortMeta: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  h1Title?: string;
   gemColor: string;
   gemStyle: GemStyle;
   imageUrl?: string;
   galleryUrls?: string[];
+  imageAlts?: string[];
   videoUrl?: string;
   model3dUrl?: string;
 }

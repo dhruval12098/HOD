@@ -110,6 +110,21 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
       ? metalImages
       : [storefrontProduct.imageUrl, ...(storefrontProduct.galleryUrls || [])].filter((entry): entry is string => typeof entry === 'string' && entry.length > 0);
   }, [selectedCombinedVariant, selectedMetalMedia, storefrontProduct.defaultVariantMediaItems, storefrontProduct.galleryUrls, storefrontProduct.imageUrl]);
+  const activeImageAlts = useMemo<string[]>(() => {
+    if (selectedCombinedVariant) {
+      const variantAlts = selectedCombinedVariant.mediaItems
+        .filter((entry) => entry.type === 'image')
+        .map((entry) => entry.altText || product.name);
+      const fallbackAlts = storefrontProduct.defaultVariantMediaItems
+        .filter((entry) => entry.type === 'image')
+        .map((entry) => entry.altText || product.name);
+
+      if (variantAlts.length > 0) return variantAlts;
+      if (fallbackAlts.length > 0) return fallbackAlts;
+    }
+
+    return storefrontProduct.imageAlts?.length ? storefrontProduct.imageAlts : activeImageUrls.map(() => product.name);
+  }, [activeImageUrls, product.name, selectedCombinedVariant, storefrontProduct.defaultVariantMediaItems, storefrontProduct.imageAlts]);
   const activeVideoUrl =
     selectedCombinedVariant?.mediaItems.find((entry) => entry.type === 'video')?.url ||
     storefrontProduct.defaultVariantMediaItems.find((entry) => entry.type === 'video')?.url ||
@@ -122,10 +137,11 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
       priceFrom: activePrice,
       imageUrl: activeImageUrls[0] || storefrontProduct.imageUrl,
       galleryUrls: activeImageUrls.length > 1 ? activeImageUrls.slice(1) : [],
+      imageAlts: activeImageAlts,
       videoUrl: activeVideoUrl,
       model3dUrl: storefrontProduct.model3dUrl,
     }),
-    [activeImageUrls, activePrice, activeVideoUrl, storefrontProduct]
+    [activeImageAlts, activeImageUrls, activePrice, activeVideoUrl, storefrontProduct]
   );
   const configuredProduct = useMemo(
     () => ({
@@ -347,6 +363,7 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
               dark={isDark}
               imageUrl={activeProduct.imageUrl}
               galleryUrls={activeProduct.galleryUrls}
+              imageAlts={activeProduct.imageAlts}
               videoUrl={activeProduct.videoUrl}
               model3dUrl={activeProduct.model3dUrl}
             />
@@ -354,7 +371,7 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
           info={(
             <div>
               <h1 className="font-display-title mb-[10px] text-[clamp(25px,2.8vw,34px)] font-normal leading-[1.12] tracking-[0.01em] text-[#0A1628]">
-                {product.name}
+                {storefrontProduct.h1Title || product.name}
               </h1>
 
               <ProductPriceBlock priceFrom={activePrice} compact />

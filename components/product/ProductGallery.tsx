@@ -11,6 +11,7 @@ interface ProductGalleryProps {
   dark?: boolean;
   imageUrl?: string;
   galleryUrls?: string[];
+  imageAlts?: string[];
   videoUrl?: string;
   model3dUrl?: string;
 }
@@ -34,7 +35,7 @@ declare global {
   }
 }
 
-type MediaAsset = { type: 'image' | 'video' | 'model'; url: string };
+type MediaAsset = { type: 'image' | 'video' | 'model'; url: string; alt?: string };
 type ThumbnailSlot = MediaAsset | { type: 'placeholder'; key: string };
 type MagnifierState = { key: string; x: number; y: number } | null;
 
@@ -59,6 +60,7 @@ export default function ProductGallery({
   dark = false,
   imageUrl,
   galleryUrls = [],
+  imageAlts = [],
   videoUrl,
   model3dUrl,
 }: ProductGalleryProps) {
@@ -80,14 +82,14 @@ export default function ProductGallery({
     const imageAssets = [imageUrl, ...galleryUrls]
       .filter((url): url is string => typeof url === 'string' && url.length > 0)
       .slice(0, imageSlots)
-      .map((url) => ({ type: 'image' as const, url }));
+      .map((url, index) => ({ type: 'image' as const, url, alt: imageAlts[index] }));
 
     const nonImageAssets: MediaAsset[] = [];
     if (videoUrl) nonImageAssets.push({ type: 'video', url: videoUrl });
     if (model3dUrl) nonImageAssets.push({ type: 'model', url: model3dUrl });
 
     return [...imageAssets, ...nonImageAssets];
-  }, [imageUrl, galleryUrls, videoUrl, model3dUrl]);
+  }, [imageUrl, galleryUrls, imageAlts, videoUrl, model3dUrl]);
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [magnifier, setMagnifier] = useState<MagnifierState>(null);
@@ -184,7 +186,7 @@ export default function ProductGallery({
                   <>
                     <img
                       src={asset.url}
-                      alt={`Jewellery product media ${index + 1}`}
+                      alt={asset.alt || `Jewellery product media ${index + 1}`}
                       className={mainMediaClass}
                       loading="lazy"
                     />
@@ -252,7 +254,7 @@ export default function ProductGallery({
               <div className="absolute inset-0 overflow-hidden">
                 <img
                   src={activeAsset.url}
-                  alt="Jewellery product media"
+                  alt={activeAsset.alt || 'Jewellery product media'}
                   className={mainMediaClass}
                   loading="lazy"
                 />
@@ -313,7 +315,7 @@ export default function ProductGallery({
                     </div>
                   ) : thumb?.type === 'image' ? (
                     <div className="relative h-full w-full overflow-hidden">
-                      <img src={thumb.url} alt={`Product view ${index + 1}`} className={thumbMediaClass} loading="lazy" />
+                      <img src={thumb.url} alt={thumb.alt || `Product view ${index + 1}`} className={thumbMediaClass} loading="lazy" />
                     </div>
                   ) : (
                     <GemSVG style={gemStyle} size={70} color={gemColor} />

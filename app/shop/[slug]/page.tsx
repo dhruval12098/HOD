@@ -22,8 +22,8 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   }
 
   return createPageMetadata({
-    title: product.name,
-    description: `${product.shortMeta} - House of Diams`,
+    title: product.seoTitle || product.name,
+    description: product.seoDescription || `${product.shortMeta} - House of Diams`,
     path: `/shop/${product.slug}`,
     image: product.imageUrl,
   });

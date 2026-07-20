@@ -136,6 +136,9 @@ type ProductRow = {
   style_id?: string | null
   description: string | null
   tag_line: string | null
+  seo_title?: string | null
+  seo_description?: string | null
+  h1_title?: string | null
   base_price: number | null
   gst_slab_id?: string | null
   stock_quantity?: number | null
@@ -145,6 +148,10 @@ type ProductRow = {
   image_2_path: string | null
   image_3_path: string | null
   image_4_path: string | null
+  image_1_alt?: string | null
+  image_2_alt?: string | null
+  image_3_alt?: string | null
+  image_4_alt?: string | null
   video_path: string | null
   model_3d_url?: string | null
   show_image_1?: boolean | null
@@ -231,6 +238,7 @@ type ProductVariantMediaItemRow = {
   variant_id?: string | null
   media_type: 'image' | 'video'
   media_path: string
+  alt_text?: string | null
   sort_order?: number | null
   is_default_fallback?: boolean | null
 }
@@ -345,9 +353,9 @@ export type StorefrontProduct = Product & {
     baseMetalName?: string | null
     price: number
     isDefault: boolean
-    mediaItems: { id: string; type: 'image' | 'video'; url: string; sortOrder: number }[]
+    mediaItems: { id: string; type: 'image' | 'video'; url: string; altText?: string | null; sortOrder: number }[]
   }[]
-  defaultVariantMediaItems: { id: string; type: 'image' | 'video'; url: string; sortOrder: number }[]
+  defaultVariantMediaItems: { id: string; type: 'image' | 'video'; url: string; altText?: string | null; sortOrder: number }[]
 }
 
 function toPublicUrl(path: string | null | undefined) {
@@ -585,6 +593,7 @@ const fetchStorefrontProducts = async () => {
         id: entry.id,
         type: entry.media_type,
         url: toPublicUrl(entry.media_path) ?? entry.media_path,
+        altText: entry.alt_text ?? null,
         sortOrder: Number(entry.sort_order ?? 0),
       }))
       .filter((entry) => Boolean(entry.url))
@@ -598,6 +607,7 @@ const fetchStorefrontProducts = async () => {
             id: mediaEntry.id,
             type: mediaEntry.media_type,
             url: toPublicUrl(mediaEntry.media_path) ?? mediaEntry.media_path,
+            altText: mediaEntry.alt_text ?? null,
             sortOrder: Number(mediaEntry.sort_order ?? 0),
           }))
           .filter((mediaEntry) => Boolean(mediaEntry.url))
@@ -627,10 +637,10 @@ const fetchStorefrontProducts = async () => {
         : selectedMetals.flatMap((metal) => {
             const metalSpecificMedia = productMetalMediaRows.find((entry) => entry.metal_id === metal.id) || fallbackMedia
             const mediaItems = [
-              { id: `${product.id}-${metal.id}-legacy-image-1`, type: 'image' as const, url: metalSpecificMedia?.image_1_path || '' },
-              { id: `${product.id}-${metal.id}-legacy-image-2`, type: 'image' as const, url: metalSpecificMedia?.image_2_path || '' },
-              { id: `${product.id}-${metal.id}-legacy-image-3`, type: 'image' as const, url: metalSpecificMedia?.image_3_path || '' },
-              { id: `${product.id}-${metal.id}-legacy-image-4`, type: 'image' as const, url: metalSpecificMedia?.image_4_path || '' },
+              { id: `${product.id}-${metal.id}-legacy-image-1`, type: 'image' as const, url: metalSpecificMedia?.image_1_path || '', altText: product.image_1_alt ?? null },
+              { id: `${product.id}-${metal.id}-legacy-image-2`, type: 'image' as const, url: metalSpecificMedia?.image_2_path || '', altText: product.image_2_alt ?? null },
+              { id: `${product.id}-${metal.id}-legacy-image-3`, type: 'image' as const, url: metalSpecificMedia?.image_3_path || '', altText: product.image_3_alt ?? null },
+              { id: `${product.id}-${metal.id}-legacy-image-4`, type: 'image' as const, url: metalSpecificMedia?.image_4_path || '', altText: product.image_4_alt ?? null },
               { id: `${product.id}-${metal.id}-legacy-video`, type: 'video' as const, url: metalSpecificMedia?.video_path || '' },
             ]
               .filter((entry) => Boolean(entry.url))
@@ -688,18 +698,24 @@ const fetchStorefrontProducts = async () => {
       .filter((entry) => entry.type === 'image')
       .map((entry) => entry.url)
       .filter(Boolean)
-    const legacyVisibleImages = [
-      product.show_image_1 === false ? null : toPublicUrl(resolvedMediaSource.image_1_path),
-      product.show_image_2 === false ? null : toPublicUrl(resolvedMediaSource.image_2_path),
-      product.show_image_3 === false ? null : toPublicUrl(resolvedMediaSource.image_3_path),
-      product.show_image_4 === false ? null : toPublicUrl(resolvedMediaSource.image_4_path),
-    ].filter(Boolean) as string[]
+    const legacyVisibleImageEntries = [
+      { url: product.show_image_1 === false ? undefined : toPublicUrl(resolvedMediaSource.image_1_path), alt: product.image_1_alt },
+      { url: product.show_image_2 === false ? undefined : toPublicUrl(resolvedMediaSource.image_2_path), alt: product.image_2_alt },
+      { url: product.show_image_3 === false ? undefined : toPublicUrl(resolvedMediaSource.image_3_path), alt: product.image_3_alt },
+      { url: product.show_image_4 === false ? undefined : toPublicUrl(resolvedMediaSource.image_4_path), alt: product.image_4_alt },
+    ].filter((entry): entry is { url: string; alt: string | null | undefined } => typeof entry.url === 'string' && entry.url.length > 0)
+    const legacyVisibleImages = legacyVisibleImageEntries.map((entry) => entry.url)
+    const legacyVisibleImageAlts = legacyVisibleImageEntries.map((entry) => entry.alt || product.name)
     const visibleImages =
       combinedVariantImages.length > 0
         ? combinedVariantImages
         : fallbackVariantImages.length > 0
           ? fallbackVariantImages
           : legacyVisibleImages
+    const visibleImageAlts =
+      visibleImages === legacyVisibleImages
+        ? legacyVisibleImageAlts
+        : visibleImages.map(() => product.name)
     const combinedVariantVideo = (defaultCombinedVariant?.mediaItems ?? []).find((entry) => entry.type === 'video')?.url
     const fallbackVariantVideo = defaultVariantMediaItems.find((entry) => entry.type === 'video')?.url
     const visibleVideoUrl = combinedVariantVideo || fallbackVariantVideo || (product.show_video === false ? undefined : toPublicUrl(resolvedMediaSource.video_path))
@@ -730,10 +746,14 @@ const fetchStorefrontProducts = async () => {
         optionName: option?.name,
         metals: selectedMetals,
       }),
+      seoTitle: product.seo_title ?? undefined,
+      seoDescription: product.seo_description ?? undefined,
+      h1Title: product.h1_title ?? undefined,
       gemColor: '#D4A840',
       gemStyle: 'round',
       imageUrl: visibleImages[0],
       galleryUrls: visibleImages.length > 1 ? visibleImages.slice(1) : [],
+      imageAlts: visibleImageAlts,
       videoUrl: visibleVideoUrl,
       model3dUrl: product.model_3d_url ?? undefined,
       mainCategoryCode: category?.code || '',
