@@ -136,12 +136,21 @@ function deriveSectionFilterHref(
   return null
 }
 
+const filterQueryKeys = ['subcategory', 'option', 'shape', 'style', 'metal', 'certificate', 'sort', 'page'] as const
+
+function hasFilterQuery(params: Record<string, string | string[] | undefined>) {
+  return filterQueryKeys.some((key) => typeof params[key] === 'string' && Boolean(params[key]))
+}
+
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Promise<{ categorySlug: string }>
+  searchParams: Promise<Record<string, string | string[] | undefined>>
 }): Promise<Metadata> {
   const { categorySlug } = await params
+  const query = await searchParams
   const supabase = createSupabaseServerClient()
   const { data: category } = await supabase
     .from('catalog_categories')
@@ -157,12 +166,22 @@ export async function generateMetadata({
     }
   }
 
-  return createPageMetadata({
+  const metadata = createPageMetadata({
     title: category.name,
     description: category.banner_subtitle || `Browse ${category.name} from the live catalog.`,
     path: `/${category.slug}`,
     image: toPublicUrl(category.banner_desktop_image_path),
   })
+
+  if (!hasFilterQuery(query)) return metadata
+
+  return {
+    ...metadata,
+    robots: {
+      index: false,
+      follow: true,
+    },
+  }
 }
 
 export default async function CategoryCollectionPage({

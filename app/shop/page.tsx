@@ -6,11 +6,34 @@ import { createPageMetadata } from '@/lib/seo';
 import JsonLd from '@/components/seo/JsonLd';
 import { createBreadcrumbSchema } from '@/lib/structured-data';
 
-export const metadata: Metadata = createPageMetadata({
-  title: 'Shop',
-  description: 'Browse our collection of fine jewellery and hip hop jewellery with natural and CVD diamonds.',
-  path: '/shop',
-});
+const filterQueryKeys = ['category', 'subcategory', 'option', 'shape', 'style', 'metal', 'certificate', 'sort', 'page'] as const
+
+function hasFilterQuery(params: Record<string, string | string[] | undefined>) {
+  return filterQueryKeys.some((key) => typeof params[key] === 'string' && Boolean(params[key]))
+}
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}): Promise<Metadata> {
+  const params = await searchParams
+  const metadata = createPageMetadata({
+    title: 'Shop',
+    description: 'Browse our collection of fine jewellery and hip hop jewellery with natural and CVD diamonds.',
+    path: '/shop',
+  })
+
+  if (!hasFilterQuery(params)) return metadata
+
+  return {
+    ...metadata,
+    robots: {
+      index: false,
+      follow: true,
+    },
+  }
+}
 
 export default async function ShopPage({
   searchParams,

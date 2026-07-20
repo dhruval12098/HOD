@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import ProductClient from '@/components/pages/ProductClient';
 import { getStorefrontProductBySlug, getStorefrontProducts } from '@/lib/catalog-products';
 import { createPageMetadata } from '@/lib/seo';
@@ -35,6 +35,10 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
 
   if (!product) {
     notFound();
+  }
+
+  if (product.slug !== slug) {
+    redirect(`/shop/${product.slug}`);
   }
 
   const relatedProducts = (await getStorefrontProducts())

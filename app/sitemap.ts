@@ -43,6 +43,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const categoryEntries = (categoriesResult.data ?? [])
     .filter((category) => category.slug)
+    .filter((category) => !staticRoutes.includes(`/${category.slug}`))
     .map((category) => ({
       url: getCanonicalUrl(`/${category.slug}`).toString(),
       lastModified: now,

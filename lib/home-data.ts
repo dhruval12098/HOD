@@ -100,6 +100,17 @@ export type CollectionPageConfig = {
   showcaseMobileImageUrl?: string;
 };
 
+export type HomeBespokeShowcaseSection = {
+  isEnabled: boolean;
+  eyebrow: string;
+  heading: string;
+  subtitle: string;
+  ctaLabel: string;
+  imageUrl?: string;
+  mobileImageUrl?: string;
+  imageAlt: string;
+};
+
 export type HomeCertificationSection = {
   eyebrow: string;
   heading: string;
@@ -521,6 +532,7 @@ const loadHomePageData = unstable_cache(
       discoverStylesResult,
       hiphopResult,
       collectionPageConfigResult,
+      bespokeShowcaseResult,
       couplesSectionResult,
       diamondInfoResult,
       diamondInfoConfigResult,
@@ -593,6 +605,11 @@ const loadHomePageData = unstable_cache(
         .from('collection_page_config')
         .select('page_enabled, show_in_footer, show_home_showcase, showcase_heading, showcase_subtitle, showcase_cta_label, showcase_cta_href, showcase_image_path, showcase_mobile_image_path')
         .eq('section_key', 'main_collection_page')
+        .maybeSingle(),
+      supabase
+        .from('home_bespoke_showcase_section')
+        .select('is_enabled, eyebrow, heading, subtitle, cta_label, image_path, mobile_image_path, image_alt')
+        .eq('section_key', 'home_bespoke_showcase')
         .maybeSingle(),
       supabase
         .from('couples_section')
@@ -834,6 +851,7 @@ const loadHomePageData = unstable_cache(
     const diamondInfoConfigError = diamondInfoConfigResult.error
     const diamondInfoFeatureError = diamondInfoResult.error
     const collectionPageConfigError = collectionPageConfigResult.error
+    const bespokeShowcaseError = bespokeShowcaseResult.error
     const isMissingDiamondInfoConfigTable =
       diamondInfoConfigError?.code === 'PGRST205' ||
       diamondInfoConfigError?.message?.includes("Could not find the table 'public.diamond_info_config'")
@@ -843,6 +861,9 @@ const loadHomePageData = unstable_cache(
     const isMissingCollectionPageConfigTable =
       collectionPageConfigError?.code === 'PGRST205' ||
       collectionPageConfigError?.message?.includes("Could not find the table 'public.collection_page_config'")
+    const isMissingBespokeShowcaseTable =
+      bespokeShowcaseError?.code === 'PGRST205' ||
+      bespokeShowcaseError?.message?.includes("Could not find the table 'public.home_bespoke_showcase_section'")
 
     if (diamondInfoFeatureError && !isMissingDiamondInfoFeatureTable) {
       throw diamondInfoFeatureError
@@ -852,6 +873,9 @@ const loadHomePageData = unstable_cache(
     }
     if (collectionPageConfigError && !isMissingCollectionPageConfigTable) {
       throw collectionPageConfigError
+    }
+    if (bespokeShowcaseError && !isMissingBespokeShowcaseTable) {
+      throw bespokeShowcaseError
     }
 
     return {
@@ -899,6 +923,18 @@ const loadHomePageData = unstable_cache(
         showcaseCtaHref: collectionPageConfigResult.data?.showcase_cta_href ?? '/collection',
         showcaseImageUrl: toPublicUrl(collectionPageConfigResult.data?.showcase_image_path),
         showcaseMobileImageUrl: toPublicUrl(collectionPageConfigResult.data?.showcase_mobile_image_path),
+      },
+      bespokeShowcaseSection: {
+        isEnabled: isMissingBespokeShowcaseTable ? false : (bespokeShowcaseResult.data?.is_enabled ?? true),
+        eyebrow: bespokeShowcaseResult.data?.eyebrow ?? 'Bespoke Atelier',
+        heading: bespokeShowcaseResult.data?.heading ?? 'Create Something One of One',
+        subtitle:
+          bespokeShowcaseResult.data?.subtitle ??
+          'Begin a bespoke commission with House of Diams, from first sketch to final setting.',
+        ctaLabel: bespokeShowcaseResult.data?.cta_label ?? 'Start Bespoke Enquiry',
+        imageUrl: toPublicUrl(bespokeShowcaseResult.data?.image_path),
+        mobileImageUrl: toPublicUrl(bespokeShowcaseResult.data?.mobile_image_path),
+        imageAlt: bespokeShowcaseResult.data?.image_alt ?? 'House of Diams bespoke jewellery showcase',
       },
       couplesData: {
         eyebrow: couplesSectionResult.data?.eyebrow ?? 'Love Stories',

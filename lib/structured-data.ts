@@ -1,4 +1,5 @@
 import type { StorefrontProduct } from '@/lib/catalog-products'
+import type { BlogPost } from '@/lib/data/blog-posts'
 import { getCanonicalUrl, getSiteUrl } from '@/lib/site-url'
 
 type FaqSchemaItem = {
@@ -100,5 +101,33 @@ export function createFaqSchema(items: FaqSchemaItem[]) {
         text: item.answer,
       },
     })),
+  }
+}
+
+export function createBlogPostingSchema(post: BlogPost, imageUrl?: string | null) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.titleRaw || post.title,
+    description: post.subtitle,
+    image: imageUrl ? [imageUrl] : undefined,
+    datePublished: post.date,
+    dateModified: post.date,
+    author: {
+      '@type': 'Person',
+      name: post.author,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'House of Diams',
+      logo: {
+        '@type': 'ImageObject',
+        url: getCanonicalUrl('/logo.jpeg').toString(),
+      },
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': getCanonicalUrl(`/blog/${post.slug ?? ''}`).toString(),
+    },
   }
 }

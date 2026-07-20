@@ -36,6 +36,7 @@ declare global {
 
 type MediaAsset = { type: 'image' | 'video' | 'model'; url: string };
 type ThumbnailSlot = MediaAsset | { type: 'placeholder'; key: string };
+type MagnifierState = { key: string; x: number; y: number } | null;
 
 function ModelViewer({ src }: { src: string }) {
   return React.createElement('model-viewer', {
@@ -89,6 +90,7 @@ export default function ProductGallery({
   }, [imageUrl, galleryUrls, videoUrl, model3dUrl]);
 
   const [activeIndex, setActiveIndex] = useState(0);
+  const [magnifier, setMagnifier] = useState<MagnifierState>(null);
   const activeAsset = assets[activeIndex] ?? null;
   const thumbnailSlots = useMemo<ThumbnailSlot[]>(() => {
     const minSlots = 5;
@@ -136,41 +138,74 @@ export default function ProductGallery({
 
     return classes.join(' ');
   };
+  const updateMagnifier = (event: React.MouseEvent<HTMLDivElement>, key: string) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = ((event.clientX - rect.left) / rect.width) * 100;
+    const y = ((event.clientY - rect.top) / rect.height) * 100;
+    setMagnifier({
+      key,
+      x: Math.max(0, Math.min(100, x)),
+      y: Math.max(0, Math.min(100, y)),
+    });
+  };
 
   return (
     <div>
       <div className="hidden lg:block">
         <div className="grid grid-cols-2 gap-1 overflow-hidden rounded-[28px]">
-          {desktopGridAssets.map((asset, index) => (
-            <div
-              key={`${asset.type}-${asset.url}-${index}`}
-              className={`
-                ${bgMain} relative aspect-square overflow-hidden border ${getDesktopTileRadius(index)}
-              `}
-            >
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(10,22,40,0.1),transparent_70%)]" />
-              {asset.type === 'model' ? (
-                <ModelViewer src={asset.url} />
-              ) : asset.type === 'video' ? (
-                <video
-                  src={asset.url}
-                  className={mainMediaClass}
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  preload="auto"
-                />
-              ) : (
-                <img
-                  src={asset.url}
-                  alt={`Jewellery product media ${index + 1}`}
-                  className={mainMediaClass}
-                  loading="lazy"
-                />
-              )}
-            </div>
-          ))}
+          {desktopGridAssets.map((asset, index) => {
+            const tileKey = `${asset.type}-${asset.url}-${index}`;
+            const isMagnified = asset.type === 'image' && magnifier?.key === tileKey;
+
+            return (
+              <div
+                key={tileKey}
+                className={`
+                  ${bgMain} group relative aspect-square overflow-hidden border ${getDesktopTileRadius(index)}
+                  ${asset.type === 'image' ? 'cursor-zoom-in' : ''}
+                `}
+                onMouseMove={asset.type === 'image' ? (event) => updateMagnifier(event, tileKey) : undefined}
+                onMouseLeave={asset.type === 'image' ? () => setMagnifier(null) : undefined}
+              >
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(10,22,40,0.1),transparent_70%)]" />
+                {asset.type === 'model' ? (
+                  <ModelViewer src={asset.url} />
+                ) : asset.type === 'video' ? (
+                  <video
+                    src={asset.url}
+                    className={mainMediaClass}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="auto"
+                  />
+                ) : (
+                  <>
+                    <img
+                      src={asset.url}
+                      alt={`Jewellery product media ${index + 1}`}
+                      className={mainMediaClass}
+                      loading="lazy"
+                    />
+                    {isMagnified ? (
+                      <div
+                        className="pointer-events-none absolute z-20 h-[190px] w-[190px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/80 bg-white bg-no-repeat shadow-[0_14px_45px_rgba(10,22,40,0.26),inset_0_0_0_1px_rgba(10,22,40,0.10)] ring-1 ring-[rgba(10,22,40,0.16)]"
+                        style={{
+                          left: `${magnifier.x}%`,
+                          top: `${magnifier.y}%`,
+                          backgroundImage: `url(${asset.url})`,
+                          backgroundSize: '240%',
+                          backgroundPosition: `${magnifier.x}% ${magnifier.y}%`,
+                        }}
+                        aria-hidden="true"
+                      />
+                    ) : null}
+                  </>
+                )}
+              </div>
+            );
+          })}
           {desktopGridAssets.length === 0 ? (
             <div
               className={`

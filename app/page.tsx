@@ -39,6 +39,7 @@ export default async function Home() {
     discoverRingsItems,
     hiphopSection,
     collectionPageConfig,
+    bespokeShowcaseSection,
     couplesData,
     diamondInfoItems,
     diamondInfoConfig,
@@ -69,6 +70,7 @@ export default async function Home() {
       discoverRingsItems={discoverRingsItems}
       hiphopSection={hiphopSection}
       collectionPageConfig={collectionPageConfig}
+      bespokeShowcaseSection={bespokeShowcaseSection}
       couplesData={couplesData}
       diamondInfoItems={diamondInfoItems}
       diamondInfoConfig={diamondInfoConfig}

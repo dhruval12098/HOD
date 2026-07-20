@@ -423,6 +423,7 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
                   detailSections={product.detailSections}
                   shippingContent={product.shippingContent}
                   careWarrantyContent={product.careWarrantyContent}
+                  faqItems={product.faqItems}
                   detailsAccordion
                 />
               </div>

@@ -18,6 +18,7 @@ import SpecSection from './SpecSection';
  *  detailSections?: ProductTabDetailSection[]
  *  shippingContent?: ProductTabPolicy | null
  *  careWarrantyContent?: ProductTabPolicy | null
+ *  faqItems?: { id?: string, question: string, answer: string }[]
  *  showSections?: boolean
  *  showPolicies?: boolean
  *  cardGrid?: boolean
@@ -31,6 +32,7 @@ export default function ProductTabs({
   detailSections = [],
   shippingContent = null,
   careWarrantyContent = null,
+  faqItems = [],
   showSections = true,
   showPolicies = true,
   cardGrid = false,
@@ -41,6 +43,7 @@ export default function ProductTabs({
     details: true,
     shipping: false,
     care: false,
+    faqs: {},
   });
 
   const visibleSections = useMemo(() => {
@@ -85,6 +88,10 @@ export default function ProductTabs({
   const detailsRows = useMemo(
     () => visibleSections.flatMap((section) => section.rows.map(([label, value]) => ({ label, value, section: section.title }))),
     [visibleSections]
+  );
+  const visibleFaqs = useMemo(
+    () => faqItems.filter((item) => item?.question?.trim() && item?.answer?.trim()),
+    [faqItems]
   );
 
   const renderPolicyBody = (body, keyPrefix) => (
@@ -240,6 +247,43 @@ export default function ProductTabs({
                 </button>
                 <div className={`${openPanels.care ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'} grid transition-all duration-300`}>
                   {renderPolicyBody(careWarrantyContent.body, 'care')}
+                </div>
+              </div>
+            ) : null}
+
+            {visibleFaqs.length > 0 ? (
+              <div className="border-b border-[rgba(10,22,40,0.10)] last:border-b-0">
+                <div className={detailsAccordion ? 'px-1 py-4' : 'border-b border-[rgba(10,22,40,0.10)] bg-white px-6 py-5'}>
+                  <span className={policyTitleClass}>Product FAQs</span>
+                </div>
+                <div>
+                  {visibleFaqs.map((item, index) => {
+                    const key = item.id || `${item.question}-${index}`;
+                    const isOpen = Boolean(openPanels.faqs[key]);
+                    return (
+                      <div key={key} className="border-t border-[rgba(10,22,40,0.08)] first:border-t-0">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setOpenPanels((current) => ({
+                              ...current,
+                              faqs: {
+                                ...current.faqs,
+                                [key]: !current.faqs[key],
+                              },
+                            }))
+                          }
+                          className={policyButtonClass}
+                        >
+                          <span className={policyTitleClass}>{item.question}</span>
+                          <ChevronDown className={`${chevronClass} text-[#8B94A5] transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+                        </button>
+                        <div className={`${isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'} grid transition-all duration-300`}>
+                          {renderPolicyBody(item.answer, `faq-${index}`)}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             ) : null}

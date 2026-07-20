@@ -1,7 +1,13 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Select } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/shadcn-select';
 
 function RevealDiv({
   children,
@@ -275,15 +281,22 @@ export default function BespokeForm({ onSuccess, initialConfig }: BespokeFormPro
                   <label className="mb-2 block text-[9px] font-normal uppercase tracking-[0.28em] text-[#6A6A6A]" htmlFor="b-piece">
                     Piece Type
                   </label>
+                  <input tabIndex={-1} readOnly required aria-label="Piece type" value={form.piece} className="pointer-events-none absolute h-px w-px opacity-0" />
                   <Select
-                    required
-                    validationLabel="Piece type"
                     value={form.piece}
                     onValueChange={setDropdown('piece')}
-                    placeholder="Select piece..."
-                    options={config.pieceTypes.map((item) => ({ value: item.label, label: item.label }))}
-                    triggerClassName="bg-[#FCFCFA] font-sans text-[13px] font-light tracking-[0.02em] text-[#0A1628]"
-                  />
+                  >
+                    <SelectTrigger className="rounded-none bg-[#FCFCFA] font-sans text-[13px] font-light tracking-[0.02em] text-[#0A1628]">
+                      <SelectValue placeholder="Select piece..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {config.pieceTypes.map((item) => (
+                        <SelectItem key={item.id ?? item.label} value={item.label}>
+                          {item.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
@@ -291,13 +304,20 @@ export default function BespokeForm({ onSuccess, initialConfig }: BespokeFormPro
                     Preferred Stone
                   </label>
                   <Select
-                    validationLabel="Preferred stone"
                     value={form.stone}
                     onValueChange={setDropdown('stone')}
-                    placeholder="Stone preference..."
-                    options={config.stoneOptions.map((item) => ({ value: item.label, label: item.label }))}
-                    triggerClassName="bg-[#FCFCFA] font-sans text-[13px] font-light tracking-[0.02em] text-[#0A1628]"
-                  />
+                  >
+                    <SelectTrigger className="rounded-none bg-[#FCFCFA] font-sans text-[13px] font-light tracking-[0.02em] text-[#0A1628]">
+                      <SelectValue placeholder="Stone preference..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {config.stoneOptions.map((item) => (
+                        <SelectItem key={item.id ?? item.label} value={item.label}>
+                          {item.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
@@ -305,13 +325,20 @@ export default function BespokeForm({ onSuccess, initialConfig }: BespokeFormPro
                     Approx. Carat
                   </label>
                   <Select
-                    validationLabel="Approximate carat"
                     value={form.carat}
                     onValueChange={setDropdown('carat')}
-                    placeholder="Select size..."
-                    options={config.caratOptions.map((item) => ({ value: item.label, label: item.label }))}
-                    triggerClassName="bg-[#FCFCFA] font-sans text-[13px] font-light tracking-[0.02em] text-[#0A1628]"
-                  />
+                  >
+                    <SelectTrigger className="rounded-none bg-[#FCFCFA] font-sans text-[13px] font-light tracking-[0.02em] text-[#0A1628]">
+                      <SelectValue placeholder="Select size..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {config.caratOptions.map((item) => (
+                        <SelectItem key={item.id ?? item.label} value={item.label}>
+                          {item.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
@@ -319,13 +346,20 @@ export default function BespokeForm({ onSuccess, initialConfig }: BespokeFormPro
                     Preferred Metal
                   </label>
                   <Select
-                    validationLabel="Preferred metal"
                     value={form.metal}
                     onValueChange={setDropdown('metal')}
-                    placeholder="Select metal..."
-                    options={config.metalOptions.map((item) => ({ value: item.label, label: item.label }))}
-                    triggerClassName="bg-[#FCFCFA] font-sans text-[13px] font-light tracking-[0.02em] text-[#0A1628]"
-                  />
+                  >
+                    <SelectTrigger className="rounded-none bg-[#FCFCFA] font-sans text-[13px] font-light tracking-[0.02em] text-[#0A1628]">
+                      <SelectValue placeholder="Select metal..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {config.metalOptions.map((item) => (
+                        <SelectItem key={item.id ?? item.label} value={item.label}>
+                          {item.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="col-span-2 max-md:col-span-1">

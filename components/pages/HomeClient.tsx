@@ -14,12 +14,14 @@ import BlogGrid from '@/components/blog/BlogGrid';
 import { posts } from '@/lib/data/blog-posts';
 import type { BlogPost } from '@/lib/data/blog-posts';
 import EnquireModal from '@/components/home/EnquireModal';
+import BespokeEnquiryModal from '@/components/home/BespokeEnquiryModal';
 import Toast from '@/components/home/Toast';
 import { useHomeLoader } from '@/components/layout/HomeLoaderContext';
 import { persistHomeLoaderCache, shouldSkipHomeLoader } from '@/lib/home-loader-cache';
 import type {
   HomeBestSellerProduct,
   HomeBestSellerSection,
+  HomeBespokeShowcaseSection,
   HomeCollectionItem,
   HomeCoupleItem,
   HomeDiscoverItem,
@@ -34,6 +36,7 @@ import type {
 const HipHopShowcase = dynamic(() => import('@/components/home/HipHopShowcase'), { loading: () => null });
 const BestSellers = dynamic(() => import('@/components/home/BestSellers'), { loading: () => null });
 const CollectionShowcase = dynamic(() => import('@/components/home/CollectionShowcase'), { loading: () => null });
+const BespokeShowcase = dynamic(() => import('@/components/home/BespokeShowcase'), { loading: () => null });
 const DiscoverRings = dynamic(() => import('@/components/home/DiscoverRings'), { loading: () => null });
 const DiamondInfoSequence = dynamic(() => import('@/components/home/DiamondInfoSequence'), { loading: () => null });
 const Testimonials = dynamic(() => import('@/components/home/Testimonials'), { loading: () => null });
@@ -74,6 +77,7 @@ export default function HomeClient({
   discoverRingsItems = [],
   hiphopSection,
   collectionPageConfig,
+  bespokeShowcaseSection,
   couplesData,
   diamondInfoItems = [],
   diamondInfoConfig,
@@ -90,6 +94,7 @@ export default function HomeClient({
   discoverRingsItems?: HomeDiscoverItem[]
   hiphopSection: HomeHipHopSection
   collectionPageConfig: CollectionPageConfig
+  bespokeShowcaseSection: HomeBespokeShowcaseSection
   couplesData: { eyebrow: string; heading: string; subtitle: string; items: HomeCoupleItem[] }
   diamondInfoItems?: HomeDiamondInfoItem[]
   diamondInfoConfig?: HomeDiamondInfoConfig
@@ -102,6 +107,7 @@ export default function HomeClient({
   const router = useRouter();
   const { isHomeReady, setIsHomeLoading, setIsHomeReady } = useHomeLoader();
   const [isEnquireOpen, setIsEnquireOpen] = useState(false);
+  const [isBespokeEnquireOpen, setIsBespokeEnquireOpen] = useState(false);
   const [enquireGemName, setEnquireGemName] = useState('');
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
@@ -273,6 +279,9 @@ export default function HomeClient({
       {showPrimarySections ? (
         <>
           <TrustedPartnersMarquee data={trustedPartnersData} />
+          {bespokeShowcaseSection.isEnabled ? (
+            <BespokeShowcase section={bespokeShowcaseSection} onEnquireClick={() => setIsBespokeEnquireOpen(true)} />
+          ) : null}
           {/* <TestimonialMarquee initialData={marqueeData} /> */}
           <Collection items={collectionItems} />
           <Certifications />
@@ -303,6 +312,7 @@ export default function HomeClient({
       ) : null}
 
       {isEnquireOpen && <EnquireModal open={isEnquireOpen} piece={enquireGemName} onClose={handleEnquireClose} />}
+      <BespokeEnquiryModal open={isBespokeEnquireOpen} onClose={() => setIsBespokeEnquireOpen(false)} />
       <Toast message={toastMessage} visible={showToast} />
     </div>
   );

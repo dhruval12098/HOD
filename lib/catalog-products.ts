@@ -17,6 +17,15 @@ type ProductDetailSection = {
   visible: boolean
 }
 
+type ProductFaqItem = {
+  id: string
+  product_id: string
+  question: string
+  answer: string
+  sort_order?: number | null
+  is_active?: boolean | null
+}
+
 type CatalogCategory = {
   id: string
   code: string
@@ -306,6 +315,7 @@ export type StorefrontProduct = Product & {
   detailSections: ProductDetailSection[]
   shippingContent: { title: string; body: string } | null
   careWarrantyContent: { title: string; body: string } | null
+  faqItems: { id: string; question: string; answer: string; sortOrder: number }[]
   descriptionText: string
   tagLineText: string
   customOrderEnabled: boolean
@@ -441,7 +451,7 @@ function resolveMetalMediaDefaults(
 const fetchStorefrontProducts = async () => {
   const supabase = createSupabaseServerClient()
 
-  const [productsResult, categoriesResult, subcategoriesResult, optionsResult, metalsResult, materialValuesResult, certificatesResult, stylesResult, ringCategoriesResult, ringCategorySizesResult, productContentRulesResult, metalSelectionsResult, materialValueSelectionsResult, shapeSelectionsResult, gstSlabsResult, purityPricesResult, metalMediaResult, metalCompositionPartsResult, subcategoryLinksResult, optionLinksResult, metalVariantsResult, variantMediaItemsResult] =
+  const [productsResult, categoriesResult, subcategoriesResult, optionsResult, metalsResult, materialValuesResult, certificatesResult, stylesResult, ringCategoriesResult, ringCategorySizesResult, productContentRulesResult, metalSelectionsResult, materialValueSelectionsResult, shapeSelectionsResult, gstSlabsResult, purityPricesResult, metalMediaResult, metalCompositionPartsResult, subcategoryLinksResult, optionLinksResult, metalVariantsResult, variantMediaItemsResult, productFaqResult] =
     await Promise.all([
       supabase.from('products').select('*').eq('status', 'active').order('created_at', { ascending: false }),
       supabase.from('catalog_categories').select('id, code, name, slug, category_lane'),
@@ -465,6 +475,7 @@ const fetchStorefrontProducts = async () => {
       supabase.from('product_option_links').select('product_id, option_id, is_primary, sort_order').order('sort_order', { ascending: true }),
       supabase.from('product_metal_variants').select('*').order('sort_order', { ascending: true }),
       supabase.from('product_variant_media_items').select('*').order('sort_order', { ascending: true }),
+      supabase.from('product_faq_items').select('id, product_id, question, answer, sort_order, is_active').eq('is_active', true).order('sort_order', { ascending: true }),
     ])
 
   const error =
@@ -499,6 +510,7 @@ const fetchStorefrontProducts = async () => {
   const optionLinks = optionLinksResult.error ? ([] as ProductOptionLinkRow[]) : ((optionLinksResult.data || []) as ProductOptionLinkRow[])
   const productMetalVariants = metalVariantsResult.error ? ([] as ProductMetalVariantRow[]) : ((metalVariantsResult.data || []) as ProductMetalVariantRow[])
   const productVariantMediaItems = variantMediaItemsResult.error ? ([] as ProductVariantMediaItemRow[]) : ((variantMediaItemsResult.data || []) as ProductVariantMediaItemRow[])
+  const productFaqItems = productFaqResult.error ? ([] as ProductFaqItem[]) : ((productFaqResult.data || []) as ProductFaqItem[])
   const products = (productsResult.data || []) as ProductRow[]
 
   return products.map((product, index) => {
@@ -809,6 +821,14 @@ const fetchStorefrontProducts = async () => {
             title: product.care_warranty_override_enabled ? product.care_warranty_title_override || careWarrantyRule?.title || 'Care & Warranty' : careWarrantyRule?.title || 'Care & Warranty',
             body: product.care_warranty_override_enabled ? product.care_warranty_body_override || careWarrantyRule?.body || '' : careWarrantyRule?.body || '',
           },
+      faqItems: productFaqItems
+        .filter((item) => item.product_id === product.id && item.question?.trim() && item.answer?.trim())
+        .map((item) => ({
+          id: item.id,
+          question: item.question.trim(),
+          answer: item.answer.trim(),
+          sortOrder: Number(item.sort_order ?? 0),
+        })),
       descriptionText: product.description || '',
       tagLineText: product.tag_line || '',
       customOrderEnabled: Boolean(product.custom_order_enabled),
