@@ -621,44 +621,30 @@ export async function finalizePaidOrder({
     return { error: orderError?.message || 'Order not found.' }
   }
 
-  const gatewayPayload = {
-    ...(order.gateway_payload || {}),
-    payment: {
-      ...((order.gateway_payload as any)?.payment || {}),
-      razorpayOrderId,
-      razorpayPaymentId: paymentId,
-      razorpaySignature: signature || null,
-      paymentMethod: paymentMethod || null,
-      paymentEmail: paymentEmail || null,
-      paymentContact: paymentContact || null,
-      eventType: gatewayPaymentStatus || null,
-    },
-    rawEvent: rawEvent || ((order.gateway_payload as any)?.rawEvent ?? null),
+  const { data: stockFinalization, error: stockFinalizationError } = await adminClient
+    .rpc('finalize_paid_order_with_inventory', {
+      p_order_id: order.id,
+      p_razorpay_order_id: razorpayOrderId,
+      p_payment_id: paymentId,
+      p_signature: signature || null,
+      p_payment_method: paymentMethod || null,
+      p_payment_contact: paymentContact || null,
+      p_payment_email: paymentEmail || null,
+      p_gateway_payment_status: gatewayPaymentStatus || 'captured',
+      p_raw_event: rawEvent ?? null,
+    })
+    .single()
+
+  if (stockFinalizationError) {
+    return { error: stockFinalizationError.message }
   }
 
-  const alreadyPaid = order.payment_status === 'paid'
-  const paidAt = new Date().toISOString()
-
-  const { error: updateError } = await adminClient
-    .from('orders')
-    .update({
-      payment_status: 'paid',
-      gateway_payment_status: gatewayPaymentStatus || 'captured',
-      gateway_order_status: 'paid',
-      razorpay_order_id: razorpayOrderId,
-      razorpay_payment_id: paymentId,
-      razorpay_signature: signature || null,
-      razorpay_payment_method: paymentMethod || null,
-      razorpay_payment_contact: paymentContact || null,
-      razorpay_payment_email: paymentEmail || null,
-      payment_verified_at: paidAt,
-      payment_captured_at: paidAt,
-      gateway_payload: gatewayPayload,
-    })
-    .eq('id', order.id)
-
-  if (updateError) {
-    return { error: updateError.message }
+  if (!stockFinalization?.ok) {
+    return {
+      error:
+        stockFinalization?.message ||
+        'Payment was verified, but stock could not be allocated. Please contact support.',
+    }
   }
 
   const coupon = (order.gateway_payload as any)?.checkout?.coupon
@@ -693,7 +679,7 @@ export async function finalizePaidOrder({
     }
   }
 
-  if (!alreadyPaid) {
+  if (!stockFinalization.already_paid) {
     const { data: items } = await adminClient
       .from('order_items')
       .select('product_name, quantity, line_total')
@@ -728,9 +714,9 @@ export async function finalizePaidOrder({
 
   return {
     data: {
-      orderId: order.id as string,
-      orderNumber: order.order_number as string,
-      totalAmount: Number(order.total_amount || 0),
+      orderId: stockFinalization.order_id as string,
+      orderNumber: stockFinalization.order_number as string,
+      totalAmount: Number(stockFinalization.total_amount || 0),
     },
   } as const
 }

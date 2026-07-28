@@ -85,7 +85,7 @@ export async function POST(request: Request) {
 
   try {
     if ((eventType === 'payment.captured' || eventType === 'order.paid') && razorpayOrderId && razorpayPaymentId) {
-      await finalizePaidOrder({
+      const finalized = await finalizePaidOrder({
         adminClient,
         razorpayOrderId,
         paymentId: razorpayPaymentId,
@@ -95,6 +95,10 @@ export async function POST(request: Request) {
         gatewayPaymentStatus: paymentEntity?.status || eventType,
         rawEvent: payload,
       })
+
+      if ('error' in finalized) {
+        throw new Error(finalized.error)
+      }
     }
 
     if (eventType === 'payment.failed') {
@@ -131,6 +135,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true })
   } catch (error) {
     console.error('Razorpay webhook handling failed:', error)
-    return NextResponse.json({ error: 'Webhook handling failed.' }, { status: 500 })
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Webhook handling failed.' },
+      { status: 500 }
+    )
   }
 }

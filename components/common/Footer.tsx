@@ -50,6 +50,22 @@ type CollectionPageConfigRow = {
   showcase_cta_label?: string | null;
 };
 
+type ContactInfoRow = {
+  id?: number | string | null;
+  sort_order?: number | null;
+  label?: string | null;
+  value?: string | null;
+  note?: string | null;
+  href?: string | null;
+};
+
+const FALLBACK_CONTACT_ROWS: ContactInfoRow[] = [
+  { id: 'fallback-email', label: 'Email', value: 'info@houseofdiams.com', href: 'mailto:info@houseofdiams.com' },
+  { id: 'fallback-phone', label: 'Phone & WhatsApp', value: '+91 93285 36178', href: 'tel:+919328536178' },
+  { id: 'fallback-surat', label: 'Address', value: 'Surat, Gujarat, India' },
+  { id: 'fallback-new-york', label: 'Address', value: '36 W 44th Street, Suite 1000B, New York, 10036, USA' },
+];
+
 function ColLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
     <a
@@ -187,12 +203,13 @@ function CurrencySelector() {
 export default function Footer() {
   const [serviceCategories, setServiceCategories] = useState<FooterCategory[]>([]);
   const [collectionConfig, setCollectionConfig] = useState<CollectionPageConfigRow | null>(null);
+  const [contactRows, setContactRows] = useState<ContactInfoRow[]>([]);
 
   useEffect(() => {
     let ignore = false;
 
     const loadCategories = async () => {
-      const [{ data, error }, { data: configData }] = await Promise.all([
+      const [{ data, error }, { data: configData }, contactResponse] = await Promise.all([
         supabase
           .from('catalog_categories')
           .select('id, name, slug')
@@ -203,11 +220,19 @@ export default function Footer() {
           .select('page_enabled, show_in_footer, showcase_cta_href, showcase_cta_label')
           .eq('section_key', 'main_collection_page')
           .maybeSingle(),
+        fetch('/api/public/contact/info', { cache: 'no-store' }).catch(() => null),
       ]);
 
       if (ignore) return;
       if (!error && data) setServiceCategories(data);
       setCollectionConfig(configData ?? null);
+
+      if (contactResponse?.ok) {
+        const payload = await contactResponse.json().catch(() => null);
+        if (!ignore && Array.isArray(payload?.items)) {
+          setContactRows(payload.items);
+        }
+      }
     };
 
     void loadCategories();
@@ -221,6 +246,10 @@ export default function Footer() {
   const showCollectionLink = Boolean(collectionConfig?.page_enabled && collectionConfig?.show_in_footer);
   const collectionHref = collectionConfig?.showcase_cta_href || '/collection';
   const collectionLabel = collectionConfig?.showcase_cta_label || 'Collection';
+  const footerContactRows = useMemo(
+    () => (contactRows.length ? contactRows : FALLBACK_CONTACT_ROWS).filter((row) => row.value?.trim()),
+    [contactRows]
+  );
 
   return (
     <footer
@@ -307,10 +336,17 @@ export default function Footer() {
 
         <div>
           <ColTitle>CONTACT</ColTitle>
-          <ColLink href="mailto:info@houseofdiams.com">info@houseofdiams.com</ColLink>
-          <ColLink href="tel:+919328536178">+91 93285 36178</ColLink>
-          <ColText>Surat, Gujarat, India</ColText>
-          <ColText>36 W 44th Street, Suite 1000B, New York, 10036, USA</ColText>
+          {footerContactRows.map((row, index) => {
+            const value = row.value?.trim();
+            if (!value) return null;
+            return row.href ? (
+              <ColLink key={row.id ?? `${row.label}-${index}`} href={row.href}>
+                {value}
+              </ColLink>
+            ) : (
+              <ColText key={row.id ?? `${row.label}-${index}`}>{value}</ColText>
+            );
+          })}
         </div>
       </div>
 
