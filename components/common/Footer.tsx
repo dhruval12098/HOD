@@ -89,6 +89,22 @@ function ColText({ children }: { children: React.ReactNode }) {
   );
 }
 
+function ContactText({ value, note }: { value: string; note?: string | null }) {
+  const trimmedNote = note?.trim();
+
+  return (
+    <ColText>
+      {value}
+      {trimmedNote ? (
+        <>
+          <br />
+          <span className="text-white/68">{trimmedNote}</span>
+        </>
+      ) : null}
+    </ColText>
+  );
+}
+
 function ColTitle({ children }: { children: React.ReactNode }) {
   return (
     <p
@@ -344,7 +360,7 @@ export default function Footer() {
                 {value}
               </ColLink>
             ) : (
-              <ColText key={row.id ?? `${row.label}-${index}`}>{value}</ColText>
+              <ContactText key={row.id ?? `${row.label}-${index}`} value={value} note={row.note} />
             );
           })}
         </div>
