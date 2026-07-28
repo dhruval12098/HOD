@@ -89,8 +89,15 @@ function ColText({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ContactText({ value, note }: { value: string; note?: string | null }) {
+function isLinkHref(value?: string | null) {
+  const trimmed = value?.trim();
+  if (!trimmed) return false;
+  return /^(https?:\/\/|mailto:|tel:|\/)/i.test(trimmed);
+}
+
+function ContactText({ value, note, extra }: { value: string; note?: string | null; extra?: string | null }) {
   const trimmedNote = note?.trim();
+  const trimmedExtra = extra?.trim();
 
   return (
     <ColText>
@@ -99,6 +106,12 @@ function ContactText({ value, note }: { value: string; note?: string | null }) {
         <>
           <br />
           <span className="text-white/68">{trimmedNote}</span>
+        </>
+      ) : null}
+      {trimmedExtra ? (
+        <>
+          <br />
+          <span className="text-white/68">{trimmedExtra}</span>
         </>
       ) : null}
     </ColText>
@@ -355,12 +368,13 @@ export default function Footer() {
           {footerContactRows.map((row, index) => {
             const value = row.value?.trim();
             if (!value) return null;
-            return row.href ? (
+            const href = row.href?.trim();
+            return isLinkHref(href) ? (
               <ColLink key={row.id ?? `${row.label}-${index}`} href={row.href}>
                 {value}
               </ColLink>
             ) : (
-              <ContactText key={row.id ?? `${row.label}-${index}`} value={value} note={row.note} />
+              <ContactText key={row.id ?? `${row.label}-${index}`} value={value} note={row.note} extra={href} />
             );
           })}
         </div>
