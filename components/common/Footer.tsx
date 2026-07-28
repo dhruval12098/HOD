@@ -369,7 +369,7 @@ export default function Footer() {
             const value = row.value?.trim();
             if (!value) return null;
             const href = row.href?.trim();
-            return isLinkHref(href) ? (
+            return href && isLinkHref(href) ? (
               <ColLink key={row.id ?? `${row.label}-${index}`} href={href}>
                 {value}
               </ColLink>
