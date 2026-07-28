@@ -81,7 +81,7 @@ function ColLink({ href, children }: { href: string; children: React.ReactNode }
 function ColText({ children }: { children: React.ReactNode }) {
   return (
     <p
-      className="m-0 py-[7px] text-[11px] font-light leading-[1.9] tracking-[0.08em] text-white"
+      className="m-0 max-w-full whitespace-normal break-words py-[7px] text-[11px] font-light leading-[1.9] tracking-[0.08em] text-white"
       style={{ fontFamily: 'var(--font-plus-jakarta), Arial, Helvetica, sans-serif' }}
     >
       {children}
@@ -263,7 +263,7 @@ export default function Footer() {
 
       <div
         className="hod-footer-grid mx-auto max-w-[1400px] pb-[60px]"
-        style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1.2fr', gap: '48px' }}
+        style={{ display: 'grid', gridTemplateColumns: '1.8fr 0.9fr 0.9fr 0.9fr minmax(260px, 1.6fr)', gap: '48px' }}
       >
         <style>{`
           @media (max-width: 1024px) {
