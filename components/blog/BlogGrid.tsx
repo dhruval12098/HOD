@@ -8,11 +8,13 @@ import BlogCardSmall from "./BlogCardSmall";
 interface BlogGridProps {
   posts: BlogPost[];
   onPostClick: (id: number) => void;
+  maxPosts?: number;
 }
 
-export default function BlogGrid({ posts, onPostClick }: BlogGridProps) {
-  const [featured, ...rest] = posts;
-  const smallCards = rest.slice(0, 4);
+export default function BlogGrid({ posts, onPostClick, maxPosts = 5 }: BlogGridProps) {
+  const displayPosts = maxPosts > 0 ? posts.slice(0, maxPosts) : posts;
+  const [featured, ...rest] = displayPosts;
+  const smallCards = rest;
   const mobileCards = [featured, ...smallCards].filter(Boolean) as BlogPost[];
   const [mobilePage, setMobilePage] = useState(0);
   const mobileScrollerRef = useRef<HTMLDivElement | null>(null);

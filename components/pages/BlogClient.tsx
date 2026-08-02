@@ -1,61 +1,42 @@
 'use client'
 
-import { useMemo } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import BlogPostBack from '@/components/blog/BlogPostBack'
-import BlogPostHero from '@/components/blog/BlogPostHero'
-import BlogPostMeta from '@/components/blog/BlogPostMeta'
-import BlogPostBody from '@/components/blog/BlogPostBody'
-import BlogPostTags from '@/components/blog/BlogPostTags'
-import BlogRelatedPosts from '@/components/blog/BlogRelatedPosts'
+import { useRouter } from 'next/navigation'
+import BlogGrid from '@/components/blog/BlogGrid'
 import { posts, type BlogPost } from '@/lib/data/blog-posts'
 
 export default function BlogClient({ blogPosts = posts }: { blogPosts?: BlogPost[] }) {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const safePosts = blogPosts.length > 0 ? blogPosts : posts
-
-  const activeSlug = searchParams.get('slug')
-  const activePostId = Number(searchParams.get('post') ?? safePosts[0]?.id ?? 0)
-  const activePost = useMemo(
-    () =>
-      (activeSlug
-        ? safePosts.find((post) => post.slug === activeSlug)
-        : safePosts.find((post) => post.id === activePostId)) ?? safePosts[0],
-    [activePostId, activeSlug, safePosts]
-  )
-  const relatedPosts = useMemo(
-    () => safePosts.filter((post) => post.id !== activePost.id).slice(0, 3),
-    [activePost, safePosts]
-  )
 
   return (
     <div className="min-h-screen bg-[#faf7f2] text-[#0A1628]">
-      <BlogPostBack onBack={() => router.push('/')} />
-      <BlogPostHero post={activePost} />
+      <section className="mx-auto max-w-[1400px] px-5 pb-20 pt-16 sm:px-7 lg:px-[52px] lg:pb-28 lg:pt-24">
+        <div className="mb-10 flex flex-col gap-5 md:mb-12 md:flex-row md:items-end md:justify-between">
+          <div className="max-w-[720px]">
+            <p className="mb-4 text-[10px] font-normal uppercase tracking-[0.28em] text-[#A17842]">
+              House of Diams Journal
+            </p>
+            <h1 className="font-serif text-[clamp(42px,7vw,84px)] font-normal leading-[0.95] tracking-[0.02em] text-[#0A1628]">
+              Blogs
+            </h1>
+            <p className="mt-6 max-w-[560px] text-[14px] font-light leading-[1.9] tracking-[0.03em] text-[#536070]">
+              Diamond education, jewellery craft, buying guides, and design notes from the House of Diams atelier.
+            </p>
+          </div>
+          <div className="text-[10px] uppercase tracking-[0.22em] text-[#6A6A6A]">
+            {safePosts.length} {safePosts.length === 1 ? 'Article' : 'Articles'}
+          </div>
+        </div>
 
-      <section className="mx-auto max-w-[860px] px-6 py-14">
-        <BlogPostMeta
-          date={activePost.date}
-          author={activePost.author}
-          readTime={activePost.readTime}
+        <BlogGrid
+          posts={safePosts}
+          maxPosts={0}
+          onPostClick={(id) => {
+            const target = safePosts.find((post) => post.id === id)
+            router.push(target?.slug ? `/blog/${target.slug}` : '/blog')
+          }}
         />
-        <BlogPostBody
-          title={activePost.title}
-          subtitle={activePost.subtitle}
-          body={activePost.body}
-          contentBlocks={activePost.contentBlocks}
-        />
-        <BlogPostTags tags={activePost.tags} />
       </section>
-
-      <BlogRelatedPosts
-        posts={relatedPosts}
-        onPostClick={(id) => {
-          const target = safePosts.find((post) => post.id === id)
-          router.push(target?.slug ? `/blog/${target.slug}` : '/blog')
-        }}
-      />
     </div>
   )
 }
