@@ -10,12 +10,9 @@ export default function BlogClient({ blogPosts = posts }: { blogPosts?: BlogPost
 
   return (
     <div className="min-h-screen bg-[#faf7f2] text-[#0A1628]">
-      <section className="mx-auto max-w-[1400px] px-5 pb-20 pt-16 sm:px-7 lg:px-[52px] lg:pb-28 lg:pt-24">
+      <section className="mx-auto max-w-[1400px] px-5 pb-20 pt-10 sm:px-7 lg:px-[52px] lg:pb-28 lg:pt-16">
         <div className="mb-10 flex flex-col gap-5 md:mb-12 md:flex-row md:items-end md:justify-between">
           <div className="max-w-[720px]">
-            <p className="mb-4 text-[10px] font-normal uppercase tracking-[0.28em] text-[#A17842]">
-              House of Diams Journal
-            </p>
             <h1 className="font-serif text-[clamp(42px,7vw,84px)] font-normal leading-[0.95] tracking-[0.02em] text-[#0A1628]">
               Blogs
             </h1>

@@ -1,5 +1,6 @@
 import { mapBlogPostRecord, posts as fallbackPosts, type BlogPost } from '@/lib/data/blog-posts'
 import { createSupabaseServerClient } from '@/lib/server-supabase'
+import { getStorefrontProducts } from '@/lib/catalog-products'
 
 type BlogTagRow = { tag: string; sort_order: number | null }
 type BlogContentBlockRow = {
@@ -31,10 +32,11 @@ type BlogPostRow = {
   sort_order: number | null
   blog_post_tags: BlogTagRow[] | null
   blog_post_content_blocks: BlogContentBlockRow[] | null
+  blog_post_products: { product_id: string; sort_order: number | null }[] | null
 }
 
 const blogPostSelect =
-  'id, slug, category, author, date_label, read_time, bg_key, bg_color, title, title_html, subtitle, body_html, hero_image_path, is_published, sort_order, blog_post_tags(tag, sort_order), blog_post_content_blocks(id, block_type, sort_order, heading, body_html, image_path, image_alt, image_caption, is_enabled)'
+  'id, slug, category, author, date_label, read_time, bg_key, bg_color, title, title_html, subtitle, body_html, hero_image_path, is_published, sort_order, blog_post_tags(tag, sort_order), blog_post_content_blocks(id, block_type, sort_order, heading, body_html, image_path, image_alt, image_caption, is_enabled), blog_post_products(product_id, sort_order)'
 
 function mapRows(rows: BlogPostRow[] | null): BlogPost[] {
   return ((rows?.length ? rows : null)?.map((row) =>
@@ -60,7 +62,22 @@ export async function getPublishedBlogPosts() {
     .eq('is_published', true)
     .order('sort_order', { ascending: true })
 
-  return mapRows(blogRows as BlogPostRow[] | null)
+  const rows = blogRows as BlogPostRow[] | null
+  const mappedPosts = mapRows(rows)
+  if (!rows?.length) return mappedPosts
+
+  const storefrontProducts = await getStorefrontProducts()
+  const productMap = new Map(storefrontProducts.map((product) => [product.dbId, product]))
+
+  return mappedPosts.map((post) => {
+    const sourceRow = rows.find((row) => row.id === post.id)
+    const featuredProducts = (sourceRow?.blog_post_products ?? [])
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+      .map((entry) => productMap.get(entry.product_id))
+      .filter((product): product is NonNullable<typeof product> => Boolean(product))
+
+    return { ...post, featuredProducts }
+  })
 }
 
 export async function getPublishedBlogPostBySlug(slug: string) {

@@ -14,6 +14,7 @@ export interface BlogPost {
   body: string;
   heroImagePath?: string;
   contentBlocks?: BlogPostContentBlock[];
+  featuredProducts?: import('@/lib/catalog-products').StorefrontProduct[];
   isPublished?: boolean;
   sortOrder?: number;
 }

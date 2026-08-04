@@ -6,6 +6,7 @@ import BlogPostHero from '@/components/blog/BlogPostHero'
 import BlogPostMeta from '@/components/blog/BlogPostMeta'
 import BlogPostBody from '@/components/blog/BlogPostBody'
 import BlogPostTags from '@/components/blog/BlogPostTags'
+import BlogProductGrid from '@/components/blog/BlogProductGrid'
 import BlogRelatedPosts from '@/components/blog/BlogRelatedPosts'
 import type { BlogPost } from '@/lib/data/blog-posts'
 
@@ -19,7 +20,7 @@ export default function BlogPostPage({
   const router = useRouter()
 
   return (
-    <div className="min-h-screen bg-[#faf7f2] text-[#0A1628]">
+    <div className="min-h-screen bg-[#faf7f2] font-[var(--font-manrope)] text-[#0A1628]">
       <BlogPostBack onBack={() => router.push('/blog')} />
       <BlogPostHero post={post} />
 
@@ -37,6 +38,8 @@ export default function BlogPostPage({
         />
         <BlogPostTags tags={post.tags} />
       </section>
+
+      <BlogProductGrid products={post.featuredProducts ?? []} />
 
       <BlogRelatedPosts
         posts={relatedPosts}
