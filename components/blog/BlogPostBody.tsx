@@ -13,12 +13,15 @@ export default function BlogPostBody({ title, subtitle, body, contentBlocks = []
   return (
     <>
       <h1
-        className="font-[var(--font-manrope)] text-[clamp(34px,4.7vw,52px)] font-semibold leading-[1.12] text-[#0A0A0A] mb-4 [&_em]:italic [&_em]:text-[#0A1628]"
+        className="blog-title-font mb-6 max-w-[19ch] text-[clamp(36px,5vw,58px)] font-semibold leading-[1.12] tracking-[-0.04em] text-[#0A1628] [&_em]:font-[inherit] [&_em]:italic"
         dangerouslySetInnerHTML={{ __html: title }}
       />
-      <p className="font-[var(--font-manrope)] text-[18px] font-normal text-[#5F6670] leading-[1.75] mb-10">
-        {subtitle}
-      </p>
+      {subtitle ? (
+        <aside aria-label="Article summary" className="mb-11 border-l-[3px] border-[#A7864C] bg-white px-6 py-5 shadow-[0_8px_30px_rgba(10,22,40,0.05)] sm:px-7 sm:py-6">
+          <p className="mb-2 font-[var(--font-manrope)] text-[12px] font-bold uppercase tracking-[0.16em] text-[#765F35]">Article summary</p>
+          <p className="font-[var(--font-manrope)] text-[17px] font-medium leading-[1.75] text-[#344154] sm:text-[18px]">{subtitle}</p>
+        </aside>
+      ) : null}
 
       {/* Rich body — scoped Tailwind via [&_*] selectors */}
       <div

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 
 /**
@@ -34,16 +34,14 @@ export default function ShopHero({
   const searchParams = useSearchParams();
 
   const matchedSectionId = useMemo(() => {
-    const currentParams = searchParams?.toString() ?? '';
+    const currentSubcategory = searchParams?.get('subcategory');
+    if (!currentSubcategory) return '';
 
     for (const section of browseSections) {
       if (section.href) {
         try {
           const target = new URL(section.href, 'https://houseofdiams.local');
-          const targetPath = target.pathname;
-          const targetParams = target.searchParams.toString();
-
-          if (targetPath === pathname && targetParams === currentParams) {
+          if (target.pathname === pathname && target.searchParams.get('subcategory') === currentSubcategory) {
             return section.id;
           }
         } catch {}
@@ -52,10 +50,7 @@ export default function ShopHero({
       for (const option of section.options ?? []) {
         try {
           const target = new URL(option.href, 'https://houseofdiams.local');
-          const targetPath = target.pathname;
-          const targetParams = target.searchParams.toString();
-
-          if (targetPath === pathname && targetParams === currentParams) {
+          if (target.pathname === pathname && target.searchParams.get('subcategory') === currentSubcategory) {
             return section.id;
           }
         } catch {
@@ -67,29 +62,24 @@ export default function ShopHero({
     return '';
   }, [browseSections, pathname, searchParams]);
 
-  const [activeSectionId, setActiveSectionId] = useState(matchedSectionId || (browseSections[0]?.id ?? ''));
+  const allSectionId = '__all__';
+  const activeSectionId = matchedSectionId || allSectionId;
+  const tabSections = useMemo(
+    () => [{ id: allSectionId, title: 'All', href: pathname, options: [] }, ...browseSections],
+    [browseSections, pathname]
+  );
 
   const tabsWrapWidth = useMemo(() => {
-    if (browseSections.length <= 1) return 'fit-content';
-    if (browseSections.length === 2) return '420px';
-    if (browseSections.length === 3) return '620px';
+    if (tabSections.length <= 1) return 'fit-content';
+    if (tabSections.length === 2) return '420px';
+    if (tabSections.length === 3) return '620px';
     return '760px';
-  }, [browseSections.length]);
+  }, [tabSections.length]);
 
-  useEffect(() => {
-    setActiveSectionId((current) => {
-      if (matchedSectionId && browseSections.some((section) => section.id === matchedSectionId)) {
-        return matchedSectionId;
-      }
-      if (browseSections.some((section) => section.id === current)) return current;
-      return browseSections[0]?.id ?? '';
-    });
-  }, [browseSections, matchedSectionId]);
-
-  const activeSection = browseSections.find((section) => section.id === activeSectionId) ?? browseSections[0] ?? null;
+  const activeSection = browseSections.find((section) => section.id === activeSectionId) ?? null;
   const activeSectionIndex = Math.max(
     0,
-    browseSections.findIndex((section) => section.id === activeSection?.id)
+    tabSections.findIndex((section) => section.id === activeSectionId)
   );
   const hasBannerImage = bannerEnabled && Boolean(desktopImageUrl || mobileImageUrl);
 
@@ -105,7 +95,7 @@ export default function ShopHero({
     >
       <style>{`
         @media (max-width: 640px) {
-          .shop-hero-top { padding: ${hasBannerImage ? '0' : '56px 16px 28px'} !important; }
+          .shop-hero-top { padding: ${hasBannerImage ? '0' : '118px 16px 42px'} !important; }
           .shop-hero-banner-content { padding: ${hasBannerImage ? '88px 16px 28px' : '0'} !important; }
           .shop-hero-browse { display: none !important; }
           .shop-hero-tabs-wrap { padding: 6px !important; }
@@ -124,7 +114,7 @@ export default function ShopHero({
           position: "relative",
           overflow: "hidden",
           minHeight: hasBannerImage ? undefined : "auto",
-          padding: hasBannerImage ? "0" : "92px 52px 40px",
+          padding: hasBannerImage ? "0" : "170px 52px 64px",
           background: hasBannerImage ? "#0A1628" : "linear-gradient(180deg, #FAFBFD 0%, #FAF7F2 100%)",
         }}
       >
@@ -276,7 +266,7 @@ export default function ShopHero({
         </div>
       </div>
 
-      {browseSections.length > 0 && activeSection ? (
+      {browseSections.length > 0 ? (
         <div
           className="shop-hero-browse"
           style={{
@@ -298,17 +288,17 @@ export default function ShopHero({
             }}
           >
             <div
-              className={`shop-hero-tabs${browseSections.length === 1 ? ' single' : ''}`}
+              className={`shop-hero-tabs${tabSections.length === 1 ? ' single' : ''}`}
               style={{
                 position: "relative",
                 isolation: "isolate",
-                display: browseSections.length === 1 ? "flex" : "grid",
-                justifyContent: browseSections.length === 1 ? "center" : undefined,
-                gridTemplateColumns: browseSections.length === 1 ? undefined : `repeat(${Math.max(1, browseSections.length)}, minmax(0, 1fr))`,
+                display: tabSections.length === 1 ? "flex" : "grid",
+                justifyContent: tabSections.length === 1 ? "center" : undefined,
+                gridTemplateColumns: tabSections.length === 1 ? undefined : `repeat(${Math.max(1, tabSections.length)}, minmax(0, 1fr))`,
                 gap: "5px",
               }}
             >
-              {browseSections.length > 1 ? (
+              {tabSections.length > 1 ? (
                 <span
                   aria-hidden="true"
                   style={{
@@ -316,7 +306,7 @@ export default function ShopHero({
                     top: 0,
                     left: 0,
                     bottom: 0,
-                    width: `calc((100% - ${(browseSections.length - 1) * 5}px) / ${browseSections.length})`,
+                    width: `calc((100% - ${(tabSections.length - 1) * 5}px) / ${tabSections.length})`,
                     borderRadius: "14px",
                     background: "#0A1628",
                     transform: `translateX(calc(${activeSectionIndex} * (100% + 5px)))`,
@@ -326,8 +316,8 @@ export default function ShopHero({
                   }}
                 />
               ) : null}
-              {browseSections.map((section) => {
-                const isActive = section.id === activeSection.id;
+              {tabSections.map((section) => {
+                const isActive = section.id === activeSectionId;
                 const tabContent = (
                   <span
                     style={{
@@ -367,13 +357,13 @@ export default function ShopHero({
 
                 const commonTabStyle = {
                   minWidth: "0",
-                  width: browseSections.length === 1 ? "auto" : "100%",
+                  width: tabSections.length === 1 ? "auto" : "100%",
                   padding: "10px 14px",
                   position: "relative",
                   zIndex: 1,
                   borderRadius: "14px",
-                  border: browseSections.length === 1 && isActive ? "1px solid #0A1628" : "1px solid transparent",
-                  background: browseSections.length === 1 && isActive ? "#0A1628" : "transparent",
+                  border: tabSections.length === 1 && isActive ? "1px solid #0A1628" : "1px solid transparent",
+                  background: tabSections.length === 1 && isActive ? "#0A1628" : "transparent",
                   color: isActive ? "#FFFFFF" : "#0A1628",
                   display: "inline-flex",
                   alignItems: "center",
@@ -383,30 +373,21 @@ export default function ShopHero({
                   textDecoration: "none",
                 };
 
-                if (section.href) {
-                  return (
-                    <Link key={section.id} href={section.href} className="shop-hero-tab" style={commonTabStyle}>
-                      {tabContent}
-                    </Link>
-                  );
-                }
-
                 return (
-                  <button
+                  <Link
                     key={section.id}
-                    type="button"
+                    href={section.href || pathname}
                     className="shop-hero-tab"
-                    onClick={() => setActiveSectionId(section.id)}
                     style={commonTabStyle}
                   >
                     {tabContent}
-                  </button>
+                  </Link>
                 );
               })}
             </div>
           </div>
 
-          {activeSection.options.length > 0 ? (
+          {activeSection?.options.length > 0 ? (
             <div
               className="shop-hero-options"
               style={{

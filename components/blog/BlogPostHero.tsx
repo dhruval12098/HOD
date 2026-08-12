@@ -18,7 +18,7 @@ export default function BlogPostHero({ post }: BlogPostHeroProps) {
         }}
       >
         {imageUrl ? (
-          <img src={imageUrl} alt={post.titleRaw} className="absolute inset-0 h-full w-full object-cover" />
+          <img src={imageUrl} alt={post.heroImageAlt || post.titleRaw} className="absolute inset-0 h-full w-full object-cover" />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
             <GemPlaceholder size={100} variant="diamond" />

@@ -9,9 +9,10 @@ interface BlogGridProps {
   posts: BlogPost[];
   onPostClick: (id: number) => void;
   maxPosts?: number;
+  basePath?: string;
 }
 
-export default function BlogGrid({ posts, onPostClick, maxPosts = 5 }: BlogGridProps) {
+export default function BlogGrid({ posts, onPostClick, maxPosts = 5, basePath = "/blog" }: BlogGridProps) {
   const displayPosts = maxPosts > 0 ? posts.slice(0, maxPosts) : posts;
   const [featured, ...rest] = displayPosts;
   const smallCards = rest;
@@ -27,13 +28,14 @@ export default function BlogGrid({ posts, onPostClick, maxPosts = 5 }: BlogGridP
   return (
     <>
       <div className="grid grid-cols-1 items-stretch gap-6 xl:grid-cols-[1.28fr_1fr] max-md:hidden">
-        {featured && <BlogCardBig post={featured} onClick={() => onPostClick(featured.id)} />}
+        {featured && <BlogCardBig post={featured} basePath={basePath} onClick={() => onPostClick(featured.id)} />}
 
         <div className="grid h-full grid-cols-1 gap-6 sm:grid-cols-2 sm:grid-rows-2">
           {smallCards.map((post) => (
             <BlogCardSmall
               key={post.id}
               post={post}
+              basePath={basePath}
               onClick={() => onPostClick(post.id)}
             />
           ))}
@@ -57,7 +59,7 @@ export default function BlogGrid({ posts, onPostClick, maxPosts = 5 }: BlogGridP
           <div className="contents">
             {mobileCards.map((post) => (
               <div key={post.id} data-blog-mobile-card className="min-w-[84%] snap-center">
-                <BlogCardSmall post={post} onClick={() => onPostClick(post.id)} />
+                <BlogCardSmall post={post} basePath={basePath} onClick={() => onPostClick(post.id)} />
               </div>
             ))}
           </div>

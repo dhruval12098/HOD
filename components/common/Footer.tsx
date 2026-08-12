@@ -339,6 +339,7 @@ export default function Footer() {
           <ColLink href="/about">About Us</ColLink>
           <ColLink href="/bespoke">Bespoke</ColLink>
           <ColLink href="/blog">Blog</ColLink>
+          <ColLink href="/education">Education</ColLink>
           <ColLink href="/contact">Contact</ColLink>
         </div>
 

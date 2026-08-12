@@ -13,6 +13,7 @@ export interface BlogPost {
   tags: string[];
   body: string;
   heroImagePath?: string;
+  heroImageAlt?: string;
   contentBlocks?: BlogPostContentBlock[];
   featuredProducts?: import('@/lib/catalog-products').StorefrontProduct[];
   isPublished?: boolean;
@@ -158,6 +159,7 @@ export function mapBlogPostRecord(record: {
   subtitle: string
   body_html: string
   hero_image_path?: string
+  hero_image_alt?: string
   content_blocks?: Array<{
     id: number | string
     block_type: 'text' | 'image' | 'heading' | 'quote'
@@ -186,6 +188,7 @@ export function mapBlogPostRecord(record: {
     tags: record.tags ?? [],
     body: record.body_html,
     heroImagePath: record.hero_image_path ?? '',
+    heroImageAlt: record.hero_image_alt?.trim() || record.title,
     contentBlocks: (record.content_blocks ?? []).map((block) => ({
       id: String(block.id),
       type: block.block_type,

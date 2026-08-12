@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next'
 import { getPublishedBlogPosts } from '@/lib/blog'
+import { getPublishedEducationPosts } from '@/lib/education'
 import { getStorefrontProducts } from '@/lib/catalog-products'
 import { createSupabaseServerClient } from '@/lib/server-supabase'
 import { getCanonicalUrl } from '@/lib/site-url'
@@ -19,6 +20,7 @@ const staticRoutes = [
   '/shipping',
   '/returns',
   '/blog',
+  '/education',
   '/privacy-policy',
   '/terms',
 ]
@@ -27,13 +29,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date()
   const supabase = createSupabaseServerClient()
 
-  const [products, categoriesResult, blogPosts] = await Promise.all([
+  const [products, categoriesResult, blogPosts, educationPosts] = await Promise.all([
     getStorefrontProducts(),
     supabase
       .from('catalog_categories')
       .select('slug, status')
       .eq('status', 'active'),
     getPublishedBlogPosts(),
+    getPublishedEducationPosts(),
   ])
 
   const staticEntries = staticRoutes.map((route) => ({
@@ -69,5 +72,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     }))
 
-  return [...staticEntries, ...categoryEntries, ...productEntries, ...blogEntries]
+  const educationEntries = educationPosts
+    .filter((post) => post.slug)
+    .map((post) => ({
+      url: getCanonicalUrl(`/education/${post.slug}`).toString(),
+      lastModified: now,
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    }))
+
+  return [...staticEntries, ...categoryEntries, ...productEntries, ...blogEntries, ...educationEntries]
 }

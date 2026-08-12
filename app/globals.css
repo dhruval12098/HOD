@@ -125,6 +125,11 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--serif) !important;
 }
 
+/* Blog editorial titles intentionally use the more compact sans display face. */
+.blog-title-font {
+  font-family: var(--font-plus-jakarta), Arial, Helvetica, sans-serif !important;
+}
+
 /* Also force Tailwind's `font-serif` utility to resolve to Forfelast everywhere. */
 .font-serif {
   font-family: var(--serif) !important;

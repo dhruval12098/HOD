@@ -5,18 +5,22 @@ interface BlogPostMetaProps {
 }
 
 export default function BlogPostMeta({ date, author, readTime }: BlogPostMetaProps) {
+  const items = [
+    date ? { label: "Published", value: date } : null,
+    author ? { label: "Written by", value: author } : null,
+    readTime ? { label: "Reading time", value: readTime } : null,
+  ].filter((item): item is { label: string; value: string } => Boolean(item));
+
+  if (!items.length) return null;
+
   return (
-    <div className="flex items-center gap-5 mb-7 pb-5 border-b border-[rgba(10,22,40,0.09)]">
-      <span className="text-[7.5px] tracking-[0.2em] uppercase text-[#9A9A9A]">
-        {date}
-      </span>
-      <span className="w-[3px] h-[3px] rounded-full bg-[rgba(10,22,40,0.18)]" />
-      <span className="text-[7.5px] tracking-[0.16em] uppercase text-[#6A6A6A]">
-        {author}
-      </span>
-      <span className="text-[7.5px] tracking-[0.16em] uppercase text-[#9A9A9A] ml-auto">
-        {readTime}
-      </span>
-    </div>
+    <dl className="mb-8 flex flex-wrap gap-x-8 gap-y-4 border-b border-[rgba(10,22,40,0.12)] pb-6 font-[var(--font-manrope)]">
+      {items.map((item) => (
+        <div key={item.label} className="min-w-[120px]">
+          <dt className="text-[12px] font-bold uppercase tracking-[0.12em] text-[#765F35]">{item.label}</dt>
+          <dd className="mt-1 text-[14px] font-semibold leading-5 text-[#344154]">{item.value}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }

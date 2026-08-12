@@ -1,70 +1,49 @@
 import Image from "next/image";
+import Link from "next/link";
 import { BlogPost, getStorageImageUrl } from "@/lib/data/blog-posts";
 import GemPlaceholder from "./GemPlaceholder";
+import { BlogCardDetails } from "./BlogCardDetails";
 
 interface BlogRelatedPostsProps {
   posts: BlogPost[];
   onPostClick: (id: number) => void;
+  basePath?: string;
+  heading?: string;
 }
 
-export default function BlogRelatedPosts({ posts, onPostClick }: BlogRelatedPostsProps) {
+export default function BlogRelatedPosts({ posts, onPostClick, basePath = "/blog", heading = "More from the Journal" }: BlogRelatedPostsProps) {
+  if (!posts.length) return null;
+
   return (
-    <div className="max-w-[1400px] mx-auto px-[52px] pb-20 max-md:px-6">
-      <div className="font-['Cormorant_Garamond',Georgia,serif] text-[30px] font-light tracking-[0.03em] text-[#0A0A0A] mb-8">
-        More from <em className="italic text-[#0A1628]">The Journal</em>
-      </div>
+    <section aria-labelledby="related-posts-title" className="mx-auto max-w-[1400px] px-6 pb-20 lg:px-[52px]">
+      <h2 id="related-posts-title" className="mb-8 text-[clamp(26px,3vw,36px)] font-light tracking-[0.01em] text-[#0A1628]">
+        {heading}
+      </h2>
 
-      <div className="grid grid-cols-3 gap-5 max-md:grid-cols-1">
-        {posts.map((post) => (
-          (() => {
-            const imageUrl = getStorageImageUrl(post.heroImagePath);
-
-            return (
-          <div
-            key={post.id}
-            onClick={() => onPostClick(post.id)}
-            className="border border-[rgba(10,22,40,0.09)] overflow-hidden cursor-pointer transition-transform duration-300 bg-white hover:-translate-y-0.5 group"
-          >
-            <div
-              className="relative overflow-hidden flex items-center justify-center"
-              style={{ aspectRatio: "16/10", background: post.bgColor }}
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+        {posts.map((post) => {
+          const imageUrl = getStorageImageUrl(post.heroImagePath);
+          return (
+            <Link
+              key={post.id}
+              href={post.slug ? `${basePath}/${post.slug}` : basePath}
+              onNavigate={(event) => { event.preventDefault(); onPostClick(post.id); }}
+              className="group flex h-full flex-col overflow-hidden rounded-[10px] border border-[rgba(10,22,40,0.12)] bg-white transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_36px_rgba(10,22,40,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0A1628] focus-visible:ring-offset-4"
             >
-              {imageUrl ? (
-                <Image
-                  src={imageUrl}
-                  alt={post.titleRaw}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 33vw"
-                  className="absolute inset-0 block h-full w-full object-cover object-center"
-                />
-              ) : null}
-
-              {/* Gradient */}
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[rgba(10,22,40,0.45)] pointer-events-none z-10" />
-
-              {/* Gem */}
-              {!imageUrl ? (
-                <div className="absolute inset-0 flex items-center justify-center transition-transform duration-700 ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:scale-[1.05]">
-                  <GemPlaceholder size={60} variant="diamond" />
-                </div>
-              ) : null}
-
-              {/* Text overlay */}
-              <div className="absolute bottom-0 left-0 right-0 px-3.5 pb-4 pt-3 z-20">
-                <div
-                  className="font-['Cormorant_Garamond',Georgia,serif] text-[15px] font-normal text-white leading-[1.3] mb-2 [&_em]:italic"
-                  dangerouslySetInnerHTML={{ __html: post.title }}
-                />
-                <div className="text-[7px] tracking-[0.18em] uppercase text-white/75">
-                  Read More →
-                </div>
+              <div className="relative flex aspect-[16/10] items-center justify-center overflow-hidden" style={{ background: post.bgColor }}>
+                {imageUrl ? (
+                  <Image src={imageUrl} alt={post.heroImageAlt || post.titleRaw} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover transition-transform duration-700 group-hover:scale-[1.04]" />
+                ) : (
+                  <div className="transition-transform duration-700 group-hover:scale-[1.04]">
+                    <GemPlaceholder size={60} variant="diamond" />
+                  </div>
+                )}
               </div>
-            </div>
-          </div>
-            );
-          })()
-        ))}
+              <BlogCardDetails post={post} compact />
+            </Link>
+          );
+        })}
       </div>
-    </div>
+    </section>
   );
 }

@@ -299,7 +299,7 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
           info.style.background = isDark ? "#0A1628" : "#FFFFFF";
         }
         const gem = e.currentTarget.querySelector(".card-gem");
-        if (gem) gem.style.transform = "scale(1.08) rotate(-3deg)";
+        if (gem) gem.style.transform = "scale(1.08)";
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = "translateY(0)";
@@ -329,7 +329,7 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
           info.style.background = isDark ? "#0A1628" : "#FFFFFF";
         }
         const gem = e.currentTarget.querySelector(".card-gem");
-        if (gem) gem.style.transform = "scale(1) rotate(0deg)";
+        if (gem) gem.style.transform = "scale(1)";
       }}
     >
       {/* Visual */}

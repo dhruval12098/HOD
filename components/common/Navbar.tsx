@@ -483,8 +483,9 @@ export default function Navbar() {
           <div className="announcement-marquee animate-marquee-slow items-center">
             {[0, 1].map((groupIndex) => (
               <div key={groupIndex} className="flex shrink-0 items-center gap-x-[28px] px-[14px]">
-                {announcementItems.map((item, itemIndex) => (
-                  <span key={`${groupIndex}-${itemIndex}`} className="flex items-center gap-x-[28px] whitespace-nowrap">
+                {Array.from({ length: 10 }, (_, repeatIndex) =>
+                  announcementItems.map((item, itemIndex) => (
+                  <span key={`${groupIndex}-${repeatIndex}-${itemIndex}`} className="flex items-center gap-x-[28px] whitespace-nowrap">
                     {item.link_url ? (
                       <Link
                         href={item.link_url}
@@ -499,7 +500,8 @@ export default function Navbar() {
                     )}
                     <span className="inline-block h-1 w-1 rounded-full bg-[var(--theme-surface-soft)] align-middle" />
                   </span>
-                ))}
+                  ))
+                )}
               </div>
             ))}
           </div>

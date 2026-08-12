@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local database migrations already applied manually; keep them out of Git.
+/supabase/migrations/202608110001_add_blog_hero_image_alt.sql
+/supabase/migrations/202608120001_safe_product_duplication.sql

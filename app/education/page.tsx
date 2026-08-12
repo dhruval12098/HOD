@@ -1,0 +1,14 @@
+import type { Metadata } from 'next'
+import EducationClient from '@/components/pages/EducationClient'
+import { getPublishedEducationPosts } from '@/lib/education'
+import { createPageMetadata } from '@/lib/seo'
+
+export const metadata: Metadata = createPageMetadata({
+  title: 'Education',
+  description: 'Learn about diamonds, jewellery, craftsmanship, care, and confident buying from House of Diams.',
+  path: '/education',
+})
+
+export default async function EducationPage() {
+  return <EducationClient posts={await getPublishedEducationPosts()} />
+}
