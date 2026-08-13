@@ -11,7 +11,7 @@ const securityHeaders = [
       "font-src 'self' data:",
       "connect-src 'self' https://*.supabase.co https://maps.googleapis.com https://checkout.razorpay.com https://api.razorpay.com https://www.google-analytics.com https://www.googletagmanager.com",
       "media-src 'self' data: blob: https:",
-      "frame-src 'self' https://checkout.razorpay.com",
+      "frame-src 'self' https://checkout.razorpay.com https://www.googletagmanager.com",
       "object-src 'none'",
       "base-uri 'self'",
       "frame-ancestors 'self'",

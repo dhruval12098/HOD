@@ -26,7 +26,6 @@ const staticRoutes = [
 ]
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const now = new Date()
   const supabase = createSupabaseServerClient()
 
   const [products, categoriesResult, blogPosts, educationPosts] = await Promise.all([
@@ -41,7 +40,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const staticEntries = staticRoutes.map((route) => ({
     url: getCanonicalUrl(route).toString(),
-    lastModified: now,
   }))
 
   const categoryEntries = (categoriesResult.data ?? [])
@@ -49,7 +47,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .filter((category) => !staticRoutes.includes(`/${category.slug}`))
     .map((category) => ({
       url: getCanonicalUrl(`/${category.slug}`).toString(),
-      lastModified: now,
       changeFrequency: 'daily' as const,
       priority: 0.8,
     }))
@@ -58,7 +55,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .filter((product) => product.slug)
     .map((product) => ({
       url: getCanonicalUrl(`/shop/${product.slug}`).toString(),
-      lastModified: now,
       changeFrequency: 'daily' as const,
       priority: 0.9,
     }))
@@ -67,16 +63,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .filter((post) => post.slug)
     .map((post) => ({
       url: getCanonicalUrl(`/blog/${post.slug}`).toString(),
-      lastModified: now,
       changeFrequency: 'weekly' as const,
       priority: 0.7,
     }))
 
   const educationEntries = educationPosts
     .filter((post) => post.slug)
+    .filter((post) => post.slug !== 'education-copy')
     .map((post) => ({
       url: getCanonicalUrl(`/education/${post.slug}`).toString(),
-      lastModified: now,
       changeFrequency: 'weekly' as const,
       priority: 0.7,
     }))

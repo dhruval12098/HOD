@@ -14,25 +14,11 @@ export default function robots(): MetadataRoute.Robots {
   ]
 
   return {
-    rules: [
-      {
-        userAgent: '*',
-        allow: '/',
-        disallow: privatePaths,
-      },
-      {
-        userAgent: [
-          'GPTBot',
-          'ChatGPT-User',
-          'CCBot',
-          'ClaudeBot',
-          'Google-Extended',
-          'PerplexityBot',
-          'Applebot-Extended',
-        ],
-        disallow: '/',
-      },
-    ],
+    rules: {
+      userAgent: '*',
+      allow: '/',
+      disallow: privatePaths,
+    },
     sitemap: getCanonicalUrl('/sitemap.xml').toString(),
     host: getSiteUrl(),
   }

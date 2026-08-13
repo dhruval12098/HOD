@@ -10,6 +10,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: 'Checkout',
   description: 'Static checkout preview for House of Diams.',
+  robots: { index: false, follow: false },
 };
 
 export default function CheckoutPage() {

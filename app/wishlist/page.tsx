@@ -4,6 +4,7 @@ import WishlistClient from '@/components/pages/WishlistClient'
 export const metadata: Metadata = {
   title: 'Wishlist',
   description: 'Saved House of Diams pieces.',
+  robots: { index: false, follow: false },
 }
 
 export default function WishlistPage() {

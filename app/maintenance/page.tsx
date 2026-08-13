@@ -1,7 +1,13 @@
+import type { Metadata } from 'next'
 import MaintenanceScreen from '@/components/layout/MaintenanceScreen'
 import { fallbackMaintenanceMessage } from '@/lib/maintenance'
 
 export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = {
+  title: 'Maintenance',
+  robots: { index: false, follow: false },
+}
 
 export default async function MaintenancePage({
   searchParams,

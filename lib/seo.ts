@@ -19,16 +19,17 @@ export function createPageMetadata({
   type = 'website',
 }: PageSeoInput): Metadata {
   const canonical = getCanonicalUrl(path)
-  const images = image ? [{ url: image, alt: `${title} - House of Diams` }] : undefined
+  const normalizedTitle = title.replace(/\s*\|\s*House of Diams\s*$/i, '').trim()
+  const images = image ? [{ url: image, alt: `${normalizedTitle} - House of Diams` }] : undefined
 
   return {
-    title,
+    title: normalizedTitle,
     description,
     alternates: {
       canonical,
     },
     openGraph: {
-      title,
+      title: normalizedTitle,
       description,
       url: canonical,
       siteName: 'House of Diams',
@@ -37,7 +38,7 @@ export function createPageMetadata({
     },
     twitter: {
       card: 'summary_large_image',
-      title,
+      title: normalizedTitle,
       description,
       images: image ? [image] : undefined,
     },

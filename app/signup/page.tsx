@@ -5,6 +5,7 @@ import AuthShell from '@/components/auth/AuthShell';
 export const metadata: Metadata = {
   title: 'Sign Up',
   description: 'Create your House of Diams account.',
+  robots: { index: false, follow: false },
 };
 
 export default function SignupPage() {

@@ -254,7 +254,9 @@ export default function ProductTabs({
             {visibleFaqs.length > 0 ? (
               <div className="border-b border-[rgba(10,22,40,0.10)] last:border-b-0">
                 <div className={detailsAccordion ? 'px-1 py-4' : 'border-b border-[rgba(10,22,40,0.10)] bg-white px-6 py-5'}>
-                  <span className={policyTitleClass}>Product FAQs</span>
+                  <h2 className="font-sans text-[20px] font-medium leading-[1.25] tracking-[-0.01em] text-[#0A1628] md:text-[23px]">
+                    Product FAQs
+                  </h2>
                 </div>
                 <div>
                   {visibleFaqs.map((item, index) => {

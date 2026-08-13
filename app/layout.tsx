@@ -12,6 +12,7 @@ import { getSiteUrl } from "@/lib/site-url";
 import JsonLd from "@/components/seo/JsonLd";
 import { createOrganizationSchema } from "@/lib/structured-data";
 import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
+import GoogleTagManager from "@/components/analytics/GoogleTagManager";
 import MaintenanceScreen from "@/components/layout/MaintenanceScreen";
 import { getMaintenanceMode } from "@/lib/maintenance";
 
@@ -66,6 +67,7 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
+        <GoogleTagManager />
         <JsonLd data={createOrganizationSchema()} />
         <Suspense fallback={null}>
           <GoogleAnalytics />

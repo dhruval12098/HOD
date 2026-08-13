@@ -10,6 +10,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: 'Profile',
   description: 'Your House of Diams account profile.',
+  robots: { index: false, follow: false },
 };
 
 export default function ProfilePage() {

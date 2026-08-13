@@ -193,6 +193,7 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
 
       {content.slider_enabled && currentSlide ? (
         <div className="relative z-[2] w-full">
+          <h1 className="sr-only">{content.headline}</h1>
           <div className="relative overflow-hidden rounded-none border-0 bg-transparent shadow-none backdrop-blur-0">
             <div className="absolute inset-0 z-10 bg-gradient-to-t from-[rgba(10,22,40,0.42)] via-[rgba(10,22,40,0.1)] to-transparent" />
             <div className="relative h-[360px] sm:hidden">

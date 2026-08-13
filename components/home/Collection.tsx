@@ -129,7 +129,7 @@ export default function Collection({ items = [] }: CollectionProps) {
                   <div className="text-[7px] font-medium uppercase tracking-[0.18em] text-white/72 sm:text-[9px]">
                     {panel.label}
                   </div>
-                  <h3 className="mt-1 font-serif text-[18px] font-normal leading-[0.98] text-white min-[420px]:text-[22px] sm:mt-1.5 sm:text-[36px]">
+                  <h3 className="mt-1 font-serif text-[16px] font-normal leading-[1.05] text-white min-[420px]:text-[19px] sm:mt-1.5 sm:text-[28px]">
                     {panel.name}
                   </h3>
                   <div className="mt-1.5 inline-flex items-center gap-1.5 text-[7px] font-medium uppercase tracking-[0.16em] text-white/92 sm:mt-2 sm:gap-2.5 sm:text-[10px]">
