@@ -181,6 +181,13 @@ export type HomeBestSellerProduct = {
   image?: string;
   metalsFull?: Array<{ id: string; name: string; slug: string; colorHex?: string | null }>;
   metalMediaRows?: Array<{ product_id: string; metal_id: string; image_1_path?: string | null; is_default_fallback?: boolean | null }>;
+  metalPurityVariants?: Array<{
+    id: string;
+    metalId: string;
+    metalSlug: string;
+    isDefault: boolean;
+    mediaItems: Array<{ id: string; type: 'image' | 'video'; url: string; sortOrder: number }>;
+  }>;
 };
 
 type BestSellerProductRow = {
@@ -216,6 +223,24 @@ type BestSellerMetalMediaRow = {
   product_id: string;
   metal_id: string;
   image_1_path?: string | null;
+  is_default_fallback?: boolean | null;
+};
+
+type BestSellerMetalVariantRow = {
+  id: string;
+  product_id: string;
+  metal_id: string;
+  is_default?: boolean | null;
+  sort_order?: number | null;
+};
+
+type BestSellerVariantMediaRow = {
+  id: string;
+  product_id: string;
+  variant_id?: string | null;
+  media_type: 'image' | 'video';
+  media_path: string;
+  sort_order?: number | null;
   is_default_fallback?: boolean | null;
 };
 
@@ -732,6 +757,8 @@ const loadHomePageData = unstable_cache(
           { data: metalMediaRows },
           { data: materialValueSelections },
           { data: materialValueCatalog },
+          { data: metalVariants },
+          { data: variantMediaItems },
         ] = await Promise.all([
           supabase
             .from('products')
@@ -775,6 +802,16 @@ const loadHomePageData = unstable_cache(
             .select('id, name')
             .eq('status', 'active')
             .order('display_order', { ascending: true }),
+          supabase
+            .from('product_metal_variants')
+            .select('id, product_id, metal_id, is_default, sort_order')
+            .in('product_id', productIds)
+            .order('sort_order', { ascending: true }),
+          supabase
+            .from('product_variant_media_items')
+            .select('id, product_id, variant_id, media_type, media_path, sort_order, is_default_fallback')
+            .in('product_id', productIds)
+            .order('sort_order', { ascending: true }),
         ]);
 
         const productMap = new Map((data ?? []).map((item) => [item.id, item as BestSellerProductRow]));
@@ -827,6 +864,33 @@ const loadHomePageData = unstable_cache(
               (materialValueSelectionsByProduct.get(product.id) ?? [])
                 .map((selection) => materialValuesById.get(selection.material_value_id)?.name)
                 .find(Boolean) ?? undefined;
+            const productVariants = ((metalVariants ?? []) as BestSellerMetalVariantRow[])
+              .filter((variant) => variant.product_id === product.id)
+              .map((variant) => {
+                const metal = metalsById.get(variant.metal_id);
+                if (!metal) return null;
+
+                return {
+                  id: variant.id,
+                  metalId: metal.id,
+                  metalSlug: metal.slug,
+                  isDefault: Boolean(variant.is_default),
+                  mediaItems: ((variantMediaItems ?? []) as BestSellerVariantMediaRow[])
+                    .filter((media) => media.variant_id === variant.id && Boolean(media.media_path))
+                    .map((media) => ({
+                      id: media.id,
+                      type: media.media_type,
+                      url: toPublicUrl(media.media_path) ?? media.media_path,
+                      sortOrder: Number(media.sort_order ?? 0),
+                    })),
+                };
+              })
+              .filter((variant): variant is NonNullable<typeof variant> => Boolean(variant));
+            const defaultVariant = productVariants.find((variant) => variant.isDefault) ?? productVariants[0];
+            const defaultVariantImage = defaultVariant?.mediaItems.find((media) => media.type === 'image')?.url;
+            const defaultFallbackImage = ((variantMediaItems ?? []) as BestSellerVariantMediaRow[])
+              .find((media) => media.product_id === product.id && !media.variant_id && media.is_default_fallback && media.media_type === 'image')
+              ?.media_path;
 
             return {
               id: product.id,
@@ -837,12 +901,13 @@ const loadHomePageData = unstable_cache(
               badge: index === 0 ? 'Bestseller' : product.featured ? 'Featured' : 'Selected',
               badgeVariant: index === 0 || product.featured ? 'navy' : 'outline',
               detailTemplate: product.detail_template === 'hiphop' ? 'hiphop' : 'standard',
-              image: toPublicUrl(fallbackMedia?.image_1_path || product.image_1_path),
+              image: defaultVariantImage || toPublicUrl(defaultFallbackImage || fallbackMedia?.image_1_path || product.image_1_path),
               metalsFull: selectedMetals,
               metalMediaRows: (mediaByProduct.get(product.id) ?? []).map((entry) => ({
                 ...entry,
                 image_1_path: toPublicUrl(entry.image_1_path) ?? null,
               })),
+              metalPurityVariants: productVariants,
             };
           });
       }

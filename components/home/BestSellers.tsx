@@ -19,6 +19,7 @@ type Product = {
   imageUrl?: string
   metalsFull?: { id: string; name: string; slug: string; colorHex?: string | null }[]
   metalMediaRows?: { product_id: string; metal_id: string; image_1_path?: string | null; is_default_fallback?: boolean | null }[]
+  metalPurityVariants?: HomeBestSellerProduct['metalPurityVariants']
 }
 
 type SectionData = {
@@ -108,6 +109,7 @@ export default function BestSellers({
       imageUrl: product.image,
       metalsFull: product.metalsFull,
       metalMediaRows: product.metalMediaRows,
+      metalPurityVariants: product.metalPurityVariants,
     }))
   )
   const [visibleCount, setVisibleCount] = useState(4)
