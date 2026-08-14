@@ -395,6 +395,9 @@ export default function ShopHero({
                 justifyContent: "center",
                 flexWrap: "wrap",
                 gap: "10px 12px",
+                width: "100%",
+                maxWidth: "720px",
+                margin: "0 auto",
               }}
             >
               {activeSection.options.map((option) => {

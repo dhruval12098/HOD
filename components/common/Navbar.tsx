@@ -55,7 +55,7 @@ function MegaSection({ section }: { section: NavbarRenderSection }) {
             src={section.iconUrl}
             alt=""
             aria-hidden="true"
-            className="h-4 w-4 flex-shrink-0 object-contain"
+            className="h-5 w-5 flex-shrink-0 object-contain"
           />
         ) : null}
         <span>{section.title}</span>
@@ -105,7 +105,7 @@ function MegaSection({ section }: { section: NavbarRenderSection }) {
                 <img
                   src={link.iconUrl}
                   alt={link.label}
-                  className="h-5 w-5 flex-shrink-0 object-contain"
+                  className="h-7 w-7 flex-shrink-0 object-contain"
                 />
               ) : null}
               {link.label}
@@ -127,7 +127,7 @@ function MegaSection({ section }: { section: NavbarRenderSection }) {
                 <img
                   src={link.iconUrl}
                   alt={link.label}
-                  className="h-5 w-5 flex-shrink-0 object-contain"
+                  className="h-7 w-7 flex-shrink-0 object-contain"
                 />
               ) : null}
               {link.label}
@@ -367,7 +367,7 @@ export default function Navbar() {
     megaCloseTimeoutRef.current = setTimeout(() => {
       setActiveMegaItem((current) => (current === label ? null : current));
       megaCloseTimeoutRef.current = null;
-    }, 180);
+    }, 250);
   };
 
   const handleSignOut = async () => {
@@ -452,7 +452,7 @@ export default function Navbar() {
         .announcement-marquee:hover {
           animation-play-state: paused;
         }
-        .mega-parent:hover .mega-drop {
+        .mega-parent.mega-open .mega-drop {
           opacity: 1 !important;
           visibility: visible !important;
           pointer-events: auto !important;
@@ -600,7 +600,7 @@ export default function Navbar() {
               {navItems.map((item) => (
                 <li
                   key={item.label}
-                  className={item.mega ? 'mega-parent' : ''}
+                  className={item.mega ? `mega-parent${activeMegaItem === item.label ? ' mega-open' : ''}` : ''}
                   style={{ position: 'static' }}
                   onMouseEnter={() => {
                     if (item.mega) openMegaMenu(item.label);
