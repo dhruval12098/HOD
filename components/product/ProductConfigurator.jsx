@@ -8,6 +8,13 @@ import ConfiguratorMaterialButtons from './ConfiguratorMaterialButtons';
 import { useCurrency } from '@/context/CurrencyContext';
 import { METAL_META } from '@/lib/data/product-config';
 import { Select } from '@/components/ui/select';
+import {
+  Select as ShadcnSelect,
+  SelectContent as ShadcnSelectContent,
+  SelectItem as ShadcnSelectItem,
+  SelectTrigger as ShadcnSelectTrigger,
+  SelectValue as ShadcnSelectValue,
+} from '@/components/ui/shadcn-select';
 
 /**
  * @param {{
@@ -178,20 +185,35 @@ export default function ProductConfigurator({
 
       {showRingSelector ? (
         <>
-          <ConfiguratorPillGroup
-            label={activeRingCategory?.name || 'Ring Size'}
-            selectedLabel={ringSize}
-            options={ringCategorySizes}
-            active={ringSize}
-            onChange={onRingSizeChange || onSizeOrFitChange}
-          />
+          <div className="mb-5">
+            <div className="mb-[10px] flex items-baseline justify-between">
+              <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-[#0A1628]">
+                {activeRingCategory?.name || 'Ring Size'}
+              </span>
+              <span className="font-sans text-[13px] font-medium tracking-[0.01em] text-[#0A1628]">
+                {ringSize}
+              </span>
+            </div>
+            <ShadcnSelect value={ringSize} onValueChange={onRingSizeChange || onSizeOrFitChange}>
+              <ShadcnSelectTrigger aria-label={activeRingCategory?.name || 'Ring Size'}>
+                <ShadcnSelectValue placeholder="Select ring size" />
+              </ShadcnSelectTrigger>
+              <ShadcnSelectContent>
+                {ringCategorySizes.map((size) => (
+                  <ShadcnSelectItem key={size} value={size}>
+                    {size}
+                  </ShadcnSelectItem>
+                ))}
+              </ShadcnSelectContent>
+            </ShadcnSelect>
+          </div>
           {product.ringCategoryOptions?.length > 1 ? (
             <button
               type="button"
               onClick={() => setShowRingModal(true)}
               className="mb-5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#0A1628] underline underline-offset-4"
             >
-              Show More Ring Categories
+              Show Ring Sizes
             </button>
           ) : null}
         </>
@@ -251,16 +273,34 @@ export default function ProductConfigurator({
               </div>
             </div>
 
-            <ConfiguratorPillGroup
-              label={activeRingCategory?.name || 'Ring Size'}
-              selectedLabel={ringSize}
-              options={ringCategorySizes}
-              active={ringSize}
-              onChange={(value) => {
-                (onRingSizeChange || onSizeOrFitChange)(value);
-                setShowRingModal(false);
-              }}
-            />
+            <div className="mb-5">
+              <div className="mb-[10px] flex items-baseline justify-between">
+                <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-[#0A1628]">
+                  {activeRingCategory?.name || 'Ring Size'}
+                </span>
+                <span className="font-sans text-[13px] font-medium tracking-[0.01em] text-[#0A1628]">
+                  {ringSize}
+                </span>
+              </div>
+              <ShadcnSelect
+                value={ringSize}
+                onValueChange={(value) => {
+                  (onRingSizeChange || onSizeOrFitChange)(value);
+                  setShowRingModal(false);
+                }}
+              >
+                <ShadcnSelectTrigger aria-label={activeRingCategory?.name || 'Ring Size'}>
+                  <ShadcnSelectValue placeholder="Select ring size" />
+                </ShadcnSelectTrigger>
+                <ShadcnSelectContent>
+                  {ringCategorySizes.map((size) => (
+                    <ShadcnSelectItem key={size} value={size}>
+                      {size}
+                    </ShadcnSelectItem>
+                  ))}
+                </ShadcnSelectContent>
+              </ShadcnSelect>
+            </div>
           </div>
         </div>
       ) : null}

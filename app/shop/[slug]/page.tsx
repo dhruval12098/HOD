@@ -6,6 +6,8 @@ import { createPageMetadata } from '@/lib/seo';
 import JsonLd from '@/components/seo/JsonLd';
 import { createBreadcrumbSchema, createProductSchema } from '@/lib/structured-data';
 
+export const dynamic = 'force-dynamic';
+
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
 }

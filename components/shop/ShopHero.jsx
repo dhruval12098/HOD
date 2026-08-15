@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { startTransition, useMemo, useOptimistic } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 /**
  * @typedef {{ id: string; title: string; iconUrl?: string | null; href?: string | null; options: { label: string; href: string; type?: 'default' | 'swatch' | 'icon', iconUrl?: string | null, colorHex?: string | null }[], emphasis?: 'section' | 'group' }} ShopHeroBrowseSection
@@ -31,6 +31,7 @@ export default function ShopHero({
   browseSections = [],
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const searchParams = useSearchParams();
 
   const matchedSectionId = useMemo(() => {
@@ -64,11 +65,7 @@ export default function ShopHero({
 
   const allSectionId = '__all__';
   const resolvedActiveSectionId = matchedSectionId || allSectionId;
-  const [activeSectionId, setActiveSectionId] = useState(resolvedActiveSectionId);
-
-  useEffect(() => {
-    setActiveSectionId(resolvedActiveSectionId);
-  }, [resolvedActiveSectionId]);
+  const [activeSectionId, setOptimisticActiveSectionId] = useOptimistic(resolvedActiveSectionId);
 
   const tabSections = useMemo(
     () => [{ id: allSectionId, title: 'All', href: pathname, options: [] }, ...browseSections],
@@ -393,7 +390,11 @@ export default function ShopHero({
                         !event.shiftKey &&
                         !event.altKey
                       ) {
-                        setActiveSectionId(section.id);
+                        event.preventDefault();
+                        startTransition(() => {
+                          setOptimisticActiveSectionId(section.id);
+                          router.push(section.href || pathname);
+                        });
                       }
                     }}
                   >

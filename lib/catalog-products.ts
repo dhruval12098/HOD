@@ -456,6 +456,28 @@ function resolveMetalMediaDefaults(
   return { fallbackMedia, source }
 }
 
+async function fetchAllProductVariantMediaItems(supabase: ReturnType<typeof createSupabaseServerClient>) {
+  const pageSize = 1000
+  const rows: ProductVariantMediaItemRow[] = []
+
+  for (let from = 0; ; from += pageSize) {
+    const result = await supabase
+      .from('product_variant_media_items')
+      .select('*')
+      .order('sort_order', { ascending: true })
+      .order('id', { ascending: true })
+      .range(from, from + pageSize - 1)
+
+    if (result.error) return result
+
+    const page = (result.data || []) as ProductVariantMediaItemRow[]
+    rows.push(...page)
+    if (page.length < pageSize) {
+      return { data: rows, error: null }
+    }
+  }
+}
+
 const fetchStorefrontProducts = async () => {
   const supabase = createSupabaseServerClient()
 
@@ -482,7 +504,7 @@ const fetchStorefrontProducts = async () => {
       supabase.from('product_subcategory_links').select('product_id, subcategory_id, is_primary, sort_order').order('sort_order', { ascending: true }),
       supabase.from('product_option_links').select('product_id, option_id, is_primary, sort_order').order('sort_order', { ascending: true }),
       supabase.from('product_metal_variants').select('*').order('sort_order', { ascending: true }),
-      supabase.from('product_variant_media_items').select('*').order('sort_order', { ascending: true }),
+      fetchAllProductVariantMediaItems(supabase),
       supabase.from('product_faq_items').select('id, product_id, question, answer, sort_order, is_active').eq('is_active', true).order('sort_order', { ascending: true }),
     ])
 
@@ -886,7 +908,9 @@ export async function getStorefrontProducts() {
 }
 
 export async function getStorefrontProductBySlug(slug: string) {
-  const products = await getStorefrontProducts()
+  // Product detail media is edited independently in the admin. Read it fresh so
+  // a newly selected variant image/video cannot be hidden by the collection cache.
+  const products = await fetchStorefrontProducts()
   const exactMatch = products.find((entry) => entry.slug === slug)
   if (exactMatch) return exactMatch
 

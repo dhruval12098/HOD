@@ -9,5 +9,9 @@ if (!supabaseUrl || (!supabaseAnonKey && !supabaseServiceRoleKey)) {
 }
 
 export function createSupabaseServerClient() {
-  return createClient(supabaseUrl!, supabaseServiceRoleKey || supabaseAnonKey!)
+  return createClient(supabaseUrl!, supabaseServiceRoleKey || supabaseAnonKey!, {
+    global: {
+      fetch: (input, init) => fetch(input, { ...init, cache: 'no-store' }),
+    },
+  })
 }

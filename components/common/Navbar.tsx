@@ -22,14 +22,6 @@ const METAL_COLORS: Record<string, string> = {
 };
 
 const OVERLAY_NAVBAR_ROUTES = new Set(['/', '/hiphop', '/bespoke']);
-const FALLBACK_NAV_ITEMS: NavbarRenderItem[] = [
-  { label: 'Fine Jewellery', href: '/fine-jewellery' },
-  { label: 'Engagement Rings', href: '/engagement-rings' },
-  { label: 'Wedding Bands', href: '/wedding-bands' },
-  { label: 'Hip Hop', href: '/hiphop' },
-  { label: 'Bespoke', href: '/bespoke' },
-];
-
 function MetalDot({ type, colorHex }: { type: keyof typeof METAL_COLORS; colorHex?: string | null }) {
   const color = typeof colorHex === 'string' && colorHex.trim().length > 0
     ? colorHex.trim()
@@ -182,7 +174,8 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchItems, setSearchItems] = useState<Array<{ dbId?: string; slug: string; name: string; shortMeta: string; imageUrl?: string; priceFrom: number }>>([]);
-  const [navItems, setNavItems] = useState<NavbarRenderItem[]>(FALLBACK_NAV_ITEMS);
+  // Start empty so builder-hidden items never flash while the live configuration loads.
+  const [navItems, setNavItems] = useState<NavbarRenderItem[]>([]);
   const [announcementItems, setAnnouncementItems] = useState<
     Array<{ message: string; link_url: string; open_in_new_tab: boolean }>
   >([
@@ -271,7 +264,7 @@ export default function Navbar() {
       const response = await fetch('/api/public/navbar', { cache: 'no-store' });
       const payload = await response.json().catch(() => null);
 
-      if (ignore || !response.ok || !Array.isArray(payload?.items) || payload.items.length === 0) {
+      if (ignore || !response.ok || !Array.isArray(payload?.items)) {
         return;
       }
 
@@ -474,7 +467,7 @@ export default function Navbar() {
 
       {announcementActive ? (
         <div
-          className="fixed top-0 left-0 right-0 z-[1001] overflow-hidden bg-[var(--theme-ink)] py-[9px] text-left text-[10px] font-light uppercase tracking-[0.24em] text-white select-none"
+          className="fixed top-0 left-0 right-0 z-[1001] flex h-[35px] items-center overflow-hidden bg-[var(--theme-ink)] text-left text-[10px] font-light uppercase tracking-[0.24em] text-white select-none"
           style={{
             fontFamily: "'Montserrat', sans-serif",
             ['--announcement-speed' as string]: `${Math.max(announcementSpeed, 10)}s`,

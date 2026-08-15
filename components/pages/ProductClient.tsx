@@ -320,7 +320,7 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
         }
       `}</style>
       <div
-        className={`fixed left-0 right-0 top-[40px] z-[45] border-b border-[rgba(10,22,40,0.10)] bg-white/95 backdrop-blur-md transition-transform duration-300 ${
+        className={`fixed left-0 right-0 top-[35px] z-[45] border-b border-[rgba(10,22,40,0.10)] bg-white/95 backdrop-blur-md transition-transform duration-300 ${
           showStickyCartBar
             ? 'translate-y-0'
             : '-translate-y-[120%] max-[700px]:translate-y-[120%]'

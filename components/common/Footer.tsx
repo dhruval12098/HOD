@@ -225,12 +225,13 @@ export default function Footer() {
   const [serviceCategories, setServiceCategories] = useState<FooterCategory[]>([]);
   const [collectionConfig, setCollectionConfig] = useState<CollectionPageConfigRow | null>(null);
   const [contactRows, setContactRows] = useState<ContactInfoRow[]>([]);
+  const [visibleNavbarHrefs, setVisibleNavbarHrefs] = useState<Set<string> | null>(null);
 
   useEffect(() => {
     let ignore = false;
 
     const loadCategories = async () => {
-      const [{ data, error }, { data: configData }, contactResponse] = await Promise.all([
+      const [{ data, error }, { data: configData }, contactResponse, navbarResponse] = await Promise.all([
         supabase
           .from('catalog_categories')
           .select('id, name, slug')
@@ -242,6 +243,7 @@ export default function Footer() {
           .eq('section_key', 'main_collection_page')
           .maybeSingle(),
         fetch('/api/public/contact/info', { cache: 'no-store' }).catch(() => null),
+        fetch('/api/public/navbar', { cache: 'no-store' }).catch(() => null),
       ]);
 
       if (ignore) return;
@@ -254,6 +256,19 @@ export default function Footer() {
           setContactRows(payload.items);
         }
       }
+
+      if (navbarResponse?.ok) {
+        const payload = await navbarResponse.json().catch(() => null);
+        if (!ignore && Array.isArray(payload?.items)) {
+          setVisibleNavbarHrefs(
+            new Set(
+              payload.items
+                .map((item: { href?: string | null }) => item.href?.split('?')[0]?.replace(/\/$/, '') || '/')
+                .filter(Boolean)
+            )
+          );
+        }
+      }
     };
 
     void loadCategories();
@@ -263,7 +278,11 @@ export default function Footer() {
     };
   }, []);
 
-  const visibleServiceCategories = useMemo(() => serviceCategories.filter((item) => item.slug && item.name), [serviceCategories]);
+  const visibleServiceCategories = useMemo(
+    () => serviceCategories.filter((item) => item.slug && item.name && visibleNavbarHrefs?.has(`/${item.slug}`)),
+    [serviceCategories, visibleNavbarHrefs]
+  );
+  const showBespokeLink = Boolean(visibleNavbarHrefs?.has('/bespoke'));
   const showCollectionLink = Boolean(collectionConfig?.page_enabled && collectionConfig?.show_in_footer);
   const collectionHref = collectionConfig?.showcase_cta_href || '/collection';
   const collectionLabel = collectionConfig?.showcase_cta_label || 'Collection';
@@ -329,7 +348,7 @@ export default function Footer() {
           <ColLink href="/">Home</ColLink>
           {showCollectionLink ? <ColLink href={collectionHref}>{collectionLabel}</ColLink> : null}
           <ColLink href="/about">About Us</ColLink>
-          <ColLink href="/bespoke">Bespoke</ColLink>
+          {showBespokeLink ? <ColLink href="/bespoke">Bespoke</ColLink> : null}
           <ColLink href="/blog">Blog</ColLink>
           <ColLink href="/education">Education</ColLink>
           <ColLink href="/contact">Contact</ColLink>
@@ -337,15 +356,11 @@ export default function Footer() {
 
         <div>
           <ColTitle>JEWELLERY</ColTitle>
-          {visibleServiceCategories.length > 0 ? (
-            visibleServiceCategories.map((category) => (
-              <ColLink key={category.id} href={`/${encodeURIComponent(category.slug)}`}>
-                {category.name}
-              </ColLink>
-            ))
-          ) : (
-            <ColLink href="/shop">Shop Collection</ColLink>
-          )}
+          {visibleServiceCategories.map((category) => (
+            <ColLink key={category.id} href={`/${encodeURIComponent(category.slug)}`}>
+              {category.name}
+            </ColLink>
+          ))}
         </div>
 
         <div>
