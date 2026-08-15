@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 
 /**
@@ -63,7 +63,13 @@ export default function ShopHero({
   }, [browseSections, pathname, searchParams]);
 
   const allSectionId = '__all__';
-  const activeSectionId = matchedSectionId || allSectionId;
+  const resolvedActiveSectionId = matchedSectionId || allSectionId;
+  const [activeSectionId, setActiveSectionId] = useState(resolvedActiveSectionId);
+
+  useEffect(() => {
+    setActiveSectionId(resolvedActiveSectionId);
+  }, [resolvedActiveSectionId]);
+
   const tabSections = useMemo(
     () => [{ id: allSectionId, title: 'All', href: pathname, options: [] }, ...browseSections],
     [browseSections, pathname]
@@ -379,6 +385,17 @@ export default function ShopHero({
                     href={section.href || pathname}
                     className="shop-hero-tab"
                     style={commonTabStyle}
+                    onClick={(event) => {
+                      if (
+                        event.button === 0 &&
+                        !event.metaKey &&
+                        !event.ctrlKey &&
+                        !event.shiftKey &&
+                        !event.altKey
+                      ) {
+                        setActiveSectionId(section.id);
+                      }
+                    }}
                   >
                     {tabContent}
                   </Link>
