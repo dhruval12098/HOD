@@ -1,3 +1,5 @@
+import { sanitizeRichText } from '@/lib/sanitize-html'
+
 type DocsPageProps = {
   eyebrow: string
   title: string
@@ -34,7 +36,7 @@ export default function DocsPage({ eyebrow, title, subtitle, blocks }: DocsPageP
                   {block.body ? (
                     <div
                       className="docs-body text-sm leading-8 text-[#3E362A] sm:text-[15px]"
-                      dangerouslySetInnerHTML={{ __html: block.body }}
+                      dangerouslySetInnerHTML={{ __html: sanitizeRichText(block.body) }}
                     />
                   ) : null}
                 </section>

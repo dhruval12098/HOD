@@ -74,7 +74,6 @@ This folder contains the reusable UI and page-specific components used across th
 - `hiphop-products.ts`
 - `useCountUp.ts`
 - `useRevealAnimation.ts`
-- `useWishlist.ts`
 
 ### `home`
 
@@ -149,10 +148,6 @@ This folder contains the reusable UI and page-specific components used across th
 
 - `product-config.ts`
 - `products.ts`
-
-#### `hooks`
-
-- `useWishlist.ts`
 
 ## Notes
 

@@ -1,4 +1,5 @@
 import type { BlogPost } from "@/lib/data/blog-posts";
+import { sanitizeEmphasisTitle } from "@/lib/sanitize-html";
 
 export function BlogCardMeta({ post }: { post: BlogPost }) {
   const items = [post.date, post.author, post.readTime].filter(Boolean);
@@ -25,7 +26,7 @@ export function BlogCardDetails({ post, compact = false }: { post: BlogPost; com
       </p>
       <h2
         className={`${compact ? "text-[20px]" : "text-[clamp(24px,2.3vw,34px)]"} blog-title-font line-clamp-3 font-semibold leading-[1.25] tracking-[-0.025em] text-[#0A1628] [&_em]:font-[inherit] [&_em]:italic`}
-        dangerouslySetInnerHTML={{ __html: post.title }}
+        dangerouslySetInnerHTML={{ __html: sanitizeEmphasisTitle(post.title) }}
       />
       <div className="mt-5">
         <BlogCardMeta post={post} />

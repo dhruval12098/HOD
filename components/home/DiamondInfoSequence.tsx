@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import type { HomeDiamondInfoConfig, HomeDiamondInfoItem } from '@/lib/home-data';
+import { sanitizeInlineSvg } from '@/lib/sanitize-html';
 
 const FALLBACK_FEATURES: HomeDiamondInfoItem[] = [
   {
@@ -146,7 +147,7 @@ export default function DiamondInfoSequence({
                         {isSvgMarkup(feature.iconSvg) ? (
                           <span
                             className="block h-4.5 w-4.5 [&>svg]:h-4.5 [&>svg]:w-4.5"
-                            dangerouslySetInnerHTML={{ __html: feature.iconSvg ?? '' }}
+                            dangerouslySetInnerHTML={{ __html: sanitizeInlineSvg(feature.iconSvg ?? '') }}
                           />
                         ) : feature.iconSvg ? (
                           <img src={resolveIconSource(feature.iconSvg)} alt={feature.title} className="h-4.5 w-4.5 object-contain" />
