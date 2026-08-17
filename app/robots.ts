@@ -13,12 +13,23 @@ export default function robots(): MetadataRoute.Robots {
     '/maintenance',
   ]
 
+  const visibleCrawlers = [
+    '*',
+    'OAI-SearchBot',
+    'ChatGPT-User',
+    'GPTBot',
+    'Google-Extended',
+    'ClaudeBot',
+    'Claude-SearchBot',
+    'PerplexityBot',
+  ]
+
   return {
-    rules: {
-      userAgent: '*',
+    rules: visibleCrawlers.map((userAgent) => ({
+      userAgent,
       allow: '/',
       disallow: privatePaths,
-    },
+    })),
     sitemap: getCanonicalUrl('/sitemap.xml').toString(),
     host: getSiteUrl(),
   }

@@ -1,19 +1,30 @@
 import { NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+import { resolveAuthoritativeCheckoutPricing } from '@/lib/checkout-pricing'
 import { buildCheckoutChargeQuote } from '@/lib/exchange-rates'
 import { enforceRateLimit } from '@/lib/rate-limit'
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 type QuotePayload = {
   country?: string | null
   currencyCode?: string | null
   items?: Array<{
-    priceFrom: number
+    slug: string
+    name?: string
+    metalVariantId?: string
+    metal?: string
+    purity?: string
     quantity: number
-    gstPercentage?: number
   }>
-  couponDiscountAmount?: number | null
+  coupon?: { id?: number; code?: string } | null
 }
 
 export async function POST(request: Request) {
+  if (!supabaseUrl || !supabaseServiceRoleKey) {
+    return NextResponse.json({ error: 'Missing Supabase environment variables.' }, { status: 500 })
+  }
   const rateLimit = await enforceRateLimit(request, { key: 'checkout-quote', limit: 30, windowSeconds: 60 })
   if (!rateLimit.ok && rateLimit.response) return rateLimit.response
 
@@ -24,48 +35,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Missing checkout items.' }, { status: 400 })
   }
 
-  const hasInvalidItem = items.some((item) => {
-    const priceFrom = Number(item?.priceFrom)
-    const quantity = Number(item?.quantity)
-    const gstPercentage = Number(item?.gstPercentage ?? 0)
-
-    return (
-      !Number.isFinite(priceFrom) ||
-      priceFrom <= 0 ||
-      priceFrom > 1000000 ||
-      !Number.isInteger(quantity) ||
-      quantity <= 0 ||
-      quantity > 100 ||
-      !Number.isFinite(gstPercentage) ||
-      gstPercentage < 0 ||
-      gstPercentage > 100
-    )
-  })
-
-  if (hasInvalidItem) {
-    return NextResponse.json({ error: 'One or more checkout items are invalid.' }, { status: 400 })
+  const adminClient = createClient(supabaseUrl, supabaseServiceRoleKey)
+  const pricingResult = await resolveAuthoritativeCheckoutPricing({ adminClient, items, coupon: payload?.coupon })
+  if ('error' in pricingResult) {
+    return NextResponse.json({ error: pricingResult.error }, { status: pricingResult.status })
   }
-
-  const requestedCouponDiscount = Number(payload?.couponDiscountAmount ?? 0)
-  if (!Number.isFinite(requestedCouponDiscount) || requestedCouponDiscount < 0 || requestedCouponDiscount > 1000000) {
-    return NextResponse.json({ error: 'Invalid coupon discount amount.' }, { status: 400 })
-  }
-
-  const subtotalUsd = items.reduce((sum, item) => sum + Number(item.priceFrom || 0) * Number(item.quantity || 0), 0)
-  const couponDiscountUsd = Math.max(0, Math.min(subtotalUsd, requestedCouponDiscount))
-  const gstUsd = items.reduce((sum, item) => {
-    const lineSubtotal = Number(item.priceFrom || 0) * Number(item.quantity || 0)
-    const discountShare = subtotalUsd > 0 ? couponDiscountUsd * (lineSubtotal / subtotalUsd) : 0
-    const taxableLineAmount = Math.max(0, lineSubtotal - discountShare)
-    return sum + taxableLineAmount * (Number(item.gstPercentage || 0) / 100)
-  }, 0)
+  const pricing = pricingResult.data
   const quote = await buildCheckoutChargeQuote({
-    subtotalUsd,
-    gstUsd,
-    couponDiscountUsd,
+    subtotalUsd: pricing.subtotalAmount,
+    gstUsd: pricing.gstAmount,
+    couponDiscountUsd: pricing.couponDiscountAmount,
     country: payload?.country || null,
     currencyCode: payload?.currencyCode || null,
   })
 
-  return NextResponse.json({ quote })
+  return NextResponse.json({
+    quote,
+    pricing: {
+      subtotalAmount: pricing.subtotalAmount,
+      gstAmount: pricing.gstAmount,
+      couponDiscountAmount: pricing.couponDiscountAmount,
+      totalAmount: pricing.totalAmount,
+      lines: pricing.lines.map((line) => ({ slug: line.product.slug, unitPrice: line.unitPrice, quantity: line.quantity })),
+    },
+  })
 }

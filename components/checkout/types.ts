@@ -14,6 +14,7 @@ export type CheckoutChargeQuote = {
 export type CheckoutDisplayItem = {
   name: string
   slug: string
+  metalVariantId?: string
   imageUrl?: string
   priceFrom: number
   metal?: string
@@ -24,6 +25,7 @@ export type CheckoutDisplayItem = {
   quantity: number
   gstLabel?: string
   gstPercentage?: number
+  customSelections?: { dropdownId: string; optionId: string; label?: string; optionLabel?: string }[]
 }
 
 export type CheckoutSummaryData = {

@@ -17,6 +17,8 @@ type RazorpayWebhookPayload = {
         method?: string
         contact?: string
         email?: string
+        amount?: number
+        currency?: string
         error_code?: string
         error_description?: string
         error_source?: string
@@ -85,6 +87,9 @@ export async function POST(request: Request) {
 
   try {
     if ((eventType === 'payment.captured' || eventType === 'order.paid') && razorpayOrderId && razorpayPaymentId) {
+      if (paymentEntity?.status !== 'captured' || !Number.isFinite(Number(paymentEntity.amount)) || !paymentEntity?.currency) {
+        throw new Error('Captured payment details are incomplete.')
+      }
       const finalized = await finalizePaidOrder({
         adminClient,
         razorpayOrderId,
@@ -93,6 +98,8 @@ export async function POST(request: Request) {
         paymentContact: paymentEntity?.contact || null,
         paymentEmail: paymentEntity?.email || null,
         gatewayPaymentStatus: paymentEntity?.status || eventType,
+        paymentAmountInSubunits: Number(paymentEntity.amount),
+        paymentCurrency: paymentEntity.currency,
         rawEvent: payload,
       })
 

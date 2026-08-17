@@ -21,6 +21,7 @@ export type CartItemSelection = {
   engravingMode?: string
   engravingText?: string
   loveLetter?: LoveLetterDraft | null
+  customSelections?: { dropdownId: string; optionId: string; label?: string; optionLabel?: string }[]
 }
 
 export type StoredCartItem = {
@@ -48,6 +49,7 @@ export function buildCartItemKey(product: { dbId?: string | null; id?: string | 
     hiphopCarat: selection.hiphopCarat || '',
     engravingMode: selection.engravingMode || '',
     engravingText: selection.engravingText || '',
+    customSelections: [...(selection.customSelections ?? [])].sort((a, b) => a.dropdownId.localeCompare(b.dropdownId)).map(({ dropdownId, optionId }) => ({ dropdownId, optionId })),
     loveLetter: selection.loveLetter
       ? {
           wantsLetter: Boolean(selection.loveLetter.wantsLetter),
@@ -76,5 +78,6 @@ export function buildCheckoutHrefFromCartItem(product: StorefrontProduct, item: 
   if (item.selection.ringSize) params.set('ring_size', item.selection.ringSize)
   if (item.selection.gemstone) params.set('gemstone', item.selection.gemstone)
   if (item.selection.shape) params.set('shape', item.selection.shape)
+  if (item.selection.customSelections?.length) params.set('custom', encodeURIComponent(JSON.stringify(item.selection.customSelections)))
   return `/checkout?${params.toString()}`
 }

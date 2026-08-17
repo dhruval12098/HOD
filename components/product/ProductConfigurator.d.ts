@@ -26,6 +26,8 @@ declare module '@/components/product/ProductConfigurator' {
     priceFrom?: number
     metalComposition?: unknown
     metalCompositionColor?: string
+    customSelections?: Record<string, string>
+    onCustomSelectionChange?: (groupId: string, optionId: string) => void
   }
 
   const ProductConfigurator: ComponentType<ProductConfiguratorProps>

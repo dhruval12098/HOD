@@ -1,8 +1,10 @@
 import type { User } from '@supabase/supabase-js'
 import { sendOrderConfirmationEmail } from '@/lib/email'
 import { buildCheckoutChargeQuote } from '@/lib/exchange-rates'
+import { resolveAuthoritativeCheckoutPricing } from '@/lib/checkout-pricing'
 
 export type CheckoutPayload = {
+  idempotencyKey?: string
   item?: CheckoutPayloadItem | null
   items?: CheckoutPayloadItem[]
   customer?: {
@@ -20,7 +22,6 @@ export type CheckoutPayload = {
   coupon?: {
     id?: number
     code?: string
-    discountAmount?: number
   } | null
   currencyCode?: string | null
   loveLetter?: {
@@ -39,8 +40,9 @@ export type CheckoutPayload = {
 export type CheckoutPayloadItem = {
   name: string
   slug: string
+  metalVariantId?: string
   imageUrl?: string
-  priceFrom: number
+  priceFrom?: number
   metal?: string
   purity?: string
   sizeOrFit?: string
@@ -49,6 +51,7 @@ export type CheckoutPayloadItem = {
   quantity: number
   gstLabel?: string
   gstPercentage?: number
+  customSelections?: { dropdownId: string; optionId: string; label?: string; optionLabel?: string }[]
 }
 
 type PreparedItem = {
@@ -58,6 +61,11 @@ type PreparedItem = {
     slug: string
     sku: string | null
     gst_slab_id: string | null
+    base_price: number | null
+    default_purity_price_id: string | null
+    stock_quantity: number | null
+    allow_checkout: boolean | null
+    status: string | null
   } | null
   quantity: number
   unitPrice: number
@@ -66,6 +74,7 @@ type PreparedItem = {
   gstLabel: string
   gstAmount: number
   gstSlabId: string | null
+  selectedCustomDropdowns: { dropdown_id: string; name: string; label: string; option_id: string; option_label: string; option_value: string }[]
 }
 
 type ProductRow = {
@@ -73,6 +82,26 @@ type ProductRow = {
   slug: string
   sku: string | null
   gst_slab_id: string | null
+  base_price: number | null
+  default_purity_price_id: string | null
+  stock_quantity: number | null
+  allow_checkout: boolean | null
+  status: string | null
+  custom_dropdowns_enabled?: boolean | null
+}
+
+type MetalVariantRow = {
+  id: string
+  product_id: string
+  price: number | null
+}
+
+type PurityPriceRow = {
+  id: string
+  product_id: string
+  purity_label: string | null
+  price: number | null
+  sort_order: number | null
 }
 
 type PreparedCheckout = {
@@ -157,7 +186,13 @@ function buildGatewayPayload(input: {
         gstPercentage,
         gstLabel,
       })),
-      coupon: input.payload.coupon || null,
+      coupon: input.prepared.couponId && input.prepared.couponCode
+        ? {
+            id: input.prepared.couponId,
+            code: input.prepared.couponCode,
+            discountAmount: input.prepared.couponDiscountAmount,
+          }
+        : null,
       loveLetter: input.payload.loveLetter || null,
     },
     totals: {
@@ -204,7 +239,7 @@ export async function prepareCheckoutPayload({
 }) {
   const checkoutItems = (payload?.items?.length ? payload.items : payload?.item ? [payload.item] : []).filter(Boolean) as CheckoutPayloadItem[]
 
-  if (!checkoutItems.length || checkoutItems.some((entry) => !entry?.name || !entry.slug || !entry.priceFrom)) {
+  if (!checkoutItems.length || checkoutItems.some((entry) => !entry?.name || !entry.slug)) {
     return { error: 'Invalid checkout payload.', status: 400 as const }
   }
 
@@ -218,133 +253,54 @@ export async function prepareCheckoutPayload({
     return { error: profileError.message, status: 500 as const }
   }
 
-  const slugs = checkoutItems.map((entry) => entry.slug)
-  const { data: productRows, error: productRowsError } = await adminClient
-    .from('products')
-    .select('id, slug, sku, gst_slab_id')
-    .in('slug', slugs)
-
-  if (productRowsError) {
-    return { error: productRowsError.message, status: 500 as const }
+  const pricingResult = await resolveAuthoritativeCheckoutPricing({
+    adminClient,
+    items: checkoutItems,
+    coupon: payload?.coupon ?? null,
+  })
+  if ('error' in pricingResult) {
+    return { error: pricingResult.error, status: pricingResult.status }
   }
-
-  const { data: settingsRow } = await adminClient
-    .from('site_settings')
-    .select('*')
-    .eq('settings_key', 'global_site_settings')
-    .maybeSingle()
-
-  const productBySlug = new Map<string, ProductRow>((productRows || []).map((product: any) => [product.slug, product as ProductRow]))
-  const defaultGstSlabId = settingsRow?.default_gst_slab_id ?? null
-  const gstSlabIds = Array.from(
-    new Set(
-      [
-        ...(productRows || []).map((product: any) => product.gst_slab_id).filter(Boolean),
-        defaultGstSlabId,
-      ].filter(Boolean)
-    )
-  )
-
-  const { data: gstSlabs, error: gstSlabsError } = gstSlabIds.length
-    ? await adminClient.from('catalog_gst_slabs').select('id, name, percentage').in('id', gstSlabIds)
-    : { data: [], error: null as { message?: string } | null }
-
-  if (gstSlabsError) {
-    return { error: gstSlabsError.message || 'Unable to load tax slabs.', status: 500 as const }
-  }
-
-  const fallbackGstSlabResponse =
-    gstSlabs && gstSlabs.length > 0
-      ? null
-      : await adminClient
-          .from('catalog_gst_slabs')
-          .select('id, name, percentage')
-          .neq('status', 'hidden')
-          .order('display_order', { ascending: true })
-          .limit(1)
-          .maybeSingle()
-
-  if (fallbackGstSlabResponse?.error) {
-    return { error: fallbackGstSlabResponse.error.message, status: 500 as const }
-  }
-
-  const gstById = new Map((gstSlabs || []).map((slab: any) => [slab.id, slab]))
-  const fallbackGstSlab = (gstSlabs || [])[0] ?? fallbackGstSlabResponse?.data ?? null
-
-  let normalizedItems: PreparedItem[] = checkoutItems.map((entry) => {
-    const product = (productBySlug.get(entry.slug) || null) as ProductRow | null
-    const gstSlab =
-      (product?.gst_slab_id ? gstById.get(product.gst_slab_id) : null) ||
-      (defaultGstSlabId ? gstById.get(defaultGstSlabId) : null) ||
-      fallbackGstSlab
-    const quantity = entry.quantity || 1
-    const unitPrice = Number(entry.priceFrom || 0)
-    const subtotalAmount = Number((unitPrice * quantity).toFixed(2))
-    const gstPercentage = Number(gstSlab?.percentage ?? entry.gstPercentage ?? 0)
-    const gstLabel = gstSlab?.name || entry.gstLabel || 'Taxes'
+  const pricing = pricingResult.data
+  const productRows = pricing.lines.map((line) => line.product)
+  const productIds = productRows.map((product) => product.id)
+  const groupsResult = productIds.length ? await adminClient.from('product_custom_dropdowns').select('id, product_id, name, label, is_required').in('product_id', productIds).eq('is_enabled', true) : { data: [], error: null }
+  if (groupsResult.error) return { error: groupsResult.error.message, status: 500 as const }
+  const groupIds = (groupsResult.data || []).map((group: any) => group.id)
+  const optionsResult = groupIds.length ? await adminClient.from('product_custom_dropdown_options').select('id, dropdown_id, label, value').in('dropdown_id', groupIds).eq('is_enabled', true) : { data: [], error: null }
+  if (optionsResult.error) return { error: optionsResult.error.message, status: 500 as const }
+  let selectionError = ''
+  const normalizedItems: PreparedItem[] = pricing.lines.map((line) => {
+    const entry = checkoutItems.find((item) => item.slug === line.entry.slug && item.metalVariantId === line.entry.metalVariantId) || (line.entry as CheckoutPayloadItem)
+    const groups = line.product.custom_dropdowns_enabled ? (groupsResult.data || []).filter((group: any) => group.product_id === line.product.id) : []
+    const requested = new Map((entry.customSelections || []).map((selection) => [selection.dropdownId, selection.optionId]))
+    if (requested.size !== (entry.customSelections || []).length || [...requested.keys()].some((groupId) => !groups.some((group: any) => group.id === groupId))) {
+      selectionError = 'One or more custom product selections are invalid.'
+    }
+    const selectedCustomDropdowns = groups.flatMap((group: any) => {
+      const optionId = requested.get(group.id)
+      if (!optionId) { if (group.is_required) selectionError = `Please select ${group.label}.`; return [] }
+      const option = (optionsResult.data || []).find((candidate: any) => candidate.dropdown_id === group.id && candidate.id === optionId)
+      if (!option) { selectionError = `Invalid selection for ${group.label}.`; return [] }
+      return [{ dropdown_id: group.id, name: group.name, label: group.label, option_id: option.id, option_label: option.label, option_value: option.value }]
+    })
 
     return {
       entry,
-      product,
-      quantity,
-      unitPrice,
-      subtotalAmount,
-      gstPercentage,
-      gstLabel,
-      gstAmount: 0,
-      gstSlabId: product?.gst_slab_id ?? null,
+      product: line.product,
+      quantity: line.quantity,
+      unitPrice: line.unitPrice,
+      subtotalAmount: line.subtotalAmount,
+      gstPercentage: line.gstPercentage,
+      gstLabel: line.gstLabel,
+      gstAmount: line.gstAmount,
+      gstSlabId: line.gstSlabId,
+      selectedCustomDropdowns,
     }
   })
+  if (selectionError) return { error: selectionError, status: 400 as const }
 
-  const subtotalAmount = Number(normalizedItems.reduce((sum, entry) => sum + entry.subtotalAmount, 0).toFixed(2))
-  const gstLabel = normalizedItems.length === 1 ? normalizedItems[0]?.gstLabel || 'Taxes' : 'Taxes'
-
-  let couponId: number | null = null
-  let couponCode: string | null = null
-  let couponDiscountAmount = 0
-  const couponPayload = payload?.coupon ?? null
-
-  if (couponPayload?.id && couponPayload?.code) {
-    const { data: coupon, error: couponError } = await adminClient
-      .from('coupons')
-      .select('id, code, discount_type, discount_value, usage_limit, usage_count, is_active')
-      .eq('id', couponPayload.id)
-      .eq('code', couponPayload.code.trim().toUpperCase())
-      .maybeSingle()
-
-    if (couponError) {
-      return { error: couponError.message, status: 500 as const }
-    }
-
-    if (!coupon || !coupon.is_active) {
-      return { error: 'Selected coupon is no longer valid.', status: 400 as const }
-    }
-
-    if (coupon.usage_limit != null && coupon.usage_count >= coupon.usage_limit) {
-      return { error: 'Coupon usage limit has been reached.', status: 400 as const }
-    }
-
-    const calculatedDiscount =
-      coupon.discount_type === 'percentage'
-        ? subtotalAmount * (Number(coupon.discount_value || 0) / 100)
-        : Number(coupon.discount_value || 0)
-
-    couponDiscountAmount = Math.max(0, Math.min(subtotalAmount, Number(calculatedDiscount.toFixed(2))))
-    couponId = coupon.id
-    couponCode = coupon.code
-  }
-
-  normalizedItems = normalizedItems.map((item) => {
-    const discountShare = subtotalAmount > 0 ? couponDiscountAmount * (item.subtotalAmount / subtotalAmount) : 0
-    const taxableAmount = Math.max(0, item.subtotalAmount - discountShare)
-    return {
-      ...item,
-      gstAmount: Number((taxableAmount * (item.gstPercentage / 100)).toFixed(2)),
-    }
-  })
-
-  const gstAmount = Number(normalizedItems.reduce((sum, entry) => sum + entry.gstAmount, 0).toFixed(2))
-  const totalAmount = Math.max(0, subtotalAmount - couponDiscountAmount) + gstAmount
+  const { subtotalAmount, gstAmount, gstLabel, gstPercentage, couponId, couponCode, couponDiscountAmount, totalAmount } = pricing
   const loveLetter = payload?.loveLetter ?? null
   const customer = payload?.customer ?? {}
   const resolvedCustomer = {
@@ -377,11 +333,6 @@ export async function prepareCheckoutPayload({
   if (!resolvedCustomer.address_line_1) {
     return { error: 'Address line 1 is required.', status: 400 as const }
   }
-
-  const gstPercentage =
-    normalizedItems.length === 1
-      ? normalizedItems[0]?.gstPercentage ?? 0
-      : normalizedItems.reduce((highest, item) => Math.max(highest, item.gstPercentage), 0)
 
   const chargeQuote = await buildCheckoutChargeQuote({
     subtotalUsd: subtotalAmount,
@@ -430,9 +381,7 @@ export async function createPendingOrder({
     .filter(Boolean)
     .join(' ')
 
-  const { data: order, error: orderError } = await adminClient
-    .from('orders')
-    .insert({
+  const orderInput = {
       user_id: userId,
       customer_email: prepared.resolvedCustomer.email,
       customer_first_name: prepared.resolvedCustomer.first_name || 'Customer',
@@ -460,17 +409,9 @@ export async function createPendingOrder({
       gateway_payment_status: 'pending',
       gateway_payload: gatewayPayload,
       notes,
-    })
-    .select('id, order_number, customer_email, customer_first_name, customer_last_name, total_amount, created_at')
-    .single()
-
-  if (orderError || !order) {
-    return { error: orderError?.message || 'Unable to create order.' }
   }
-
-  if (prepared.loveLetter) {
-    const { error: loveLetterError } = await adminClient.from('order_love_letters').insert({
-      order_id: order.id,
+  const loveLetterInput = prepared.loveLetter
+    ? {
       wants_letter: Boolean(prepared.loveLetter.wantsLetter),
       letter_type: prepared.loveLetter.letterType || 'no_letter',
       recipient_name: prepared.loveLetter.recipientName?.trim() || null,
@@ -481,16 +422,9 @@ export async function createPendingOrder({
       final_letter_text: prepared.loveLetter.finalLetterText?.trim() || null,
       final_letter_html: prepared.loveLetter.finalLetterHtml?.trim() || null,
       print_status: prepared.loveLetter.wantsLetter ? 'pending' : 'skipped',
-    })
-
-    if (loveLetterError) {
-      return { error: loveLetterError.message }
     }
-  }
-
-  const { error: itemError } = await adminClient.from('order_items').insert(
-    prepared.normalizedItems.map(({ entry, product, quantity, unitPrice, subtotalAmount, gstSlabId, gstPercentage, gstAmount }) => ({
-      order_id: order.id,
+    : null
+  const itemInputs = prepared.normalizedItems.map(({ entry, product, quantity, unitPrice, subtotalAmount, gstSlabId, gstPercentage, gstAmount, selectedCustomDropdowns }) => ({
       product_id: product?.id || null,
       product_name: entry.name,
       product_slug: entry.slug,
@@ -507,11 +441,20 @@ export async function createPendingOrder({
       gst_percentage: gstPercentage,
       gst_amount: gstAmount,
       image_url: entry.imageUrl || null,
+      selected_custom_dropdowns: selectedCustomDropdowns,
     }))
-  )
 
-  if (itemError) {
-    return { error: itemError.message }
+  const { data: order, error: orderError } = await adminClient
+    .rpc('create_pending_order_atomic', {
+      p_user_id: userId,
+      p_order: orderInput,
+      p_items: itemInputs,
+      p_love_letter: loveLetterInput,
+    })
+    .single()
+
+  if (orderError || !order) {
+    return { error: orderError?.message || 'Unable to create order.' }
   }
 
   return {
@@ -596,6 +539,8 @@ export async function finalizePaidOrder({
   paymentContact,
   paymentEmail,
   gatewayPaymentStatus,
+  paymentAmountInSubunits,
+  paymentCurrency,
   rawEvent,
 }: {
   adminClient: any
@@ -607,6 +552,8 @@ export async function finalizePaidOrder({
   paymentContact?: string | null
   paymentEmail?: string | null
   gatewayPaymentStatus?: string | null
+  paymentAmountInSubunits: number
+  paymentCurrency: string
   rawEvent?: unknown
 }) {
   let query = adminClient.from('orders').select('*').limit(1)
@@ -622,7 +569,7 @@ export async function finalizePaidOrder({
   }
 
   const { data: stockFinalization, error: stockFinalizationError } = await adminClient
-    .rpc('finalize_paid_order_with_inventory', {
+    .rpc('finalize_paid_order_with_coupon_secure', {
       p_order_id: order.id,
       p_razorpay_order_id: razorpayOrderId,
       p_payment_id: paymentId,
@@ -631,6 +578,8 @@ export async function finalizePaidOrder({
       p_payment_contact: paymentContact || null,
       p_payment_email: paymentEmail || null,
       p_gateway_payment_status: gatewayPaymentStatus || 'captured',
+      p_payment_amount_subunits: paymentAmountInSubunits,
+      p_payment_currency: paymentCurrency,
       p_raw_event: rawEvent ?? null,
     })
     .single()
@@ -648,36 +597,6 @@ export async function finalizePaidOrder({
   }
 
   const coupon = (order.gateway_payload as any)?.checkout?.coupon
-  if (coupon?.id && coupon?.code) {
-    const { data: existingRedemption } = await adminClient
-      .from('coupon_redemptions')
-      .select('id')
-      .eq('order_id', order.id)
-      .maybeSingle()
-
-    if (!existingRedemption) {
-      const discountAmount = Number(coupon.discountAmount || 0)
-      await adminClient.from('coupon_redemptions').insert({
-        coupon_id: coupon.id,
-        coupon_code: coupon.code,
-        user_id: order.user_id,
-        order_id: order.id,
-        order_number: order.order_number,
-        discount_amount: discountAmount,
-      })
-
-      const { data: couponSnapshot } = await adminClient
-        .from('coupons')
-        .select('usage_count')
-        .eq('id', coupon.id)
-        .single()
-
-      await adminClient
-        .from('coupons')
-        .update({ usage_count: Number(couponSnapshot?.usage_count ?? 0) + 1 })
-        .eq('id', coupon.id)
-    }
-  }
 
   if (!stockFinalization.already_paid) {
     const { data: items } = await adminClient

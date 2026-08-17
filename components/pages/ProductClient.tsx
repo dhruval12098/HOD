@@ -50,6 +50,7 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
   const [selectedShapeSlug, setSelectedShapeSlug] = useState(storefrontProduct.primaryShapeSlug || storefrontProduct.shapeOptions[0]?.slug || '');
   const [engravingMode, setEngravingMode] = useState<'none' | 'custom'>('none');
   const [engravingText, setEngravingText] = useState('');
+  const [customSelections, setCustomSelections] = useState<Record<string, string>>(() => Object.fromEntries(storefrontProduct.customDropdowns.filter((group) => group.isRequired && group.options[0]).map((group) => [group.id, group.options[0].id])));
   const { wishlist, contains, toggle } = useWishlistStore();
   const { addItem } = useCart();
   const [isEnquireOpen, setIsEnquireOpen] = useState(false);
@@ -226,12 +227,20 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
     if (selectedRingSize) params.set('ring_size', selectedRingSize);
     if (selectedGemstoneValue) params.set('gemstone', selectedGemstoneValue);
     if (selectedShapeSlug) params.set('shape', selectedShapeSlug);
+    const custom = Object.entries(customSelections).map(([dropdownId, optionId]) => { const group = storefrontProduct.customDropdowns.find((entry) => entry.id === dropdownId); const option = group?.options.find((entry) => entry.id === optionId); return { dropdownId, optionId, label: group?.label, optionLabel: option?.label }; }).sort((a, b) => a.dropdownId.localeCompare(b.dropdownId));
+    if (custom.length) params.set('custom', encodeURIComponent(JSON.stringify(custom)));
 
     const preserveCategory = searchParams.get('category');
     if (preserveCategory) params.set('category', preserveCategory);
 
     return `/checkout?${params.toString()}`;
-  }, [activePrice, activeProduct.imageUrl, product.name, product.slug, searchParams, selectedCombinedVariant?.label, selectedGemstoneValue, selectedHiphopCarat, selectedMetalMeta?.name, selectedRingSize, selectedShapeSlug, selectedVariantId, sizeOrFit]);
+  }, [activePrice, activeProduct.imageUrl, customSelections, product.name, product.slug, searchParams, selectedCombinedVariant?.label, selectedGemstoneValue, selectedHiphopCarat, selectedMetalMeta?.name, selectedRingSize, selectedShapeSlug, selectedVariantId, sizeOrFit]);
+
+  const validateCustomSelections = () => {
+    const missing = storefrontProduct.customDropdowns.find((group) => group.isRequired && !customSelections[group.id]);
+    if (missing) { showToast(`Please select ${missing.label}`); return false; }
+    return true;
+  };
 
   const showToast = (message: string) => {
     setToastMessage(message);
@@ -259,10 +268,15 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
     hiphopCarat: selectedHiphopCarat,
     engravingMode,
     engravingText,
+    customSelections: storefrontProduct.customDropdowns.flatMap((group) => {
+      const option = group.options.find((entry) => entry.id === customSelections[group.id]);
+      return option ? [{ dropdownId: group.id, optionId: option.id, label: group.label, optionLabel: option.label }] : [];
+    }),
     loveLetter: loveLetterDraft,
   });
 
   const handleAddToCart = () => {
+    if (!validateCustomSelections()) return;
     setLoveLetterIntent('cart');
     setIsLoveLetterOpen(true);
   };
@@ -402,6 +416,8 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
                   const nextCategory = storefrontProduct.ringCategoryOptions?.find((entry) => entry.id === value);
                   if (nextCategory?.sizes?.length) setSelectedRingSize(nextCategory.sizes[0]);
                 }}
+                customSelections={customSelections}
+                onCustomSelectionChange={(groupId: string, optionId: string) => setCustomSelections((current) => ({ ...current, [groupId]: optionId }))}
               />
 
               <div ref={ctaAnchorRef}>
@@ -412,6 +428,7 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
                   onEnquire={() => setIsEnquireOpen(true)}
                   onAddToCart={handleAddToCart}
                   onCheckout={() => {
+                    if (!validateCustomSelections()) return;
                     setLoveLetterIntent('checkout');
                     setIsLoveLetterOpen(true);
                   }}

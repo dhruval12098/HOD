@@ -1,7 +1,7 @@
 'use client'
 
-import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { type FormEvent, useEffect, useState } from 'react'
+import { Check, Copy } from 'lucide-react'
 
 type PromotionPopupData = {
   label: string
@@ -9,6 +9,8 @@ type PromotionPopupData = {
   description: string
   cta_text: string
   cta_link: string
+  cta_action?: 'redirect' | 'reveal_coupon'
+  selected_coupon_id?: number | null
   image_path?: string
   mobile_image_path?: string
   image_alt?: string
@@ -18,7 +20,7 @@ type PromotionPopupData = {
   updated_at?: string
 }
 
-const SESSION_KEY_PREFIX = 'hod_promotion_popup_dismissed_v2'
+const SESSION_KEY = 'hod_promotion_popup_shown_v3'
 const SUPABASE_PUBLIC_BASE = process.env.NEXT_PUBLIC_SUPABASE_URL
 const SUPABASE_COLLECTION_BUCKET = process.env.NEXT_PUBLIC_SUPABASE_COLLECTION_BUCKET || 'hod'
 
@@ -31,6 +33,8 @@ function buildVersionToken(item: PromotionPopupData) {
       item.description,
       item.cta_text,
       item.cta_link,
+      item.cta_action,
+      item.selected_coupon_id,
       item.image_path,
       item.mobile_image_path,
       item.image_alt,
@@ -56,6 +60,12 @@ function appendCacheBuster(src: string, versionToken: string) {
 export default function PromotionPopup() {
   const [item, setItem] = useState<PromotionPopupData | null>(null)
   const [visible, setVisible] = useState(false)
+  const [email, setEmail] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState('')
+  const [revealedCoupon, setRevealedCoupon] = useState<{ code: string; title?: string | null } | null>(null)
+  const [redirectUrl, setRedirectUrl] = useState('')
+  const [couponCopied, setCouponCopied] = useState(false)
 
   useEffect(() => {
     let ignore = false
@@ -69,10 +79,12 @@ export default function PromotionPopup() {
         const nextItem = payload?.item as PromotionPopupData | null
         if (!nextItem?.is_active) return
 
-        const versionToken = buildVersionToken(nextItem)
-        const sessionKey = `${SESSION_KEY_PREFIX}:${versionToken}`
-        const dismissed = typeof window !== 'undefined' && window.sessionStorage.getItem(sessionKey) === '1'
-        if (nextItem.show_once_per_session && dismissed) return
+        const alreadyShown = typeof window !== 'undefined' && window.sessionStorage.getItem(SESSION_KEY) === '1'
+        if (nextItem.show_once_per_session && alreadyShown) return
+
+        if (nextItem.show_once_per_session && typeof window !== 'undefined') {
+          window.sessionStorage.setItem(SESSION_KEY, '1')
+        }
 
         setItem(nextItem)
         setVisible(true)
@@ -86,9 +98,8 @@ export default function PromotionPopup() {
   }, [])
 
   const close = () => {
-    if (typeof window !== 'undefined' && item) {
-      const sessionKey = `${SESSION_KEY_PREFIX}:${buildVersionToken(item)}`
-      window.sessionStorage.setItem(sessionKey, '1')
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem(SESSION_KEY, '1')
       document.body.style.overflow = ''
     }
     setVisible(false)
@@ -108,11 +119,55 @@ export default function PromotionPopup() {
   const versionToken = buildVersionToken(item)
   const imageSrc = appendCacheBuster(toPublicUrl(item.image_path || ''), versionToken)
   const mobileImageSrc = appendCacheBuster(toPublicUrl(item.mobile_image_path || item.image_path || ''), versionToken)
-  const imageOnlyMode = Boolean(item.image_only_mode)
-  const hasTextContent = Boolean(
-    item.label?.trim() || item.title?.trim() || item.description?.trim() || item.cta_text?.trim()
+  const useTextOnlyLayout = Boolean(item.image_only_mode)
+  const submitEmail = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (isSubmitting) return
+    setIsSubmitting(true)
+    setSubmitError('')
+    try {
+      const response = await fetch('/api/public/promotion-popup/submit', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      const payload = await response.json().catch(() => null) as { error?: string; action?: string; redirectUrl?: string; coupon?: { code: string; title?: string | null } } | null
+      if (!response.ok) throw new Error(payload?.error || 'Unable to submit your email.')
+      if (payload?.action === 'reveal_coupon' && payload.coupon?.code) {
+        setRevealedCoupon(payload.coupon)
+        return
+      }
+      if (payload?.redirectUrl) setRedirectUrl(payload.redirectUrl)
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'Unable to submit your email.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const emailAction = revealedCoupon ? (
+    <div className="mt-6 rounded-[10px] border border-[rgba(10,22,40,0.14)] bg-white px-4 py-4 text-center" aria-live="polite">
+      <p className="text-[9px] font-medium uppercase tracking-[0.2em] text-[rgba(10,22,40,0.48)]">Your coupon code</p>
+      {revealedCoupon.title ? <p className="mt-2 text-[12px] text-[rgba(10,22,40,0.62)]">{revealedCoupon.title}</p> : null}
+      <div className="mt-3 flex items-stretch gap-2">
+        <strong className="flex min-h-[44px] flex-1 items-center justify-center border border-dashed border-[rgba(10,22,40,0.28)] bg-[#f7f3eb] px-3 text-[15px] tracking-[0.12em] text-[var(--theme-ink)]">{revealedCoupon.code}</strong>
+        <button type="button" onClick={async () => { try { await navigator.clipboard.writeText(revealedCoupon.code); setCouponCopied(true); window.setTimeout(() => setCouponCopied(false), 2500) } catch { setCouponCopied(false) } }} className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center bg-[var(--theme-ink)] px-3 text-white transition hover:bg-[#182a45]" aria-label="Copy coupon code" title="Copy coupon code">{couponCopied ? <Check className="h-4 w-4" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}</button>
+      </div>
+      <p className={`mt-2 min-h-4 text-[10px] font-medium transition-opacity ${couponCopied ? 'text-[#35634a] opacity-100' : 'opacity-0'}`} aria-live="polite">Copied to clipboard</p>
+    </div>
+  ) : redirectUrl ? (
+    <div className="mt-6" aria-live="polite">
+      <p className="mb-3 text-[11px] leading-5 text-[rgba(10,22,40,0.58)]">Thank you. Your offer is ready.</p>
+      <a href={redirectUrl} onClick={close} className="inline-flex min-h-[46px] w-full items-center justify-center bg-[var(--theme-ink)] px-5 text-[10px] font-medium uppercase tracking-[0.16em] text-white transition hover:bg-[#182a45] sm:min-h-[48px] sm:text-[11px]">{item.cta_text || 'Continue'}</a>
+    </div>
+  ) : (
+    <form onSubmit={submitEmail} className="mt-6" noValidate>
+      <label htmlFor="promotion-email" className="sr-only">Email address</label>
+      <input id="promotion-email" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Enter your email address" className="h-[46px] w-full border border-[rgba(10,22,40,0.18)] bg-white px-4 text-[12px] text-[var(--theme-ink)] outline-none placeholder:text-[rgba(10,22,40,0.4)] focus:border-[var(--theme-ink)] sm:h-[48px]" />
+      <button type="submit" disabled={isSubmitting} className="mt-2 inline-flex min-h-[44px] w-full items-center justify-center border border-[var(--theme-ink)] bg-white px-5 text-[10px] font-medium uppercase tracking-[0.16em] text-[var(--theme-ink)] transition hover:bg-[#f4f1e9] disabled:cursor-wait disabled:opacity-65 sm:min-h-[46px]">{isSubmitting ? 'Submitting…' : 'Submit'}</button>
+      {submitError ? <p className="mt-2 text-[11px] leading-4 text-[#9f2f2f]" role="alert">{submitError}</p> : null}
+    </form>
   )
-  const useImageOnlyLayout = imageOnlyMode && !hasTextContent
 
   return (
     <div className="fixed inset-0 z-[1300] flex items-center justify-center bg-[rgba(10,22,40,0.48)] p-3 backdrop-blur-[6px] sm:p-5">
@@ -128,26 +183,14 @@ export default function PromotionPopup() {
           </svg>
         </button>
 
-        {useImageOnlyLayout && imageSrc ? (
-          <div className="flex max-h-[calc(100vh-24px)] min-h-[300px] flex-col sm:min-h-[560px]">
-            <div className="relative h-[50vh] max-h-[380px] min-h-[260px] w-full shrink overflow-hidden bg-[radial-gradient(circle_at_top,#f5e7c4_0%,#ebd8ad_42%,#dcc18d_100%)] sm:h-[380px] sm:max-h-[520px]">
-              <img
-                src={mobileImageSrc}
-                alt={item.image_alt || item.title || 'Promotion image'}
-                className="h-full w-full object-cover object-center"
-                loading="eager"
-              />
-            </div>
-            <div className="flex shrink-0 items-end p-4 sm:p-8">
-              {item.cta_text && item.cta_link ? (
-                <Link
-                  href={item.cta_link}
-                  onClick={close}
-                  className="inline-flex min-h-[40px] items-center justify-center rounded-full bg-[var(--theme-ink)] px-5 text-[9px] font-medium uppercase tracking-[0.2em] text-white transition hover:bg-[#13233b] sm:min-h-[46px] sm:px-7 sm:text-[10px] sm:tracking-[0.24em]"
-                >
-                  {item.cta_text}
-                </Link>
-              ) : null}
+        {useTextOnlyLayout ? (
+          <div className="flex min-h-[380px] items-center justify-center overflow-y-auto bg-[linear-gradient(180deg,#fdfcf8_0%,#f5f0e6_100%)] px-7 py-14 sm:min-h-[480px] sm:px-16 sm:py-20">
+            <div className="w-full max-w-[480px] text-center">
+              {item.label ? <p className="mb-4 text-[10px] uppercase tracking-[0.28em] text-[rgba(10,22,40,0.45)]">{item.label}</p> : null}
+              <h2 className="font-display-title text-[clamp(2.25rem,8vw,4.75rem)] leading-[0.92] tracking-[-0.03em] text-[var(--theme-ink)]">{item.title}</h2>
+              {item.description ? <p className="mx-auto mt-6 max-w-[40ch] text-[14px] leading-7 text-[rgba(10,22,40,0.64)] sm:text-[16px]">{item.description}</p> : null}
+              {emailAction}
+              <p className="mx-auto mt-7 max-w-[44ch] text-[9px] leading-5 text-[rgba(10,22,40,0.42)] sm:text-[10px]">Promotion only valid on select styles. This code cannot be used during sale periods or in combination with other promotion codes.</p>
             </div>
           </div>
         ) : (
@@ -193,17 +236,7 @@ export default function PromotionPopup() {
                   {item.description}
                 </p>
 
-                {item.cta_text && item.cta_link ? (
-                  <div className="mt-5 sm:mt-7">
-                    <Link
-                      href={item.cta_link}
-                      onClick={close}
-                      className="inline-flex h-[40px] w-full items-center justify-center bg-[var(--theme-ink)] px-5 text-[10px] font-medium text-white transition hover:bg-[#182a45] sm:h-[48px] sm:px-6 sm:text-[12px]"
-                    >
-                      {item.cta_text}
-                    </Link>
-                  </div>
-                ) : null}
+                {emailAction}
 
                 <p className="mx-auto mt-4 max-w-[28ch] text-[9px] leading-4 text-[rgba(10,22,40,0.42)] sm:mt-6 sm:max-w-[30ch] sm:text-[10px] sm:leading-5">
                   Promotion only valid on select styles. This code cannot be used during sale periods or in combination with other promotion codes.

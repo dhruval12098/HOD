@@ -37,6 +37,7 @@ import {
  *     hiphopCaratValues: string[]
  *     engravingEnabled: boolean
  *     engravingLabel: string
+ *     customDropdowns?: { id: string, name: string, label: string, isRequired: boolean, options: { id: string, label: string, value: string }[] }[]
  *   }
  *   metal: string
  *   variantId?: string
@@ -56,6 +57,8 @@ import {
  *   onEngravingModeChange: (value: string) => void
  *   onEngravingTextChange: (value: string) => void
  *   onRingCategoryChange?: (value: string) => void
+ *   customSelections?: Record<string, string>
+ *   onCustomSelectionChange?: (groupId: string, optionId: string) => void
  * }} props
  */
 export default function ProductConfigurator({
@@ -82,6 +85,8 @@ export default function ProductConfigurator({
   priceFrom,
   metalComposition,
   metalCompositionColor,
+  customSelections = {},
+  onCustomSelectionChange,
 }) {
   const { format } = useCurrency();
   const combinedVariants = product.metalPurityVariants || [];
@@ -218,6 +223,14 @@ export default function ProductConfigurator({
           ) : null}
         </>
       ) : null}
+
+      {(product.customDropdowns || []).map((group) => <div key={group.id} className="mb-5">
+        <div className="mb-[10px] flex items-baseline justify-between"><span className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-[#0A1628]">{group.label}{group.isRequired ? ' *' : ''}</span></div>
+        <ShadcnSelect value={customSelections[group.id] || undefined} onValueChange={(value) => onCustomSelectionChange?.(group.id, value)}>
+          <ShadcnSelectTrigger aria-label={group.label}><ShadcnSelectValue placeholder={`Select ${group.label}`} /></ShadcnSelectTrigger>
+          <ShadcnSelectContent>{group.options.map((option) => <ShadcnSelectItem key={option.id} value={option.id}>{option.label}</ShadcnSelectItem>)}</ShadcnSelectContent>
+        </ShadcnSelect>
+      </div>)}
 
       {typeof priceFrom === 'number' ? (
         <div className="mb-6 mt-1 text-center">

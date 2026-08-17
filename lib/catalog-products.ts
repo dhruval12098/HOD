@@ -181,6 +181,7 @@ type ProductRow = {
   show_purity?: boolean | null
   engraving_enabled?: boolean | null
   engraving_label?: string | null
+  custom_dropdowns_enabled?: boolean | null
   shipping_rule_id?: string | null
   care_warranty_rule_id?: string | null
   shipping_enabled?: boolean | null
@@ -202,6 +203,8 @@ type ProductMaterialValueSelectionRow = {
   material_value_id: string
   sort_order?: number | null
 }
+
+export type StorefrontCustomDropdown = { id: string; name: string; label: string; isRequired: boolean; options: { id: string; label: string; value: string }[] }
 
 type ProductPurityPriceRow = {
   id: string
@@ -317,6 +320,7 @@ export type StorefrontProduct = Product & {
   showPurity: boolean
   engravingEnabled: boolean
   engravingLabel: string
+  customDropdowns: StorefrontCustomDropdown[]
   featuresList: string[]
   specificationRows: ProductKeyValue[]
   productDetailRows: ProductKeyValue[]
@@ -481,7 +485,7 @@ async function fetchAllProductVariantMediaItems(supabase: ReturnType<typeof crea
 const fetchStorefrontProducts = async () => {
   const supabase = createSupabaseServerClient()
 
-  const [productsResult, categoriesResult, subcategoriesResult, optionsResult, metalsResult, materialValuesResult, certificatesResult, stylesResult, ringCategoriesResult, ringCategorySizesResult, productContentRulesResult, metalSelectionsResult, materialValueSelectionsResult, shapeSelectionsResult, gstSlabsResult, purityPricesResult, metalMediaResult, metalCompositionPartsResult, subcategoryLinksResult, optionLinksResult, metalVariantsResult, variantMediaItemsResult, productFaqResult] =
+  const [productsResult, categoriesResult, subcategoriesResult, optionsResult, metalsResult, materialValuesResult, certificatesResult, stylesResult, ringCategoriesResult, ringCategorySizesResult, productContentRulesResult, metalSelectionsResult, materialValueSelectionsResult, shapeSelectionsResult, gstSlabsResult, purityPricesResult, metalMediaResult, metalCompositionPartsResult, subcategoryLinksResult, optionLinksResult, metalVariantsResult, variantMediaItemsResult, productFaqResult, customDropdownResult, customDropdownOptionResult] =
     await Promise.all([
       supabase.from('products').select('*').eq('status', 'active').order('created_at', { ascending: false }),
       supabase.from('catalog_categories').select('id, code, name, slug, category_lane'),
@@ -506,6 +510,8 @@ const fetchStorefrontProducts = async () => {
       supabase.from('product_metal_variants').select('*').order('sort_order', { ascending: true }),
       fetchAllProductVariantMediaItems(supabase),
       supabase.from('product_faq_items').select('id, product_id, question, answer, sort_order, is_active').eq('is_active', true).order('sort_order', { ascending: true }),
+      supabase.from('product_custom_dropdowns').select('id, product_id, name, label, is_required, display_order').eq('is_enabled', true).order('display_order', { ascending: true }),
+      supabase.from('product_custom_dropdown_options').select('id, dropdown_id, label, value, display_order').eq('is_enabled', true).order('display_order', { ascending: true }),
     ])
 
   const error =
@@ -516,7 +522,9 @@ const fetchStorefrontProducts = async () => {
     metalsResult.error ||
     metalSelectionsResult.error ||
     metalVariantsResult.error ||
-    variantMediaItemsResult.error
+    variantMediaItemsResult.error ||
+    customDropdownResult.error ||
+    customDropdownOptionResult.error
 
   if (error) {
     throw new Error(error.message)
@@ -541,6 +549,8 @@ const fetchStorefrontProducts = async () => {
   const productMetalVariants = metalVariantsResult.error ? ([] as ProductMetalVariantRow[]) : ((metalVariantsResult.data || []) as ProductMetalVariantRow[])
   const productVariantMediaItems = variantMediaItemsResult.error ? ([] as ProductVariantMediaItemRow[]) : ((variantMediaItemsResult.data || []) as ProductVariantMediaItemRow[])
   const productFaqItems = productFaqResult.error ? ([] as ProductFaqItem[]) : ((productFaqResult.data || []) as ProductFaqItem[])
+  const customDropdownRows = customDropdownResult.error ? [] : (customDropdownResult.data || [])
+  const customDropdownOptionRows = customDropdownOptionResult.error ? [] : (customDropdownOptionResult.data || [])
   const products = (productsResult.data || []) as ProductRow[]
 
   return products.map((product, index) => {
@@ -847,6 +857,7 @@ const fetchStorefrontProducts = async () => {
       showPurity: false,
       engravingEnabled: Boolean(product.engraving_enabled),
       engravingLabel: product.engraving_label || 'Complimentary Engraving',
+      customDropdowns: product.custom_dropdowns_enabled ? customDropdownRows.filter((group) => group.product_id === product.id).map((group) => ({ id: group.id, name: group.name, label: group.label, isRequired: Boolean(group.is_required), options: customDropdownOptionRows.filter((option) => option.dropdown_id === group.id).map((option) => ({ id: option.id, label: option.label, value: option.value })) })).filter((group) => group.options.length > 0) : [],
       featuresList: product.features ?? [],
       specificationRows: [...baseSpecs, ...hiphopSpecs],
       productDetailRows: product.product_details ?? [],

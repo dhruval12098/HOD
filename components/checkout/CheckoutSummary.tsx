@@ -45,6 +45,7 @@ export default function CheckoutSummary({ summary }: { summary: CheckoutSummaryD
                   {buildSelectionLabel(item.metal, item.purity) ? <div>Metal: {buildSelectionLabel(item.metal, item.purity)}</div> : null}
                   {item.sizeOrFit ? <div>Size / Fit: {item.sizeOrFit}</div> : null}
                   {item.gemstone ? <div>Stone: {item.gemstone}</div> : null}
+                  {item.customSelections?.map((selection) => <div key={selection.dropdownId}>{selection.label || 'Option'}: {selection.optionLabel || selection.optionId}</div>)}
                   <div>Quantity: {item.quantity}</div>
                 </div>
               </div>

@@ -122,7 +122,7 @@ export default function ProductGallery({
     [assets],
   );
 
-  // Keep mobile ordering unchanged, while placing the wide video between image rows on desktop.
+  // Keep mobile ordering unchanged, while placing the video after the first image row on desktop.
   const desktopGridAssets = useMemo(() => {
     const video = assets.find((asset) => asset.type === 'video');
     if (!video) return assets;
@@ -331,9 +331,14 @@ export default function ProductGallery({
                     aria-current={isSelected ? 'true' : undefined}
                   >
                     {asset.type === 'video' ? (
-                      <span className="flex h-full w-full items-center justify-center rounded-[10px] bg-[#F4F6F8] text-[#0A1628]">
-                        <Film className="h-5 w-5" strokeWidth={1.6} aria-hidden="true" />
-                      </span>
+                      <video
+                        src={`${asset.url}#t=0.1`}
+                        className="pointer-events-none h-full w-full rounded-[10px] bg-white object-contain object-center"
+                        muted
+                        playsInline
+                        preload="metadata"
+                        aria-hidden="true"
+                      />
                     ) : (
                       <img src={asset.url} alt="" className="h-full w-full rounded-[10px] object-cover object-center" loading="lazy" />
                     )}
@@ -354,7 +359,7 @@ export default function ProductGallery({
         <div className="grid grid-cols-2 gap-2.5 xl:gap-3">
           {desktopGridAssets.map((asset, index) => {
             const tileKey = `${asset.type}-${asset.url}-${index}`;
-            const tileShape = asset.type === 'video' ? 'col-span-2 aspect-[3/2]' : 'aspect-[4/5]';
+            const tileShape = 'aspect-square';
             const tileSurface = asset.type === 'video'
               ? 'border-[rgba(10,22,40,0.12)] bg-white'
               : bgMain;

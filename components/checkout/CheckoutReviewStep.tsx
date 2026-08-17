@@ -14,6 +14,8 @@ export default function CheckoutReviewStep({
   loveLetter,
   totalAmount,
   chargeQuote,
+  isPaymentDisabled,
+  paymentAvailabilityMessage,
 }: {
   onPayNow: () => void
   isProcessingPayment: boolean
@@ -22,6 +24,8 @@ export default function CheckoutReviewStep({
   loveLetter?: LoveLetterDraft | null
   totalAmount: number
   chargeQuote?: CheckoutChargeQuote | null
+  isPaymentDisabled?: boolean
+  paymentAvailabilityMessage?: string
 }) {
   const { format } = useCurrency();
 
@@ -68,11 +72,14 @@ export default function CheckoutReviewStep({
           ) : null}
         </div>
         <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+          {paymentAvailabilityMessage ? (
+            <p className="text-sm leading-6 text-[#b54708] sm:basis-full">{paymentAvailabilityMessage}</p>
+          ) : null}
           <button
             type="button"
             onClick={onPayNow}
-            disabled={isProcessingPayment}
-            className="inline-flex h-11 items-center justify-center rounded-full bg-[#101828] px-6 text-sm font-medium text-white transition hover:bg-[#1d2939]"
+            disabled={isProcessingPayment || isPaymentDisabled}
+            className="inline-flex h-11 items-center justify-center rounded-full bg-[#101828] px-6 text-sm font-medium text-white transition hover:bg-[#1d2939] disabled:cursor-not-allowed disabled:bg-[#98a2b3]"
           >
             {isProcessingPayment ? paymentButtonLabel || 'Starting Payment...' : 'Pay with Razorpay'}
           </button>

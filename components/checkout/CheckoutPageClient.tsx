@@ -26,6 +26,22 @@ type RazorpayCheckoutSuccess = {
   razorpay_signature: string
 }
 
+function buildCheckoutRequestItem(item: CheckoutDisplayItem) {
+  return {
+    name: item.name,
+    slug: item.slug,
+    metalVariantId: item.metalVariantId,
+    imageUrl: item.imageUrl,
+    metal: item.metal,
+    purity: item.purity,
+    sizeOrFit: item.sizeOrFit,
+    gemstone: item.gemstone,
+    carat: item.carat,
+    quantity: item.quantity,
+    customSelections: item.customSelections,
+  }
+}
+
 type RazorpayCheckoutFailure = {
   error?: {
     code?: string
@@ -227,6 +243,15 @@ export default function CheckoutPageClient() {
   const [couponLoading, setCouponLoading] = useState(false);
   const [pendingPaymentSession, setPendingPaymentSession] = useState<PendingPaymentSession | null>(null)
   const [chargeQuote, setChargeQuote] = useState<CheckoutChargeQuote | null>(null)
+  const [quoteStatus, setQuoteStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle')
+  const [quoteError, setQuoteError] = useState('')
+  const [authoritativePricing, setAuthoritativePricing] = useState<{
+    subtotalAmount: number
+    gstAmount: number
+    couponDiscountAmount: number
+    totalAmount: number
+    lines: Array<{ slug: string; unitPrice: number; quantity: number }>
+  } | null>(null)
   const [postalLookup, setPostalLookup] = useState<CheckoutPostalLookupState | null>(null)
   const [postalAreaOptions, setPostalAreaOptions] = useState<CheckoutPostalAreaOption[]>([])
   const [cartProducts, setCartProducts] = useState<Array<Pick<StorefrontProduct, 'id' | 'dbId' | 'slug' | 'name' | 'imageUrl' | 'priceFrom'>>>([]);
@@ -239,12 +264,14 @@ export default function CheckoutPageClient() {
     state: string
   } | null>(null)
   const postalLookupAbortRef = useRef<AbortController | null>(null)
+  const checkoutAttemptKeyRef = useRef<string | null>(null)
   const lastPostalLookupKeyRef = useRef<string>('')
   const cartMode = searchParams.get('mode') === 'cart';
 
   const singleItem = useMemo<CheckoutDisplayItem>(() => ({
     name: searchParams.get('name') ?? 'Selected Piece',
     slug: searchParams.get('slug') ?? '',
+    metalVariantId: searchParams.get('variant') ?? undefined,
     imageUrl: searchParams.get('image') ?? undefined,
     priceFrom: parseCurrency(searchParams.get('price')),
     metal: searchParams.get('metal') ?? '',
@@ -252,6 +279,7 @@ export default function CheckoutPageClient() {
     sizeOrFit: searchParams.get('size') ?? '',
     gemstone: searchParams.get('gemstone') ?? '',
     carat: searchParams.get('carat') ?? '',
+    customSelections: (() => { try { return JSON.parse(decodeURIComponent(searchParams.get('custom') || '[]')) } catch { return [] } })(),
     quantity: 1,
     gstLabel: taxInfo?.gstLabel ?? '',
     gstPercentage: taxInfo?.gstPercentage ?? 0,
@@ -282,6 +310,7 @@ export default function CheckoutPageClient() {
       })
       .filter(Boolean) as Array<{ entry: typeof cartItems[number]; product: typeof cartProducts[number] }>;
   }, [cartItems, cartMode, cartProducts]);
+  const unavailableCartItemCount = cartMode ? Math.max(0, cartItems.length - resolvedCartItems.length) : 0
 
   const cartCheckoutItems = useMemo<CheckoutDisplayItem[]>(() => {
     if (!cartMode) return [];
@@ -291,6 +320,7 @@ export default function CheckoutPageClient() {
         return {
           name: product.name,
           slug: product.slug,
+          metalVariantId: entry.selection.metalVariantId,
           imageUrl: entry.selection.resolvedImageUrl || product.imageUrl || undefined,
           priceFrom: entry.selection.resolvedPrice ?? product.priceFrom,
           metal: entry.selection.metal ?? '',
@@ -298,6 +328,7 @@ export default function CheckoutPageClient() {
           sizeOrFit: entry.selection.ringSize || entry.selection.sizeOrFit || '',
           gemstone: entry.selection.gemstone ?? '',
           carat: entry.selection.hiphopCarat ?? '',
+          customSelections: entry.selection.customSelections ?? [],
           quantity: entry.quantity,
           gstLabel: tax?.gstLabel ?? 'Taxes',
           gstPercentage: tax?.gstPercentage ?? 0,
@@ -335,21 +366,35 @@ export default function CheckoutPageClient() {
     [cartMode, cartCheckoutItems, singleItem, taxInfo]
   );
 
-  const subtotal = useMemo(
+  const displayedSubtotal = useMemo(
     () => checkoutItems.reduce((sum, item) => sum + (item.priceFrom * item.quantity), 0),
     [checkoutItems]
   );
-  const couponDiscount = appliedCoupon?.discountAmount ?? 0
-  const gstTotal = useMemo(
+  const displayedCouponDiscount = appliedCoupon?.discountAmount ?? 0
+  const displayedGstTotal = useMemo(
     () => checkoutItems.reduce((sum, item) => {
       const lineSubtotal = item.priceFrom * item.quantity
-      const discountShare = subtotal > 0 ? couponDiscount * (lineSubtotal / subtotal) : 0
+      const discountShare = displayedSubtotal > 0 ? displayedCouponDiscount * (lineSubtotal / displayedSubtotal) : 0
       const taxableLineAmount = Math.max(0, lineSubtotal - discountShare)
       return sum + (taxableLineAmount * ((item.gstPercentage ?? 0) / 100))
     }, 0),
-    [checkoutItems, couponDiscount, subtotal]
+    [checkoutItems, displayedCouponDiscount, displayedSubtotal]
   )
-  const totalPayable = Math.max(0, subtotal - couponDiscount) + gstTotal
+  const subtotal = authoritativePricing?.subtotalAmount ?? displayedSubtotal
+  const couponDiscount = authoritativePricing?.couponDiscountAmount ?? displayedCouponDiscount
+  const gstTotal = authoritativePricing?.gstAmount ?? displayedGstTotal
+  const totalPayable = authoritativePricing?.totalAmount ?? Math.max(0, subtotal - couponDiscount) + gstTotal
+  const authoritativeCheckoutItems = useMemo(
+    () => checkoutItems.map((item, index) => ({
+      ...item,
+      priceFrom: authoritativePricing?.lines[index]?.unitPrice ?? item.priceFrom,
+    })),
+    [authoritativePricing?.lines, checkoutItems]
+  )
+  const hasAuthoritativePriceChange = useMemo(
+    () => Boolean(authoritativePricing?.lines.some((line, index) => Math.abs(line.unitPrice - Number(checkoutItems[index]?.priceFrom || 0)) >= 0.01)),
+    [authoritativePricing?.lines, checkoutItems]
+  )
 
   const paymentSessionSignature = useMemo(
     () =>
@@ -377,6 +422,7 @@ export default function CheckoutPageClient() {
 
   useEffect(() => {
     setPendingPaymentSession(null)
+    checkoutAttemptKeyRef.current = null
   }, [paymentSessionSignature])
 
   useEffect(() => {
@@ -384,9 +430,14 @@ export default function CheckoutPageClient() {
     if (!checkoutItems.length) return
     if (!currencyCode && !customerForm.country.trim()) {
       setChargeQuote(null)
+      setAuthoritativePricing(null)
+      setQuoteStatus('idle')
+      setQuoteError('')
       return
     }
 
+    setQuoteStatus('loading')
+    setQuoteError('')
     void (async () => {
       try {
         const response = await fetch('/api/checkout/quote', {
@@ -395,25 +446,43 @@ export default function CheckoutPageClient() {
           body: JSON.stringify({
             country: customerForm.country,
             currencyCode,
-            couponDiscountAmount: couponDiscount,
+            coupon: appliedCoupon ? { id: appliedCoupon.id, code: appliedCoupon.code } : null,
             items: checkoutItems.map((item) => ({
-              priceFrom: item.priceFrom,
+              slug: item.slug,
+              name: item.name,
+              metalVariantId: item.metalVariantId,
+              metal: item.metal,
+              purity: item.purity,
               quantity: item.quantity,
-              gstPercentage: item.gstPercentage ?? 0,
             })),
           }),
         })
         const payload = await response.json().catch(() => null)
         if (!ignore && response.ok) {
           setChargeQuote(payload?.quote ?? null)
+          setAuthoritativePricing(payload?.pricing ?? null)
+          setQuoteStatus(payload?.quote && payload?.pricing ? 'ready' : 'error')
+          setQuoteError(payload?.quote && payload?.pricing ? '' : 'We could not confirm the latest checkout total.')
+        } else if (!ignore) {
+          setChargeQuote(null)
+          setAuthoritativePricing(null)
+          setQuoteStatus('error')
+          setQuoteError(response.status >= 500 ? 'We could not confirm pricing right now. Please try again shortly.' : payload?.error || 'One or more products need your attention before checkout.')
         }
-      } catch {}
+      } catch {
+        if (!ignore) {
+          setChargeQuote(null)
+          setAuthoritativePricing(null)
+          setQuoteStatus('error')
+          setQuoteError('We could not confirm pricing right now. Check your connection and try again.')
+        }
+      }
     })()
 
     return () => {
       ignore = true
     }
-  }, [checkoutItems, couponDiscount, currencyCode, customerForm.country])
+  }, [appliedCoupon, checkoutItems, currencyCode, customerForm.country])
 
   const setPostalCodeFieldError = useCallback((message?: string) => {
     setFieldErrors((current) => {
@@ -830,6 +899,16 @@ export default function CheckoutPageClient() {
       return
     }
 
+    if (unavailableCartItemCount > 0) {
+      setErrorMessage('One or more cart items are no longer available. Return to your cart to remove or reconfigure them.')
+      return
+    }
+
+    if (quoteStatus !== 'ready' || !chargeQuote || !authoritativePricing) {
+      setErrorMessage(quoteError || 'Please wait while we confirm the latest price and availability.')
+      return
+    }
+
     if (!razorpayReady || !window.Razorpay) {
       setErrorMessage('Razorpay checkout is still loading. Please try again in a moment.')
       return
@@ -852,6 +931,8 @@ export default function CheckoutPageClient() {
       const paymentSession =
         pendingPaymentSession ||
         (await (async () => {
+          const idempotencyKey = checkoutAttemptKeyRef.current || window.crypto.randomUUID()
+          checkoutAttemptKeyRef.current = idempotencyKey
           const response = await fetch('/api/checkout/place', {
             method: 'POST',
             headers: {
@@ -859,8 +940,9 @@ export default function CheckoutPageClient() {
               authorization: `Bearer ${accessToken}`,
             },
             body: JSON.stringify({
-              item: cartMode ? null : singleItem,
-              items: cartMode ? checkoutItems : undefined,
+              idempotencyKey,
+              item: cartMode ? null : buildCheckoutRequestItem(singleItem),
+              items: cartMode ? checkoutItems.map(buildCheckoutRequestItem) : undefined,
               customer: customerForm,
               loveLetter: loveLetterDraft,
               currencyCode,
@@ -868,7 +950,6 @@ export default function CheckoutPageClient() {
                 ? {
                     id: appliedCoupon.id,
                     code: appliedCoupon.code,
-                    discountAmount: appliedCoupon.discountAmount,
                   }
                 : null,
             }),
@@ -876,6 +957,7 @@ export default function CheckoutPageClient() {
           const payload = await response.json().catch(() => null)
 
           if (!response.ok) {
+            if (payload?.retryable) checkoutAttemptKeyRef.current = null
             setErrorMessage(payload?.error ?? 'Unable to start payment.')
             return null
           }
@@ -981,20 +1063,29 @@ export default function CheckoutPageClient() {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           code: normalizedCode,
-          subtotal,
+          items: checkoutItems.map((item) => ({
+            slug: item.slug,
+            name: item.name,
+            metalVariantId: item.metalVariantId,
+            metal: item.metal,
+            purity: item.purity,
+            quantity: item.quantity,
+          })),
         }),
       })
 
       const payload = await response.json().catch(() => null)
       if (!response.ok || !payload?.coupon) {
         setAppliedCoupon(null)
-        setErrorMessage(payload?.error ?? 'Unable to apply coupon.')
+        setErrorMessage(response.status >= 500 ? 'We could not validate that coupon right now. Please try again shortly.' : payload?.error ?? 'Unable to apply coupon.')
         return
       }
 
       setAppliedCoupon(payload.coupon)
       setCouponCodeInput(payload.coupon.code)
       setErrorMessage('')
+    } catch {
+      setErrorMessage('We could not validate that coupon. Check your connection and try again.')
     } finally {
       setCouponLoading(false)
     }
@@ -1115,6 +1206,31 @@ export default function CheckoutPageClient() {
               </div>
             ) : null}
 
+            {quoteStatus === 'loading' ? (
+              <div className="rounded-[24px] border border-[#d0d5dd] bg-white px-5 py-4 text-sm text-[#667085]">
+                Confirming the latest price, tax, stock, and availability…
+              </div>
+            ) : null}
+
+            {quoteStatus === 'error' && quoteError ? (
+              <div className="rounded-[24px] border border-[rgba(217,119,6,0.22)] bg-[#fffaeb] px-5 py-4 text-sm text-[#b54708]">
+                {quoteError} Payment remains unavailable until the checkout total is confirmed.
+              </div>
+            ) : null}
+
+            {quoteStatus === 'ready' && hasAuthoritativePriceChange ? (
+              <div className="rounded-[24px] border border-[#b2ddff] bg-[#eff8ff] px-5 py-4 text-sm text-[#175cd3]">
+                One or more catalogue prices changed since this checkout was opened. The order summary now shows the latest confirmed price.
+              </div>
+            ) : null}
+
+            {unavailableCartItemCount > 0 ? (
+              <div className="rounded-[24px] border border-[rgba(217,119,6,0.22)] bg-[#fffaeb] px-5 py-4 text-sm text-[#b54708]">
+                {unavailableCartItemCount} cart {unavailableCartItemCount === 1 ? 'item is' : 'items are'} no longer available.{' '}
+                <Link href="/cart" className="font-medium underline underline-offset-2">Return to your cart</Link> to remove or reconfigure {unavailableCartItemCount === 1 ? 'it' : 'them'} before payment.
+              </div>
+            ) : null}
+
               <div className="animate-[fadeUp_0.35s_ease]">
                 {currentStep === 0 ? <CheckoutCustomerStep form={customerForm} onChange={updateCustomerForm} errors={fieldErrors} /> : null}
                {currentStep === 1 ? (
@@ -1130,7 +1246,7 @@ export default function CheckoutPageClient() {
                ) : null}
                 {currentStep === 2 ? <CheckoutDeliveryStep /> : null}
                 {currentStep === 3 ? <CheckoutPaymentStep totalAmount={totalPayable} chargeQuote={chargeQuote} /> : null}
-                {currentStep === 4 ? <CheckoutReviewStep onPayNow={handlePayNow} isProcessingPayment={processingPayment} paymentButtonLabel={paymentButtonLabel} continueHref={continueHref} loveLetter={loveLetterDraft} totalAmount={totalPayable} chargeQuote={chargeQuote} /> : null}
+                {currentStep === 4 ? <CheckoutReviewStep onPayNow={handlePayNow} isProcessingPayment={processingPayment} paymentButtonLabel={paymentButtonLabel} continueHref={continueHref} loveLetter={loveLetterDraft} totalAmount={totalPayable} chargeQuote={chargeQuote} isPaymentDisabled={quoteStatus !== 'ready' || unavailableCartItemCount > 0} paymentAvailabilityMessage={unavailableCartItemCount > 0 ? 'Resolve unavailable cart items before payment.' : quoteStatus === 'loading' ? 'Confirming the latest price and availability…' : quoteStatus === 'error' ? quoteError : undefined} /> : null}
             </div>
 
             {!isLastStep ? (
@@ -1218,9 +1334,9 @@ export default function CheckoutPageClient() {
               </div>
               <CheckoutSummary
                 summary={{
-                  items: checkoutItems,
+                  items: authoritativeCheckoutItems,
                   couponCode: appliedCoupon?.code,
-                  couponDiscount: appliedCoupon?.discountAmount ?? 0,
+                  couponDiscount,
                   loveLetter: loveLetterDraft,
                   chargeQuote,
                 }}

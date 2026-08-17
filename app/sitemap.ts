@@ -5,7 +5,7 @@ import { getStorefrontProducts } from '@/lib/catalog-products'
 import { createSupabaseServerClient } from '@/lib/server-supabase'
 import { getCanonicalUrl } from '@/lib/site-url'
 
-export const revalidate = 3600
+export const dynamic = 'force-dynamic'
 
 const staticRoutes = [
   '/',
