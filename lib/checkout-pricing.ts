@@ -25,6 +25,7 @@ type ProductRow = {
   default_purity_price_id: string | null
   stock_quantity: number | null
   allow_checkout: boolean | null
+  product_lane: 'standard' | 'hiphop' | 'collection' | null
   status: string | null
   custom_dropdowns_enabled: boolean | null
 }
@@ -61,7 +62,7 @@ export async function resolveAuthoritativeCheckoutPricing({
   const slugs = [...new Set(items.map((item) => item.slug))]
   const { data: productRows, error: productError } = await adminClient
     .from('products')
-    .select('id, slug, name, sku, gst_slab_id, base_price, default_purity_price_id, stock_quantity, allow_checkout, status, custom_dropdowns_enabled')
+    .select('id, slug, name, sku, gst_slab_id, base_price, default_purity_price_id, stock_quantity, allow_checkout, product_lane, status, custom_dropdowns_enabled')
     .in('slug', slugs)
 
   if (productError) return { error: productError.message, status: 500 as const }
@@ -120,7 +121,9 @@ export async function resolveAuthoritativeCheckoutPricing({
       pricingError = `This product is no longer available: ${entry.slug}.`
       return null
     }
-    if (product.status !== 'active' || product.allow_checkout !== true) pricingError = `${product.name} is not available for checkout.`
+    const productLane = product.product_lane ?? 'standard'
+    const checkoutAllowed = productLane === 'standard' || (productLane === 'hiphop' && product.allow_checkout === true)
+    if (product.status !== 'active' || !checkoutAllowed) pricingError = `${product.name} is not available for checkout.`
     if (!Number.isInteger(quantity) || quantity < 1 || quantity > 10) pricingError = `Invalid quantity for ${product.name}.`
     requestedQuantityByProduct.set(product.id, (requestedQuantityByProduct.get(product.id) || 0) + quantity)
 

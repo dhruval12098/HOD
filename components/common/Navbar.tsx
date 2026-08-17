@@ -160,7 +160,7 @@ function getMegaMenuColumnCount(item: NavbarRenderItem) {
   return Math.max(1, Math.min(4, sectionCount || 1));
 }
 
-export default function Navbar() {
+export default function Navbar({ onReady }: { onReady?: () => void }) {
   const router = useRouter();
   const pathname = usePathname();
   const { count: wishlistCount } = useWishlistStore();
@@ -261,14 +261,20 @@ export default function Navbar() {
     let ignore = false;
 
     const loadNavbar = async () => {
-      const response = await fetch('/api/public/navbar', { cache: 'no-store' });
-      const payload = await response.json().catch(() => null);
+      try {
+        const response = await fetch('/api/public/navbar', { cache: 'no-store' });
+        const payload = await response.json().catch(() => null);
 
-      if (ignore || !response.ok || !Array.isArray(payload?.items)) {
-        return;
+        if (!ignore && response.ok && Array.isArray(payload?.items)) {
+          setNavItems(payload.items as NavbarRenderItem[]);
+        }
+      } catch {
+        // Keep the navbar shell usable even if its optional live configuration is unavailable.
+      } finally {
+        if (!ignore) {
+          onReady?.();
+        }
       }
-
-      setNavItems(payload.items as NavbarRenderItem[]);
     };
 
     void loadNavbar();
@@ -276,7 +282,7 @@ export default function Navbar() {
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [onReady]);
 
   useEffect(() => {
     let ignore = false;

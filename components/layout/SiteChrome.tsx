@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { useEffect, useLayoutEffect, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
@@ -19,6 +19,7 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
   const isHomeRoute = pathname === '/';
   const [isHomeLoading, setIsHomeLoading] = useState(isHomeRoute);
   const [isHomeReady, setIsHomeReady] = useState(!isHomeRoute);
+  const [isNavbarReady, setIsNavbarReady] = useState(false);
   const usesDesktopOverlayNavbar = pathname ? OVERLAY_NAVBAR_ROUTES.has(pathname) : false;
   const isMinimalChromeRoute = pathname
     ? AUTH_ROUTES.has(pathname) || pathname.startsWith('/checkout')
@@ -81,7 +82,7 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
   }, [isHomeRoute]);
 
   useEffect(() => {
-    if (!isHomeRoute || !isHomeLoading || !isHomeReady) return;
+    if (!isHomeRoute || !isHomeLoading || !isHomeReady || !isNavbarReady) return;
 
     const fallbackTimer = window.setTimeout(() => {
       setIsHomeLoading(false);
@@ -90,7 +91,15 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
     return () => {
       window.clearTimeout(fallbackTimer);
     };
-  }, [isHomeLoading, isHomeReady, isHomeRoute]);
+  }, [isHomeLoading, isHomeReady, isHomeRoute, isNavbarReady]);
+
+  const handleNavbarReady = useCallback(() => {
+    setIsNavbarReady(true);
+  }, []);
+
+  const handleHomeLoaderComplete = useCallback(() => {
+    setIsHomeLoading(false);
+  }, []);
 
   return (
     <HomeLoaderProvider value={{ isHomeLoading, setIsHomeLoading, isHomeReady, setIsHomeReady }}>
@@ -102,7 +111,7 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
             id="site-navbar-shell"
             className={isHomeLoading ? 'pointer-events-none opacity-0' : 'pointer-events-auto opacity-100'}
           >
-            <Navbar />
+            <Navbar onReady={handleNavbarReady} />
           </div>
           <main className={`flex-1 ${usesDesktopOverlayNavbar ? 'pt-[91px] lg:pt-0' : 'pt-[118px] lg:pt-[146px]'}`}>{children}</main>
           <div
@@ -114,7 +123,7 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
           <PromotionPopup />
           {!isHomeLoading ? <FloatingWidgets /> : null}
           {isHomeRoute && isHomeLoading ? (
-            <Loader ready={isHomeReady} onComplete={() => setIsHomeLoading(false)} />
+            <Loader ready={isHomeReady && isNavbarReady} onComplete={handleHomeLoaderComplete} />
           ) : null}
         </>
       )}

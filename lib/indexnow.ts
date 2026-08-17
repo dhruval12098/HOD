@@ -1,7 +1,9 @@
 import sitemap from '@/app/sitemap'
 import { getSiteUrl } from '@/lib/site-url'
 
-export const INDEXNOW_KEY = 'a14f9c3e2b7d4a6886c5e1f902bd7431'
+const DEFAULT_INDEXNOW_KEY = 'f8b5765a513b4e3b8a608c94c9bada7c'
+
+export const INDEXNOW_KEY = process.env.INDEXNOW_KEY?.trim() || DEFAULT_INDEXNOW_KEY
 
 export async function submitCurrentSitemapToIndexNow() {
   const entries = await sitemap()
