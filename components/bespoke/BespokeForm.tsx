@@ -220,7 +220,7 @@ export default function BespokeForm({ onSuccess, initialConfig }: BespokeFormPro
     <section
       id="bespoke-form"
       className="py-[110px] px-[52px] max-lg:px-7 max-md:px-5 max-md:py-[70px]"
-      style={{ background: 'linear-gradient(180deg, #FAFBFD 0%, #FAF7F2 100%)' }}
+      style={{ background: 'linear-gradient(180deg, #FAFBFD 0%, #F5F7FC 100%)' }}
     >
       <div className="max-w-[1400px] mx-auto grid grid-cols-[1fr_1.3fr] gap-20 items-start max-lg:grid-cols-1 max-lg:gap-10">
         <RevealDiv>

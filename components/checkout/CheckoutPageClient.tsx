@@ -110,22 +110,9 @@ type PendingPaymentSession = {
 
 type PaymentUiStage = 'idle' | 'starting' | 'confirming'
 
-type GoogleAddressComponent = {
-  long_name: string
-  short_name: string
-  types: string[]
-}
-
-type GoogleGeocodeResult = {
-  formatted_address?: string
-  place_id?: string
-  address_components?: GoogleAddressComponent[]
-}
-
-type GoogleGeocodeResponse = {
-  status?: string
-  results?: GoogleGeocodeResult[]
-  error_message?: string
+type PostalLookupResponse = {
+  areas?: CheckoutPostalAreaOption[]
+  error?: string
 }
 
 const POSTAL_CODE_LOOKUP_PATTERN = /^[A-Za-z0-9][A-Za-z0-9\s-]{2,11}$/
@@ -136,35 +123,6 @@ function normalizePostalCodeValue(value: string) {
 
 function isLookupReadyAfterTyping(postalCode: string) {
   return POSTAL_CODE_LOOKUP_PATTERN.test(normalizePostalCodeValue(postalCode))
-}
-
-function getAddressPart(components: GoogleAddressComponent[] = [], types: string[]) {
-  return components.find((component) => types.some((type) => component.types.includes(type)))?.long_name?.trim() || ''
-}
-
-function mapGoogleResultToPostalArea(result: GoogleGeocodeResult, index: number) {
-  const components = result.address_components ?? []
-  const city =
-    getAddressPart(components, ['locality']) ||
-    getAddressPart(components, ['administrative_area_level_2'])
-  const district = getAddressPart(components, ['administrative_area_level_2'])
-  const state = getAddressPart(components, ['administrative_area_level_1'])
-  const country = getAddressPart(components, ['country'])
-  const area =
-    getAddressPart(components, ['sublocality_level_1', 'sublocality', 'neighborhood', 'premise']) ||
-    result.formatted_address?.split(',')[0]?.trim() ||
-    city ||
-    district ||
-    `Area ${index + 1}`
-
-  return {
-    id: result.place_id || `${area}-${index}`,
-    label: [area, district || city, state].filter(Boolean).join(', '),
-    city,
-    district,
-    state,
-    country,
-  }
 }
 
 function loadRazorpayCheckoutScript() {
@@ -583,34 +541,22 @@ export default function CheckoutPageClient() {
       setPostalCodeFieldError()
 
       try {
-        const key = process.env.NEXT_PUBLIC_GOOGLE_GEOCODING_KEY
-        if (!key) {
-          throw new Error('Missing Google Geocoding key')
-        }
-
         const response = await fetch(
-          `https://maps.googleapis.com/maps/api/geocode/json?components=postal_code:${encodeURIComponent(normalizedPostalCode)}&key=${encodeURIComponent(key)}`,
+          `/api/checkout/postal-lookup?postalCode=${encodeURIComponent(normalizedPostalCode)}`,
           {
-          cache: 'no-store',
-          signal: controller.signal,
-          method: 'GET',
-          headers: { accept: 'application/json' },
+            cache: 'no-store',
+            signal: controller.signal,
+            method: 'GET',
+            headers: { accept: 'application/json' },
           }
         )
-        const payload = (await response.json().catch(() => null)) as GoogleGeocodeResponse | null
+        const payload = (await response.json().catch(() => null)) as PostalLookupResponse | null
 
         if (!response.ok) {
-          throw new Error('Network error')
+          throw new Error(payload?.error || 'Network error')
         }
 
-        if (payload?.status && payload.status !== 'OK' && payload.status !== 'ZERO_RESULTS') {
-          throw new Error(payload.error_message || payload.status)
-        }
-
-        const results = payload?.status === 'OK' && Array.isArray(payload.results) ? payload.results : []
-        const areas = results
-          .map(mapGoogleResultToPostalArea)
-          .filter((area) => area.city || area.district || area.state || area.country)
+        const areas = Array.isArray(payload?.areas) ? payload.areas : []
 
         if (!areas.length) {
           const message = 'Invalid postal code, please check'
@@ -699,42 +645,51 @@ export default function CheckoutPageClient() {
 
   useEffect(() => {
     if (cartMode || !singleItem.slug) return;
+    const controller = new AbortController();
     void (async () => {
-      const response = await fetch(`/api/checkout/tax?slug=${encodeURIComponent(singleItem.slug)}`);
-      const payload = await response.json().catch(() => null);
-      if (response.ok) {
-        setTaxInfo({
-          gstLabel: payload?.gstLabel ?? 'Taxes',
-          gstPercentage: Number(payload?.gstPercentage ?? 0),
+      try {
+        const response = await fetch(`/api/checkout/tax?slug=${encodeURIComponent(singleItem.slug)}`, {
+          signal: controller.signal,
         });
+        const payload = await response.json().catch(() => null);
+        if (response.ok) {
+          setTaxInfo({
+            gstLabel: payload?.gstLabel ?? 'Taxes',
+            gstPercentage: Number(payload?.gstPercentage ?? 0),
+          });
+        }
+      } catch (error) {
+        if (!(error instanceof DOMException && error.name === 'AbortError')) {
+          console.error('Unable to load product tax information:', error);
+        }
       }
     })();
+    return () => controller.abort();
   }, [cartMode, singleItem.slug]);
 
   useEffect(() => {
     if (!cartMode || !resolvedCartItems.length) return;
-    let ignore = false;
+    const controller = new AbortController();
     void (async () => {
-      const entries = await Promise.all(
-        resolvedCartItems.map(async ({ product }) => {
-          const response = await fetch(`/api/checkout/tax?slug=${encodeURIComponent(product.slug)}`);
-          const payload = await response.json().catch(() => null);
-          return [
-            product.slug,
-            {
-              gstLabel: payload?.gstLabel ?? 'Taxes',
-              gstPercentage: Number(payload?.gstPercentage ?? 0),
-            },
-          ] as const;
-        })
-      );
-      if (!ignore) {
-        setTaxMap(Object.fromEntries(entries));
+      try {
+        const slugs = [...new Set(resolvedCartItems.map(({ product }) => product.slug))];
+        const response = await fetch('/api/checkout/tax', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ slugs }),
+          signal: controller.signal,
+        });
+        const payload = await response.json().catch(() => null);
+        if (response.ok) {
+          setTaxMap(payload?.taxBySlug ?? {});
+        }
+      } catch (error) {
+        if (!(error instanceof DOMException && error.name === 'AbortError')) {
+          console.error('Unable to load cart tax information:', error);
+        }
       }
     })();
-    return () => {
-      ignore = true;
-    };
+    return () => controller.abort();
   }, [cartMode, resolvedCartItems]);
 
   useEffect(() => {
@@ -1275,25 +1230,27 @@ export default function CheckoutPageClient() {
                 </div>
               </div>
             ) : (
-              <div className="flex justify-start">
+              <div className="-mt-2 flex justify-start px-1">
                 <button
                   type="button"
                   onClick={() => setCurrentStep((step) => Math.max(0, step - 1))}
-                  className="inline-flex h-11 items-center justify-center rounded-full border border-[#d0d5dd] bg-white px-6 text-sm font-medium text-[#344054] transition hover:border-[#101828] hover:text-[#101828]"
+                  className="inline-flex min-h-10 items-center text-sm font-medium text-[#667085] underline decoration-[#c7cbd1] underline-offset-4 transition hover:text-[#101828] focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b8964e]"
                 >
-                  Back
+                  Back to payment details
                 </button>
               </div>
             )}
 
-            <div className="flex justify-start">
-              <Link
-                href={continueHref}
-                className="inline-flex h-11 items-center justify-center rounded-full border border-transparent px-2 text-sm font-medium text-[#667085] transition hover:text-[#101828]"
-              >
-                Continue Shopping
-              </Link>
-            </div>
+            {!isLastStep ? (
+              <div className="flex justify-start">
+                <Link
+                  href={continueHref}
+                  className="inline-flex h-11 items-center justify-center rounded-full border border-transparent px-2 text-sm font-medium text-[#667085] transition hover:text-[#101828]"
+                >
+                  Continue Shopping
+                </Link>
+              </div>
+            ) : null}
           </div>
 
           <div className="lg:sticky lg:top-[140px] lg:self-start">

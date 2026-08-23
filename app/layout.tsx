@@ -15,6 +15,7 @@ import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 import GoogleTagManager from "@/components/analytics/GoogleTagManager";
 import MaintenanceScreen from "@/components/layout/MaintenanceScreen";
 import { getMaintenanceMode } from "@/lib/maintenance";
+import { ToastProvider } from "@/components/home/Toast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -79,7 +80,9 @@ export default async function RootLayout({
             <WishlistProvider>
               <CurrencyProvider>
                 <CartProvider>
-                  <SiteChrome>{children}</SiteChrome>
+                  <ToastProvider>
+                    <SiteChrome>{children}</SiteChrome>
+                  </ToastProvider>
                 </CartProvider>
               </CurrencyProvider>
             </WishlistProvider>

@@ -9,7 +9,7 @@ export default function CollectionShowcase({ config }: { config: CollectionPageC
   return (
     <section className="bg-[var(--theme-surface-warm)] px-5 py-16 md:px-8 md:py-24 lg:px-12 lg:py-30">
       <div className="mx-auto grid max-w-[1400px] items-end gap-8 md:grid-cols-[1.4fr_1fr] md:gap-14 lg:gap-20">
-        <div className="relative aspect-[3/4] min-h-[420px] overflow-hidden bg-[radial-gradient(circle_at_18%_22%,rgba(255,255,255,0.32),transparent_36%),linear-gradient(135deg,#f7f1e7_0%,#eadfce_42%,#dcc9ab_100%)] md:min-h-[580px]">
+        <div className="relative aspect-[3/4] min-h-[420px] overflow-hidden bg-[radial-gradient(circle_at_18%_22%,rgba(255,255,255,0.42),transparent_36%),linear-gradient(135deg,#F5F7FC_0%,#EAF0FA_42%,#D8E2F2_100%)] md:min-h-[580px]">
           {imageUrl ? (
             <picture>
               {config.showcaseMobileImageUrl ? <source media="(max-width: 960px)" srcSet={config.showcaseMobileImageUrl} /> : null}

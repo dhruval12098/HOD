@@ -1,10 +1,14 @@
 // components/product/ConfiguratorEngravingInput.jsx - House of Diams
 
+import { useId } from 'react';
+
 /**
  * Controlled engraving toggle + text input row for the configurator.
  */
 export default function ConfiguratorEngravingInput({ label = 'Free Engraving', mode, text, onModeChange, onTextChange }) {
   const maxLength = 20;
+  const inputId = useId();
+  const counterId = `${inputId}-counter`;
 
   const selectedLabel =
     mode === 'custom' && text.trim()
@@ -32,10 +36,12 @@ export default function ConfiguratorEngravingInput({ label = 'Free Engraving', m
       <div className="flex flex-wrap gap-2">
         {['none', 'custom'].map((option) => {
           const isActive = option === mode;
-          const label = option === 'none' ? 'No Engraving' : 'Add Custom Text';
+          const optionLabel = option === 'none' ? 'No Engraving' : 'Add Custom Text';
           return (
             <button
               key={option}
+              type="button"
+              aria-pressed={isActive}
               onClick={() => onModeChange(option)}
               className={`
                 px-[18px] py-[10px]
@@ -47,7 +53,7 @@ export default function ConfiguratorEngravingInput({ label = 'Free Engraving', m
                 }
               `}
             >
-              {label}
+              {optionLabel}
             </button>
           );
         })}
@@ -55,11 +61,16 @@ export default function ConfiguratorEngravingInput({ label = 'Free Engraving', m
 
       {mode === 'custom' && (
         <div className="animate-[fadeUp_0.3s_ease]">
+          <label htmlFor={inputId} className="sr-only">
+            Custom engraving text
+          </label>
           <input
+            id={inputId}
             type="text"
             maxLength={maxLength}
             value={text}
             onChange={(e) => onTextChange(e.target.value)}
+            aria-describedby={counterId}
             placeholder="Up to 20 characters..."
             className="
               mt-[10px] w-full max-w-[340px]
@@ -70,7 +81,7 @@ export default function ConfiguratorEngravingInput({ label = 'Free Engraving', m
               placeholder:text-[#7F8898] focus:border-[#0A1628] focus:outline-none
             "
           />
-          <div className="mt-2 font-sans text-[9px] uppercase tracking-[0.14em] text-[#7F8898]">
+          <div id={counterId} className="mt-2 font-sans text-[9px] uppercase tracking-[0.14em] text-[#7F8898]">
             {text.length}/{maxLength}
           </div>
         </div>

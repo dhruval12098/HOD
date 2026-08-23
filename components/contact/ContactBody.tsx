@@ -101,12 +101,13 @@ export default function ContactBody({ onSuccess }: ContactBodyProps) {
         <div className="bg-white px-11 py-11 border border-[rgba(10,22,40,0.10)] max-md:px-[22px] max-md:py-7">
           <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-2 gap-5 max-md:grid-cols-1">
-              <div><label className="block text-[9px] font-normal tracking-[0.28em] text-[#6A6A6A] uppercase mb-2">Full Name</label><input required value={form.name} onChange={set('name')} className={inputCls} /></div>
-              <div><label className="block text-[9px] font-normal tracking-[0.28em] text-[#6A6A6A] uppercase mb-2">Email</label><input required type="email" value={form.email} onChange={set('email')} className={inputCls} /></div>
-              <div><label className="block text-[9px] font-normal tracking-[0.28em] text-[#6A6A6A] uppercase mb-2">Phone / WhatsApp</label><input value={form.phone} onChange={set('phone')} className={`${inputCls} font-numeric`} /></div>
+              <div><label htmlFor="contact-name" className="block text-[9px] font-normal tracking-[0.28em] text-[#6A6A6A] uppercase mb-2">Full Name</label><input id="contact-name" required value={form.name} onChange={set('name')} className={inputCls} /></div>
+              <div><label htmlFor="contact-email" className="block text-[9px] font-normal tracking-[0.28em] text-[#6A6A6A] uppercase mb-2">Email</label><input id="contact-email" required type="email" value={form.email} onChange={set('email')} className={inputCls} /></div>
+              <div><label htmlFor="contact-phone" className="block text-[9px] font-normal tracking-[0.28em] text-[#6A6A6A] uppercase mb-2">Phone / WhatsApp</label><input id="contact-phone" value={form.phone} onChange={set('phone')} className={`${inputCls} font-numeric`} /></div>
               <div>
-                <label className="block text-[9px] font-normal tracking-[0.28em] text-[#6A6A6A] uppercase mb-2">Enquiry Topic</label>
+                <label htmlFor="contact-topic" className="block text-[9px] font-normal tracking-[0.28em] text-[#6A6A6A] uppercase mb-2">Enquiry Topic</label>
                 <Select
+                  id="contact-topic"
                   required
                   validationLabel="Enquiry topic"
                   value={form.topic}
@@ -122,7 +123,7 @@ export default function ContactBody({ onSuccess }: ContactBodyProps) {
                   triggerClassName={`${inputCls} justify-between bg-[#FAFBFD] pr-3 shadow-none`}
                 />
               </div>
-              <div className="col-span-2 max-md:col-span-1"><label className="block text-[9px] font-normal tracking-[0.28em] text-[#6A6A6A] uppercase mb-2">Your Message</label><textarea required rows={4} value={form.message} onChange={set('message')} className={`${inputCls} resize-y min-h-[100px]`} /></div>
+              <div className="col-span-2 max-md:col-span-1"><label htmlFor="contact-message" className="block text-[9px] font-normal tracking-[0.28em] text-[#6A6A6A] uppercase mb-2">Your Message</label><textarea id="contact-message" required rows={4} value={form.message} onChange={set('message')} className={`${inputCls} resize-y min-h-[100px]`} /></div>
             </div>
             <div className="flex justify-between items-center mt-6 pt-6 border-t border-[rgba(10,22,40,0.10)] flex-wrap gap-4">
               <p className="text-[10px] text-[#6A6A6A] tracking-[0.04em]">Replies within 24 hours</p>

@@ -154,7 +154,7 @@ export default function BespokeHero({ onEnquireClick, initialHero = null, initia
     <section
       className={hasImageHero ? 'relative flex min-h-0 items-center justify-center overflow-hidden px-0 py-0' : 'pt-[100px] pb-[80px] px-[52px] text-center relative max-lg:px-7 max-md:px-5 max-md:pt-[70px] max-md:pb-[60px]'}
       style={{
-        background: hasImageHero ? 'var(--theme-base)' : 'linear-gradient(180deg, #FAFBFD 0%, #FAF7F2 100%)',
+        background: hasImageHero ? 'var(--theme-base)' : 'linear-gradient(180deg, #FAFBFD 0%, #F5F7FC 100%)',
       }}
     >
       {hasImageHero && currentSlide ? (

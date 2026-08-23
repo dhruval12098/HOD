@@ -81,28 +81,6 @@ export default function ProfileClient() {
   useEffect(() => {
     let mounted = true;
 
-    const syncSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      const user = data.session?.user;
-
-      if (!mounted) return;
-
-      if (!user) {
-        setState({ status: 'signed-out' });
-        return;
-      }
-
-      setState({
-        status: 'signed-in',
-        email: user.email ?? 'No email available',
-        username: getUsername(user.email, user.user_metadata),
-        createdAt: user.created_at ?? '',
-        userId: user.id,
-      });
-    };
-
-    void syncSession();
-
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       const user = session?.user;
 

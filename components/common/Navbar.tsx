@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type AnchorHTMLAttributes, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { loaderWordmarkFont } from '@/app/fonts';
@@ -22,6 +22,63 @@ const METAL_COLORS: Record<string, string> = {
 };
 
 const OVERLAY_NAVBAR_ROUTES = new Set(['/', '/hiphop', '/bespoke']);
+const DETECTED_COUNTRY_COOKIE = 'detected_country';
+
+function readDetectedCountryCookie() {
+  const cookie = document.cookie
+    .split('; ')
+    .find((entry) => entry.startsWith(`${DETECTED_COUNTRY_COOKIE}=`));
+  if (!cookie) return '';
+
+  try {
+    const countryCode = decodeURIComponent(cookie.slice(DETECTED_COUNTRY_COOKIE.length + 1)).toUpperCase();
+    return /^[A-Z]{2}$/.test(countryCode) ? countryCode : '';
+  } catch {
+    return '';
+  }
+}
+
+function getCountryName(countryCode: string) {
+  if (!countryCode) return 'Location unavailable';
+  try {
+    return new Intl.DisplayNames(['en'], { type: 'region' }).of(countryCode) || countryCode;
+  } catch {
+    return countryCode;
+  }
+}
+
+function DetectedCountryIndicator({
+  countryCode,
+  borderColor = 'rgba(0,0,0,0.1)',
+  background = 'transparent',
+}: {
+  countryCode: string;
+  borderColor?: string;
+  background?: string;
+}) {
+  const countryName = getCountryName(countryCode);
+  const flag = countryCode
+    ? String.fromCodePoint(...countryCode.split('').map((character) => 127397 + character.charCodeAt(0)))
+    : '🌐';
+
+  return (
+    <span
+      role="img"
+      aria-label={`Detected location: ${countryName}`}
+      title={`Detected location: ${countryName}`}
+      className="inline-flex h-[34px] w-[34px] flex-shrink-0 items-center justify-center rounded-full text-[16px] leading-none transition-all duration-300"
+      style={{ border: `1px solid ${borderColor}`, background }}
+    >
+      {flag}
+    </span>
+  );
+}
+
+function SmartNavLink({ href, ...props }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) {
+  const isInternalRoute = href.startsWith('/') && !href.startsWith('//');
+  return isInternalRoute ? <Link href={href} {...props} /> : <a href={href} {...props} />;
+}
+
 function MetalDot({ type, colorHex }: { type: keyof typeof METAL_COLORS; colorHex?: string | null }) {
   const color = typeof colorHex === 'string' && colorHex.trim().length > 0
     ? colorHex.trim()
@@ -56,7 +113,7 @@ function MegaSection({ section }: { section: NavbarRenderSection }) {
       {section.metals && (
         <div className={section.twoCol ? 'grid grid-cols-2 gap-x-7 gap-y-1' : 'flex flex-col'}>
           {section.metals.map((metal) => (
-            <a
+            <SmartNavLink
               key={`${metal.type}-${metal.label}`}
               href={metal.href}
               className="flex items-center gap-[14px] py-[10px] text-[13.5px] font-light tracking-[0.02em] text-[#555] no-underline transition-all duration-250 hover:text-[#0A1628] hover:pl-1.5 group"
@@ -64,7 +121,7 @@ function MegaSection({ section }: { section: NavbarRenderSection }) {
             >
               <MetalDot type={metal.type as keyof typeof METAL_COLORS} colorHex={metal.colorHex} />
               {metal.label}
-            </a>
+            </SmartNavLink>
           ))}
         </div>
       )}
@@ -72,14 +129,14 @@ function MegaSection({ section }: { section: NavbarRenderSection }) {
       {section.metals && section.links && section.links.length > 0 && (
         <div className={`mt-4 border-t border-black/[0.06] pt-4 ${section.twoCol ? 'grid grid-cols-2 gap-x-7 gap-y-1' : 'flex flex-col'}`}>
           {section.links.map((link) => (
-            <a
+            <SmartNavLink
               key={`${section.title}-${link.label}`}
               href={link.href}
               className="block py-[10px] text-[13.5px] font-light tracking-[0.02em] text-[#555] no-underline transition-all duration-250 hover:text-[#0A1628] hover:pl-1.5"
               style={{ fontFamily: "'Montserrat', sans-serif" }}
             >
               {link.label}
-            </a>
+            </SmartNavLink>
           ))}
         </div>
       )}
@@ -87,7 +144,7 @@ function MegaSection({ section }: { section: NavbarRenderSection }) {
       {section.twoCol && section.links && !section.metals && (
         <div className="grid grid-cols-2 gap-x-7">
           {section.links.map((link) => (
-            <a
+            <SmartNavLink
               key={`${section.title}-${link.label}`}
               href={link.href}
               className="flex items-center gap-[12px] py-[10px] text-[13.5px] font-light tracking-[0.02em] text-[#555] no-underline transition-all duration-250 hover:text-[#0A1628] hover:pl-1.5"
@@ -101,7 +158,7 @@ function MegaSection({ section }: { section: NavbarRenderSection }) {
                 />
               ) : null}
               {link.label}
-            </a>
+            </SmartNavLink>
           ))}
         </div>
       )}
@@ -109,7 +166,7 @@ function MegaSection({ section }: { section: NavbarRenderSection }) {
       {!section.twoCol && !section.metals && section.links && (
         <div className="flex flex-col">
           {section.links.map((link) => (
-            <a
+            <SmartNavLink
               key={`${section.title}-${link.label}`}
               href={link.href}
               className="flex items-center gap-[12px] py-[10px] text-[13.5px] font-light tracking-[0.02em] text-[#555] no-underline transition-all duration-250 hover:text-[#0A1628] hover:pl-1.5"
@@ -123,7 +180,7 @@ function MegaSection({ section }: { section: NavbarRenderSection }) {
                 />
               ) : null}
               {link.label}
-            </a>
+            </SmartNavLink>
           ))}
         </div>
       )}
@@ -173,7 +230,9 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
   const [navHidden, setNavHidden] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeSearchIndex, setActiveSearchIndex] = useState(-1);
   const [searchItems, setSearchItems] = useState<Array<{ dbId?: string; slug: string; name: string; shortMeta: string; imageUrl?: string; priceFrom: number }>>([]);
+  const [detectedCountry, setDetectedCountry] = useState('');
   // Start empty so builder-hidden items never flash while the live configuration loads.
   const [navItems, setNavItems] = useState<NavbarRenderItem[]>([]);
   const [announcementItems, setAnnouncementItems] = useState<
@@ -189,10 +248,24 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
   const [authReady, setAuthReady] = useState(false);
   const lastScrollY = useRef(0);
   const searchRef = useRef<HTMLDivElement>(null);
+  const searchOptionRefs = useRef<Array<HTMLAnchorElement | null>>([]);
   const megaCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    const onScroll = () => {
+    let ignore = false;
+    const countryCode = readDetectedCountryCookie();
+    window.queueMicrotask(() => {
+      if (!ignore) setDetectedCountry(countryCode);
+    });
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let frameId: number | null = null;
+
+    const updateNavbarForScroll = () => {
       const currentScrollY = window.scrollY;
       setScrolled(currentScrollY > 10);
 
@@ -211,9 +284,20 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
       lastScrollY.current = currentScrollY;
     };
 
+    const onScroll = () => {
+      if (frameId !== null) return;
+      frameId = window.requestAnimationFrame(() => {
+        frameId = null;
+        updateNavbarForScroll();
+      });
+    };
+
     window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener('scroll', onScroll);
+    updateNavbarForScroll();
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (frameId !== null) window.cancelAnimationFrame(frameId);
+    };
   }, []);
 
   useEffect(() => {
@@ -243,6 +327,7 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
     const onPointerDown = (event: MouseEvent) => {
       if (!searchRef.current?.contains(event.target as Node)) {
         setSearchOpen(false);
+        setActiveSearchIndex(-1);
       }
     };
     document.addEventListener('mousedown', onPointerDown);
@@ -329,16 +414,8 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
   useEffect(() => {
     let mounted = true;
 
-    const loadUser = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!mounted) return;
-      setAuthUser(data.session?.user ?? null);
-      setAuthReady(true);
-    };
-
-    void loadUser();
-
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return;
       setAuthUser(session?.user ?? null);
       setAuthReady(true);
     });
@@ -349,7 +426,10 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
     };
   }, []);
 
-  const closeMenu = () => setMenuOpen(false);
+  const closeMenu = () => {
+    setMenuOpen(false);
+    setMobileOpenItem(null);
+  };
 
   const openMegaMenu = (label: string) => {
     if (megaCloseTimeoutRef.current) {
@@ -375,24 +455,6 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
     router.replace('/login');
     router.refresh();
   };
-
-  const mobileLinks = useMemo(
-    () => [
-      { label: 'Home', href: '/' },
-      { label: 'Wishlist', href: '/wishlist' },
-      { label: 'Cart', href: '/cart' },
-      ...navItems.map((item) => ({ label: item.label, href: item.href ?? '#' })),
-      { label: 'About Us', href: '/about' },
-      { label: 'Contact Us', href: '/contact' },
-    ],
-    [navItems]
-  );
-
-  useEffect(() => {
-    if (!menuOpen) {
-      setMobileOpenItem(null);
-    }
-  }, [menuOpen]);
 
   const username = (() => {
     const metadata = authUser?.user_metadata;
@@ -427,6 +489,47 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
       .slice(0, 6);
   }, [searchItems, searchQuery]);
 
+  useEffect(() => {
+    if (activeSearchIndex < 0) return;
+    searchOptionRefs.current[activeSearchIndex]?.scrollIntoView({ block: 'nearest' });
+  }, [activeSearchIndex]);
+
+  const closeSearch = () => {
+    setSearchOpen(false);
+    setSearchQuery('');
+    setActiveSearchIndex(-1);
+  };
+
+  const handleSearchKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeSearch();
+      return;
+    }
+
+    if (!filteredSearchItems.length) return;
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setActiveSearchIndex((current) => (current + 1) % filteredSearchItems.length);
+      return;
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setActiveSearchIndex((current) => (current <= 0 ? filteredSearchItems.length - 1 : current - 1));
+      return;
+    }
+
+    if (event.key === 'Enter') {
+      const selectedItem = filteredSearchItems[activeSearchIndex >= 0 ? activeSearchIndex : 0];
+      if (!selectedItem) return;
+      event.preventDefault();
+      closeSearch();
+      router.push(`/shop/${selectedItem.slug}`);
+    }
+  };
+
   const desktopOverlayMode = pathname ? OVERLAY_NAVBAR_ROUTES.has(pathname) : false;
   const desktopSolidMode = !desktopOverlayMode || scrolled || Boolean(activeMegaItem) || searchOpen;
   const desktopHeaderText = desktopSolidMode ? '#0A1628' : '#FFFFFF';
@@ -439,18 +542,6 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
   return (
     <>
       <style>{`
-        @keyframes marquee {
-          0%   { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-        .animate-marquee-slow {
-          display: flex;
-          width: max-content;
-          animation: marquee var(--announcement-speed, 40s) linear infinite;
-        }
-        .announcement-marquee:hover {
-          animation-play-state: paused;
-        }
         .mega-parent.mega-open .mega-drop {
           opacity: 1 !important;
           visibility: visible !important;
@@ -479,7 +570,10 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
             ['--announcement-speed' as string]: `${Math.max(announcementSpeed, 10)}s`,
           }}
         >
-          <div className="announcement-marquee animate-marquee-slow items-center">
+          <div
+            className="flex w-max animate-marquee-slow items-center hover:[animation-play-state:paused]"
+            style={{ animationDuration: 'var(--announcement-speed, 40s)' }}
+          >
             {[0, 1].map((groupIndex) => (
               <div key={groupIndex} className="flex shrink-0 items-center gap-x-[28px] px-[14px]">
                 {Array.from({ length: 10 }, (_, repeatIndex) =>
@@ -526,6 +620,7 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
         >
           <div className="relative flex items-center justify-center border-b border-black/[0.06] bg-white px-4 py-[14px] lg:hidden">
           <div className="absolute left-4 top-1/2 flex -translate-y-1/2 items-center gap-2.5 sm:gap-3">
+            <DetectedCountryIndicator countryCode={detectedCountry} />
             <Link
               href="/wishlist"
               aria-label="Wishlist"
@@ -550,7 +645,10 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
             </Link>
           </div>
           <button
-            onClick={() => setMenuOpen((v) => !v)}
+            onClick={() => {
+              if (menuOpen) closeMenu();
+              else setMenuOpen(true);
+            }}
             aria-label="Menu"
             aria-expanded={menuOpen}
             className="absolute right-4 flex w-7 cursor-pointer flex-col gap-[5px] border-none bg-transparent p-1"
@@ -608,7 +706,7 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
                     if (item.mega) queueCloseMegaMenu(item.label);
                   }}
                 >
-                  <a
+                  <SmartNavLink
                     href={item.href ?? '#'}
                     className="nav-link-underline relative block px-[18px] py-[11px] text-[11px] font-semibold tracking-[0.19em] uppercase no-underline cursor-pointer transition-colors duration-300"
                     style={{
@@ -617,7 +715,7 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
                     }}
                   >
                     {item.label}
-                  </a>
+                  </SmartNavLink>
 
                   {item.mega ? (
                     <div
@@ -700,18 +798,25 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
             </div>
 
             {searchOpen && searchQuery.trim() ? (
-              <div className="absolute right-0 top-[calc(100%+24px)] w-[760px] overflow-hidden rounded-[22px] border border-black/8 bg-white shadow-[0_24px_56px_rgba(10,22,40,0.14)]">
+              <div
+                id="navbar-search-results"
+                role="listbox"
+                aria-label="Product search results"
+                className="absolute right-0 top-[calc(100%+24px)] w-[760px] overflow-hidden rounded-[22px] border border-black/8 bg-white shadow-[0_24px_56px_rgba(10,22,40,0.14)]"
+              >
                 {filteredSearchItems.length ? (
                   <div className="max-h-[420px] overflow-y-auto py-2">
-                    {filteredSearchItems.map((item) => (
+                    {filteredSearchItems.map((item, index) => (
                       <Link
                         key={item.dbId || item.slug}
+                        ref={(node) => { searchOptionRefs.current[index] = node; }}
+                        id={`navbar-search-option-${index}`}
+                        role="option"
+                        aria-selected={activeSearchIndex === index}
                         href={`/shop/${item.slug}`}
-                        onClick={() => {
-                          setSearchOpen(false);
-                          setSearchQuery('');
-                        }}
-                        className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-[#F7F8FA]"
+                        onMouseEnter={() => setActiveSearchIndex(index)}
+                        onClick={closeSearch}
+                        className={`flex items-center gap-3 px-4 py-3 transition-colors hover:bg-[#F7F8FA] ${activeSearchIndex === index ? 'bg-[#F7F8FA]' : ''}`}
                       >
                         <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-[14px] bg-[#F5F1E8]">
                           {item.imageUrl ? <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" /> : null}
@@ -730,6 +835,11 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
               </div>
             ) : null}
           </div>
+            <DetectedCountryIndicator
+              countryCode={detectedCountry}
+              borderColor={desktopHeaderBorder}
+              background={desktopUtilityBg}
+            />
             <Link
               href="/wishlist"
               aria-label="Wishlist"
@@ -798,16 +908,30 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
               <input
                 autoFocus
                 value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
+                onChange={(event) => {
+                  setSearchQuery(event.target.value);
+                  setActiveSearchIndex(0);
+                }}
+                onKeyDown={handleSearchKeyDown}
+                role="combobox"
+                aria-label="Search products"
+                aria-autocomplete="list"
+                aria-expanded={Boolean(searchQuery.trim())}
+                aria-controls="navbar-search-results"
+                aria-activedescendant={filteredSearchItems[activeSearchIndex] ? `navbar-search-option-${activeSearchIndex}` : undefined}
                 placeholder="What can we help you with?"
                 className="h-[46px] flex-1 border-0 border-b border-[rgba(10,22,40,0.18)] bg-transparent text-[15px] text-[#0A1628] outline-none placeholder:text-[#6E7685]"
               />
+              <span className="sr-only" aria-live="polite">
+                {searchQuery.trim()
+                  ? filteredSearchItems.length
+                    ? `${filteredSearchItems.length} products found.`
+                    : 'No products found.'
+                  : ''}
+              </span>
               <button
                 type="button"
-                onClick={() => {
-                  setSearchQuery('');
-                  setSearchOpen(false);
-                }}
+                onClick={closeSearch}
                 className="text-[12px] text-[#0A1628] underline underline-offset-4"
               >
                 clear
@@ -837,14 +961,14 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
           transition: 'transform 0.5s cubic-bezier(0.77,0,0.18,1)',
         }}
       >
-        <a
+        <SmartNavLink
           href="/"
           onClick={closeMenu}
           className="block py-3.5 text-[20px] font-normal tracking-[0.04em] border-b border-black/[0.06] no-underline text-[#0A1628] transition-all duration-300 hover:text-[#0A1628] hover:pl-2"
           style={{ fontFamily: 'var(--display-title)' }}
         >
           Home
-        </a>
+        </SmartNavLink>
 
         {navItems.map((item) => {
           const hasMega = Boolean(item.mega?.sections?.length);
@@ -852,15 +976,15 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
 
           if (!hasMega) {
             return (
-              <a
+              <SmartNavLink
                 key={item.label}
-                href={item.href}
+                href={item.href ?? '#'}
                 onClick={closeMenu}
                 className="block py-3.5 text-[20px] font-normal tracking-[0.04em] border-b border-black/[0.06] no-underline text-[#0A1628] transition-all duration-300 hover:text-[#0A1628] hover:pl-2"
                 style={{ fontFamily: 'var(--display-title)' }}
               >
                 {item.label}
-              </a>
+              </SmartNavLink>
             );
           }
 
@@ -917,7 +1041,7 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
                         </div>
                         <div className="flex flex-col gap-1">
                           {entries.map((entry) => (
-                            <a
+                            <SmartNavLink
                               key={`${section.id}-${entry.label}-${entry.href}`}
                               href={entry.href}
                               onClick={closeMenu}
@@ -926,7 +1050,7 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
                             >
                               {entry.icon}
                               <span>{entry.label}</span>
-                            </a>
+                            </SmartNavLink>
                           ))}
                         </div>
                       </div>
@@ -944,7 +1068,7 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
           { label: 'About Us', href: '/about' },
           { label: 'Contact Us', href: '/contact' },
         ].map((item) => (
-          <a
+          <SmartNavLink
             key={item.label}
             href={item.href}
             onClick={closeMenu}
@@ -952,7 +1076,7 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
             style={{ fontFamily: 'var(--display-title)' }}
           >
             {item.label}
-          </a>
+          </SmartNavLink>
         ))}
 
         <div className="mt-6 grid gap-3">

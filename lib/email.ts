@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer'
 import { formatMoney as formatCurrencyAmount } from '@/lib/currency'
+import { escapeHtml } from '@/lib/escape-html'
 
 type OrderEmailItem = {
   product_name: string
@@ -67,8 +68,8 @@ function renderItems(items: OrderEmailItem[], currency?: string | null) {
       (item) => `
         <tr>
           <td style="padding:14px 0;border-bottom:1px solid #ece7dd;color:#1c1f26;font-size:14px;line-height:1.5;">
-            <div style="font-weight:600;">${item.product_name}</div>
-            <div style="font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:.16em;margin-top:4px;">Qty ${item.quantity}</div>
+            <div style="font-weight:600;">${escapeHtml(item.product_name)}</div>
+            <div style="font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:.16em;margin-top:4px;">Qty ${escapeHtml(item.quantity)}</div>
           </td>
           <td style="padding:14px 0;border-bottom:1px solid #ece7dd;color:#1c1f26;font-size:14px;line-height:1.5;text-align:right;font-weight:600;">
             ${formatMoney(item.line_total, currency)}
@@ -116,14 +117,14 @@ function renderTotals({
         <td style="padding-bottom:10px;text-align:right;font-size:14px;color:#1c1f26;font-weight:600;">${shippingAmount > 0 ? formatMoney(shippingAmount, currency) : 'Free'}</td>
       </tr>
       <tr>
-        <td style="padding-bottom:10px;font-size:14px;color:#4b5563;">${taxLabel}</td>
+        <td style="padding-bottom:10px;font-size:14px;color:#4b5563;">${escapeHtml(taxLabel)}</td>
         <td style="padding-bottom:10px;text-align:right;font-size:14px;color:#1c1f26;font-weight:600;">${gstAmount > 0 ? formatMoney(gstAmount, currency) : 'Free'}</td>
       </tr>
       ${
         couponDiscountAmount > 0
           ? `
       <tr>
-        <td style="padding-bottom:10px;font-size:14px;color:#14804a;">Coupon${couponCode ? ` (${couponCode})` : ''}</td>
+        <td style="padding-bottom:10px;font-size:14px;color:#14804a;">Coupon${couponCode ? ` (${escapeHtml(couponCode)})` : ''}</td>
         <td style="padding-bottom:10px;text-align:right;font-size:14px;color:#14804a;font-weight:600;">-${formatMoney(couponDiscountAmount, currency)}</td>
       </tr>
       `
@@ -198,16 +199,16 @@ function renderShell({
         <tr>
           <td style="padding:20px 28px;background:#0f1726;color:#f7f4ee;">
             <div style="font-size:11px;letter-spacing:.34em;text-transform:uppercase;color:#c8b08a;">House of Diams</div>
-            <div style="margin-top:10px;font-size:30px;line-height:1.1;font-weight:500;">${title}</div>
-            <div style="margin-top:10px;font-size:14px;line-height:1.7;color:#d4d8df;">${body}</div>
+            <div style="margin-top:10px;font-size:30px;line-height:1.1;font-weight:500;">${escapeHtml(title)}</div>
+            <div style="margin-top:10px;font-size:14px;line-height:1.7;color:#d4d8df;">${escapeHtml(body)}</div>
           </td>
         </tr>
         <tr>
           <td style="padding:28px;">
-            <div style="font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:#8b7355;">${pretitle}</div>
+            <div style="font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:#8b7355;">${escapeHtml(pretitle)}</div>
             ${
               badge
-                ? `<div style="display:inline-block;margin-top:14px;padding:8px 14px;border-radius:999px;background:#f1eadf;color:#6b5639;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;">${badge}</div>`
+                ? `<div style="display:inline-block;margin-top:14px;padding:8px 14px;border-radius:999px;background:#f1eadf;color:#6b5639;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;">${escapeHtml(badge)}</div>`
                 : ''
             }
 
@@ -217,8 +218,8 @@ function renderShell({
                 <td style="padding:0 0 8px;color:#8b7355;font-size:11px;letter-spacing:.18em;text-transform:uppercase;text-align:right;">Order Date</td>
               </tr>
               <tr>
-                <td style="padding:0 0 18px;font-size:17px;font-weight:600;color:#1c1f26;">${orderNumber}</td>
-                <td style="padding:0 0 18px;font-size:14px;color:#4b5563;text-align:right;">${orderDateLabel}</td>
+                <td style="padding:0 0 18px;font-size:17px;font-weight:600;color:#1c1f26;">${escapeHtml(orderNumber)}</td>
+                <td style="padding:0 0 18px;font-size:14px;color:#4b5563;text-align:right;">${escapeHtml(orderDateLabel)}</td>
               </tr>
             </table>
 
@@ -229,8 +230,8 @@ function renderShell({
             ${totalsMarkup}
 
             <div style="margin-top:28px;">
-              <a href="${ctaHref}" style="display:inline-block;padding:14px 22px;border-radius:999px;background:#0f1726;color:#ffffff;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;">
-                ${ctaLabel}
+              <a href="${escapeHtml(ctaHref)}" style="display:inline-block;padding:14px 22px;border-radius:999px;background:#0f1726;color:#ffffff;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;">
+                ${escapeHtml(ctaLabel)}
               </a>
             </div>
           </td>

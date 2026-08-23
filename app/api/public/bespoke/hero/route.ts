@@ -1,24 +1,40 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import type { PostgrestError } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+type BespokeHeroSection = {
+  id: string
+  badge_text: string | null
+  eyebrow: string | null
+  heading_line_1: string | null
+  heading_line_2: string | null
+  subtitle: string | null
+  primary_cta_label: string | null
+  primary_cta_action: string | null
+  secondary_cta_label: string | null
+  secondary_cta_action: string | null
+  slider_enabled?: boolean | null
+  status: string
+  updated_at: string
+}
 
 function isMissingSliderEnabledColumn(message?: string) {
   return Boolean(message?.includes("slider_enabled"))
 }
 
 export async function GET() {
-  if (!supabaseUrl || (!supabaseAnonKey && !supabaseServiceRoleKey)) {
+  if (!supabaseUrl || !supabaseAnonKey) {
     return NextResponse.json({ error: 'Missing Supabase env vars.' }, { status: 500 })
   }
 
-  const supabase = createClient(supabaseUrl, supabaseServiceRoleKey || supabaseAnonKey!)
+  const supabase = createClient(supabaseUrl, supabaseAnonKey)
   const sectionSelectWithToggle = 'id, badge_text, eyebrow, heading_line_1, heading_line_2, subtitle, primary_cta_label, primary_cta_action, secondary_cta_label, secondary_cta_action, slider_enabled, status, updated_at'
   const sectionSelectFallback = 'id, badge_text, eyebrow, heading_line_1, heading_line_2, subtitle, primary_cta_label, primary_cta_action, secondary_cta_label, secondary_cta_action, status, updated_at'
 
-  let { data: sections, error }: { data: any[] | null; error: { message?: string } | null } = await supabase
+  let { data: sections, error }: { data: BespokeHeroSection[] | null; error: PostgrestError | null } = await supabase
     .from('bespoke_hero_content')
     .select(sectionSelectWithToggle)
     .eq('status', 'active')

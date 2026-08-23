@@ -185,8 +185,9 @@ export default function EnquireModal({ open, piece = 'General Enquiry', onClose 
         </p>
 
         <form onSubmit={handleSubmit}>
-          <FormGroup label="Full Name">
+          <FormGroup label="Full Name" htmlFor="enquire-name">
             <input
+              id="enquire-name"
               className="form-input"
               type="text"
               name="name"
@@ -197,16 +198,17 @@ export default function EnquireModal({ open, piece = 'General Enquiry', onClose 
             />
           </FormGroup>
 
-          <FormGroup label="Email">
-            <input type="email" name="email" value={form.email} onChange={handleChange} required style={inputStyle} />
+          <FormGroup label="Email" htmlFor="enquire-email">
+            <input id="enquire-email" type="email" name="email" value={form.email} onChange={handleChange} required style={inputStyle} />
           </FormGroup>
 
-          <FormGroup label="Phone / WhatsApp (Optional)">
-            <input type="tel" name="phone" value={form.phone} onChange={handleChange} style={inputStyle} />
+          <FormGroup label="Phone / WhatsApp (Optional)" htmlFor="enquire-phone">
+            <input id="enquire-phone" type="tel" name="phone" value={form.phone} onChange={handleChange} style={inputStyle} />
           </FormGroup>
 
-          <FormGroup label="Your Message">
+          <FormGroup label="Your Message" htmlFor="enquire-message">
             <textarea
+              id="enquire-message"
               name="message"
               value={form.message}
               onChange={handleChange}
@@ -275,10 +277,11 @@ const inputStyle: React.CSSProperties = {
   outline: 'none',
 };
 
-function FormGroup({ label, children }: { label: string; children: React.ReactNode }) {
+function FormGroup({ label, htmlFor, children }: { label: string; htmlFor: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: '20px' }}>
       <label
+        htmlFor={htmlFor}
         style={{
           display: 'block',
           fontSize: '9px',

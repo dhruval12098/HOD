@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { loaderWordmarkFont } from '@/app/fonts';
 
 interface LoaderProps {
   onComplete?: () => void;
+  onExitStart?: () => void;
   minDurationMs?: number;
   maxDurationMs?: number;
   mode?: 'overlay' | 'screen'
@@ -16,6 +17,7 @@ const LOADER_COPY = 'House of Diams';
 
 export default function Loader({
   onComplete,
+  onExitStart,
   minDurationMs = 1200,
   maxDurationMs = 8000,
   mode = 'overlay',
@@ -26,6 +28,7 @@ export default function Loader({
   const [introComplete, setIntroComplete] = useState<boolean>(false);
 
   const completedRef = useRef<boolean>(false);
+  const exitStartedRef = useRef<boolean>(false);
   const startTimeRef = useRef<number>(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -40,6 +43,12 @@ export default function Loader({
         : 'fixed inset-0 z-[10000]',
     [mode]
   );
+
+  const notifyExitStart = useCallback(() => {
+    if (exitStartedRef.current) return;
+    exitStartedRef.current = true;
+    onExitStart?.();
+  }, [onExitStart]);
 
   useEffect(() => {
     if (!overlayRef.current) return;
@@ -69,6 +78,7 @@ export default function Loader({
       if (completedRef.current) return;
       completedRef.current = true;
       if (intervalRef.current) clearInterval(intervalRef.current);
+      notifyExitStart();
 
       if (overlayRef.current) {
         gsap.killTweensOf(wordRefs.current);
@@ -155,7 +165,7 @@ export default function Loader({
       if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
       if (maxTimeout) clearTimeout(maxTimeout);
     };
-  }, [maxDurationMs, minDurationMs, onComplete, ready]);
+  }, [maxDurationMs, minDurationMs, notifyExitStart, onComplete, ready]);
 
   useEffect(() => {
     if (!ready || !introComplete || completedRef.current) return;
@@ -191,6 +201,7 @@ export default function Loader({
       if (completedRef.current) return;
       if (intervalRef.current) clearInterval(intervalRef.current);
       setProgress(100);
+      notifyExitStart();
 
       if (overlayRef.current) {
         gsap.killTweensOf(wordRefs.current);
@@ -240,18 +251,18 @@ export default function Loader({
     return () => {
       window.removeEventListener('hod-loader-complete', handleForceComplete);
     };
-  }, [onComplete]);
+  }, [notifyExitStart, onComplete]);
 
   return (
     <div
       ref={overlayRef}
       aria-hidden="true"
-      className={`${shellClasses} flex items-center justify-center overflow-hidden bg-[linear-gradient(180deg,#fbf7f0_0%,#ffffff_55%,#f5f7fb_100%)] ${
+      className={`${shellClasses} flex items-center justify-center overflow-hidden bg-[linear-gradient(180deg,#F5F7FC_0%,#ffffff_55%,#EEF3FA_100%)] ${
         hidden ? 'opacity-0 invisible' : 'opacity-100 visible'
       }`}
     >
       <div className="pointer-events-none absolute inset-0 opacity-70">
-        <div className="absolute left-[-4%] top-[10%] h-56 w-56 rounded-full bg-[rgba(212,175,55,0.12)] blur-3xl" />
+        <div className="absolute left-[-4%] top-[10%] h-56 w-56 rounded-full bg-[rgba(10,22,40,0.10)] blur-3xl" />
         <div className="absolute bottom-[5%] right-[-4%] h-64 w-64 rounded-full bg-[rgba(10,22,40,0.08)] blur-3xl" />
       </div>
 

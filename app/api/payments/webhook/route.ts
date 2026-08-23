@@ -52,8 +52,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid webhook signature.' }, { status: 400 })
   }
 
+  let payload: RazorpayWebhookPayload
+  try {
+    payload = JSON.parse(rawBody) as RazorpayWebhookPayload
+  } catch (error) {
+    console.error('Razorpay webhook payload was not valid JSON:', error)
+    return NextResponse.json({ error: 'Malformed webhook payload.' }, { status: 400 })
+  }
+
   const adminClient = createClient(supabaseUrl, supabaseServiceRoleKey)
-  const payload = JSON.parse(rawBody) as RazorpayWebhookPayload
   const eventType = payload.event || 'unknown'
   const paymentEntity = payload.payload?.payment?.entity
   const orderEntity = payload.payload?.order?.entity

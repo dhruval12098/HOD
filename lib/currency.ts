@@ -22,6 +22,9 @@ export const CURRENCIES: CurrencyOption[] = [
   { code: 'CNY', symbol: '¥', countryCode: 'CN', countryName: 'China', label: 'China', locale: 'zh-CN' },
 ]
 
+// Emergency-only legacy rates. Do not treat these as recently verified market rates.
+export const FALLBACK_USD_RATES_LAST_VERIFIED_AT: string | null = null
+
 export const FALLBACK_USD_RATES: Record<SupportedCurrency, number> = {
   USD: 1,
   INR: 83.5,

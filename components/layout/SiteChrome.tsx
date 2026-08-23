@@ -18,6 +18,7 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const isHomeRoute = pathname === '/';
   const [isHomeLoading, setIsHomeLoading] = useState(isHomeRoute);
+  const [isHomeLoaderExiting, setIsHomeLoaderExiting] = useState(false);
   const [isHomeReady, setIsHomeReady] = useState(!isHomeRoute);
   const [isNavbarReady, setIsNavbarReady] = useState(false);
   const usesDesktopOverlayNavbar = pathname ? OVERLAY_NAVBAR_ROUTES.has(pathname) : false;
@@ -29,9 +30,11 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
     if (isHomeRoute) {
       const skipLoader = shouldSkipHomeLoader();
       setIsHomeLoading(!skipLoader);
+      setIsHomeLoaderExiting(false);
       setIsHomeReady(skipLoader);
     } else {
       setIsHomeLoading(false);
+      setIsHomeLoaderExiting(false);
       setIsHomeReady(true);
     }
   }, [isHomeRoute]);
@@ -39,11 +42,11 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (typeof document === 'undefined') return;
 
-    document.body.classList.toggle('home-loader-active', isHomeRoute && isHomeLoading);
+    document.body.classList.toggle('home-loader-active', isHomeRoute && isHomeLoading && !isHomeLoaderExiting);
     return () => {
       document.body.classList.remove('home-loader-active');
     };
-  }, [isHomeLoading, isHomeRoute]);
+  }, [isHomeLoaderExiting, isHomeLoading, isHomeRoute]);
 
   useEffect(() => {
     if (!isHomeRoute) return;
@@ -61,6 +64,7 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
       if (persisted || navigationType === 'back_forward' || shouldSkipHomeLoader()) {
         setIsHomeReady(true);
         setIsHomeLoading(false);
+        setIsHomeLoaderExiting(false);
       }
     };
 
@@ -86,6 +90,7 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
 
     const fallbackTimer = window.setTimeout(() => {
       setIsHomeLoading(false);
+      setIsHomeLoaderExiting(false);
     }, 1800);
 
     return () => {
@@ -99,7 +104,14 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
 
   const handleHomeLoaderComplete = useCallback(() => {
     setIsHomeLoading(false);
+    setIsHomeLoaderExiting(false);
   }, []);
+
+  const handleHomeLoaderExitStart = useCallback(() => {
+    setIsHomeLoaderExiting(true);
+  }, []);
+
+  const hideHomeChrome = isHomeLoading && !isHomeLoaderExiting;
 
   return (
     <HomeLoaderProvider value={{ isHomeLoading, setIsHomeLoading, isHomeReady, setIsHomeReady }}>
@@ -109,21 +121,27 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
         <>
           <div
             id="site-navbar-shell"
-            className={isHomeLoading ? 'pointer-events-none opacity-0' : 'pointer-events-auto opacity-100'}
+            className={`transition-opacity duration-500 ease-out ${hideHomeChrome ? 'pointer-events-none opacity-0' : 'pointer-events-auto opacity-100'}`}
           >
             <Navbar onReady={handleNavbarReady} />
           </div>
           <main className={`flex-1 ${usesDesktopOverlayNavbar ? 'pt-[91px] lg:pt-0' : 'pt-[118px] lg:pt-[146px]'}`}>{children}</main>
           <div
             id="site-footer-shell"
-            className={isHomeLoading ? 'pointer-events-none opacity-0' : 'pointer-events-auto opacity-100'}
+            className={`transition-opacity duration-500 ease-out ${hideHomeChrome ? 'pointer-events-none opacity-0' : 'pointer-events-auto opacity-100'}`}
           >
             <Footer />
           </div>
           <PromotionPopup />
-          {!isHomeLoading ? <FloatingWidgets /> : null}
+          <div className={`transition-opacity duration-500 ease-out ${hideHomeChrome ? 'pointer-events-none opacity-0' : 'pointer-events-auto opacity-100'}`}>
+            <FloatingWidgets />
+          </div>
           {isHomeRoute && isHomeLoading ? (
-            <Loader ready={isHomeReady && isNavbarReady} onComplete={handleHomeLoaderComplete} />
+            <Loader
+              ready={isHomeReady && isNavbarReady}
+              onExitStart={handleHomeLoaderExitStart}
+              onComplete={handleHomeLoaderComplete}
+            />
           ) : null}
         </>
       )}

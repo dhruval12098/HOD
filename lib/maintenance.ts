@@ -27,7 +27,10 @@ export async function getMaintenanceMode(): Promise<MaintenanceModeState> {
         apikey: supabaseAnonKey,
         authorization: `Bearer ${supabaseAnonKey}`,
       },
-      cache: 'no-store',
+      next: {
+        revalidate: 30,
+        tags: ['maintenance-mode'],
+      },
     })
 
     if (!response.ok) {

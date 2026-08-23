@@ -301,7 +301,7 @@ export default function HomeClient({
           <section className="bg-[var(--theme-surface-warm)] px-5 py-8 md:px-8 lg:px-12">
             <div className="mx-auto max-w-[1320px]">
               <BlogSectionHeader title="Blogs" onViewAll={() => router.push('/blog')} />
-              <DeferredBlogGrid posts={blogPosts} onPostClick={(id) => {
+              <DeferredBlogGrid posts={blogPosts} simplifiedCards onPostClick={(id) => {
                 const target = blogPosts.find((post) => post.id === id)
                 router.push(target?.slug ? `/blog/${target.slug}` : `/blog?post=${id}`)
               }} />

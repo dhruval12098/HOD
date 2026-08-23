@@ -1,7 +1,7 @@
 'use client';
 
 import TrustStrip from '@/components/home/TrustStrip';
-import { ToastProvider, useToast } from '@/components/home/Toast';
+import { useToast } from '@/components/home/Toast';
 
 import ContactHero from '@/components/contact/ContactHero';
 import ContactBody from '@/components/contact/ContactBody';
@@ -23,10 +23,5 @@ function ContactInner() {
 }
 
 export default function ContactClient() {
-  return (
-    <ToastProvider>
-      <ContactInner />
-    </ToastProvider>
-  );
+  return <ContactInner />;
 }
-

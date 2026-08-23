@@ -168,7 +168,7 @@ export default function FAQ() {
             <div
               key={faq.id ?? `${faq.question}-${index}`}
               className={`border-b border-[rgba(10,22,40,0.10)] transition-colors duration-300 last:border-b-0 ${
-                isOpen ? 'bg-[#FAF7F2]' : 'hover:bg-[#FAF7F2]'
+                isOpen ? 'bg-[#F5F7FC]' : 'hover:bg-[#F5F7FC]'
               }`}
             >
               <button

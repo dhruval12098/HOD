@@ -6,7 +6,6 @@ import {
   FALLBACK_USD_RATES,
   formatMoney,
   getCurrencyOption,
-  normalizeCurrency,
   type CurrencyOption,
   type SupportedCurrency,
 } from '@/lib/currency'
@@ -28,22 +27,40 @@ type CurrencyContextValue = {
 }
 
 const STORAGE_KEY = 'selected_currency'
+const DETECTED_CURRENCY_COOKIE = 'detected_currency'
+
+function readDetectedCurrencyCookie() {
+  const cookie = document.cookie
+    .split('; ')
+    .find((entry) => entry.startsWith(`${DETECTED_CURRENCY_COOKIE}=`))
+
+  if (!cookie) return null
+
+  try {
+    return decodeURIComponent(cookie.slice(DETECTED_CURRENCY_COOKIE.length + 1))
+  } catch {
+    return null
+  }
+}
 
 const CurrencyContext = createContext<CurrencyContextValue | null>(null)
 
 export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   const [selected, setSelected] = useState<CurrencyOption>(CURRENCIES[0])
   const [rates, setRates] = useState<CurrencyRates>({ USD: 1 })
-  const [isLoadingRate, setIsLoadingRate] = useState(false)
+  const [isLoadingRate, setIsLoadingRate] = useState(true)
 
   useEffect(() => {
-    const storedCurrency = window.localStorage.getItem(STORAGE_KEY)
-    if (storedCurrency) {
-      setSelected(getCurrencyOption(storedCurrency))
-    }
-
     let ignore = false
-    setIsLoadingRate(true)
+    const storedCurrency = window.localStorage.getItem(STORAGE_KEY)
+    const startupCurrency = storedCurrency || readDetectedCurrencyCookie()
+    if (startupCurrency) {
+      window.queueMicrotask(() => {
+        if (!ignore) {
+          setSelected(getCurrencyOption(startupCurrency))
+        }
+      })
+    }
 
     void (async () => {
       try {

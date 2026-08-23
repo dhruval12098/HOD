@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/server-supabase'
 import { enforceRateLimit } from '@/lib/rate-limit'
+import { isValidEmail } from '@/lib/validation'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
 function isMissingRelationError(error: { code?: string; message?: string } | null) {
   return error?.code === 'PGRST205' || error?.message?.includes('schema cache') || error?.message?.includes('does not exist')
 }
@@ -23,7 +22,7 @@ export async function POST(request: Request) {
   }
 
   const email = body.email.trim().toLowerCase()
-  if (!email || email.length > 254 || !EMAIL_RE.test(email)) {
+  if (!email || email.length > 254 || !isValidEmail(email)) {
     return NextResponse.json({ error: 'Enter a valid email address.' }, { status: 400 })
   }
 

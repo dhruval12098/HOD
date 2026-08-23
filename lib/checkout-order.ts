@@ -1,7 +1,8 @@
-import type { User } from '@supabase/supabase-js'
+import type { SupabaseClient, User } from '@supabase/supabase-js'
 import { sendOrderConfirmationEmail } from '@/lib/email'
 import { buildCheckoutChargeQuote } from '@/lib/exchange-rates'
 import { resolveAuthoritativeCheckoutPricing } from '@/lib/checkout-pricing'
+import { isValidEmail, isValidPhone } from '@/lib/validation'
 
 export type CheckoutPayload = {
   idempotencyKey?: string
@@ -104,6 +105,54 @@ type PurityPriceRow = {
   sort_order: number | null
 }
 
+type CustomDropdownGroupRow = {
+  id: string
+  product_id: string
+  name: string
+  label: string
+  is_required: boolean | null
+}
+
+type CustomDropdownOptionRow = {
+  id: string
+  dropdown_id: string
+  label: string
+  value: string
+}
+
+type OrderEmailItemRow = {
+  product_name: string
+  quantity: number | null
+  line_total: number | null
+}
+
+type StockFinalizationResult = {
+  ok: boolean
+  message?: string | null
+  already_paid?: boolean | null
+  order_id: string
+  order_number: string
+  total_amount: number | null
+}
+
+type StoredGatewayPayload = {
+  checkout?: {
+    coupon?: {
+      code?: string | null
+      discountAmount?: number | null
+    } | null
+  } | null
+  totals?: {
+    chargedSubtotal?: number | null
+    chargedGst?: number | null
+    gstLabel?: string | null
+    gstPercentage?: number | null
+    shippingCharged?: number | null
+    chargedCouponDiscount?: number | null
+    exchangeRate?: number | null
+  } | null
+}
+
 type PreparedCheckout = {
   normalizedItems: PreparedItem[]
   subtotalAmount: number
@@ -138,16 +187,6 @@ type PendingOrderRecord = {
   customer_last_name: string | null
   total_amount: number | null
   created_at: string | null
-}
-
-function isValidEmail(value: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
-}
-
-function isValidPhone(value: string) {
-  const trimmed = value.trim()
-  const digitsOnly = trimmed.replace(/\D/g, '')
-  return /^\+?[0-9][0-9\s\-()]{7,19}$/.test(trimmed) && digitsOnly.length >= 8
 }
 
 function isValidPostalCode(value: string) {
@@ -233,7 +272,7 @@ export async function prepareCheckoutPayload({
   payload,
   user,
 }: {
-  adminClient: any
+  adminClient: SupabaseClient
   payload: CheckoutPayload | null
   user: User
 }) {
@@ -266,21 +305,23 @@ export async function prepareCheckoutPayload({
   const productIds = productRows.map((product) => product.id)
   const groupsResult = productIds.length ? await adminClient.from('product_custom_dropdowns').select('id, product_id, name, label, is_required').in('product_id', productIds).eq('is_enabled', true) : { data: [], error: null }
   if (groupsResult.error) return { error: groupsResult.error.message, status: 500 as const }
-  const groupIds = (groupsResult.data || []).map((group: any) => group.id)
+  const dropdownGroups = (groupsResult.data || []) as CustomDropdownGroupRow[]
+  const groupIds = dropdownGroups.map((group) => group.id)
   const optionsResult = groupIds.length ? await adminClient.from('product_custom_dropdown_options').select('id, dropdown_id, label, value').in('dropdown_id', groupIds).eq('is_enabled', true) : { data: [], error: null }
   if (optionsResult.error) return { error: optionsResult.error.message, status: 500 as const }
+  const dropdownOptions = (optionsResult.data || []) as CustomDropdownOptionRow[]
   let selectionError = ''
   const normalizedItems: PreparedItem[] = pricing.lines.map((line) => {
     const entry = checkoutItems.find((item) => item.slug === line.entry.slug && item.metalVariantId === line.entry.metalVariantId) || (line.entry as CheckoutPayloadItem)
-    const groups = line.product.custom_dropdowns_enabled ? (groupsResult.data || []).filter((group: any) => group.product_id === line.product.id) : []
+    const groups = line.product.custom_dropdowns_enabled ? dropdownGroups.filter((group) => group.product_id === line.product.id) : []
     const requested = new Map((entry.customSelections || []).map((selection) => [selection.dropdownId, selection.optionId]))
-    if (requested.size !== (entry.customSelections || []).length || [...requested.keys()].some((groupId) => !groups.some((group: any) => group.id === groupId))) {
+    if (requested.size !== (entry.customSelections || []).length || [...requested.keys()].some((groupId) => !groups.some((group) => group.id === groupId))) {
       selectionError = 'One or more custom product selections are invalid.'
     }
-    const selectedCustomDropdowns = groups.flatMap((group: any) => {
+    const selectedCustomDropdowns = groups.flatMap((group) => {
       const optionId = requested.get(group.id)
       if (!optionId) { if (group.is_required) selectionError = `Please select ${group.label}.`; return [] }
-      const option = (optionsResult.data || []).find((candidate: any) => candidate.dropdown_id === group.id && candidate.id === optionId)
+      const option = dropdownOptions.find((candidate) => candidate.dropdown_id === group.id && candidate.id === optionId)
       if (!option) { selectionError = `Invalid selection for ${group.label}.`; return [] }
       return [{ dropdown_id: group.id, name: group.name, label: group.label, option_id: option.id, option_label: option.label, option_value: option.value }]
     })
@@ -318,6 +359,8 @@ export async function prepareCheckoutPayload({
 
   if (!resolvedCustomer.first_name) return { error: 'First name is required.', status: 400 as const }
   if (!resolvedCustomer.last_name) return { error: 'Last name is required.', status: 400 as const }
+  if (resolvedCustomer.first_name.length > 80) return { error: 'First name must be 80 characters or fewer.', status: 400 as const }
+  if (resolvedCustomer.last_name.length > 80) return { error: 'Last name must be 80 characters or fewer.', status: 400 as const }
   if (!resolvedCustomer.email || !isValidEmail(resolvedCustomer.email)) {
     return { error: 'A valid email address is required.', status: 400 as const }
   }
@@ -367,7 +410,7 @@ export async function createPendingOrder({
   prepared,
   razorpayOrderId,
 }: {
-  adminClient: any
+  adminClient: SupabaseClient
   userId: string
   payload: CheckoutPayload
   prepared: PreparedCheckout
@@ -473,7 +516,7 @@ export async function markOrderPaymentFailed({
   error,
   rawEvent,
 }: {
-  adminClient: any
+  adminClient: SupabaseClient
   orderId?: string | null
   razorpayOrderId?: string | null
   paymentId?: string | null
@@ -543,7 +586,7 @@ export async function finalizePaidOrder({
   paymentCurrency,
   rawEvent,
 }: {
-  adminClient: any
+  adminClient: SupabaseClient
   orderId?: string | null
   paymentId: string
   razorpayOrderId: string
@@ -588,17 +631,19 @@ export async function finalizePaidOrder({
     return { error: stockFinalizationError.message }
   }
 
-  if (!stockFinalization?.ok) {
+  const finalization = stockFinalization as StockFinalizationResult | null
+  if (!finalization?.ok) {
     return {
       error:
-        stockFinalization?.message ||
+        finalization?.message ||
         'Payment was verified, but stock could not be allocated. Please contact support.',
     }
   }
 
-  const coupon = (order.gateway_payload as any)?.checkout?.coupon
+  const storedGatewayPayload = order.gateway_payload as StoredGatewayPayload | null
+  const coupon = storedGatewayPayload?.checkout?.coupon
 
-  if (!stockFinalization.already_paid) {
+  if (!finalization.already_paid) {
     const { data: items } = await adminClient
       .from('order_items')
       .select('product_name, quantity, line_total')
@@ -611,19 +656,19 @@ export async function finalizePaidOrder({
         customerName: [order.customer_first_name, order.customer_last_name].filter(Boolean).join(' ') || 'Client',
         orderNumber: order.order_number,
         orderDate: order.created_at,
-        subtotalAmount: Number(((order.gateway_payload as any)?.totals?.chargedSubtotal ?? order.subtotal_amount) || 0),
-        gstAmount: Number(((order.gateway_payload as any)?.totals?.chargedGst ?? order.gst_amount) || 0),
-        gstLabel: (order.gateway_payload as any)?.totals?.gstLabel || 'Taxes',
-        gstPercentage: Number((order.gateway_payload as any)?.totals?.gstPercentage || 0),
-        shippingAmount: Number(((order.gateway_payload as any)?.totals?.shippingCharged ?? order.shipping_amount) || 0),
+        subtotalAmount: Number((storedGatewayPayload?.totals?.chargedSubtotal ?? order.subtotal_amount) || 0),
+        gstAmount: Number((storedGatewayPayload?.totals?.chargedGst ?? order.gst_amount) || 0),
+        gstLabel: storedGatewayPayload?.totals?.gstLabel || 'Taxes',
+        gstPercentage: Number(storedGatewayPayload?.totals?.gstPercentage || 0),
+        shippingAmount: Number((storedGatewayPayload?.totals?.shippingCharged ?? order.shipping_amount) || 0),
         couponCode: coupon?.code || null,
-        couponDiscountAmount: Number((((order.gateway_payload as any)?.totals?.chargedCouponDiscount ?? coupon?.discountAmount) || 0)),
+        couponDiscountAmount: Number((storedGatewayPayload?.totals?.chargedCouponDiscount ?? coupon?.discountAmount) || 0),
         totalAmount: Number(order.payment_amount || order.total_amount || 0),
         currency: (order.payment_currency as string | null) || 'USD',
-        items: (items || []).map((item: any) => ({
+        items: ((items || []) as OrderEmailItemRow[]).map((item) => ({
           product_name: item.product_name,
           quantity: Number(item.quantity || 0),
-          line_total: Number(item.line_total || 0) * Number((order.gateway_payload as any)?.totals?.exchangeRate || 1),
+          line_total: Number(item.line_total || 0) * Number(storedGatewayPayload?.totals?.exchangeRate || 1),
         })),
       })
     } catch (emailError) {
@@ -633,9 +678,9 @@ export async function finalizePaidOrder({
 
   return {
     data: {
-      orderId: stockFinalization.order_id as string,
-      orderNumber: stockFinalization.order_number as string,
-      totalAmount: Number(stockFinalization.total_amount || 0),
+      orderId: finalization.order_id,
+      orderNumber: finalization.order_number,
+      totalAmount: Number(finalization.total_amount || 0),
     },
   } as const
 }

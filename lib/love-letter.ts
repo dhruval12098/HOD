@@ -1,3 +1,5 @@
+import { escapeHtml } from '@/lib/escape-html'
+
 export type LoveLetterType = 'generate_for_me' | 'write_myself' | 'no_letter'
 
 export type LoveLetterOccasionKey =
@@ -32,15 +34,6 @@ const OCCASION_LABELS: Record<LoveLetterOccasionKey, string> = {
   apology: 'A reconciliation',
   mother: 'A gift for her mother',
   newchapter: 'A new chapter',
-}
-
-function escapeHtml(value: string) {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
 }
 
 function normalizeSentence(value: string) {

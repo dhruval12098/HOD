@@ -40,7 +40,7 @@ export default function ManufacturingSection() {
   if (!items.length) return null;
 
   return (
-    <section className="py-[110px] px-5 sm:px-7 lg:px-[52px]" style={{ background: 'linear-gradient(180deg, #FAFBFD 0%, #FAF7F2 100%)' }}>
+    <section className="py-[110px] px-5 sm:px-7 lg:px-[52px]" style={{ background: 'linear-gradient(180deg, #FAFBFD 0%, #F5F7FC 100%)' }}>
       <div className="max-w-[1400px] mx-auto">
         <div className="text-center mb-12">
           <div className="text-[10px] font-normal tracking-[0.32em] text-[#0A1628] uppercase mb-[18px] inline-flex items-center gap-3 before:content-[''] before:w-6 before:h-px before:bg-[#0A1628]">

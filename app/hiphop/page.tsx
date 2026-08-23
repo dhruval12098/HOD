@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+
+export const dynamic = 'force-dynamic'
 import HipHopClient from '@/components/pages/HipHopClient';
 import { getStorefrontProducts } from '@/lib/catalog-products';
 import { getHipHopHeroData } from '@/lib/hiphop-hero';
@@ -14,7 +16,7 @@ export const metadata: Metadata = createPageMetadata({
 export default async function HipHopPage() {
   const supabase = createSupabaseServerClient()
   const [products, hero, hiphopCategoryResult, subcategoriesResult, optionsResult] = await Promise.all([
-    getStorefrontProducts(),
+    getStorefrontProducts('hiphop'),
     getHipHopHeroData(),
     supabase.from('catalog_categories').select('id').eq('slug', 'hiphop').maybeSingle(),
     supabase.from('catalog_subcategories').select('id, category_id, name, slug, display_order, status').eq('status', 'active').order('display_order', { ascending: true }),

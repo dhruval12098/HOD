@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+
+export const dynamic = 'force-dynamic'
 import { notFound, redirect } from 'next/navigation';
 import ProductClient from '@/components/pages/ProductClient';
 import { getStorefrontProductBySlug, getStorefrontProducts } from '@/lib/catalog-products';
@@ -6,7 +8,7 @@ import { createPageMetadata } from '@/lib/seo';
 import JsonLd from '@/components/seo/JsonLd';
 import { createBreadcrumbSchema, createProductSchema } from '@/lib/structured-data';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;

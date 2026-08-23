@@ -68,7 +68,7 @@ export default function ContactHero() {
   return (
     <section
       className="pt-[100px] pb-[60px] px-[52px] text-center max-lg:px-7 max-md:px-5 max-md:pt-[60px] max-md:pb-10"
-      style={{ background: 'linear-gradient(180deg, #FAFBFD 0%, #FAF7F2 100%)' }}
+      style={{ background: 'linear-gradient(180deg, #FAFBFD 0%, #F5F7FC 100%)' }}
     >
       <RevealDiv className="flex justify-center mb-5">
         <div className="text-[9px] tracking-[0.3em] uppercase text-[#6A6A6A]">

@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import ConfiguratorMetalSwatches from './ConfiguratorMetalSwatches';
 import ConfiguratorPillGroup from './ConfiguratorPillGroup';
 import ConfiguratorEngravingInput from './ConfiguratorEngravingInput';
 import ConfiguratorMaterialButtons from './ConfiguratorMaterialButtons';
+import SizeChartDrawer from './SizeChartDrawer';
 import { useCurrency } from '@/context/CurrencyContext';
 import { METAL_META } from '@/lib/data/product-config';
 import { Select } from '@/components/ui/select';
@@ -106,12 +107,62 @@ export default function ProductConfigurator({
       : [];
   const sizeLabel = product.chainLengthOptions.length > 0 ? 'Chain Length' : product.fitLabel || 'Fit';
   const [showRingModal, setShowRingModal] = useState(false);
+  const [showSizeChart, setShowSizeChart] = useState(false);
+  const ringModalTitleId = useId();
+  const ringModalRef = useRef(null);
+  const ringModalCloseRef = useRef(null);
+  const ringModalTriggerRef = useRef(null);
   const [activeRingCategoryId, setActiveRingCategoryId] = useState(product.ringCategoryId || product.ringCategoryOptions?.[0]?.id || '');
   const activeRingCategory = (product.ringCategoryOptions || []).find((entry) => entry.id === activeRingCategoryId) || product.ringCategoryOptions?.[0];
   const ringCategorySizes = activeRingCategory?.sizes || [];
   useEffect(() => {
     setActiveRingCategoryId(product.ringCategoryId || product.ringCategoryOptions?.[0]?.id || '');
   }, [product.ringCategoryId, product.ringCategoryOptions]);
+
+  useEffect(() => {
+    if (!showRingModal) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const returnFocusNode = ringModalTriggerRef.current;
+    document.body.style.overflow = 'hidden';
+    ringModalCloseRef.current?.focus();
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setShowRingModal(false);
+        return;
+      }
+
+      if (event.defaultPrevented || event.key !== 'Tab' || !ringModalRef.current) return;
+      if (!ringModalRef.current.contains(document.activeElement)) return;
+
+      const focusable = Array.from(
+        ringModalRef.current.querySelectorAll(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      );
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (!first || !last) {
+        event.preventDefault();
+      } else if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', handleKeyDown);
+      returnFocusNode?.focus();
+    };
+  }, [showRingModal]);
   return (
     <div className="mb-8 mt-6 rounded-[24px] border border-[rgba(10,22,40,0.10)] bg-white p-7 shadow-[0_18px_50px_rgba(10,22,40,0.04)]">
       <div className="mb-[6px] flex items-center gap-[10px] text-[22px] font-bold tracking-[-0.01em] text-[#0A1628]" style={{ fontFamily: 'var(--font-plus-jakarta), Arial, Helvetica, sans-serif' }}>
@@ -195,15 +246,15 @@ export default function ProductConfigurator({
               <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-[#0A1628]">
                 {activeRingCategory?.name || 'Ring Size'}
               </span>
-              <span className="font-sans text-[13px] font-medium tracking-[0.01em] text-[#0A1628]">
-                {ringSize}
-              </span>
+              <button type="button" onClick={() => setShowSizeChart(true)} className="font-sans text-[13px] font-medium tracking-[0.01em] text-[#0A1628] underline-offset-4 hover:underline">
+                Size Chart
+              </button>
             </div>
             <ShadcnSelect value={ringSize} onValueChange={onRingSizeChange || onSizeOrFitChange}>
               <ShadcnSelectTrigger aria-label={activeRingCategory?.name || 'Ring Size'}>
                 <ShadcnSelectValue placeholder="Select ring size" />
               </ShadcnSelectTrigger>
-              <ShadcnSelectContent>
+              <ShadcnSelectContent nativeScroll>
                 {ringCategorySizes.map((size) => (
                   <ShadcnSelectItem key={size} value={size}>
                     {size}
@@ -214,6 +265,7 @@ export default function ProductConfigurator({
           </div>
           {product.ringCategoryOptions?.length > 1 ? (
             <button
+              ref={ringModalTriggerRef}
               type="button"
               onClick={() => setShowRingModal(true)}
               className="mb-5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#0A1628] underline underline-offset-4"
@@ -255,14 +307,25 @@ export default function ProductConfigurator({
       ) : null}
 
       {showRingModal ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4">
-          <div className="w-full max-w-[680px] rounded-[28px] bg-white p-6 shadow-[0_30px_80px_rgba(10,22,40,0.2)]">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setShowRingModal(false);
+          }}
+        >
+          <div
+            ref={ringModalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={ringModalTitleId}
+            className="w-full max-w-[680px] rounded-[28px] bg-white p-6 shadow-[0_30px_80px_rgba(10,22,40,0.2)]"
+          >
             <div className="mb-5 flex items-center justify-between gap-4">
               <div>
-                <h3 className="text-[22px] font-medium text-[#0A1628]">Ring Categories</h3>
+                <h3 id={ringModalTitleId} className="text-[22px] font-medium text-[#0A1628]">Ring Categories</h3>
                 <p className="mt-1 text-[12px] tracking-[0.08em] text-[#6A6A6A]">Switch category and pick the size you want.</p>
               </div>
-              <button type="button" onClick={() => setShowRingModal(false)} className="rounded-full border border-[rgba(10,22,40,0.1)] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#0A1628]">
+              <button ref={ringModalCloseRef} type="button" onClick={() => setShowRingModal(false)} className="rounded-full border border-[rgba(10,22,40,0.1)] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#0A1628]">
                 Close
               </button>
             </div>
@@ -291,9 +354,9 @@ export default function ProductConfigurator({
                 <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-[#0A1628]">
                   {activeRingCategory?.name || 'Ring Size'}
                 </span>
-                <span className="font-sans text-[13px] font-medium tracking-[0.01em] text-[#0A1628]">
-                  {ringSize}
-                </span>
+                <button type="button" onClick={() => setShowSizeChart(true)} className="font-sans text-[13px] font-medium tracking-[0.01em] text-[#0A1628] underline-offset-4 hover:underline">
+                  Size Chart
+                </button>
               </div>
               <ShadcnSelect
                 value={ringSize}
@@ -305,7 +368,7 @@ export default function ProductConfigurator({
                 <ShadcnSelectTrigger aria-label={activeRingCategory?.name || 'Ring Size'}>
                   <ShadcnSelectValue placeholder="Select ring size" />
                 </ShadcnSelectTrigger>
-                <ShadcnSelectContent>
+                <ShadcnSelectContent nativeScroll>
                   {ringCategorySizes.map((size) => (
                     <ShadcnSelectItem key={size} value={size}>
                       {size}
@@ -317,6 +380,7 @@ export default function ProductConfigurator({
           </div>
         </div>
       ) : null}
+      <SizeChartDrawer open={showSizeChart} onClose={() => setShowSizeChart(false)} />
     </div>
   );
 }

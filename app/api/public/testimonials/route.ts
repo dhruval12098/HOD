@@ -2,17 +2,17 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 const sectionKey = 'home_testimonials'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
-  if (!supabaseUrl || !supabaseServiceRoleKey) {
+  if (!supabaseUrl || !supabaseAnonKey) {
     return NextResponse.json({ error: 'Missing Supabase env vars.' }, { status: 500 })
   }
 
-  const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
+  const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
   const { data: section, error: sectionError } = await supabase
     .from('testimonials_section')

@@ -10,6 +10,7 @@ type SelectOption = {
 };
 
 type AppSelectProps = {
+  id?: string;
   value: string;
   onValueChange: (value: string) => void;
   options: SelectOption[];
@@ -24,6 +25,7 @@ type AppSelectProps = {
 };
 
 export function Select({
+  id,
   value,
   onValueChange,
   options,
@@ -51,6 +53,7 @@ export function Select({
 
       <SelectPrimitive.Root value={value} onValueChange={onValueChange} disabled={disabled}>
         <SelectPrimitive.Trigger
+          id={id}
           className={[
             "flex w-full items-center justify-between gap-3",
             "rounded-[18px] border border-[rgba(10,22,40,0.12)] bg-[#FCFCFA]",

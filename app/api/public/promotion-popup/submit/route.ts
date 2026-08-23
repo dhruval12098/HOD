@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/server-supabase'
 import { enforceRateLimit } from '@/lib/rate-limit'
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+import { isValidEmail } from '@/lib/validation'
 
 export async function POST(request: Request) {
   const rateLimit = await enforceRateLimit(request, { key: 'promotion-popup-submit', limit: 5, windowSeconds: 60 })
@@ -10,7 +9,7 @@ export async function POST(request: Request) {
 
   const body = await request.json().catch(() => null)
   const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : ''
-  if (!email || email.length > 254 || !EMAIL_RE.test(email)) {
+  if (!email || email.length > 254 || !isValidEmail(email)) {
     return NextResponse.json({ error: 'Enter a valid email address.' }, { status: 400 })
   }
 

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import EnquireModal from '@/components/home/EnquireModal';
-import { ToastProvider, useToast } from '@/components/home/Toast';
+import { useToast } from '@/components/home/Toast';
 import Loader from '@/components/home/Loader';
 import { usePageLoaderCache } from '@/lib/hooks/usePageLoaderCache';
 
@@ -64,9 +64,5 @@ export default function BespokeClient(props: {
   portfolioItems?: any[];
   formConfig?: any;
 }) {
-  return (
-    <ToastProvider>
-      <BespokeInner {...props} />
-    </ToastProvider>
-  );
+  return <BespokeInner {...props} />;
 }

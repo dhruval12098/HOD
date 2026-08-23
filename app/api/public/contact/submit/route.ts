@@ -1,23 +1,10 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { enforceRateLimit } from '@/lib/rate-limit'
+import { isValidEmail, isValidPhone } from '@/lib/validation'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const PHONE_RE = /^\+?[0-9][0-9\s\-()]{7,19}$/
-
-function isValidEmail(value: string) {
-  return EMAIL_RE.test(value)
-}
-
-function isValidPhone(value: string) {
-  const trimmed = value.trim()
-  if (!trimmed) return true
-  const digitsOnly = trimmed.replace(/\D/g, '')
-  return PHONE_RE.test(trimmed) && digitsOnly.length >= 8
-}
 
 export async function POST(request: Request) {
   if (!supabaseUrl || !supabaseAnonKey) return NextResponse.json({ error: 'Missing Supabase env vars.' }, { status: 500 })
@@ -42,7 +29,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Enter a valid email address.' }, { status: 400 })
   }
 
-  if (!isValidPhone(phone)) {
+  if (phone && !isValidPhone(phone)) {
     return NextResponse.json({ error: 'Enter a valid phone number.' }, { status: 400 })
   }
 

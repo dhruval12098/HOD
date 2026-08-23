@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
+
+export const dynamic = 'force-dynamic'
 import { unstable_noStore as noStore } from 'next/cache';
 import ShopClient from '@/components/pages/ShopClient';
-import { filterStorefrontProducts, getStorefrontProducts } from '@/lib/catalog-products';
+import { filterStorefrontProducts, getStorefrontProducts, toStorefrontProductCard } from '@/lib/catalog-products';
 import { createPageMetadata } from '@/lib/seo';
 import JsonLd from '@/components/seo/JsonLd';
 import { createBreadcrumbSchema } from '@/lib/structured-data';
@@ -42,7 +44,7 @@ export default async function ShopPage({
 }) {
   noStore()
   const params = await searchParams
-  const products = await getStorefrontProducts()
+  const products = await getStorefrontProducts('standard')
   const filteredProducts = filterStorefrontProducts(products, {
     productLane: 'standard',
     subcategorySlug: typeof params.subcategory === 'string' ? params.subcategory : null,
@@ -57,8 +59,8 @@ export default async function ShopPage({
     <>
       <JsonLd data={createBreadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Shop', path: '/shop' }])} />
       <ShopClient
-        products={filteredProducts}
-        sourceProducts={products.filter((product) => product.productLane === 'standard')}
+        products={filteredProducts.map(toStorefrontProductCard)}
+        sourceProducts={products.filter((product) => product.productLane === 'standard').map(toStorefrontProductCard)}
         heroTitle="Our Collection"
         heroSubtitle="Browse our curated selection of fine jewellery, engagement rings, and wedding bands."
         initialFilters={{

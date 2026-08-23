@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
+
+export const dynamic = 'force-dynamic'
 import { notFound } from 'next/navigation';
 import ShopClient from '@/components/pages/ShopClient';
-import { getStorefrontProducts } from '@/lib/catalog-products';
+import { getStorefrontProducts, toStorefrontProductCard } from '@/lib/catalog-products';
 import { getHomePageData } from '@/lib/home-data';
 import { createPageMetadata } from '@/lib/seo';
 
@@ -15,8 +17,8 @@ export default async function CollectionPage() {
   const { collectionPageConfig } = await getHomePageData();
   if (!collectionPageConfig.pageEnabled) notFound();
 
-  const products = await getStorefrontProducts();
-  const collectionProducts = products.filter((product) => product.productLane === 'collection');
+  const products = await getStorefrontProducts('collection');
+  const collectionProducts = products.map(toStorefrontProductCard);
 
   return (
     <ShopClient

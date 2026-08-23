@@ -8,9 +8,10 @@ interface BlogCardBigProps {
   post: BlogPost;
   onClick: () => void;
   basePath?: string;
+  simplifiedDetails?: boolean;
 }
 
-export default function BlogCardBig({ post, onClick, basePath = "/blog" }: BlogCardBigProps) {
+export default function BlogCardBig({ post, onClick, basePath = "/blog", simplifiedDetails = false }: BlogCardBigProps) {
   const imageUrl = getStorageImageUrl(post.heroImagePath);
   const href = post.slug ? `${basePath}/${post.slug}` : basePath;
 
@@ -21,7 +22,7 @@ export default function BlogCardBig({ post, onClick, basePath = "/blog" }: BlogC
       className="group relative flex h-full flex-col overflow-hidden rounded-[10px] border border-[var(--theme-border)] bg-[var(--theme-surface)] shadow-[0_1px_0_rgba(10,22,40,0.04)] transition-[box-shadow,transform] duration-[350ms] hover:-translate-y-0.5 hover:shadow-[0_20px_56px_rgba(10,22,40,0.09)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0A1628] focus-visible:ring-offset-4"
     >
       <div
-        className="relative flex min-h-[360px] items-center justify-center overflow-hidden sm:min-h-[440px] lg:min-h-[500px]"
+        className="relative flex min-h-[360px] flex-1 items-center justify-center overflow-hidden sm:min-h-[440px] md:min-h-0"
         style={{ background: post.bgColor }}
       >
         {imageUrl ? (
@@ -39,7 +40,7 @@ export default function BlogCardBig({ post, onClick, basePath = "/blog" }: BlogC
         )}
 
       </div>
-      <BlogCardDetails post={post} />
+      <BlogCardDetails post={post} simplified={simplifiedDetails} />
     </Link>
   );
 }

@@ -15,6 +15,7 @@ import RingGuide from '@/components/product/RingGuide';
 import ProductCTAs from '@/components/product/ProductCTAs';
 import ProductTrustRow from '@/components/product/ProductTrustRow';
 import ProductTabs from '@/components/product/ProductTabs';
+import ProductFaqSection from '@/components/product/ProductFaqSection';
 import ProductLayout from '@/components/product/ProductLayout';
 import RelatedProducts from '@/components/product/RelatedProducts';
 import LoveLetterModal from '@/components/product/LoveLetterModal';
@@ -177,6 +178,7 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
     const ctaNode = ctaAnchorRef.current;
     const topNode = pageTopRef.current;
     if (!ctaNode || !topNode || typeof window === 'undefined') return;
+    let frameId: number | null = null;
 
     const updateStickyBar = () => {
       const topRect = topNode.getBoundingClientRect();
@@ -186,12 +188,21 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
       setShowStickyCartBar(hasScrolledIntoPage && ctaIsPastHeader);
     };
 
+    const scheduleStickyBarUpdate = () => {
+      if (frameId !== null) return;
+      frameId = window.requestAnimationFrame(() => {
+        frameId = null;
+        updateStickyBar();
+      });
+    };
+
     updateStickyBar();
-    window.addEventListener('scroll', updateStickyBar, { passive: true });
-    window.addEventListener('resize', updateStickyBar);
+    window.addEventListener('scroll', scheduleStickyBarUpdate, { passive: true });
+    window.addEventListener('resize', scheduleStickyBarUpdate);
     return () => {
-      window.removeEventListener('scroll', updateStickyBar);
-      window.removeEventListener('resize', updateStickyBar);
+      window.removeEventListener('scroll', scheduleStickyBarUpdate);
+      window.removeEventListener('resize', scheduleStickyBarUpdate);
+      if (frameId !== null) window.cancelAnimationFrame(frameId);
     };
   }, []);
 
@@ -457,7 +468,6 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
                   detailSections={product.detailSections}
                   shippingContent={product.shippingContent}
                   careWarrantyContent={product.careWarrantyContent}
-                  faqItems={product.faqItems}
                   detailsAccordion
                 />
               </div>
@@ -465,6 +475,8 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
           )}
         />
       </section>
+
+      <ProductFaqSection items={product.faqItems} />
 
       <RelatedProducts
         products={relatedProducts}

@@ -10,7 +10,7 @@ export default function B2BHero() {
     <section
       className="pt-[100px] pb-[70px] px-5 sm:px-7 lg:px-[52px] text-center relative overflow-hidden"
       style={{
-        background: "linear-gradient(180deg, #FAFBFD 0%, #FAF7F2 100%)",
+        background: "linear-gradient(180deg, #FAFBFD 0%, #F5F7FC 100%)",
       }}
     >
       <div className="max-w-[1100px] mx-auto">

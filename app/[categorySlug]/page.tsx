@@ -1,10 +1,14 @@
 import type { Metadata } from 'next'
+
+export const dynamic = 'force-dynamic'
+import { unstable_cache } from 'next/cache'
 import { notFound } from 'next/navigation'
-import { createClient } from '@supabase/supabase-js'
+import { cache } from 'react'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import ShopClient from '@/components/pages/ShopClient'
 import { buildNavbarRenderItems } from '@/lib/navbar'
 import { createSupabaseServerClient } from '@/lib/server-supabase'
-import { filterStorefrontProducts, getStorefrontProducts } from '@/lib/catalog-products'
+import { filterStorefrontProducts, getStorefrontProducts, toStorefrontProductCard } from '@/lib/catalog-products'
 import { createPageMetadata } from '@/lib/seo'
 import JsonLd from '@/components/seo/JsonLd'
 import { createBreadcrumbSchema } from '@/lib/structured-data'
@@ -44,13 +48,74 @@ function getPublicNavbarDataClient() {
   return null
 }
 
-async function loadNavbarItems(client: any) {
+async function loadNavbarItems(client: SupabaseClient) {
   return client
     .from('navbar_items')
     .select('*')
     .eq('status', 'active')
     .order('display_order', { ascending: true })
 }
+
+const getCategoryBySlug = cache(async (slug: string) => {
+  const supabase = createSupabaseServerClient()
+  const { data } = await supabase
+    .from('catalog_categories')
+    .select('id, name, slug, status, category_lane, banner_desktop_image_path, banner_mobile_image_path, banner_title, banner_subtitle, banner_cta_label, banner_cta_link, banner_enabled')
+    .eq('slug', slug)
+    .eq('status', 'active')
+    .maybeSingle()
+
+  return data
+})
+
+const getCategoryReferenceData = unstable_cache(
+  async () => {
+    const client = getPublicNavbarDataClient() ?? createSupabaseServerClient()
+
+    return Promise.all([
+      loadNavbarItems(client),
+      client.from('navbar_sections').select('*').eq('status', 'active').order('column_number', { ascending: true }).order('display_order', { ascending: true }),
+      client.from('navbar_section_links').select('*').eq('status', 'active').order('display_order', { ascending: true }),
+      client.from('navbar_section_source_items').select('*').eq('is_active', true).order('sort_order', { ascending: true }),
+      client.from('navbar_featured_cards').select('*'),
+      client.from('catalog_categories').select('id, name, slug, display_order, status').eq('status', 'active').order('display_order', { ascending: true }),
+      client.from('catalog_subcategories').select('id, category_id, name, slug, icon_svg_path, display_order, status').eq('status', 'active').order('display_order', { ascending: true }),
+      client.from('catalog_options').select('id, subcategory_id, name, slug, icon_svg_path, display_order, status').eq('status', 'active').order('display_order', { ascending: true }),
+      client.from('catalog_certificates').select('*').order('display_order', { ascending: true }),
+      client.from('catalog_metals').select('*').eq('status', 'active').order('display_order', { ascending: true }),
+      client.from('catalog_stone_shapes').select('*').eq('status', 'active').order('display_order', { ascending: true }),
+      client.from('catalog_styles').select('*').eq('status', 'active').order('display_order', { ascending: true }),
+    ])
+  },
+  ['category-page-reference-data'],
+  { revalidate: 300 }
+)
+
+const getCategoryGridPosters = unstable_cache(
+  async (categoryId: string) => {
+    const supabase = createSupabaseServerClient()
+    const result = await supabase
+      .from('category_grid_posters')
+      .select('id, title, image_path, image_alt, link_url, insert_after, display_order, status, starts_at, ends_at')
+      .eq('category_id', categoryId)
+      .eq('status', 'active')
+      .order('display_order', { ascending: true })
+
+    if (result.error) return result
+
+    const now = Date.now()
+    return {
+      ...result,
+      data: (result.data ?? []).filter((poster) => {
+        const startsAt = poster.starts_at ? Date.parse(poster.starts_at) : null
+        const endsAt = poster.ends_at ? Date.parse(poster.ends_at) : null
+        return (!startsAt || startsAt <= now) && (!endsAt || endsAt >= now)
+      }),
+    }
+  },
+  ['category-grid-posters'],
+  { revalidate: 60 }
+)
 
 function uniqueSectionOptions(
   options: { label: string; href: string; type?: 'default' | 'swatch' | 'icon'; iconUrl?: string | null; colorHex?: string | null }[]
@@ -151,13 +216,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { categorySlug } = await params
   const query = await searchParams
-  const supabase = createSupabaseServerClient()
-  const { data: category } = await supabase
-    .from('catalog_categories')
-    .select('id, name, slug, status, category_lane, banner_title, banner_subtitle, banner_desktop_image_path')
-    .eq('slug', categorySlug)
-    .eq('status', 'active')
-    .maybeSingle()
+  const category = await getCategoryBySlug(categorySlug)
 
   if (!category) {
     return {
@@ -192,26 +251,23 @@ export default async function CategoryCollectionPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
   const { categorySlug } = await params
-  const supabase = createSupabaseServerClient()
-  const { data: category } = await supabase
-    .from('catalog_categories')
-    .select('id, name, slug, status, category_lane, banner_desktop_image_path, banner_mobile_image_path, banner_title, banner_subtitle, banner_cta_label, banner_cta_link, banner_enabled')
-    .eq('slug', categorySlug)
-    .eq('status', 'active')
-    .maybeSingle()
+  const category = await getCategoryBySlug(categorySlug)
 
   if (!category) {
     notFound()
   }
 
   const query = await searchParams
-  const products = await getStorefrontProducts()
   const resolvedProductLane = category.category_lane ?? 'standard'
+  const [products, referenceData, gridPostersResult] = await Promise.all([
+    getStorefrontProducts(resolvedProductLane),
+    getCategoryReferenceData(),
+    getCategoryGridPosters(category.id),
+  ])
   const categoryProducts = filterStorefrontProducts(products, {
     productLane: resolvedProductLane,
     categorySlug,
   })
-  const publicNavbarClient = getPublicNavbarDataClient() ?? supabase
   const [
     navbarItemsResult,
     navbarSectionsResult,
@@ -225,28 +281,7 @@ export default async function CategoryCollectionPage({
     metalsResult,
     stoneShapesResult,
     stylesResult,
-    gridPostersResult,
-  ] =
-    await Promise.all([
-      loadNavbarItems(publicNavbarClient),
-      publicNavbarClient.from('navbar_sections').select('*').eq('status', 'active').order('column_number', { ascending: true }).order('display_order', { ascending: true }),
-      publicNavbarClient.from('navbar_section_links').select('*').eq('status', 'active').order('display_order', { ascending: true }),
-      publicNavbarClient.from('navbar_section_source_items').select('*').eq('is_active', true).order('sort_order', { ascending: true }),
-      publicNavbarClient.from('navbar_featured_cards').select('*'),
-      publicNavbarClient.from('catalog_categories').select('id, name, slug, display_order, status').eq('status', 'active').order('display_order', { ascending: true }),
-      publicNavbarClient.from('catalog_subcategories').select('id, category_id, name, slug, icon_svg_path, display_order, status').eq('status', 'active').order('display_order', { ascending: true }),
-      publicNavbarClient.from('catalog_options').select('id, subcategory_id, name, slug, icon_svg_path, display_order, status').eq('status', 'active').order('display_order', { ascending: true }),
-      publicNavbarClient.from('catalog_certificates').select('*').order('display_order', { ascending: true }),
-      publicNavbarClient.from('catalog_metals').select('*').eq('status', 'active').order('display_order', { ascending: true }),
-      publicNavbarClient.from('catalog_stone_shapes').select('*').eq('status', 'active').order('display_order', { ascending: true }),
-      publicNavbarClient.from('catalog_styles').select('*').eq('status', 'active').order('display_order', { ascending: true }),
-      supabase
-        .from('category_grid_posters')
-        .select('id, title, image_path, image_alt, link_url, insert_after, display_order, status, starts_at, ends_at')
-        .eq('category_id', category.id)
-        .eq('status', 'active')
-        .order('display_order', { ascending: true }),
-    ])
+  ] = referenceData
 
   const headerBrowseSections = (() => {
     const navbarItems = navbarItemsResult.data ?? []
@@ -374,8 +409,8 @@ export default async function CategoryCollectionPage({
         ])}
       />
       <ShopClient
-        products={filteredProducts}
-        sourceProducts={categoryProducts}
+        products={filteredProducts.map(toStorefrontProductCard)}
+        sourceProducts={categoryProducts.map(toStorefrontProductCard)}
         heroTitle={category.banner_title || category.name}
         heroSubtitle={category.banner_subtitle || `Browse ${category.name} from the live catalog.`}
         heroDesktopImageUrl={toPublicUrl(category.banner_desktop_image_path) || undefined}
@@ -384,12 +419,6 @@ export default async function CategoryCollectionPage({
         heroCtaHref={category.banner_cta_link || undefined}
         heroBannerEnabled={Boolean(category.banner_enabled)}
         gridPosters={(gridPostersResult.error ? [] : gridPostersResult.data ?? [])
-          .filter((poster) => {
-            const now = Date.now()
-            const startsAt = poster.starts_at ? Date.parse(poster.starts_at) : null
-            const endsAt = poster.ends_at ? Date.parse(poster.ends_at) : null
-            return (!startsAt || startsAt <= now) && (!endsAt || endsAt >= now)
-          })
           .map((poster) => ({
             id: poster.id,
             title: poster.title,
@@ -408,6 +437,7 @@ export default async function CategoryCollectionPage({
           ...(typeof query.metal === 'string' ? { metal: [query.metal] } : {}),
           ...(certificateFilterValue ? { certificate: [certificateFilterValue] } : {}),
         }}
+        initialPage={typeof query.page === 'string' ? Math.max(1, Number.parseInt(query.page, 10) || 1) : 1}
       />
     </>
   )

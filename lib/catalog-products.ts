@@ -1,5 +1,5 @@
 import type { Product } from '@/lib/data/products'
-import { unstable_cache } from 'next/cache'
+import { cache } from 'react'
 import { createSupabaseServerClient } from '@/lib/server-supabase'
 
 const collectionBucket = process.env.NEXT_PUBLIC_SUPABASE_COLLECTION_BUCKET || 'hod'
@@ -204,6 +204,33 @@ type ProductMaterialValueSelectionRow = {
   sort_order?: number | null
 }
 
+type ProductMetalSelectionRow = {
+  product_id: string
+  metal_id: string
+  sort_order?: number | null
+}
+
+type ProductStoneShapeSelectionRow = {
+  product_id: string
+  shape_id: string
+  shape: CatalogStoneShape | CatalogStoneShape[] | null
+}
+
+type ProductCustomDropdownRow = {
+  id: string
+  product_id: string
+  name: string
+  label: string
+  is_required?: boolean | null
+}
+
+type ProductCustomDropdownOptionRow = {
+  id: string
+  dropdown_id: string
+  label: string
+  value: string
+}
+
 export type StorefrontCustomDropdown = { id: string; name: string; label: string; isRequired: boolean; options: { id: string; label: string; value: string }[] }
 
 type ProductPurityPriceRow = {
@@ -362,6 +389,90 @@ export type StorefrontProduct = Product & {
   defaultVariantMediaItems: { id: string; type: 'image' | 'video'; url: string; altText?: string | null; sortOrder: number }[]
 }
 
+export type StorefrontProductCard = Pick<
+  StorefrontProduct,
+  | 'dbId'
+  | 'id'
+  | 'slug'
+  | 'name'
+  | 'category'
+  | 'type'
+  | 'stone'
+  | 'cut'
+  | 'metals'
+  | 'priceFrom'
+  | 'carat'
+  | 'featured'
+  | 'isNew'
+  | 'shortMeta'
+  | 'gemColor'
+  | 'gemStyle'
+  | 'imageUrl'
+  | 'productLane'
+  | 'mainCategoryName'
+  | 'mainCategorySlug'
+  | 'subcategorySlug'
+  | 'linkedSubcategorySlugs'
+  | 'optionSlug'
+  | 'linkedOptionSlugs'
+  | 'styleName'
+  | 'styleSlug'
+  | 'certificateNames'
+  | 'ringSizeNames'
+  | 'shapeOptions'
+> & {
+  metalsFull: Pick<StorefrontProduct['metalsFull'][number], 'id' | 'name' | 'slug' | 'colorHex' | 'displayLabel'>[]
+  metalMediaRows: Array<Pick<ProductMetalMediaRow, 'product_id' | 'metal_id' | 'image_1_path'>>
+  metalPurityVariants: Array<
+    Pick<StorefrontProduct['metalPurityVariants'][number], 'id' | 'metalId' | 'metalSlug' | 'isDefault'> & {
+      mediaItems: StorefrontProduct['metalPurityVariants'][number]['mediaItems']
+    }
+  >
+}
+
+export function toStorefrontProductCard(product: StorefrontProduct): StorefrontProductCard {
+  return {
+    dbId: product.dbId,
+    id: product.id,
+    slug: product.slug,
+    name: product.name,
+    category: product.category,
+    type: product.type,
+    stone: product.stone,
+    cut: product.cut,
+    metals: product.metals,
+    priceFrom: product.priceFrom,
+    carat: product.carat,
+    featured: product.featured,
+    isNew: product.isNew,
+    shortMeta: product.shortMeta,
+    gemColor: product.gemColor,
+    gemStyle: product.gemStyle,
+    imageUrl: product.imageUrl,
+    productLane: product.productLane,
+    mainCategoryName: product.mainCategoryName,
+    mainCategorySlug: product.mainCategorySlug,
+    subcategorySlug: product.subcategorySlug,
+    linkedSubcategorySlugs: product.linkedSubcategorySlugs,
+    optionSlug: product.optionSlug,
+    linkedOptionSlugs: product.linkedOptionSlugs,
+    styleName: product.styleName,
+    styleSlug: product.styleSlug,
+    certificateNames: product.certificateNames,
+    ringSizeNames: product.ringSizeNames,
+    shapeOptions: product.shapeOptions,
+    metalsFull: product.metalsFull.map(({ id, name, slug, colorHex, displayLabel }) => ({ id, name, slug, colorHex, displayLabel })),
+    metalMediaRows: product.metalMediaRows.map(({ product_id, metal_id, image_1_path }) => ({ product_id, metal_id, image_1_path })),
+    metalPurityVariants: product.metalPurityVariants.map(({ id, metalId, metalSlug, isDefault, mediaItems }) => ({
+      id,
+      metalId,
+      metalSlug,
+      isDefault,
+      mediaItems: mediaItems.filter((item) => item.type === 'image' && item.url).slice(0, 1),
+    })),
+  }
+}
+
 function toPublicUrl(path: string | null | undefined) {
   if (!path) return undefined
   if (path.startsWith('http://') || path.startsWith('https://')) return path
@@ -482,12 +593,28 @@ async function fetchAllProductVariantMediaItems(supabase: ReturnType<typeof crea
   }
 }
 
-const fetchStorefrontProducts = async () => {
+export type StorefrontProductLane = 'standard' | 'hiphop' | 'collection'
+
+function groupRowsBy<T>(rows: T[], getKey: (row: T) => string | null | undefined) {
+  const grouped = new Map<string, T[]>()
+  for (const row of rows) {
+    const key = getKey(row)
+    if (!key) continue
+    const group = grouped.get(key)
+    if (group) group.push(row)
+    else grouped.set(key, [row])
+  }
+  return grouped
+}
+
+const fetchStorefrontProducts = async (productLane?: StorefrontProductLane) => {
   const supabase = createSupabaseServerClient()
+  let productsQuery = supabase.from('products').select('*').eq('status', 'active')
+  if (productLane) productsQuery = productsQuery.eq('product_lane', productLane)
 
   const [productsResult, categoriesResult, subcategoriesResult, optionsResult, metalsResult, materialValuesResult, certificatesResult, stylesResult, ringCategoriesResult, ringCategorySizesResult, productContentRulesResult, metalSelectionsResult, materialValueSelectionsResult, shapeSelectionsResult, gstSlabsResult, purityPricesResult, metalMediaResult, metalCompositionPartsResult, subcategoryLinksResult, optionLinksResult, metalVariantsResult, variantMediaItemsResult, productFaqResult, customDropdownResult, customDropdownOptionResult] =
     await Promise.all([
-      supabase.from('products').select('*').eq('status', 'active').order('created_at', { ascending: false }),
+      productsQuery.order('created_at', { ascending: false }),
       supabase.from('catalog_categories').select('id, code, name, slug, category_lane'),
       supabase.from('catalog_subcategories').select('id, category_id, name, slug'),
       supabase.from('catalog_options').select('id, subcategory_id, name, slug'),
@@ -549,63 +676,77 @@ const fetchStorefrontProducts = async () => {
   const productMetalVariants = metalVariantsResult.error ? ([] as ProductMetalVariantRow[]) : ((metalVariantsResult.data || []) as ProductMetalVariantRow[])
   const productVariantMediaItems = variantMediaItemsResult.error ? ([] as ProductVariantMediaItemRow[]) : ((variantMediaItemsResult.data || []) as ProductVariantMediaItemRow[])
   const productFaqItems = productFaqResult.error ? ([] as ProductFaqItem[]) : ((productFaqResult.data || []) as ProductFaqItem[])
-  const customDropdownRows = customDropdownResult.error ? [] : (customDropdownResult.data || [])
-  const customDropdownOptionRows = customDropdownOptionResult.error ? [] : (customDropdownOptionResult.data || [])
+  const metalSelections = (metalSelectionsResult.data || []) as ProductMetalSelectionRow[]
+  const materialValueSelections = materialValueSelectionsResult.error ? [] : ((materialValueSelectionsResult.data || []) as ProductMaterialValueSelectionRow[])
+  const shapeSelections = shapeSelectionsResult.error ? [] : ((shapeSelectionsResult.data || []) as ProductStoneShapeSelectionRow[])
+  const customDropdownRows = customDropdownResult.error ? [] : ((customDropdownResult.data || []) as ProductCustomDropdownRow[])
+  const customDropdownOptionRows = customDropdownOptionResult.error ? [] : ((customDropdownOptionResult.data || []) as ProductCustomDropdownOptionRow[])
   const products = (productsResult.data || []) as ProductRow[]
+
+  const subcategoryLinksByProduct = groupRowsBy(subcategoryLinks, (entry) => entry.product_id)
+  const optionLinksByProduct = groupRowsBy(optionLinks, (entry) => entry.product_id)
+  const metalSelectionsByProduct = groupRowsBy(metalSelections, (entry) => entry.product_id)
+  const materialValueSelectionsByProduct = groupRowsBy(materialValueSelections, (entry) => entry.product_id)
+  const shapeSelectionsByProduct = groupRowsBy(shapeSelections, (entry) => entry.product_id)
+  const purityPricesByProduct = groupRowsBy(purityPriceRows, (entry) => entry.product_id)
+  const metalVariantsByProduct = groupRowsBy(productMetalVariants, (entry) => entry.product_id)
+  const metalMediaByProduct = groupRowsBy(metalMediaRows, (entry) => entry.product_id)
+  const variantMediaByProduct = groupRowsBy(productVariantMediaItems, (entry) => entry.product_id)
+  const variantMediaByVariant = groupRowsBy(productVariantMediaItems, (entry) => entry.variant_id)
+  const faqItemsByProduct = groupRowsBy(productFaqItems, (entry) => entry.product_id)
+  const customDropdownsByProduct = groupRowsBy(customDropdownRows, (entry) => entry.product_id)
+  const customDropdownOptionsByDropdown = groupRowsBy(customDropdownOptionRows, (entry) => entry.dropdown_id)
+  const ringSizesByCategory = groupRowsBy(ringCategorySizes, (entry) => entry.ring_category_id)
+  const compositionPartsByMetal = groupRowsBy(metalCompositionParts, (entry) => entry.metal_id)
 
   return products.map((product, index) => {
     const productLane = product.product_lane ?? 'standard'
     const category = categories.find((entry) => entry.id === product.main_category_id)
     const subcategory = subcategories.find((entry) => entry.id === product.subcategory_id)
     const option = options.find((entry) => entry.id === product.option_id)
-    const linkedSubcategories = subcategoryLinks
-      .filter((entry) => entry.product_id === product.id && !entry.is_primary)
+    const linkedSubcategories = (subcategoryLinksByProduct.get(product.id) || [])
+      .filter((entry) => !entry.is_primary)
       .map((entry) => subcategories.find((subcategoryEntry) => subcategoryEntry.id === entry.subcategory_id))
       .filter(Boolean) as CatalogSubcategory[]
-    const linkedOptions = optionLinks
-      .filter((entry) => entry.product_id === product.id && !entry.is_primary)
+    const linkedOptions = (optionLinksByProduct.get(product.id) || [])
+      .filter((entry) => !entry.is_primary)
       .map((entry) => options.find((optionEntry) => optionEntry.id === entry.option_id))
       .filter(Boolean) as CatalogOption[]
     const style = styles.find((entry) => entry.id === product.style_id)
-    const productMetalSelections = (metalSelectionsResult.data || [])
-      .filter((entry) => entry.product_id === product.id)
+    const productMetalSelections = [...(metalSelectionsByProduct.get(product.id) || [])]
       .sort((left, right) => (left.sort_order ?? 0) - (right.sort_order ?? 0))
     const productMetalIds = productMetalSelections.map((entry) => entry.metal_id)
 
     const selectedMetals = productMetalSelections
       .map((selection) => metals.find((entry) => entry.id === selection.metal_id))
       .filter(Boolean) as CatalogMetal[]
-    const productMaterialValueSelections = (materialValueSelectionsResult.error ? [] : ((materialValueSelectionsResult.data || []) as ProductMaterialValueSelectionRow[]))
-      .filter((entry) => entry.product_id === product.id)
+    const productMaterialValueSelections = [...(materialValueSelectionsByProduct.get(product.id) || [])]
       .sort((left, right) => (left.sort_order ?? 0) - (right.sort_order ?? 0))
     const selectedMaterialValues = productMaterialValueSelections
       .map((entry) => materialValues.find((materialValue) => materialValue.id === entry.material_value_id))
       .filter(Boolean) as CatalogMaterialValue[]
-    const selectedShapes = (shapeSelectionsResult.error ? [] : (shapeSelectionsResult.data || []))
-      .filter((entry) => entry.product_id === product.id)
+    const selectedShapes = (shapeSelectionsByProduct.get(product.id) || [])
       .map((entry) => Array.isArray(entry.shape) ? entry.shape[0] : entry.shape)
       .filter(Boolean) as CatalogStoneShape[]
     const selectedCertificates = certificates
       .filter((entry) => (product.certificate_ids || []).includes(entry.id))
       .map((entry) => entry.name)
     const ringCategory = ringCategories.find((entry) => entry.id === product.ring_category_id)
-    const selectedRingSizes = ringCategorySizes
-      .filter((entry) => entry.ring_category_id === product.ring_category_id)
+    const selectedRingSizes = (ringSizesByCategory.get(product.ring_category_id || '') || [])
       .map((entry) => entry.size_label)
     const ringCategoryOptions = ringCategories
       .map((entry) => ({
         id: entry.id,
         name: entry.name,
-        sizes: ringCategorySizes.filter((size) => size.ring_category_id === entry.id).map((size) => size.size_label),
+        sizes: (ringSizesByCategory.get(entry.id) || []).map((size) => size.size_label),
       }))
       .filter((entry) => entry.sizes.length > 0)
     const gstSlab = gstSlabs.find((entry) => entry.id === product.gst_slab_id)
     const shippingRule = productContentRules.find((entry) => entry.id === product.shipping_rule_id && entry.kind === 'shipping')
     const careWarrantyRule = productContentRules.find((entry) => entry.id === product.care_warranty_rule_id && entry.kind === 'care_warranty')
-    const productPurityPrices = purityPriceRows.filter((entry) => entry.product_id === product.id)
-    const productMetalVariantRows = productMetalVariants.filter((entry) => entry.product_id === product.id)
-    const productMetalMediaRows = metalMediaRows
-      .filter((entry) => entry.product_id === product.id)
+    const productPurityPrices = purityPricesByProduct.get(product.id) || []
+    const productMetalVariantRows = metalVariantsByProduct.get(product.id) || []
+    const productMetalMediaRows = (metalMediaByProduct.get(product.id) || [])
       .map((entry) => ({
         ...entry,
         image_1_path: toPublicUrl(entry.image_1_path) ?? null,
@@ -619,8 +760,8 @@ const fetchStorefrontProducts = async () => {
       productPurityPrices[0] ??
       null
     const { fallbackMedia, source: resolvedMediaSource } = resolveMetalMediaDefaults(product, productMetalMediaRows)
-    const defaultVariantMediaItems = productVariantMediaItems
-      .filter((entry) => entry.product_id === product.id && entry.is_default_fallback && !entry.variant_id)
+    const defaultVariantMediaItems = (variantMediaByProduct.get(product.id) || [])
+      .filter((entry) => entry.is_default_fallback && !entry.variant_id)
       .map((entry) => ({
         id: entry.id,
         type: entry.media_type,
@@ -633,8 +774,7 @@ const fetchStorefrontProducts = async () => {
       .map((entry) => {
         const metal = metals.find((metalEntry) => metalEntry.id === entry.metal_id)
         if (!metal) return null
-        const mediaItems = productVariantMediaItems
-          .filter((mediaEntry) => mediaEntry.variant_id === entry.id)
+        const mediaItems = (variantMediaByVariant.get(entry.id) || [])
           .map((mediaEntry) => ({
             id: mediaEntry.id,
             type: mediaEntry.media_type,
@@ -814,8 +954,7 @@ const fetchStorefrontProducts = async () => {
         metalId: entry.id,
         name: entry.name,
         description: entry.composition_description ?? null,
-        parts: metalCompositionParts
-          .filter((part) => part.metal_id === entry.id)
+        parts: (compositionPartsByMetal.get(entry.id) || [])
           .map((part) => ({
             partName: part.part_name,
             percentage: Number(part.percentage ?? 0),
@@ -857,7 +996,7 @@ const fetchStorefrontProducts = async () => {
       showPurity: false,
       engravingEnabled: Boolean(product.engraving_enabled),
       engravingLabel: product.engraving_label || 'Complimentary Engraving',
-      customDropdowns: product.custom_dropdowns_enabled ? customDropdownRows.filter((group) => group.product_id === product.id).map((group) => ({ id: group.id, name: group.name, label: group.label, isRequired: Boolean(group.is_required), options: customDropdownOptionRows.filter((option) => option.dropdown_id === group.id).map((option) => ({ id: option.id, label: option.label, value: option.value })) })).filter((group) => group.options.length > 0) : [],
+      customDropdowns: product.custom_dropdowns_enabled ? (customDropdownsByProduct.get(product.id) || []).map((group) => ({ id: group.id, name: group.name, label: group.label, isRequired: Boolean(group.is_required), options: (customDropdownOptionsByDropdown.get(group.id) || []).map((option) => ({ id: option.id, label: option.label, value: option.value })) })).filter((group) => group.options.length > 0) : [],
       featuresList: product.features ?? [],
       specificationRows: [...baseSpecs, ...hiphopSpecs],
       productDetailRows: product.product_details ?? [],
@@ -874,8 +1013,8 @@ const fetchStorefrontProducts = async () => {
             title: product.care_warranty_override_enabled ? product.care_warranty_title_override || careWarrantyRule?.title || 'Care & Warranty' : careWarrantyRule?.title || 'Care & Warranty',
             body: product.care_warranty_override_enabled ? product.care_warranty_body_override || careWarrantyRule?.body || '' : careWarrantyRule?.body || '',
           },
-      faqItems: productFaqItems
-        .filter((item) => item.product_id === product.id && item.question?.trim() && item.answer?.trim())
+      faqItems: (faqItemsByProduct.get(product.id) || [])
+        .filter((item) => item.question?.trim() && item.answer?.trim())
         .map((item) => ({
           id: item.id,
           question: item.question.trim(),
@@ -910,18 +1049,14 @@ const fetchStorefrontProducts = async () => {
   })
 }
 
-const getCachedStorefrontProducts = unstable_cache(fetchStorefrontProducts, ['storefront-products'], {
-  revalidate: 5,
-})
+const getRequestStorefrontProducts = cache(fetchStorefrontProducts)
 
-export async function getStorefrontProducts() {
-  return getCachedStorefrontProducts()
+export async function getStorefrontProducts(productLane?: StorefrontProductLane) {
+  return getRequestStorefrontProducts(productLane)
 }
 
 export async function getStorefrontProductBySlug(slug: string) {
-  // Product detail media is edited independently in the admin. Read it fresh so
-  // a newly selected variant image/video cannot be hidden by the collection cache.
-  const products = await fetchStorefrontProducts()
+  const products = await getRequestStorefrontProducts()
   const exactMatch = products.find((entry) => entry.slug === slug)
   if (exactMatch) return exactMatch
 

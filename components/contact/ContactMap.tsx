@@ -89,7 +89,7 @@ export default function ContactMap() {
       <div
         className="relative h-[320px] overflow-hidden border border-[rgba(10,22,40,0.10)]"
         style={{
-          background: 'linear-gradient(135deg, #FAF7F2 0%, #F5F7FC 100%)',
+          background: 'linear-gradient(135deg, #F5F7FC 0%, #EAF0FA 100%)',
         }}
       >
         {mapSrc ? (

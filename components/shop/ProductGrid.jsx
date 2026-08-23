@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
 import ProductCard from "./ProductCard";
 import ShopSidebar from "./ShopSidebar";
 import ShopToolbar from "./ShopToolbar";
@@ -102,19 +104,45 @@ function buildGridItems(products, posters) {
  *   products: any[]
  *   sourceProducts?: any[]
  *   initialFilters?: Record<string, string[]>
+ *   initialPage?: number
  *   filterGroups?: ProductGridFilterGroup[]
  *   gridPosters?: CategoryGridPoster[]
  *   onEnquire: (name?: string) => void
  * }} props
  */
-export default function ProductGrid({ products, sourceProducts = products, initialFilters = {}, filterGroups: externalFilterGroups = [], gridPosters = [], onEnquire }) {
+export default function ProductGrid({ products, sourceProducts = products, initialFilters = {}, initialPage = 1, filterGroups: externalFilterGroups = [], gridPosters = [], onEnquire }) {
   const { wishlist, toggle } = useWishlistStore();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [filters, setFilters] = useState(initialFilters);
+  const [page, setPage] = useState(initialPage);
   const [priceMin, setPriceMin] = useState("");
   const [priceMax, setPriceMax] = useState("");
   const [sort, setSort] = useState("featured");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const sidebarTopOffset = 146;
+
+  const pageSize = 24;
+
+  const pageHref = (nextPage) => {
+    const params = new URLSearchParams(searchParams?.toString());
+    if (nextPage <= 1) params.delete("page");
+    else params.set("page", String(nextPage));
+    const query = params.toString();
+    return query ? `${pathname}?${query}` : pathname;
+  };
+
+  const changePage = (nextPage) => {
+    setPage(nextPage);
+    window.history.pushState(null, "", pageHref(nextPage));
+    document.querySelector(".shop-grid-layout")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const handleFiltersChange = (nextFilters) => {
+    setFilters(nextFilters);
+    setPage(1);
+    window.history.replaceState(null, "", pageHref(1));
+  };
 
   const handleWishlist = (product) => {
     toggle(getProductKey(product));
@@ -122,6 +150,8 @@ export default function ProductGrid({ products, sourceProducts = products, initi
 
   const handleClear = () => {
     setFilters({});
+    setPage(1);
+    window.history.replaceState(null, "", pageHref(1));
     setPriceMin("");
     setPriceMax("");
     setSort("featured");
@@ -130,6 +160,14 @@ export default function ProductGrid({ products, sourceProducts = products, initi
   const handlePriceChange = (key, value) => {
     if (key === "min") setPriceMin(value);
     else setPriceMax(value);
+    setPage(1);
+    window.history.replaceState(null, "", pageHref(1));
+  };
+
+  const handleSortChange = (value) => {
+    setSort(value);
+    setPage(1);
+    window.history.replaceState(null, "", pageHref(1));
   };
 
   const baseFilterGroups = useMemo(() => {
@@ -242,6 +280,10 @@ export default function ProductGrid({ products, sourceProducts = products, initi
     return list;
   }, [filters, priceMin, priceMax, sort, products]);
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const resolvedPage = Math.min(page, totalPages);
+  const paginatedProducts = filtered.slice((resolvedPage - 1) * pageSize, resolvedPage * pageSize);
+
   useEffect(() => {
     if (!sidebarOpen) {
       document.body.style.overflow = "";
@@ -322,7 +364,7 @@ export default function ProductGrid({ products, sourceProducts = products, initi
         <ShopSidebar
           filterGroups={filterGroups}
           filters={filters}
-          onFiltersChange={setFilters}
+          onFiltersChange={handleFiltersChange}
           priceMin={priceMin}
           priceMax={priceMax}
           onPriceChange={handlePriceChange}
@@ -336,7 +378,7 @@ export default function ProductGrid({ products, sourceProducts = products, initi
           <ShopToolbar
             count={filtered.length}
             sort={sort}
-            onSortChange={setSort}
+            onSortChange={handleSortChange}
             onToggleFilters={() => setSidebarOpen((open) => !open)}
           />
 
@@ -379,7 +421,7 @@ export default function ProductGrid({ products, sourceProducts = products, initi
             </div>
           ) : (
             <div className="product-grid">
-              {buildGridItems(filtered, gridPosters).map((item) => item.type === "poster" ? (
+              {buildGridItems(paginatedProducts, resolvedPage === 1 ? gridPosters : []).map((item) => item.type === "poster" ? (
                 <CategoryGridPosterCard key={`poster-${item.poster.id}`} poster={item.poster} />
               ) : (
                 <ProductCard
@@ -392,6 +434,30 @@ export default function ProductGrid({ products, sourceProducts = products, initi
               ))}
             </div>
           )}
+
+          {filtered.length > pageSize ? (
+            <nav aria-label="Product pagination" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", padding: "0 0 72px" }}>
+              {resolvedPage > 1 ? (
+                <Link
+                  href={pageHref(resolvedPage - 1)}
+                  onClick={(event) => { event.preventDefault(); changePage(resolvedPage - 1); }}
+                  style={{ border: "1px solid rgba(10,22,40,.2)", borderRadius: "999px", padding: "11px 20px", color: "#0A1628", textDecoration: "none", fontSize: "12px" }}
+                >
+                  Previous
+                </Link>
+              ) : null}
+              <span style={{ color: "#6A6A6A", fontSize: "12px" }}>Page {resolvedPage} of {totalPages}</span>
+              {resolvedPage < totalPages ? (
+                <Link
+                  href={pageHref(resolvedPage + 1)}
+                  onClick={(event) => { event.preventDefault(); changePage(resolvedPage + 1); }}
+                  style={{ border: "1px solid rgba(10,22,40,.2)", borderRadius: "999px", padding: "11px 20px", color: "#0A1628", textDecoration: "none", fontSize: "12px" }}
+                >
+                  Next
+                </Link>
+              ) : null}
+            </nav>
+          ) : null}
         </div>
       </div>
     </>

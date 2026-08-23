@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+
+export const dynamic = 'force-dynamic'
 import EducationClient from '@/components/pages/EducationClient'
 import { getPublishedEducationPosts } from '@/lib/education'
 import { createPageMetadata } from '@/lib/seo'

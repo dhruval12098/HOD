@@ -165,7 +165,7 @@ export default function CouplesSection({
             <X size={16} />
           </button>
           <div className="flex min-h-0 flex-1 flex-col md:grid md:grid-cols-2">
-            <div className="min-h-[180px] shrink-0 bg-[#f5f1ea] flex items-center justify-center md:min-h-[320px]">
+            <div className="min-h-[180px] shrink-0 bg-[#F5F7FC] flex items-center justify-center md:min-h-[320px]">
               {active.image_path ? <img src={buildImageUrl(active.image_path)} alt={active.names} className="h-full w-full object-cover" /> : <HeartIcon />}
             </div>
             <div
@@ -218,7 +218,7 @@ export default function CouplesSection({
                         onClick={() => setActive(couple)}
                         className="group relative overflow-hidden border border-black/8 bg-white text-left"
                       >
-                        <div className={`relative overflow-hidden bg-gradient-to-br from-[#f5f5f5] to-[#ececec] ${cardsPerView === 1 ? 'h-[310px] sm:h-[340px]' : 'h-80'}`}>
+                        <div className={`relative overflow-hidden bg-gradient-to-br from-[#F5F7FC] to-[#E5ECF7] ${cardsPerView === 1 ? 'h-[310px] sm:h-[340px]' : 'h-80'}`}>
                           {couple.image_path ? (
                             <img
                               src={buildImageUrl(couple.image_path)}

@@ -40,7 +40,7 @@ export default function AuthShell({
   }, []);
 
   return (
-    <section className="relative overflow-hidden bg-[radial-gradient(circle_at_top,rgba(212,175,55,0.14),transparent_32%),linear-gradient(180deg,#fbf7f0_0%,#ffffff_46%,#f6f8fc_100%)] px-4 py-4 sm:px-5 sm:py-5 lg:px-8 lg:py-6">
+    <section className="relative overflow-hidden bg-[radial-gradient(circle_at_top,rgba(10,22,40,0.10),transparent_32%),linear-gradient(180deg,#f5f7fc_0%,#ffffff_46%,#eef3fa_100%)] px-4 py-4 sm:px-5 sm:py-5 lg:px-8 lg:py-6">
       <div className="pointer-events-none absolute inset-0 opacity-60">
         <div className="absolute left-[-8%] top-[8%] h-64 w-64 rounded-full bg-[rgba(10,22,40,0.06)] blur-3xl" />
         <div className="absolute bottom-[-6%] right-[-5%] h-72 w-72 rounded-full bg-[rgba(184,149,74,0.16)] blur-3xl" />

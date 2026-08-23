@@ -85,9 +85,9 @@ export default function DiscoverRings({
   const nameRef  = useRef<HTMLSpanElement>(null);
   const descRef  = useRef<HTMLParagraphElement>(null);
 
-  if (!items.length) return null;
-
   useEffect(() => {
+    if (!items.length) return;
+
     itemRefs.current.forEach((el, i) => {
       if (!el) return;
       const off = getOffset(i, current, total);
@@ -107,6 +107,8 @@ export default function DiscoverRings({
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  if (!items.length) return null;
 
   function go(dir: 1 | -1) {
     if (animating) return;

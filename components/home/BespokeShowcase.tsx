@@ -40,7 +40,7 @@ export default function BespokeShowcase({
           </button>
         </div>
 
-        <div className="relative aspect-[3/4] min-h-[420px] overflow-hidden bg-[radial-gradient(circle_at_18%_22%,rgba(255,255,255,0.32),transparent_36%),linear-gradient(135deg,#f7f1e7_0%,#eadfce_42%,#dcc9ab_100%)] md:min-h-[580px]">
+        <div className="relative aspect-[3/4] min-h-[420px] overflow-hidden bg-[radial-gradient(circle_at_18%_22%,rgba(255,255,255,0.42),transparent_36%),linear-gradient(135deg,#F5F7FC_0%,#EAF0FA_42%,#D8E2F2_100%)] md:min-h-[580px]">
           {imageUrl ? (
             <picture>
               {section.mobileImageUrl ? <source media="(max-width: 960px)" srcSet={section.mobileImageUrl} /> : null}

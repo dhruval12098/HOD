@@ -25,9 +25,9 @@ export default function TestimonialMarquee({ initialData }: { initialData?: Home
   const allQuotes = [...quotes, ...quotes];
 
   return (
-    <div className="relative overflow-hidden border-b border-t border-[rgba(10,22,40,0.10)] bg-[#FAF7F2] py-[26px] sm:py-[34px]">
-      <div className="absolute top-0 bottom-0 left-0 z-[2] w-[120px] pointer-events-none bg-gradient-to-r from-[#FAF7F2] to-transparent" />
-      <div className="absolute top-0 bottom-0 right-0 z-[2] w-[120px] pointer-events-none bg-gradient-to-l from-[#FAF7F2] to-transparent" />
+    <div className="relative overflow-hidden border-b border-t border-[rgba(10,22,40,0.10)] bg-[#F5F7FC] py-[26px] sm:py-[34px]">
+      <div className="absolute top-0 bottom-0 left-0 z-[2] w-[120px] pointer-events-none bg-gradient-to-r from-[#F5F7FC] to-transparent" />
+      <div className="absolute top-0 bottom-0 right-0 z-[2] w-[120px] pointer-events-none bg-gradient-to-l from-[#F5F7FC] to-transparent" />
 
       <div className="flex w-max items-center gap-11 animate-marquee-slow">
         {allQuotes.map((item, i) => (

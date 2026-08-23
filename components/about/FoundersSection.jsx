@@ -61,7 +61,7 @@ export default function FoundersSection({ initialItems = [] }) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "36px" }} className="founders-grid">
         {items.map((f) => (
           <div key={f.name} className="founder-card" style={{ display: "grid", gridTemplateColumns: "1fr 1.6fr", background: "#fff", border: "1px solid rgba(10,22,40,0.10)", overflow: "hidden" }}>
-            <div style={{ background: "linear-gradient(135deg, #FAF7F2, #F5F7FC)", display: "flex", alignItems: "center", justifyContent: "center", aspectRatio: "1" }}>
+            <div style={{ background: "linear-gradient(135deg, #F5F7FC, #EAF0FA)", display: "flex", alignItems: "center", justifyContent: "center", aspectRatio: "1" }}>
               {f.image_path ? <img src={buildImageUrl(f.image_path)} alt={f.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontFamily: "var(--serif)", fontSize: "80px", fontWeight: 400, color: "#0A1628" }}>{(f.name || "FD").slice(0, 2).toUpperCase()}</span>}
             </div>
             <div style={{ padding: "32px 28px" }}>

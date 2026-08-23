@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { startTransition, useMemo, useOptimistic } from 'react';
+import { startTransition, useMemo, useOptimistic, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 /**
@@ -18,6 +18,8 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
  *   ctaHref?: string
  *   bannerEnabled?: boolean
  *   browseSections?: ShopHeroBrowseSection[]
+ *   activeFilters?: Record<string, string[]>
+ *   onBrowseNavigate?: (href: string) => boolean
  * }} props
  */
 export default function ShopHero({
@@ -29,13 +31,15 @@ export default function ShopHero({
   ctaHref = '',
   bannerEnabled = false,
   browseSections = [],
+  activeFilters = {},
+  onBrowseNavigate,
 }) {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const matchedSectionId = useMemo(() => {
-    const currentSubcategory = searchParams?.get('subcategory');
+    const currentSubcategory = activeFilters.subcategory?.[0] || searchParams?.get('subcategory');
     if (!currentSubcategory) return '';
 
     for (const section of browseSections) {
@@ -61,11 +65,47 @@ export default function ShopHero({
     }
 
     return '';
-  }, [browseSections, pathname, searchParams]);
+  }, [activeFilters.subcategory, browseSections, pathname, searchParams]);
 
   const allSectionId = '__all__';
   const resolvedActiveSectionId = matchedSectionId || allSectionId;
   const [activeSectionId, setOptimisticActiveSectionId] = useOptimistic(resolvedActiveSectionId);
+  const [pendingHref, setPendingHref] = useState('');
+  const hasPendingNavigation = useMemo(() => {
+    if (!pendingHref) return false;
+    try {
+      const target = new URL(pendingHref, 'https://houseofdiams.local');
+      const currentSearch = searchParams?.toString();
+      return target.pathname !== pathname || target.search !== (currentSearch ? `?${currentSearch}` : '');
+    } catch {
+      return false;
+    }
+  }, [pathname, pendingHref, searchParams]);
+
+  const isOptionActive = (href) => {
+    try {
+      const target = new URL(href, 'https://houseofdiams.local');
+      const filterKeys = ['category', 'subcategory', 'option', 'shape', 'style', 'metal', 'certificate'];
+      const targetEntries = filterKeys
+        .map((key) => [key, target.searchParams.get(key)])
+        .filter(([, value]) => Boolean(value));
+
+      if (targetEntries.length === 0) return false;
+      return targetEntries.every(([key, value]) => activeFilters[key]?.includes(value));
+    } catch {
+      return false;
+    }
+  };
+
+  const navigateBrowseHref = (href) => {
+    if (onBrowseNavigate?.(href)) {
+      setPendingHref('');
+      return;
+    }
+
+    setPendingHref(href);
+    router.push(href);
+  };
 
   const tabSections = useMemo(
     () => [{ id: allSectionId, title: 'All', href: pathname, options: [] }, ...browseSections],
@@ -118,7 +158,7 @@ export default function ShopHero({
           overflow: "hidden",
           minHeight: hasBannerImage ? undefined : "auto",
           padding: hasBannerImage ? "0" : "170px 52px 64px",
-          background: hasBannerImage ? "#0A1628" : "linear-gradient(180deg, #FAFBFD 0%, #FAF7F2 100%)",
+          background: hasBannerImage ? "#0A1628" : "linear-gradient(180deg, #FAFBFD 0%, #F5F7FC 100%)",
         }}
       >
         {hasBannerImage ? (
@@ -393,7 +433,8 @@ export default function ShopHero({
                         event.preventDefault();
                         startTransition(() => {
                           setOptimisticActiveSectionId(section.id);
-                          router.push(section.href || pathname);
+                          const href = section.href || pathname;
+                          navigateBrowseHref(href);
                         });
                       }
                     }}
@@ -420,6 +461,8 @@ export default function ShopHero({
             >
               {activeSection.options.map((option) => {
                 const isTextOnly = option.type !== "swatch" && !(option.type === "icon" && option.iconUrl);
+                const isActive = isOptionActive(option.href);
+                const isPending = hasPendingNavigation && pendingHref === option.href;
 
                 return (
                 <Link
@@ -431,9 +474,9 @@ export default function ShopHero({
                     minWidth: isTextOnly ? "148px" : undefined,
                     minHeight: isTextOnly ? "46px" : "104px",
                     padding: isTextOnly ? "12px 20px" : "14px 10px",
-                    border: "1px solid transparent",
+                    border: `1px solid ${isActive || isPending ? "#0A1628" : "transparent"}`,
                     borderRadius: isTextOnly ? "14px" : "16px",
-                    background: "transparent",
+                    background: isActive || isPending ? "rgba(10,22,40,0.06)" : "transparent",
                     color: "#0A1628",
                     textDecoration: "none",
                     display: "inline-flex",
@@ -442,13 +485,28 @@ export default function ShopHero({
                     justifyContent: "center",
                     gap: isTextOnly ? "8px" : "10px",
                     transition: "all .25s ease",
-                    boxShadow: "none",
+                    boxShadow: isActive ? "0 0 0 1px rgba(10,22,40,0.04)" : "none",
+                    opacity: hasPendingNavigation && !isPending ? 0.58 : 1,
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor = "rgba(10,22,40,0.24)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = "transparent";
+                    e.currentTarget.style.borderColor = isActive || isPending ? "#0A1628" : "transparent";
+                  }}
+                  onClick={(event) => {
+                    if (
+                      event.button === 0 &&
+                      !event.metaKey &&
+                      !event.ctrlKey &&
+                      !event.shiftKey &&
+                      !event.altKey
+                    ) {
+                      event.preventDefault();
+                      startTransition(() => {
+                        navigateBrowseHref(option.href);
+                      });
+                    }
                   }}
                 >
                   {option.type === "swatch" ? (
@@ -484,7 +542,7 @@ export default function ShopHero({
                       whiteSpace: isTextOnly ? "nowrap" : "normal",
                     }}
                   >
-                    {option.label}
+                    {option.label}{isPending ? '…' : ''}
                   </span>
                 </Link>
               )})}

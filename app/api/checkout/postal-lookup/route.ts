@@ -1,5 +1,22 @@
 import { NextResponse } from 'next/server'
 import { createSupabaseServerClient } from '@/lib/server-supabase'
+import { enforceRateLimit } from '@/lib/rate-limit'
+
+type GoogleAddressComponent = {
+  long_name?: string
+  types?: string[]
+}
+
+type GoogleGeocodeResult = {
+  formatted_address?: string
+  place_id?: string
+  address_components?: GoogleAddressComponent[]
+}
+
+type GoogleGeocodeResponse = {
+  status?: string
+  results?: GoogleGeocodeResult[]
+}
 
 type ZippopotamPlace = {
   'place name'?: string
@@ -81,6 +98,70 @@ function normalizeIndianPincode(input: string) {
   return /^\d{6}$/.test(digits) ? digits : null
 }
 
+function getGoogleAddressPart(components: GoogleAddressComponent[] = [], types: string[]) {
+  return components.find((component) => component.types?.some((type) => types.includes(type)))?.long_name?.trim() || ''
+}
+
+function mapGoogleResult(result: GoogleGeocodeResult, index: number) {
+  const components = result.address_components ?? []
+  const city =
+    getGoogleAddressPart(components, ['locality']) ||
+    getGoogleAddressPart(components, ['administrative_area_level_2'])
+  const district = getGoogleAddressPart(components, ['administrative_area_level_2'])
+  const state = getGoogleAddressPart(components, ['administrative_area_level_1'])
+  const country = getGoogleAddressPart(components, ['country'])
+  const area =
+    getGoogleAddressPart(components, ['sublocality_level_1', 'sublocality', 'neighborhood', 'premise']) ||
+    result.formatted_address?.split(',')[0]?.trim() ||
+    city ||
+    district ||
+    `Area ${index + 1}`
+
+  return {
+    id: result.place_id || `${area}-${index}`,
+    label: [area, district || city, state].filter(Boolean).join(', '),
+    city,
+    district,
+    state,
+    country,
+  }
+}
+
+async function lookupPostalCodeWithGoogle(postalCode: string) {
+  const googleGeocodingKey = process.env.GOOGLE_GEOCODING_KEY
+  if (!googleGeocodingKey) {
+    return NextResponse.json({ error: 'Postal lookup is not configured.' }, { status: 503 })
+  }
+
+  const googleUrl = new URL('https://maps.googleapis.com/maps/api/geocode/json')
+  googleUrl.searchParams.set('components', `postal_code:${postalCode}`)
+  googleUrl.searchParams.set('key', googleGeocodingKey)
+
+  try {
+    const response = await fetch(googleUrl, {
+      headers: { accept: 'application/json' },
+      next: { revalidate: 3600 },
+    })
+    const payload = (await response.json().catch(() => null)) as GoogleGeocodeResponse | null
+
+    if (!response.ok || (payload?.status && payload.status !== 'OK' && payload.status !== 'ZERO_RESULTS')) {
+      return NextResponse.json({ error: 'Postal lookup is unavailable right now.' }, { status: 502 })
+    }
+
+    const areas = payload?.status === 'OK' && Array.isArray(payload.results)
+      ? payload.results.map(mapGoogleResult).filter((area) => area.city || area.district || area.state || area.country)
+      : []
+
+    if (!areas.length) {
+      return NextResponse.json({ error: 'Invalid postal code, please check.' }, { status: 404 })
+    }
+
+    return NextResponse.json({ areas })
+  } catch {
+    return NextResponse.json({ error: 'Postal lookup is unavailable right now.' }, { status: 502 })
+  }
+}
+
 async function lookupIndianPincode(postalCode: string) {
   const pincode = normalizeIndianPincode(postalCode)
   if (!pincode) {
@@ -125,6 +206,9 @@ async function lookupIndianPincode(postalCode: string) {
 }
 
 export async function GET(request: Request) {
+  const rateLimit = await enforceRateLimit(request, { key: 'checkout-postal-lookup', limit: 30, windowSeconds: 60 })
+  if (!rateLimit.ok && rateLimit.response) return rateLimit.response
+
   const { searchParams } = new URL(request.url)
   const country = searchParams.get('country')
   const postalCode = searchParams.get('postalCode')
@@ -132,8 +216,12 @@ export async function GET(request: Request) {
   const countryCode = normalizeCountryCode(country)
   const normalizedPostalCode = normalizePostalCode(postalCode)
 
-  if (!countryCode || !normalizedPostalCode) {
-    return NextResponse.json({ error: 'A supported country and postal code are required.' }, { status: 400 })
+  if (!normalizedPostalCode) {
+    return NextResponse.json({ error: 'A valid postal code is required.' }, { status: 400 })
+  }
+
+  if (!countryCode) {
+    return lookupPostalCodeWithGoogle(normalizedPostalCode)
   }
 
   if (isIndiaCountry(countryCode)) {

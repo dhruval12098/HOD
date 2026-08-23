@@ -32,6 +32,7 @@ const memoryStore = globalThis as typeof globalThis & {
   __hodRateLimitMemory?: Map<string, MemoryEntry>
   __hodRedisClient?: RedisClientType | null
   __hodRedisConnectPromise?: Promise<RedisClientType | null> | null
+  __hodMissingRedisWarningLogged?: boolean
 }
 
 function getMemoryStore() {
@@ -72,6 +73,12 @@ async function getRedisClient() {
 
   const redisUrl = process.env.REDIS_URL?.trim()
   if (!redisUrl) {
+    if (process.env.NODE_ENV === 'production' && !memoryStore.__hodMissingRedisWarningLogged) {
+      console.error(
+        'REDIS_URL is not configured in production. Rate limiting is using a per-instance memory fallback and is not globally enforced.'
+      )
+      memoryStore.__hodMissingRedisWarningLogged = true
+    }
     return null
   }
 
@@ -188,4 +195,3 @@ export async function enforceRateLimit(request: Request, config: RateLimitConfig
 
   return consumeMemoryLimit(key, config.limit, config.windowSeconds)
 }
-

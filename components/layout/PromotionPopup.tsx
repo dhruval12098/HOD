@@ -66,6 +66,7 @@ export default function PromotionPopup() {
   const [revealedCoupon, setRevealedCoupon] = useState<{ code: string; title?: string | null } | null>(null)
   const [redirectUrl, setRedirectUrl] = useState('')
   const [couponCopied, setCouponCopied] = useState(false)
+  const [imageFailed, setImageFailed] = useState(false)
 
   useEffect(() => {
     let ignore = false
@@ -86,6 +87,7 @@ export default function PromotionPopup() {
           window.sessionStorage.setItem(SESSION_KEY, '1')
         }
 
+        setImageFailed(false)
         setItem(nextItem)
         setVisible(true)
       } catch {}
@@ -119,7 +121,7 @@ export default function PromotionPopup() {
   const versionToken = buildVersionToken(item)
   const imageSrc = appendCacheBuster(toPublicUrl(item.image_path || ''), versionToken)
   const mobileImageSrc = appendCacheBuster(toPublicUrl(item.mobile_image_path || item.image_path || ''), versionToken)
-  const useTextOnlyLayout = Boolean(item.image_only_mode)
+  const useTextOnlyLayout = Boolean(item.image_only_mode) || !imageSrc || imageFailed
   const submitEmail = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (isSubmitting) return
@@ -150,7 +152,7 @@ export default function PromotionPopup() {
       <p className="text-[9px] font-medium uppercase tracking-[0.2em] text-[rgba(10,22,40,0.48)]">Your coupon code</p>
       {revealedCoupon.title ? <p className="mt-2 text-[12px] text-[rgba(10,22,40,0.62)]">{revealedCoupon.title}</p> : null}
       <div className="mt-3 flex items-stretch gap-2">
-        <strong className="flex min-h-[44px] flex-1 items-center justify-center border border-dashed border-[rgba(10,22,40,0.28)] bg-[#f7f3eb] px-3 text-[15px] tracking-[0.12em] text-[var(--theme-ink)]">{revealedCoupon.code}</strong>
+        <strong className="flex min-h-[44px] flex-1 items-center justify-center border border-dashed border-[rgba(10,22,40,0.28)] bg-[#f4f6f8] px-3 text-[15px] tracking-[0.12em] text-[var(--theme-ink)]">{revealedCoupon.code}</strong>
         <button type="button" onClick={async () => { try { await navigator.clipboard.writeText(revealedCoupon.code); setCouponCopied(true); window.setTimeout(() => setCouponCopied(false), 2500) } catch { setCouponCopied(false) } }} className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center bg-[var(--theme-ink)] px-3 text-white transition hover:bg-[#182a45]" aria-label="Copy coupon code" title="Copy coupon code">{couponCopied ? <Check className="h-4 w-4" aria-hidden="true" /> : <Copy className="h-4 w-4" aria-hidden="true" />}</button>
       </div>
       <p className={`mt-2 min-h-4 text-[10px] font-medium transition-opacity ${couponCopied ? 'text-[#35634a] opacity-100' : 'opacity-0'}`} aria-live="polite">Copied to clipboard</p>
@@ -164,14 +166,14 @@ export default function PromotionPopup() {
     <form onSubmit={submitEmail} className="mt-6" noValidate>
       <label htmlFor="promotion-email" className="sr-only">Email address</label>
       <input id="promotion-email" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Enter your email address" className="h-[46px] w-full border border-[rgba(10,22,40,0.18)] bg-white px-4 text-[12px] text-[var(--theme-ink)] outline-none placeholder:text-[rgba(10,22,40,0.4)] focus:border-[var(--theme-ink)] sm:h-[48px]" />
-      <button type="submit" disabled={isSubmitting} className="mt-2 inline-flex min-h-[44px] w-full items-center justify-center border border-[var(--theme-ink)] bg-white px-5 text-[10px] font-medium uppercase tracking-[0.16em] text-[var(--theme-ink)] transition hover:bg-[#f4f1e9] disabled:cursor-wait disabled:opacity-65 sm:min-h-[46px]">{isSubmitting ? 'Submitting…' : 'Submit'}</button>
+      <button type="submit" disabled={isSubmitting} className="mt-2 inline-flex min-h-[44px] w-full items-center justify-center border border-[var(--theme-ink)] bg-white px-5 text-[10px] font-medium uppercase tracking-[0.16em] text-[var(--theme-ink)] transition hover:bg-[#f2f4f7] disabled:cursor-wait disabled:opacity-65 sm:min-h-[46px]">{isSubmitting ? 'Submitting…' : 'Submit'}</button>
       {submitError ? <p className="mt-2 text-[11px] leading-4 text-[#9f2f2f]" role="alert">{submitError}</p> : null}
     </form>
   )
 
   return (
     <div className="fixed inset-0 z-[1300] flex items-center justify-center bg-[rgba(10,22,40,0.48)] p-3 backdrop-blur-[6px] sm:p-5">
-      <div className="relative max-h-[calc(100vh-24px)] w-full max-w-[calc(100vw-24px)] overflow-hidden rounded-[18px] border border-[rgba(10,22,40,0.1)] bg-[#f7f3eb] shadow-[0_28px_80px_rgba(10,22,40,0.24)] sm:max-h-[calc(100vh-40px)] sm:max-w-[760px] sm:rounded-[12px]">
+      <div className="relative max-h-[calc(100vh-24px)] w-full max-w-[calc(100vw-24px)] overflow-hidden rounded-[18px] border border-[rgba(10,22,40,0.1)] bg-[#f4f6f8] shadow-[0_28px_80px_rgba(10,22,40,0.24)] sm:max-h-[calc(100vh-40px)] sm:max-w-[760px] sm:rounded-[12px]">
         <button
           type="button"
           onClick={close}
@@ -184,7 +186,7 @@ export default function PromotionPopup() {
         </button>
 
         {useTextOnlyLayout ? (
-          <div className="flex min-h-[380px] items-center justify-center overflow-y-auto bg-[linear-gradient(180deg,#fdfcf8_0%,#f5f0e6_100%)] px-7 py-14 sm:min-h-[480px] sm:px-16 sm:py-20">
+          <div className="flex min-h-[380px] items-center justify-center overflow-y-auto bg-[linear-gradient(180deg,#ffffff_0%,#f3f5f8_100%)] px-7 py-14 sm:min-h-[480px] sm:px-16 sm:py-20">
             <div className="w-full max-w-[480px] text-center">
               {item.label ? <p className="mb-4 text-[10px] uppercase tracking-[0.28em] text-[rgba(10,22,40,0.45)]">{item.label}</p> : null}
               <h2 className="font-display-title text-[clamp(2.25rem,8vw,4.75rem)] leading-[0.92] tracking-[-0.03em] text-[var(--theme-ink)]">{item.title}</h2>
@@ -195,7 +197,7 @@ export default function PromotionPopup() {
           </div>
         ) : (
           <div className="grid max-h-[calc(100vh-24px)] min-h-[250px] grid-cols-1 overflow-y-auto md:max-h-none md:grid-cols-[0.94fr_1.06fr] md:overflow-hidden sm:min-h-[420px]">
-            <div className="relative h-[46vh] max-h-[360px] min-h-[240px] bg-[radial-gradient(circle_at_top,#f3e7d4_0%,#eadfcb_46%,#ddc8a6_100%)] md:h-auto md:max-h-none md:min-h-full">
+            <div className="relative h-[46vh] max-h-[360px] min-h-[240px] bg-[radial-gradient(circle_at_top,#f7f8fa_0%,#e7eaee_46%,#cfd5dd_100%)] md:h-auto md:max-h-none md:min-h-full">
               {imageSrc ? (
                 <picture>
                   <source media="(max-width: 767px)" srcSet={mobileImageSrc} />
@@ -204,16 +206,20 @@ export default function PromotionPopup() {
                     alt={item.image_alt || item.title || 'Promotion image'}
                     className="absolute inset-0 h-full w-full object-cover object-center"
                     loading="eager"
+                    onError={(event) => {
+                      event.currentTarget.style.display = 'none'
+                      setImageFailed(true)
+                    }}
                   />
                 </picture>
               ) : (
-                <div className="flex h-full items-center justify-center bg-[linear-gradient(135deg,#efe5d3_0%,#dcc8a6_100%)] p-8 text-center text-[13px] uppercase tracking-[0.24em] text-[rgba(10,22,40,0.5)]">
+                <div className="flex h-full items-center justify-center bg-[linear-gradient(135deg,#f6f7f9_0%,#dce1e7_100%)] p-8 text-center text-[13px] uppercase tracking-[0.24em] text-[rgba(10,22,40,0.5)]">
                   Promotion Image
                 </div>
               )}
             </div>
 
-            <div className="flex min-h-full items-center justify-center bg-[linear-gradient(180deg,#fdfcf8_0%,#f5f0e6_100%)] px-5 py-5 sm:px-9 sm:py-8 md:px-10">
+            <div className="flex min-h-full items-center justify-center bg-[linear-gradient(180deg,#ffffff_0%,#f3f5f8_100%)] px-5 py-5 sm:px-9 sm:py-8 md:px-10">
               <div className="w-full max-w-[240px] text-center sm:max-w-[300px]">
                 {item.label ? (
                   <p className="mb-3 text-[9px] uppercase tracking-[0.22em] text-[rgba(10,22,40,0.42)] sm:mb-4 sm:text-[10px] sm:tracking-[0.26em]">

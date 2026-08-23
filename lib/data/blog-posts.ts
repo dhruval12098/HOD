@@ -34,7 +34,7 @@ export const bgColors: Record<string, string> = {
   "bg-0": "#EEF1F8",
   "bg-1": "#EDF3EE",
   "bg-2": "#F2EFF8",
-  "bg-3": "#F5F0EA",
+  "bg-3": "#EDF2FA",
   "bg-4": "#EEF1F8",
 };
 
@@ -104,7 +104,7 @@ export const posts: BlogPost[] = [
     readTime: "7 min read",
     author: "Krish Babariya",
     bg: "bg-3",
-    bgColor: "#F5F0EA",
+    bgColor: "#EDF2FA",
     titleRaw: "Hip Hop Jewellery — Where Culture Meets Craft",
     title: 'Hip Hop Jewellery — <em>Where Culture Meets Craft</em>',
     subtitle:
@@ -181,7 +181,7 @@ export function mapBlogPostRecord(record: {
     readTime: record.read_time,
     author: record.author,
     bg: record.bg_key,
-    bgColor: record.bg_color,
+    bgColor: record.bg_color?.toLowerCase() === '#f5f0ea' ? '#EDF2FA' : record.bg_color,
     title: record.title_html || record.title,
     titleRaw: record.title,
     subtitle: record.subtitle,

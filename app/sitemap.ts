@@ -13,7 +13,6 @@ const staticRoutes = [
   '/collection',
   '/hiphop',
   '/bespoke',
-  '/b2b',
   '/about',
   '/contact',
   '/faq',

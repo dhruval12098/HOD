@@ -36,7 +36,7 @@ const PANELS: PanelData[] = [
     desc: 'Necklaces, earrings, bracelets & pendants',
     cta: 'Shop Now',
     ctaHref: '/fine-jewellery',
-    bgClass: 'bg-[linear-gradient(145deg,#f8f6f0,#ddd5be)]',
+    bgClass: 'bg-[linear-gradient(145deg,#F5F7FC,#D8E2F2)]',
   },
   {
     index: 1,
@@ -45,7 +45,7 @@ const PANELS: PanelData[] = [
     desc: 'Solitaire, halo, pave & three stone',
     cta: 'Shop Now',
     ctaHref: '/engagement-rings',
-    bgClass: 'bg-[linear-gradient(145deg,#f0ece4,#d8cebb)]',
+    bgClass: 'bg-[linear-gradient(145deg,#EEF3FA,#D2DEEF)]',
   },
   {
     index: 2,
@@ -54,7 +54,7 @@ const PANELS: PanelData[] = [
     desc: 'For her & for him, classic to diamond-set',
     cta: 'Shop Now',
     ctaHref: '/wedding-bands',
-    bgClass: 'bg-[linear-gradient(145deg,#faf8f4,#e8e0d0)]',
+    bgClass: 'bg-[linear-gradient(145deg,#FAFBFD,#E2E9F5)]',
   },
   {
     index: 3,
@@ -63,7 +63,7 @@ const PANELS: PanelData[] = [
     desc: 'Iced chains, grillz & statement pieces',
     cta: 'Shop Now',
     ctaHref: '/hiphop',
-    bgClass: 'bg-[linear-gradient(145deg,#f3eee5,#d9cfbf)]',
+    bgClass: 'bg-[linear-gradient(145deg,#F2F5FA,#D6E0F0)]',
   },
 ];
 
@@ -81,7 +81,7 @@ function mapPanels(items: CollectionApiItem[]): PanelData[] {
     cta: 'Shop Now',
     ctaHref: item.link,
     imageSrc: item.image_path ? `${COLLECTION_BUCKET_URL}/${item.image_path}` : null,
-    bgClass: index % 2 === 0 ? 'bg-[linear-gradient(145deg,#f8f6f0,#ddd5be)]' : 'bg-[linear-gradient(145deg,#f0ece4,#d8cebb)]',
+    bgClass: index % 2 === 0 ? 'bg-[linear-gradient(145deg,#F5F7FC,#D8E2F2)]' : 'bg-[linear-gradient(145deg,#EEF3FA,#D2DEEF)]',
   }));
 }
 
@@ -120,7 +120,7 @@ export default function Collection({ items = [] }: CollectionProps) {
                     loading={index < 2 ? 'eager' : 'lazy'}
                   />
                 ) : (
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,#fff7e4_0%,#efe6d5_42%,#dfd3bf_100%)]" />
+                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,#FAFBFD_0%,#EAF0FA_42%,#D8E2F2_100%)]" />
                 )}
 
                 <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,22,40,0.06)_0%,rgba(10,22,40,0.18)_48%,rgba(10,22,40,0.76)_100%)]" />

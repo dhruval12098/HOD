@@ -10,12 +10,13 @@ interface BlogGridProps {
   onPostClick: (id: number) => void;
   maxPosts?: number;
   basePath?: string;
+  simplifiedCards?: boolean;
 }
 
-export default function BlogGrid({ posts, onPostClick, maxPosts = 5, basePath = "/blog" }: BlogGridProps) {
+export default function BlogGrid({ posts, onPostClick, maxPosts = 5, basePath = "/blog", simplifiedCards = false }: BlogGridProps) {
   const displayPosts = maxPosts > 0 ? posts.slice(0, maxPosts) : posts;
   const [featured, ...rest] = displayPosts;
-  const smallCards = rest;
+  const smallCards = rest.slice(0, 4);
   const mobileCards = [featured, ...smallCards].filter(Boolean) as BlogPost[];
   const [mobilePage, setMobilePage] = useState(0);
   const mobileScrollerRef = useRef<HTMLDivElement | null>(null);
@@ -27,15 +28,16 @@ export default function BlogGrid({ posts, onPostClick, maxPosts = 5, basePath = 
 
   return (
     <>
-      <div className="grid grid-cols-1 items-stretch gap-6 xl:grid-cols-[1.28fr_1fr] max-md:hidden">
-        {featured && <BlogCardBig post={featured} basePath={basePath} onClick={() => onPostClick(featured.id)} />}
+      <div className="hidden h-[620px] grid-cols-[1.1fr_1fr] items-stretch gap-5 md:grid lg:h-[650px] lg:gap-6 xl:h-[660px]">
+        {featured && <BlogCardBig post={featured} basePath={basePath} simplifiedDetails={simplifiedCards} onClick={() => onPostClick(featured.id)} />}
 
-        <div className="grid h-full grid-cols-1 gap-6 sm:grid-cols-2 sm:grid-rows-2">
+        <div className="grid min-h-0 grid-cols-2 grid-rows-2 gap-5 lg:gap-6">
           {smallCards.map((post) => (
             <BlogCardSmall
               key={post.id}
               post={post}
               basePath={basePath}
+              simplifiedDetails={simplifiedCards}
               onClick={() => onPostClick(post.id)}
             />
           ))}
@@ -59,7 +61,7 @@ export default function BlogGrid({ posts, onPostClick, maxPosts = 5, basePath = 
           <div className="contents">
             {mobileCards.map((post) => (
               <div key={post.id} data-blog-mobile-card className="min-w-[84%] snap-center">
-                <BlogCardSmall post={post} basePath={basePath} onClick={() => onPostClick(post.id)} />
+                <BlogCardSmall post={post} basePath={basePath} simplifiedDetails={simplifiedCards} onClick={() => onPostClick(post.id)} />
               </div>
             ))}
           </div>

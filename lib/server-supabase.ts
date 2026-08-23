@@ -9,6 +9,10 @@ if (!supabaseUrl || (!supabaseAnonKey && !supabaseServiceRoleKey)) {
 }
 
 export function createSupabaseServerClient() {
+  if (!supabaseServiceRoleKey) {
+    console.error('SUPABASE_SERVICE_ROLE_KEY is not set — falling back to anon key. This may break RLS-dependent queries.')
+  }
+
   return createClient(supabaseUrl!, supabaseServiceRoleKey || supabaseAnonKey!, {
     global: {
       fetch: (input, init) => fetch(input, { ...init, cache: 'no-store' }),

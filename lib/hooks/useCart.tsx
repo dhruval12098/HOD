@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { buildCartItemKey, getProductKey, type CartItemSelection, type StoredCartItem } from '@/lib/product-keys'
 
 const STORAGE_KEY = 'hod_cart'
@@ -18,23 +18,63 @@ const CartContext = createContext<CartContextValue | null>(null)
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<StoredCartItem[]>([])
+  const hasLoadedStoredCart = useRef(false)
 
   useEffect(() => {
+    if (!hasLoadedStoredCart.current) return
+
     try {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      if (stored) {
-        const parsed = JSON.parse(stored)
-        if (Array.isArray(parsed)) setItems(parsed)
+      const serializedItems = JSON.stringify(items)
+      if (localStorage.getItem(STORAGE_KEY) !== serializedItems) {
+        localStorage.setItem(STORAGE_KEY, serializedItems)
       }
     } catch {}
+  }, [items])
+
+  useEffect(() => {
+    let cancelled = false
+
+    queueMicrotask(() => {
+      if (cancelled) return
+
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY)
+        if (stored) {
+          const parsed = JSON.parse(stored)
+          if (Array.isArray(parsed)) setItems(parsed)
+        }
+      } catch {
+        // Ignore unavailable or malformed browser storage and start with an empty cart.
+      } finally {
+        hasLoadedStoredCart.current = true
+      }
+    })
+
+    return () => {
+      cancelled = true
+    }
   }, [])
 
-  const persist = (next: StoredCartItem[]) => {
-    setItems(next)
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
-    } catch {}
-  }
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.storageArea !== localStorage || event.key !== STORAGE_KEY) return
+
+      if (event.newValue === null) {
+        setItems([])
+        return
+      }
+
+      try {
+        const parsed = JSON.parse(event.newValue)
+        if (Array.isArray(parsed)) setItems(parsed)
+      } catch {
+        // Ignore malformed changes from other tabs.
+      }
+    }
+
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [])
 
   const value = useMemo<CartContextValue>(() => ({
     items,
@@ -42,34 +82,33 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     addItem: (product, selection) => {
       const key = buildCartItemKey(product, selection)
       const productKey = getProductKey(product)
-      persist(
-        (() => {
-          const existing = items.find((item) => item.key === key)
-          if (existing) {
-            return items.map((item) => (item.key === key ? { ...item, quantity: item.quantity + 1 } : item))
-          }
-          return [
-            ...items,
-            {
-              key,
-              productKey,
-              productSlug: product.slug || '',
-              quantity: 1,
-              selection,
-              addedAt: Date.now(),
-            },
-          ]
-        })()
-      )
+      setItems((currentItems) => {
+        const existing = currentItems.find((item) => item.key === key)
+        if (existing) {
+          return currentItems.map((item) => (item.key === key ? { ...item, quantity: item.quantity + 1 } : item))
+        }
+        return [
+          ...currentItems,
+          {
+            key,
+            productKey,
+            productSlug: product.slug || '',
+            quantity: 1,
+            selection,
+            addedAt: Date.now(),
+          },
+        ]
+      })
     },
-    removeItem: (key) => persist(items.filter((item) => item.key !== key)),
-    clearCart: () => persist([]),
+    removeItem: (key) => setItems((currentItems) => currentItems.filter((item) => item.key !== key)),
+    clearCart: () => setItems([]),
     updateQuantity: (key, quantity) => {
-      if (quantity <= 0) {
-        persist(items.filter((item) => item.key !== key))
-        return
-      }
-      persist(items.map((item) => (item.key === key ? { ...item, quantity } : item)))
+      setItems((currentItems) => {
+        if (quantity <= 0) {
+          return currentItems.filter((item) => item.key !== key)
+        }
+        return currentItems.map((item) => (item.key === key ? { ...item, quantity } : item))
+      })
     },
   }), [items])
 

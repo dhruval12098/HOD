@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { unstable_noStore as noStore } from 'next/cache'
 import { buildNavbarRenderItems, type NavbarRenderItem } from '@/lib/navbar'
 
@@ -8,20 +9,14 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 function getServerClient() {
-  if (!supabaseUrl) return null
-
-  if (supabaseServiceRoleKey) {
-    return createClient(supabaseUrl, supabaseServiceRoleKey)
-  }
-
-  if (supabaseAnonKey) {
-    return createClient(supabaseUrl, supabaseAnonKey)
-  }
-
-  return null
+  const serverKey = supabaseServiceRoleKey || supabaseAnonKey
+  if (!supabaseUrl || !serverKey) return null
+  return createClient(supabaseUrl, serverKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  })
 }
 
-async function loadNavbarItems(supabase: any) {
+async function loadNavbarItems(supabase: SupabaseClient) {
   return supabase
     .from('navbar_items')
     .select('*')
@@ -29,7 +24,7 @@ async function loadNavbarItems(supabase: any) {
     .order('display_order', { ascending: true })
 }
 
-async function loadHiddenDirectNavSlugs(supabase: any) {
+async function loadHiddenDirectNavSlugs(supabase: SupabaseClient) {
   const result = await supabase
     .from('navbar_items')
     .select('slug')

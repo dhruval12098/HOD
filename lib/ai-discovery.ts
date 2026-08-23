@@ -22,7 +22,6 @@ const corePages = [
   ['/shop', 'Shop', 'Browse the complete jewellery catalogue.'],
   ['/collection', 'Collections', 'Curated House of Diams collections.'],
   ['/bespoke', 'Bespoke Jewellery', 'Custom jewellery design and manufacturing.'],
-  ['/b2b', 'B2B', 'Business and wholesale jewellery services.'],
   ['/about', 'About', 'Company, craftsmanship, values, and founders.'],
   ['/contact', 'Contact', 'Contact details and enquiry form.'],
   ['/shipping', 'Shipping', 'Shipping information and policies.'],

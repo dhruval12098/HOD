@@ -19,14 +19,47 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      if (stored) {
-        const parsed = JSON.parse(stored)
-        if (Array.isArray(parsed)) setWishlist(parsed.map(String))
+    let cancelled = false
+
+    queueMicrotask(() => {
+      if (cancelled) return
+
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY)
+        if (stored) {
+          const parsed = JSON.parse(stored)
+          if (Array.isArray(parsed)) setWishlist(parsed.map(String))
+        }
+      } catch {
+        // Ignore unavailable or malformed browser storage.
       }
-    } catch {}
-    setReady(true)
+      setReady(true)
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.storageArea !== localStorage || event.key !== STORAGE_KEY) return
+
+      if (event.newValue === null) {
+        setWishlist([])
+        return
+      }
+
+      try {
+        const parsed = JSON.parse(event.newValue)
+        if (Array.isArray(parsed)) setWishlist(parsed.map(String))
+      } catch {
+        // Ignore malformed changes from other tabs.
+      }
+    }
+
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
   }, [])
 
   const persist = (next: string[]) => {

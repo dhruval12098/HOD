@@ -245,7 +245,7 @@ export default function Manufacturing({ initialItems = [] }: { initialItems?: Cm
     <section
       className="pt-8 pb-[120px] max-lg:pt-6 max-lg:pb-[80px] relative overflow-hidden"
       style={{
-        background: 'linear-gradient(180deg, #FAFBFD 0%, #FAF7F2 50%, #FAFBFD 100%)',
+        background: 'linear-gradient(180deg, #FAFBFD 0%, #F5F7FC 50%, #FAFBFD 100%)',
       }}
     >
       {/* Glow blobs */}
@@ -294,7 +294,7 @@ export default function Manufacturing({ initialItems = [] }: { initialItems?: Cm
                     <div
                       className="absolute inset-0"
                       style={{
-                        background: 'radial-gradient(circle at 30% 40%, rgba(10,22,40,0.08), transparent 60%), radial-gradient(circle at 70% 70%, rgba(32,48,74,0.05), transparent 50%), linear-gradient(135deg, #FAFBFD 0%, #FAF7F2 100%)',
+                        background: 'radial-gradient(circle at 30% 40%, rgba(10,22,40,0.08), transparent 60%), radial-gradient(circle at 70% 70%, rgba(32,48,74,0.05), transparent 50%), linear-gradient(135deg, #FAFBFD 0%, #F5F7FC 100%)',
                       }}
                     />
                     {step.kind === 'cms' ? (

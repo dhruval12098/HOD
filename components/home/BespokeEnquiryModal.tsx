@@ -234,28 +234,28 @@ export default function BespokeEnquiryModal({ open, onClose }: BespokeEnquiryMod
 
         <form onSubmit={handleSubmit} className="mt-8 grid gap-5">
           <div className="grid gap-5 md:grid-cols-2">
-            <FormField label="Full Name">
-              <input name="name" type="text" required value={form.name} onChange={handleChange} className={inputClassName} />
+            <FormField label="Full Name" htmlFor="bespoke-name">
+              <input id="bespoke-name" name="name" type="text" required value={form.name} onChange={handleChange} className={inputClassName} />
             </FormField>
-            <FormField label="Email">
-              <input name="email" type="email" required value={form.email} onChange={handleChange} className={inputClassName} />
+            <FormField label="Email" htmlFor="bespoke-email">
+              <input id="bespoke-email" name="email" type="email" required value={form.email} onChange={handleChange} className={inputClassName} />
             </FormField>
-            <FormField label="Phone / WhatsApp">
-              <input name="phone" type="tel" value={form.phone} onChange={handleChange} className={inputClassName} />
+            <FormField label="Phone / WhatsApp" htmlFor="bespoke-phone">
+              <input id="bespoke-phone" name="phone" type="tel" value={form.phone} onChange={handleChange} className={inputClassName} />
             </FormField>
-            <FormField label="Country">
-              <input name="country" type="text" required value={form.country} onChange={handleChange} className={inputClassName} />
+            <FormField label="Country" htmlFor="bespoke-country">
+              <input id="bespoke-country" name="country" type="text" required value={form.country} onChange={handleChange} className={inputClassName} />
             </FormField>
           </div>
 
           <div className="grid gap-5 md:grid-cols-2">
-            <FormField label="Piece Type">
+            <FormField label="Piece Type" htmlFor="bespoke-piece">
               <input tabIndex={-1} readOnly required aria-label="Piece type" value={form.piece} className="pointer-events-none absolute h-px w-px opacity-0" />
               <Select
                 value={form.piece}
                 onValueChange={setDropdown('piece')}
               >
-                <SelectTrigger className="rounded-none font-sans text-[13px] font-light tracking-[0.02em]">
+                <SelectTrigger id="bespoke-piece" className="rounded-none font-sans text-[13px] font-light tracking-[0.02em]">
                   <SelectValue placeholder="Select piece..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -267,12 +267,12 @@ export default function BespokeEnquiryModal({ open, onClose }: BespokeEnquiryMod
                 </SelectContent>
               </Select>
             </FormField>
-            <FormField label="Preferred Stone">
+            <FormField label="Preferred Stone" htmlFor="bespoke-stone">
               <Select
                 value={form.stone}
                 onValueChange={setDropdown('stone')}
               >
-                <SelectTrigger className="rounded-none font-sans text-[13px] font-light tracking-[0.02em]">
+                <SelectTrigger id="bespoke-stone" className="rounded-none font-sans text-[13px] font-light tracking-[0.02em]">
                   <SelectValue placeholder="Stone preference..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -284,12 +284,12 @@ export default function BespokeEnquiryModal({ open, onClose }: BespokeEnquiryMod
                 </SelectContent>
               </Select>
             </FormField>
-            <FormField label="Approx. Carat">
+            <FormField label="Approx. Carat" htmlFor="bespoke-carat">
               <Select
                 value={form.carat}
                 onValueChange={setDropdown('carat')}
               >
-                <SelectTrigger className="rounded-none font-sans text-[13px] font-light tracking-[0.02em]">
+                <SelectTrigger id="bespoke-carat" className="rounded-none font-sans text-[13px] font-light tracking-[0.02em]">
                   <SelectValue placeholder="Select size..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -301,12 +301,12 @@ export default function BespokeEnquiryModal({ open, onClose }: BespokeEnquiryMod
                 </SelectContent>
               </Select>
             </FormField>
-            <FormField label="Preferred Metal">
+            <FormField label="Preferred Metal" htmlFor="bespoke-metal">
               <Select
                 value={form.metal}
                 onValueChange={setDropdown('metal')}
               >
-                <SelectTrigger className="rounded-none font-sans text-[13px] font-light tracking-[0.02em]">
+                <SelectTrigger id="bespoke-metal" className="rounded-none font-sans text-[13px] font-light tracking-[0.02em]">
                   <SelectValue placeholder="Select metal..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -320,8 +320,9 @@ export default function BespokeEnquiryModal({ open, onClose }: BespokeEnquiryMod
             </FormField>
           </div>
 
-          <FormField label="Describe Your Vision">
+          <FormField label="Describe Your Vision" htmlFor="bespoke-message">
             <textarea
+              id="bespoke-message"
               name="message"
               required
               rows={4}
@@ -349,11 +350,11 @@ export default function BespokeEnquiryModal({ open, onClose }: BespokeEnquiryMod
 const inputClassName =
   'w-full border border-[rgba(10,22,40,0.10)] bg-[#FAFBFD] px-4 py-3.5 font-sans text-[13px] font-light tracking-[0.02em] text-[#0A1628] outline-none transition focus:border-[#0A1628] focus:bg-white';
 
-function FormField({ label, children }: { label: string; children: React.ReactNode }) {
+function FormField({ label, htmlFor, children }: { label: string; htmlFor: string; children: React.ReactNode }) {
   return (
-    <label className="block">
-      <span className="mb-2 block text-[9px] font-normal uppercase tracking-[0.28em] text-[#6A6A6A]">{label}</span>
+    <div className="block">
+      <label htmlFor={htmlFor} className="mb-2 block text-[9px] font-normal uppercase tracking-[0.28em] text-[#6A6A6A]">{label}</label>
       {children}
-    </label>
+    </div>
   );
 }

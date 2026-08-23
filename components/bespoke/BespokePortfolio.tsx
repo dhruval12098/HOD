@@ -350,7 +350,7 @@ export default function BespokePortfolio({
                 style={{ aspectRatio: '4/5' }}
               >
                 <div
-                  className={`absolute inset-0 flex items-center justify-center ${item.dark_theme ? 'bg-gradient-to-br from-[#0A1628] to-[#111F34]' : 'bg-gradient-to-br from-[#FAF7F2] to-[#F5F7FC]'}`}
+                  className={`absolute inset-0 flex items-center justify-center ${item.dark_theme ? 'bg-gradient-to-br from-[#0A1628] to-[#111F34]' : 'bg-gradient-to-br from-[#F5F7FC] to-[#EAF0FA]'}`}
                   style={{
                     background: item.dark_theme ? undefined : 'radial-gradient(circle at 50% 40%, rgba(10,22,40,0.12), transparent 70%)',
                   }}

@@ -1,4 +1,9 @@
-import { FALLBACK_USD_RATES, normalizeCurrency, type SupportedCurrency } from '@/lib/currency'
+import {
+  FALLBACK_USD_RATES,
+  FALLBACK_USD_RATES_LAST_VERIFIED_AT,
+  normalizeCurrency,
+  type SupportedCurrency,
+} from '@/lib/currency'
 
 type ExchangeRateResult = {
   baseCurrency: 'USD'
@@ -16,6 +21,25 @@ const LIVE_CACHE_TTL_MS = 30 * 60 * 1000
 const FALLBACK_CACHE_TTL_MS = 60 * 1000
 const FIXER_API_KEY = process.env.APILAYER_FIXER_API_KEY || process.env.FIXER_API_KEY
 const rateCache = new Map<string, CachedExchangeRateResult>()
+const reportedFallbackReasons = new Set<string>()
+
+type FallbackReason = 'missing_api_key' | 'fixer_request_failed' | 'unusable_live_rate'
+
+function reportFallbackUsage(targetCurrency: SupportedCurrency, reason: FallbackReason) {
+  if (targetCurrency === 'USD') return
+
+  const warningKey = `${targetCurrency}:${reason}`
+  if (reportedFallbackReasons.has(warningKey)) return
+  reportedFallbackReasons.add(warningKey)
+
+  console.error('[exchange-rates] Using an emergency fallback rate.', {
+    baseCurrency: 'USD',
+    targetCurrency,
+    reason,
+    fallbackRate: FALLBACK_USD_RATES[targetCurrency],
+    fallbackRatesLastVerifiedAt: FALLBACK_USD_RATES_LAST_VERIFIED_AT,
+  })
+}
 
 function createExchangeRateResult(
   targetCurrency: SupportedCurrency,
@@ -121,6 +145,8 @@ export async function getUsdExchangeRate(targetCurrency: string | null | undefin
     return cached
   }
 
+  let fallbackReason: FallbackReason = FIXER_API_KEY ? 'unusable_live_rate' : 'missing_api_key'
+
   try {
     const fixerRates = await fetchFixerRates([resolvedCurrency])
     const fixerRate = Number(fixerRates?.[resolvedCurrency])
@@ -131,9 +157,11 @@ export async function getUsdExchangeRate(targetCurrency: string | null | undefin
       return result
     }
   } catch (error) {
+    fallbackReason = 'fixer_request_failed'
     console.error(`Fixer lookup failed for ${resolvedCurrency}, using fallback rate:`, error)
   }
 
+  reportFallbackUsage(resolvedCurrency, fallbackReason)
   const fallbackResult = createExchangeRateResult(resolvedCurrency, getFallbackRate(resolvedCurrency), 'fallback')
   setRateCache(fallbackResult)
   return fallbackResult
@@ -160,6 +188,8 @@ export async function getUsdExchangeRates(targetCurrencies: SupportedCurrency[])
   }
 
   if (missingCurrencies.length > 0) {
+    let fallbackReason: FallbackReason = FIXER_API_KEY ? 'unusable_live_rate' : 'missing_api_key'
+
     try {
       const fixerRates = await fetchFixerRates(missingCurrencies)
 
@@ -172,11 +202,13 @@ export async function getUsdExchangeRates(targetCurrencies: SupportedCurrency[])
         }
       }
     } catch (error) {
+      fallbackReason = 'fixer_request_failed'
       console.error('Bulk Fixer lookup failed, using fallback rates:', error)
     }
 
     for (const currency of missingCurrencies) {
       if (results.has(currency)) continue
+      reportFallbackUsage(currency, fallbackReason)
       const fallbackResult = createExchangeRateResult(currency, getFallbackRate(currency), 'fallback')
       setRateCache(fallbackResult)
       results.set(currency, fallbackResult)

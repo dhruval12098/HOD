@@ -54,8 +54,8 @@ interface SectionData {
 
 // ─── Colour constants ─────────────────────────────────────────────────────────
 
-const BG_COLOR = 0xebebe0;  // Darker off-white for better model contrast
-const BG_CSS   = '#ebebe0';
+const BG_COLOR = 0xeaf0fa;  // Pale brand blue for model contrast
+const BG_CSS   = '#eaf0fa';
 
 // ─── Lighting Presets ─────────────────────────────────────────────────────────
 // Three complete lighting setups that reveal the ring differently

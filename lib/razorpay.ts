@@ -22,6 +22,27 @@ export function getRazorpayClient() {
   return new Razorpay({ key_id, key_secret })
 }
 
+function safeEqualHex(expectedHex: string, suppliedHex: unknown) {
+  const hexPattern = /^[0-9a-f]+$/i
+
+  if (
+    typeof suppliedHex !== 'string' ||
+    expectedHex.length === 0 ||
+    expectedHex.length !== suppliedHex.length ||
+    expectedHex.length % 2 !== 0 ||
+    !hexPattern.test(expectedHex) ||
+    !hexPattern.test(suppliedHex)
+  ) {
+    return false
+  }
+
+  const expectedBuffer = Buffer.from(expectedHex, 'hex')
+  const suppliedBuffer = Buffer.from(suppliedHex, 'hex')
+  if (expectedBuffer.length !== suppliedBuffer.length) return false
+
+  return crypto.timingSafeEqual(expectedBuffer, suppliedBuffer)
+}
+
 export function verifyRazorpayPaymentSignature(input: {
   orderId: string
   paymentId: string
@@ -35,7 +56,7 @@ export function verifyRazorpayPaymentSignature(input: {
     .update(`${input.orderId}|${input.paymentId}`)
     .digest('hex')
 
-  return expected === input.signature
+  return safeEqualHex(expected, input.signature)
 }
 
 export function verifyRazorpayWebhookSignature(payload: string, signature: string) {
@@ -43,5 +64,5 @@ export function verifyRazorpayWebhookSignature(payload: string, signature: strin
   if (!webhookSecret) throw new Error('Missing Razorpay webhook secret.')
 
   const expected = crypto.createHmac('sha256', webhookSecret).update(payload).digest('hex')
-  return expected === signature
+  return safeEqualHex(expected, signature)
 }

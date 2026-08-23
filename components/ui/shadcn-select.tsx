@@ -45,12 +45,36 @@ function SelectTrigger({
   );
 }
 
+type SelectContentProps = React.ComponentProps<typeof SelectPrimitive.Content> & {
+  nativeScroll?: boolean;
+};
+
 function SelectContent({
   className,
   children,
   position = 'popper',
+  nativeScroll = false,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Content>) {
+}: SelectContentProps) {
+  const handleNativeWheel = (event: React.WheelEvent<HTMLDivElement>) => {
+    if (!nativeScroll) return;
+
+    const viewport = event.currentTarget;
+    const delta = event.deltaY || event.deltaX;
+    if (!delta) return;
+
+    const nextScrollTop = viewport.scrollTop + delta;
+    const canScroll = delta < 0
+      ? viewport.scrollTop > 0
+      : viewport.scrollTop + viewport.clientHeight < viewport.scrollHeight;
+
+    if (canScroll) {
+      event.preventDefault();
+      event.stopPropagation();
+      viewport.scrollTop = nextScrollTop;
+    }
+  };
+
   return (
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
@@ -63,17 +87,22 @@ function SelectContent({
         position={position}
         {...props}
       >
-        <SelectScrollUpButton />
+        {!nativeScroll ? <SelectScrollUpButton /> : null}
         <SelectPrimitive.Viewport
+          onWheel={handleNativeWheel}
           className={cn(
             'p-1',
             position === 'popper' &&
-              'h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)] scroll-my-1'
+              'w-full min-w-[var(--radix-select-trigger-width)] scroll-my-1',
+            position === 'popper' && !nativeScroll &&
+              'h-[var(--radix-select-trigger-height)]',
+            nativeScroll &&
+              'max-h-[260px] touch-pan-y overflow-y-auto overscroll-contain [scrollbar-color:rgba(10,22,40,0.32)_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[rgba(10,22,40,0.32)] [&::-webkit-scrollbar-thumb:hover]:bg-[rgba(10,22,40,0.48)]'
           )}
         >
           {children}
         </SelectPrimitive.Viewport>
-        <SelectScrollDownButton />
+        {!nativeScroll ? <SelectScrollDownButton /> : null}
       </SelectPrimitive.Content>
     </SelectPrimitive.Portal>
   );

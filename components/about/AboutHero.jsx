@@ -9,7 +9,7 @@ export default function AboutHero({ content }) {
 
   return (
     <section
-      className="overflow-hidden bg-[linear-gradient(180deg,#FAFBFD_0%,#FAF7F2_100%)] px-5 pb-16 pt-16 sm:px-7 sm:pb-20 sm:pt-20 lg:px-[52px] lg:pb-[80px] lg:pt-[100px]"
+      className="overflow-hidden bg-[linear-gradient(180deg,#FAFBFD_0%,#F5F7FC_100%)] px-5 pb-16 pt-16 sm:px-7 sm:pb-20 sm:pt-20 lg:px-[52px] lg:pb-[80px] lg:pt-[100px]"
     >
       <div className="mx-auto grid max-w-[1400px] gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)] lg:items-center lg:gap-[70px]">
         <div className="min-w-0">

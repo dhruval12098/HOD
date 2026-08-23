@@ -38,7 +38,7 @@ export default function B2BProcessSteps() {
   return (
     <section
       className="py-[110px] px-5 sm:px-7 lg:px-[52px] max-md:py-[70px]"
-      style={{ background: "linear-gradient(180deg, #FAFBFD 0%, #FAF7F2 100%)" }}
+      style={{ background: "linear-gradient(180deg, #FAFBFD 0%, #F5F7FC 100%)" }}
     >
       <div className="max-w-[1400px] mx-auto">
         <div className="text-center mb-12">
@@ -63,4 +63,3 @@ export default function B2BProcessSteps() {
     </section>
   );
 }
-

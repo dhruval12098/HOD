@@ -171,7 +171,7 @@ export default function LoveLetterModal({ onClose, onContinue }: LoveLetterModal
       className="fixed inset-0 z-[1400] flex items-start justify-center overflow-y-auto overscroll-none bg-[rgba(10,22,40,0.58)] px-2 py-2 sm:items-center sm:px-4 sm:py-6"
       onClick={closeIfBackdrop}
     >
-      <div className="relative my-auto max-h-[calc(100dvh-16px)] w-full max-w-[780px] touch-pan-y overflow-y-auto overscroll-contain rounded-[24px] border border-[rgba(166,124,34,0.16)] bg-[linear-gradient(180deg,#FEFCF8_0%,#F8F2EA_100%)] shadow-[0_24px_64px_rgba(10,22,40,0.16)] sm:max-h-[90vh] sm:rounded-[26px]">
+      <div className="relative my-auto max-h-[calc(100dvh-16px)] w-full max-w-[780px] touch-pan-y overflow-y-auto overscroll-contain rounded-[24px] border border-[rgba(10,22,40,0.12)] bg-[linear-gradient(180deg,#FFFFFF_0%,#F3F5F8_100%)] shadow-[0_24px_64px_rgba(10,22,40,0.16)] sm:max-h-[90vh] sm:rounded-[26px]">
         <button
           type="button"
           onClick={onClose}
@@ -510,7 +510,7 @@ export default function LoveLetterModal({ onClose, onContinue }: LoveLetterModal
 
             <div className="px-4 pb-8 pt-7 sm:px-6 sm:py-8">
               <div
-                className="mx-auto max-w-[410px] rounded-[22px] border border-[rgba(10,22,40,0.1)] bg-[linear-gradient(180deg,#FFFDF8_0%,#FBF6EC_100%)] px-5 py-6 shadow-[0_14px_34px_rgba(10,22,40,0.08)] sm:px-6 sm:py-7"
+                className="mx-auto max-w-[410px] rounded-[22px] border border-[rgba(10,22,40,0.1)] bg-[linear-gradient(180deg,#FFFFFF_0%,#F5F7FA_100%)] px-5 py-6 shadow-[0_14px_34px_rgba(10,22,40,0.08)] sm:px-6 sm:py-7"
                 style={{ fontFamily: 'Manrope, var(--font-geist-sans), sans-serif' }}
               >
                 <div className="text-[11px] italic tracking-[0.08em] text-[#8A92A0]">

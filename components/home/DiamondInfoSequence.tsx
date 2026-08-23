@@ -104,7 +104,7 @@ export default function DiamondInfoSequence({
 
   return (
     <section className="bg-white py-0 md:py-0 lg:py-0">
-      <div className="w-full overflow-hidden border-y border-[#E7E2D8] bg-[#F8F5EE]">
+      <div className="w-full overflow-hidden border-y border-[#DCE4F0] bg-[#F5F7FC]">
         <div className="grid lg:grid-cols-[minmax(0,1.02fr)_minmax(0,0.98fr)] lg:items-stretch">
           <div className="relative min-h-[260px] overflow-hidden bg-[#111111] sm:min-h-[340px] lg:min-h-0 lg:h-full lg:self-stretch">
             {hasVideo ? (
@@ -125,11 +125,11 @@ export default function DiamondInfoSequence({
                 className="absolute left-1/2 top-1/2 h-full w-full min-h-full min-w-full -translate-x-1/2 -translate-y-1/2 object-cover object-center"
               />
             ) : (
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.16),transparent_28%),linear-gradient(135deg,#141414,#2B231C)]" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.16),transparent_28%),linear-gradient(135deg,#0A1628,#20304A)]" />
             )}
           </div>
 
-          <div className="flex items-center bg-[#FBF8F1]">
+          <div className="flex items-center bg-[#F5F7FC]">
             <div className="w-full px-5 py-6 sm:px-8 sm:py-8 lg:px-10 lg:py-8 xl:px-12">
               <div className="mx-auto max-w-[520px]">
                 <h2 className="text-center font-display-title font-light uppercase leading-[1.08] tracking-[0.01em] text-[#0A1628] max-md:text-[28px] lg:text-left" style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}>
@@ -142,8 +142,8 @@ export default function DiamondInfoSequence({
 
                 <div className="mt-6 grid gap-3 sm:grid-cols-2 sm:gap-4">
                   {features.map((feature) => (
-                    <div key={`${feature.sort_order}-${feature.title}`} className="flex items-start gap-3 rounded-[20px] border border-[#E4DED3] bg-white/75 px-3.5 py-3.5">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#D5CEBF] bg-white text-[#0A1628]">
+                    <div key={`${feature.sort_order}-${feature.title}`} className="flex items-start gap-3 rounded-[20px] border border-[#DCE4F0] bg-white/75 px-3.5 py-3.5">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#CBD7E8] bg-white text-[#0A1628]">
                         {isSvgMarkup(feature.iconSvg) ? (
                           <span
                             className="block h-4.5 w-4.5 [&>svg]:h-4.5 [&>svg]:w-4.5"

@@ -204,13 +204,18 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
   const metalSwatches = getMetalSwatches(product);
   const visibleMetalSwatches = metalSwatches.slice(0, 3);
   const [activeMetalId, setActiveMetalId] = useState("");
+  const [failedImageUrl, setFailedImageUrl] = useState("");
 
   useEffect(() => {
     setActiveMetalId("");
+    setFailedImageUrl("");
   }, [product?.id, product?.slug]);
 
   const activeMetalSwatch = metalSwatches.find((metal) => metal.id === activeMetalId) || metalSwatches[0] || null;
   const activeImageUrl = getMetalImages(product, activeMetalSwatch)[0] || product.imageUrl;
+  const visibleImageUrl = activeImageUrl && activeImageUrl !== failedImageUrl ? activeImageUrl : "";
+  const r2PublicBaseUrl = process.env.NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_BASE_URL?.replace(/\/+$/, "") || "";
+  const isDirectR2Image = Boolean(r2PublicBaseUrl && visibleImageUrl.startsWith(`${r2PublicBaseUrl}/`));
 
   const visualBorder = isDark ? "rgba(255,255,255,0.12)" : "rgba(10,22,40,0.06)";
   const namColor = isDark ? "#FFFFFF" : "#0A1628";
@@ -406,14 +411,16 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
           </svg>
         </button>
 
-        {activeImageUrl ? (
+        {visibleImageUrl ? (
           <Image
-            key={activeImageUrl}
-            src={activeImageUrl}
+            key={visibleImageUrl}
+            src={visibleImageUrl}
             alt={`${product.name} jewellery`}
             fill
+            unoptimized={isDirectR2Image}
             sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
             className="card-gem"
+            onError={() => setFailedImageUrl(visibleImageUrl)}
             style={{
               objectFit: "cover",
               objectPosition: "center center",
@@ -425,6 +432,8 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
         ) : (
           <div
             className="card-gem"
+            role="img"
+            aria-label={`${product.name} image unavailable`}
             style={{
               transition: "transform .75s cubic-bezier(.16,1,.3,1)",
               filter: "drop-shadow(0 8px 20px rgba(10,22,40,0.2))",

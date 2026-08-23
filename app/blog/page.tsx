@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+
+export const dynamic = 'force-dynamic'
 import BlogClient from '@/components/pages/BlogClient'
 import { createPageMetadata } from '@/lib/seo'
 import { getPublishedBlogPosts } from '@/lib/blog'
