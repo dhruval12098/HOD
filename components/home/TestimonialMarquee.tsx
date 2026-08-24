@@ -22,24 +22,26 @@ const defaultQuotes: MarqueeItem[] = [
 export default function TestimonialMarquee({ initialData }: { initialData?: HomeMarqueeData }) {
   const [quotes] = useState<MarqueeItem[]>(initialData?.items?.length ? initialData.items : defaultQuotes);
 
-  const allQuotes = [...quotes, ...quotes];
-
   return (
     <div className="relative overflow-hidden border-b border-t border-[rgba(10,22,40,0.10)] bg-[#F5F7FC] py-[26px] sm:py-[34px]">
       <div className="absolute top-0 bottom-0 left-0 z-[2] w-[120px] pointer-events-none bg-gradient-to-r from-[#F5F7FC] to-transparent" />
       <div className="absolute top-0 bottom-0 right-0 z-[2] w-[120px] pointer-events-none bg-gradient-to-l from-[#F5F7FC] to-transparent" />
 
-      <div className="flex w-max items-center gap-11 animate-marquee-slow">
-        {allQuotes.map((item, i) => (
-          <div
-            key={`${item.quote}-${item.author}-${i}`}
-            className="flex items-center gap-[18px] whitespace-nowrap font-serif text-[18px] font-normal tracking-[0.02em] text-[#253246]"
-          >
-            &ldquo;{item.quote}&rdquo;
-            <span className="ml-4 font-sans text-[10px] font-medium not-italic uppercase tracking-[0.24em] text-[#0A1628]">
-              {item.author}
-            </span>
-            <span className="inline-block h-[5px] w-[5px] rounded-full bg-[#0A1628]" />
+      <div className="flex w-max animate-marquee-slow items-center">
+        {[0, 1].map((groupIndex) => (
+          <div key={groupIndex} aria-hidden={groupIndex === 1 ? true : undefined} className="flex shrink-0 items-center gap-11 pr-11">
+            {quotes.map((item, i) => (
+              <div
+                key={`${item.quote}-${item.author}-${i}`}
+                className="flex items-center gap-[18px] whitespace-nowrap font-serif text-[18px] font-normal tracking-[0.02em] text-[#253246]"
+              >
+                &ldquo;{item.quote}&rdquo;
+                <span className="ml-4 font-sans text-[10px] font-medium not-italic uppercase tracking-[0.24em] text-[#0A1628]">
+                  {item.author}
+                </span>
+                <span className="inline-block h-[5px] w-[5px] rounded-full bg-[#0A1628]" />
+              </div>
+            ))}
           </div>
         ))}
       </div>

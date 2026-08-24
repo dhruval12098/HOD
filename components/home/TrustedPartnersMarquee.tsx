@@ -24,7 +24,6 @@ export default function TrustedPartnersMarquee({ data }: { data?: HomeTrustedPar
 
   if (data && (!data.isEnabled || partners.length === 0)) return null;
 
-  const loop = [...partners, ...partners, ...partners];
   const heading = data?.heading || 'Trusted Partners';
 
   return (
@@ -39,21 +38,30 @@ export default function TrustedPartnersMarquee({ data }: { data?: HomeTrustedPar
         {heading}
       </h2>
 
-      <div className="flex w-max items-center gap-14 animate-marquee-slow sm:gap-20">
-        {loop.map((partner, index) => (
-          <a
-            key={`${partner.name}-${index}`}
-            href={partner.href || undefined}
-            aria-label={partner.href ? `Open ${partner.name}` : undefined}
-            className="flex h-14 min-w-[130px] items-center justify-center opacity-70 grayscale transition duration-500 hover:opacity-100 hover:grayscale-0 sm:h-16 sm:min-w-[160px]"
+      <div className="flex w-max animate-marquee-slow items-center">
+        {[0, 1].map((groupIndex) => (
+          <div
+            key={groupIndex}
+            aria-hidden={groupIndex === 1 ? true : undefined}
+            className="flex shrink-0 items-center gap-14 pr-14 sm:gap-20 sm:pr-20"
           >
-            <img
-              src={partner.src}
-              alt={partner.alt}
-              className="max-h-10 max-w-[150px] object-contain sm:max-h-12 sm:max-w-[180px]"
-              loading="lazy"
-            />
-          </a>
+            {partners.map((partner, index) => (
+              <a
+                key={`${partner.name}-${index}`}
+                href={partner.href || undefined}
+                aria-label={partner.href ? `Open ${partner.name}` : undefined}
+                tabIndex={groupIndex === 1 ? -1 : undefined}
+                className="flex h-14 min-w-[130px] items-center justify-center opacity-70 grayscale transition duration-500 hover:opacity-100 hover:grayscale-0 sm:h-16 sm:min-w-[160px]"
+              >
+                <img
+                  src={partner.src}
+                  alt={groupIndex === 1 ? '' : partner.alt}
+                  className="max-h-10 max-w-[150px] object-contain sm:max-h-12 sm:max-w-[180px]"
+                  loading="lazy"
+                />
+              </a>
+            ))}
+          </div>
         ))}
       </div>
     </section>

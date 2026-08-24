@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useRef, useState, type AnchorHTMLAttributes, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import ReactCountryFlag from 'react-country-flag';
 import { loaderWordmarkFont } from '@/app/fonts';
 import { supabase } from '@/lib/supabase';
 import {
@@ -10,7 +11,6 @@ import {
 } from '@/lib/navbar';
 import type { User } from '@supabase/supabase-js';
 import { useCurrency } from '@/context/CurrencyContext';
-import { CURRENCIES } from '@/lib/currency';
 import { useWishlistStore } from '@/lib/hooks/useWishlistStore';
 import { useCart } from '@/lib/hooks/useCart';
 
@@ -24,7 +24,6 @@ const METAL_COLORS: Record<string, string> = {
 
 const OVERLAY_NAVBAR_ROUTES = new Set(['/', '/hiphop', '/bespoke']);
 const DETECTED_COUNTRY_COOKIE = 'detected_country';
-const SUPPORTED_FLAG_CODES = new Set(CURRENCIES.map((currency) => currency.countryCode));
 
 function readDetectedCountryCookie() {
   const cookie = document.cookie
@@ -60,7 +59,7 @@ function DetectedCountryIndicator({
 }) {
   const normalizedCountryCode = countryCode.toUpperCase();
   const countryName = getCountryName(normalizedCountryCode);
-  const hasLocalFlag = SUPPORTED_FLAG_CODES.has(normalizedCountryCode);
+  const hasCountryFlag = /^[A-Z]{2}$/.test(normalizedCountryCode);
 
   return (
     <span
@@ -70,12 +69,12 @@ function DetectedCountryIndicator({
       className="inline-flex h-[34px] w-[34px] flex-shrink-0 items-center justify-center rounded-full text-[16px] leading-none transition-all duration-300"
       style={{ border: `1px solid ${borderColor}`, background }}
     >
-      {hasLocalFlag ? (
-        <img
-          src={`/flags/${normalizedCountryCode.toLowerCase()}.svg`}
-          alt=""
-          aria-hidden="true"
-          className="h-[14px] w-[20px] rounded-[2px] object-cover shadow-[0_0_0_1px_rgba(10,22,40,0.10)]"
+      {hasCountryFlag ? (
+        <ReactCountryFlag
+          countryCode={normalizedCountryCode}
+          svg
+          aria-label={countryName}
+          style={{ width: '18px', height: '18px', borderRadius: '999px' }}
         />
       ) : (
         <span aria-hidden="true">🌐</span>
@@ -630,8 +629,7 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
           data-overlay={desktopOverlayMode && !desktopSolidMode ? 'true' : 'false'}
         >
           <div className="relative flex items-center justify-center border-b border-black/[0.06] bg-white px-4 py-[14px] lg:hidden">
-          <div className="absolute left-4 top-1/2 flex -translate-y-1/2 items-center gap-2.5 sm:gap-3">
-            <DetectedCountryIndicator countryCode={displayedCountry} />
+          <div className="absolute left-3 top-1/2 flex -translate-y-1/2 items-center gap-1.5 min-[375px]:left-4 min-[375px]:gap-2.5 sm:gap-3">
             <Link
               href="/wishlist"
               aria-label="Wishlist"
@@ -655,34 +653,37 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
               {cartCount ? <span className="absolute -right-1 -top-1 inline-flex min-w-[18px] items-center justify-center rounded-full bg-[#0A1628] px-1 text-[10px] text-white">{cartCount}</span> : null}
             </Link>
           </div>
-          <button
-            onClick={() => {
-              if (menuOpen) closeMenu();
-              else setMenuOpen(true);
-            }}
-            aria-label="Menu"
-            aria-expanded={menuOpen}
-            className="absolute right-4 flex w-7 cursor-pointer flex-col gap-[5px] border-none bg-transparent p-1"
-          >
-            <span
-              className="block h-[1.5px] w-full bg-[#0A1628] rounded-sm origin-center transition-transform duration-350"
-              style={{ transform: menuOpen ? 'translateY(6.5px) rotate(45deg)' : 'none' }}
-            />
-            <span
-              className="block h-[1.5px] bg-[#0A1628] rounded-sm ml-auto transition-opacity duration-350"
-              style={{ width: '70%', opacity: menuOpen ? 0 : 1 }}
-            />
-            <span
-              className="block h-[1.5px] bg-[#0A1628] rounded-sm origin-center transition-transform duration-350"
-              style={{ transform: menuOpen ? 'translateY(-6.5px) rotate(-45deg)' : 'none', width: '100%' }}
-            />
-          </button>
+          <div className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1.5 min-[375px]:right-4 min-[375px]:gap-2.5">
+            <DetectedCountryIndicator countryCode={displayedCountry} />
+            <button
+              onClick={() => {
+                if (menuOpen) closeMenu();
+                else setMenuOpen(true);
+              }}
+              aria-label="Menu"
+              aria-expanded={menuOpen}
+              className="flex w-7 cursor-pointer flex-col gap-[5px] border-none bg-transparent p-1"
+            >
+              <span
+                className="block h-[1.5px] w-full origin-center rounded-sm bg-[#0A1628] transition-transform duration-350"
+                style={{ transform: menuOpen ? 'translateY(6.5px) rotate(45deg)' : 'none' }}
+              />
+              <span
+                className="ml-auto block h-[1.5px] rounded-sm bg-[#0A1628] transition-opacity duration-350"
+                style={{ width: '70%', opacity: menuOpen ? 0 : 1 }}
+              />
+              <span
+                className="block h-[1.5px] origin-center rounded-sm bg-[#0A1628] transition-transform duration-350"
+                style={{ transform: menuOpen ? 'translateY(-6.5px) rotate(-45deg)' : 'none', width: '100%' }}
+              />
+            </button>
+          </div>
           <Link
             href="/"
             className="flex items-center no-underline cursor-pointer transition-opacity duration-300 hover:opacity-60"
           >
             <span
-              className={`${loaderWordmarkFont.className} text-[16px] sm:text-[20px] font-semibold tracking-[0.24em] sm:tracking-[0.3em] uppercase`}
+              className={`${loaderWordmarkFont.className} text-[13px] min-[375px]:text-[16px] sm:text-[20px] font-semibold tracking-[0.18em] min-[375px]:tracking-[0.24em] sm:tracking-[0.3em] uppercase`}
               style={{ color: '#0A1628' }}
             >
               House of Diams
