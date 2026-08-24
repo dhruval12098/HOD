@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { venezaFont } from '@/app/fonts';
 import type { HomeCollectionItem } from '@/lib/home-data';
 
 interface CollectionProps {
@@ -92,7 +93,7 @@ export default function Collection({ items = [] }: CollectionProps) {
   return (
     <section className="mx-auto w-full max-w-[1440px] px-5 py-16 sm:px-8 sm:py-20 lg:px-12">
       <div className="mb-10 text-center sm:mb-14">
-        <h2 className="font-display-title font-light uppercase leading-[1.08] tracking-[0.01em] text-[#0A1628] max-md:text-[28px]" style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}>
+        <h2 className={`${venezaFont.variable} font-test-veneza font-light leading-[1.08] tracking-[0.01em] text-[#0A1628] max-md:text-[28px]`} style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}>
           Our <em className="not-italic italic">Collections</em>
         </h2>
         <p className="mx-auto mt-3 max-w-xl text-[12px] font-light tracking-[0.1em] text-[#6A6A6A] sm:text-[13px]">

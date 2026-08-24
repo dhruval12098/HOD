@@ -1,5 +1,6 @@
 'use client';
 
+import { aurestiaFont } from '@/app/fonts';
 import type { HomeTrustedPartnersData } from '@/lib/home-data';
 
 const fallbackPartners = [
@@ -32,7 +33,7 @@ export default function TrustedPartnersMarquee({ data }: { data?: HomeTrustedPar
       <div className="pointer-events-none absolute inset-y-0 right-0 z-[2] w-[90px] bg-gradient-to-l from-white to-transparent sm:w-[150px]" />
 
       <h2
-        className="mb-9 text-center font-display-title font-light uppercase leading-[1.08] tracking-[0.01em] text-[#0A1628] max-md:text-[28px]"
+        className={`${aurestiaFont.variable} font-test-aurestia mb-9 text-center font-light leading-[1.08] tracking-[0.01em] text-[#0A1628] max-md:text-[28px]`}
         style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}
       >
         {heading}

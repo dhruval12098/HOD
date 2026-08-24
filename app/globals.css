@@ -144,6 +144,19 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--display-title) !important;
 }
 
+/* Homepage font comparison: these intentionally override the global heading face. */
+.font-test-aurestia {
+  font-family: var(--font-aurestia) !important;
+}
+
+.font-test-veloria {
+  font-family: var(--font-veloria) !important;
+}
+
+.font-test-veneza {
+  font-family: var(--font-veneza) !important;
+}
+
 @media (max-width: 767px) {
   .font-display-title[class*="max-md:text-[28px]"] {
     font-size: 20px !important;
