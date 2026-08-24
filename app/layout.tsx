@@ -16,6 +16,8 @@ import GoogleTagManager from "@/components/analytics/GoogleTagManager";
 import MaintenanceScreen from "@/components/layout/MaintenanceScreen";
 import { getMaintenanceMode } from "@/lib/maintenance";
 import { ToastProvider } from "@/components/home/Toast";
+import { cookies, headers } from "next/headers";
+import { currencyForCountry, normalizeCountryCode } from "@/lib/country-currency";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -60,6 +62,14 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const maintenanceMode = await getMaintenanceMode()
+  const requestHeaders = await headers()
+  const requestCookies = await cookies()
+  const detectedCountry = normalizeCountryCode(
+    requestHeaders.get('x-vercel-ip-country') || requestCookies.get('detected_country')?.value
+  )
+  const initialDetectedCurrency = detectedCountry
+    ? currencyForCountry(detectedCountry)
+    : requestCookies.get('detected_currency')?.value || 'USD'
 
   return (
     <html
@@ -78,7 +88,7 @@ export default async function RootLayout({
         ) : (
           <LenisProvider>
             <WishlistProvider>
-              <CurrencyProvider>
+              <CurrencyProvider initialDetectedCurrency={initialDetectedCurrency}>
                 <CartProvider>
                   <ToastProvider>
                     <SiteChrome>{children}</SiteChrome>
