@@ -56,25 +56,6 @@ function SelectContent({
   nativeScroll = false,
   ...props
 }: SelectContentProps) {
-  const handleNativeWheel = (event: React.WheelEvent<HTMLDivElement>) => {
-    if (!nativeScroll) return;
-
-    const viewport = event.currentTarget;
-    const delta = event.deltaY || event.deltaX;
-    if (!delta) return;
-
-    const nextScrollTop = viewport.scrollTop + delta;
-    const canScroll = delta < 0
-      ? viewport.scrollTop > 0
-      : viewport.scrollTop + viewport.clientHeight < viewport.scrollHeight;
-
-    if (canScroll) {
-      event.preventDefault();
-      event.stopPropagation();
-      viewport.scrollTop = nextScrollTop;
-    }
-  };
-
   return (
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
@@ -89,7 +70,6 @@ function SelectContent({
       >
         {!nativeScroll ? <SelectScrollUpButton /> : null}
         <SelectPrimitive.Viewport
-          onWheel={handleNativeWheel}
           className={cn(
             'p-1',
             position === 'popper' &&

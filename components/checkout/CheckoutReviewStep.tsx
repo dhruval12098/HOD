@@ -1,10 +1,15 @@
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { Apple } from 'lucide-react';
 import CheckoutSectionCard from '@/components/checkout/CheckoutSectionCard';
 import { useCurrency } from '@/context/CurrencyContext';
 import { getCollectionHref } from '@/lib/browse-context';
 import { getLoveLetterOccasionLabel, type LoveLetterDraft } from '@/lib/love-letter';
 import { formatMoney } from '@/lib/currency';
 import type { CheckoutChargeQuote } from '@/components/checkout/types';
+
+// Keep disabled by default. Enable only after live Razorpay keys and both Apple Pay domains are verified.
+const APPLE_PAY_LIVE_READY = process.env.NEXT_PUBLIC_APPLE_PAY_ENABLED === 'true';
 
 export default function CheckoutReviewStep({
   onPayNow,
@@ -28,6 +33,26 @@ export default function CheckoutReviewStep({
   paymentAvailabilityMessage?: string
 }) {
   const { format } = useCurrency();
+  const [applePayEligible, setApplePayEligible] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!APPLE_PAY_LIVE_READY) {
+      setApplePayEligible(false);
+      return;
+    }
+
+    try {
+      const applePaySession = (window as Window & {
+        ApplePaySession?: { canMakePayments: () => boolean };
+      }).ApplePaySession;
+      setApplePayEligible(Boolean(applePaySession?.canMakePayments?.()));
+    } catch {
+      setApplePayEligible(false);
+    }
+  }, []);
+
+  const paymentBlocked = isProcessingPayment || isPaymentDisabled;
+  const applePayBlocked = paymentBlocked || !APPLE_PAY_LIVE_READY || applePayEligible !== true;
 
   return (
     <CheckoutSectionCard
@@ -83,25 +108,41 @@ export default function CheckoutReviewStep({
             <button
               type="button"
               onClick={onPayNow}
-              disabled={isProcessingPayment || isPaymentDisabled}
-              className="inline-flex min-h-[72px] flex-col items-center justify-center rounded-[14px] bg-[#101828] px-6 py-3 text-sm font-semibold text-white shadow-[0_8px_22px_rgba(16,24,40,0.12)] transition hover:bg-[#1d2939] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b8964e] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-[#98a2b3] disabled:shadow-none"
+              disabled={paymentBlocked}
+              className="inline-flex min-h-[74px] items-center justify-center gap-3 rounded-[14px] bg-[linear-gradient(135deg,#2f74d0_0%,#123b78_55%,#091c3d_100%)] px-6 py-3 text-white shadow-[0_10px_24px_rgba(18,59,120,0.24)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#397ed8] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-55 disabled:shadow-none disabled:hover:brightness-100"
             >
-              <span>{isProcessingPayment ? paymentButtonLabel || 'Starting Payment...' : 'Pay by Razorpay'}</span>
-              {!isProcessingPayment ? <span className="mt-1 text-[11px] font-normal text-white/70">Open secure checkout</span> : null}
+              <span aria-hidden="true" className="inline-flex h-8 w-8 items-center justify-center rounded-[9px] border border-white/30 bg-white/10 text-[15px] font-semibold">R</span>
+              <span className="flex flex-col items-start">
+                <span className="text-sm font-semibold">{isProcessingPayment ? paymentButtonLabel || 'Starting Payment...' : 'Pay with Razorpay'}</span>
+                {!isProcessingPayment ? <span className="mt-0.5 text-[10px] font-normal text-white/70">Secure standard checkout</span> : null}
+              </span>
             </button>
-            <div
-              aria-label="Apple Pay availability"
-              className="relative flex min-h-[72px] items-center justify-between gap-4 overflow-hidden rounded-[14px] border border-[#d8d2c3] bg-[#fffdf8] px-5 py-3 shadow-[0_8px_22px_rgba(58,45,20,0.06)] before:absolute before:inset-y-0 before:left-0 before:w-1 before:bg-[#b8964e]"
+            <button
+              type="button"
+              onClick={onPayNow}
+              disabled={applePayBlocked}
+              aria-describedby="apple-pay-availability"
+              className="inline-flex min-h-[74px] items-center justify-center gap-3 rounded-[14px] bg-[linear-gradient(135deg,#050505_0%,#20242a_58%,#626870_100%)] px-6 py-3 text-white shadow-[0_10px_24px_rgba(5,5,5,0.2)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#667085] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-55 disabled:shadow-none disabled:hover:brightness-100"
             >
-              <div>
-                <div className="text-[15px] font-semibold tracking-[-0.01em] text-[#101828]">Apple Pay</div>
-                <div className="mt-1 text-xs leading-5 text-[#667085]">Appears inside Razorpay Checkout on supported Apple devices</div>
-              </div>
-              <span aria-hidden="true" className="max-w-[86px] shrink-0 text-right text-[10px] font-semibold uppercase leading-4 tracking-[0.08em] text-[#8a6d32]">Shown when supported</span>
-            </div>
+              <Apple aria-hidden="true" className="h-7 w-7" strokeWidth={1.8} />
+              <span className="flex flex-col items-start">
+                <span className="text-sm font-semibold">Apple Pay</span>
+                <span className="mt-0.5 text-[10px] font-normal text-white/70">
+                  {!APPLE_PAY_LIVE_READY
+                    ? 'Setup pending'
+                    : applePayEligible === null
+                      ? 'Checking availability…'
+                      : applePayEligible
+                        ? 'Open Razorpay Checkout'
+                        : 'Unavailable on this device'}
+                </span>
+              </span>
+            </button>
           </div>
-          <p className="mt-3 text-xs leading-5 text-[#667085]">
-            Razorpay automatically shows Apple Pay in its secure checkout when your browser, device, and wallet are eligible.
+          <p id="apple-pay-availability" className="mt-3 text-xs leading-5 text-[#667085]">
+            {APPLE_PAY_LIVE_READY
+              ? 'This opens secure Razorpay Checkout, where Apple Pay is offered only when the Apple device, Safari browser, wallet, and verified live domain are eligible.'
+              : 'Apple Pay will become available here after live Razorpay activation and domain verification. Razorpay Checkout remains available above.'}
           </p>
           <Link
             href={continueHref || getCollectionHref()}

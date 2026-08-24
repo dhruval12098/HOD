@@ -10,6 +10,7 @@ import {
 } from '@/lib/navbar';
 import type { User } from '@supabase/supabase-js';
 import { useCurrency } from '@/context/CurrencyContext';
+import { CURRENCIES } from '@/lib/currency';
 import { useWishlistStore } from '@/lib/hooks/useWishlistStore';
 import { useCart } from '@/lib/hooks/useCart';
 
@@ -23,6 +24,7 @@ const METAL_COLORS: Record<string, string> = {
 
 const OVERLAY_NAVBAR_ROUTES = new Set(['/', '/hiphop', '/bespoke']);
 const DETECTED_COUNTRY_COOKIE = 'detected_country';
+const SUPPORTED_FLAG_CODES = new Set(CURRENCIES.map((currency) => currency.countryCode));
 
 function readDetectedCountryCookie() {
   const cookie = document.cookie
@@ -56,20 +58,28 @@ function DetectedCountryIndicator({
   borderColor?: string;
   background?: string;
 }) {
-  const countryName = getCountryName(countryCode);
-  const flag = countryCode
-    ? String.fromCodePoint(...countryCode.split('').map((character) => 127397 + character.charCodeAt(0)))
-    : '🌐';
+  const normalizedCountryCode = countryCode.toUpperCase();
+  const countryName = getCountryName(normalizedCountryCode);
+  const hasLocalFlag = SUPPORTED_FLAG_CODES.has(normalizedCountryCode);
 
   return (
     <span
       role="img"
-      aria-label={`Detected location: ${countryName}`}
-      title={`Detected location: ${countryName}`}
+      aria-label={`Currency region: ${countryName}`}
+      title={`Currency region: ${countryName}`}
       className="inline-flex h-[34px] w-[34px] flex-shrink-0 items-center justify-center rounded-full text-[16px] leading-none transition-all duration-300"
       style={{ border: `1px solid ${borderColor}`, background }}
     >
-      {flag}
+      {hasLocalFlag ? (
+        <img
+          src={`/flags/${normalizedCountryCode.toLowerCase()}.svg`}
+          alt=""
+          aria-hidden="true"
+          className="h-[14px] w-[20px] rounded-[2px] object-cover shadow-[0_0_0_1px_rgba(10,22,40,0.10)]"
+        />
+      ) : (
+        <span aria-hidden="true">🌐</span>
+      )}
     </span>
   );
 }
@@ -222,7 +232,7 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
   const pathname = usePathname();
   const { count: wishlistCount } = useWishlistStore();
   const { count: cartCount } = useCart();
-  const { format } = useCurrency();
+  const { format, selected } = useCurrency();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileOpenItem, setMobileOpenItem] = useState<string | null>(null);
@@ -233,6 +243,7 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
   const [activeSearchIndex, setActiveSearchIndex] = useState(-1);
   const [searchItems, setSearchItems] = useState<Array<{ dbId?: string; slug: string; name: string; shortMeta: string; imageUrl?: string; priceFrom: number }>>([]);
   const [detectedCountry, setDetectedCountry] = useState('');
+  const displayedCountry = selected.countryCode || detectedCountry;
   // Start empty so builder-hidden items never flash while the live configuration loads.
   const [navItems, setNavItems] = useState<NavbarRenderItem[]>([]);
   const [announcementItems, setAnnouncementItems] = useState<
@@ -620,7 +631,7 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
         >
           <div className="relative flex items-center justify-center border-b border-black/[0.06] bg-white px-4 py-[14px] lg:hidden">
           <div className="absolute left-4 top-1/2 flex -translate-y-1/2 items-center gap-2.5 sm:gap-3">
-            <DetectedCountryIndicator countryCode={detectedCountry} />
+            <DetectedCountryIndicator countryCode={displayedCountry} />
             <Link
               href="/wishlist"
               aria-label="Wishlist"
@@ -836,7 +847,7 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
             ) : null}
           </div>
             <DetectedCountryIndicator
-              countryCode={detectedCountry}
+              countryCode={displayedCountry}
               borderColor={desktopHeaderBorder}
               background={desktopUtilityBg}
             />
