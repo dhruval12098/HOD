@@ -39,9 +39,9 @@ const BENEFITS = [
     ),
   },
   {
-    title: "CVD and Natural",
+    title: "Lab-Grown and Natural",
     description:
-      "Conflict-free CVD options plus ethically sourced natural diamonds for every market segment.",
+      "Conflict-free lab-grown options plus ethically sourced natural diamonds for every market segment.",
     icon: (
       <svg width="36" height="36" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <polygon points="12,3 21,8 18,21 6,21 3,8" stroke="#0A1628" strokeWidth="1" />
@@ -96,4 +96,3 @@ export default function B2BBenefitsGrid() {
     </section>
   );
 }
-

@@ -13,9 +13,9 @@ export const metadata: Metadata = createPageMetadata({
 
 const fallbackFaqs = [
   {
-    question: "What's the difference between natural and CVD diamonds?",
+    question: "What's the difference between natural and lab-grown diamonds?",
     answer:
-      'Both are real diamonds. Natural diamonds form over billions of years beneath the earth, while CVD diamonds are grown in controlled conditions. They are chemically, physically and optically identical. The key difference is origin and pricing.',
+      'Both are real diamonds. Natural diamonds form over billions of years beneath the earth, while lab-grown diamonds are created in controlled conditions. They are chemically, physically and optically identical. The key difference is origin and pricing.',
   },
   {
     question: 'Do your diamonds come with certification?',

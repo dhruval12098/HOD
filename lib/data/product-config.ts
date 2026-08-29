@@ -51,7 +51,7 @@ export const CUT_MAP: Record<string, string> = {
 };
 
 export const STONE_MAP: Record<string, string> = {
-  'cvd-colourless': 'CVD Lab-Grown',
+  'cvd-colourless': 'Lab-Grown Diamond',
   'natural-colourless': 'Natural',
   'natural-fancy': 'Natural Fancy',
 };

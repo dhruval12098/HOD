@@ -29,7 +29,7 @@ const defaultMaterials: MaterialItem[] = [
   { sort_order: 1, title: 'Natural Diamonds', description: 'Ethically sourced · All cuts · D-Z colour · FL-SI', icon_path: '' },
   { sort_order: 2, title: 'Precious Gems', description: 'Emeralds · Rubies · Sapphires · Alexandrite', icon_path: '' },
   { sort_order: 3, title: 'Precious Metals', description: 'Platinum · 22K · 18K · 14K · 10K · 925 Silver', icon_path: '' },
-  { sort_order: 4, title: 'CVD Diamonds', description: 'Type IIA lab-grown · All cuts · Conflict-free', icon_path: '' },
+  { sort_order: 4, title: 'Lab-Grown Diamonds', description: 'Type IIA lab-grown · All cuts · Conflict-free', icon_path: '' },
 ]
 
 export default function MaterialStrip({ items = [] }: { items?: HomeMaterialItem[] }) {
@@ -46,7 +46,7 @@ export default function MaterialStrip({ items = [] }: { items?: HomeMaterialItem
           More Than <em className="not-italic text-[#0A1628] font-normal">Diamonds</em>
         </h2>
         <p className="text-[13px] font-light leading-[2] text-[#6A6A6A] tracking-[0.04em] mb-8">
-          We work with the world&apos;s most precious materials - from CVD diamonds to natural gemstones,
+          We work with the world&apos;s most precious materials - from lab-grown diamonds to natural gemstones,
           platinum to 22K gold. Every material selected for its rarity, beauty and integrity.
         </p>
         <Link

@@ -24,7 +24,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
  */
 export default function ShopHero({
   title = 'Our Collection',
-  subtitle = 'Browse our curated selection of fine jewellery with natural and CVD diamonds. Every piece certified, every stone responsibly sourced.',
+  subtitle = 'Browse our curated selection of fine jewellery with certified lab-grown diamonds. Every piece certified, every stone responsibly sourced.',
   desktopImageUrl = '',
   mobileImageUrl = '',
   ctaLabel = '',

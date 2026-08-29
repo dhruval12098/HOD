@@ -29,7 +29,7 @@ const trustItems = [
     ),
   },
   {
-    label: 'Natural & CVD Diamonds',
+    label: 'Certified Lab-Grown Diamonds',
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
         <polygon points="12,3 21,8 21,16 12,21 3,16 3,8" stroke="#FFFFFF" strokeWidth="1" />

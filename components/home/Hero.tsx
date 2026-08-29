@@ -31,7 +31,7 @@ const defaultContent: HeroContent = {
   eyebrow: 'Surat, India · Est. 2014 · Fine Jewellery',
   headline: 'Crafted in Light.',
   subtitle:
-    'Natural and CVD diamonds, precious gemstones and bespoke fine jewellery — handcrafted in the diamond capital of the world.',
+    'Certified lab-grown diamonds, precious gemstones and bespoke fine jewellery — handcrafted in the diamond capital of the world.',
   slider_enabled: false,
   slider_items: [],
 };

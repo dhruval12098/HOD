@@ -5,7 +5,7 @@ import { createPageMetadata } from '@/lib/seo';
 
 export const metadata: Metadata = createPageMetadata({
   title: 'Bespoke',
-  description: 'Commission a bespoke piece. From CAD to setting, crafted in Surat with natural or CVD diamonds.',
+  description: 'Commission a bespoke piece. From CAD to setting, crafted in Surat with certified lab-grown diamonds.',
   path: '/bespoke',
 });
 

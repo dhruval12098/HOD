@@ -2,6 +2,7 @@
 
 import { type FormEvent, useEffect, useState } from 'react'
 import { Check, Copy } from 'lucide-react'
+import { veloriaFont } from '@/app/fonts'
 
 type PromotionPopupData = {
   label: string
@@ -189,7 +190,7 @@ export default function PromotionPopup() {
           <div className="flex min-h-[380px] items-center justify-center overflow-y-auto bg-[linear-gradient(180deg,#ffffff_0%,#f3f5f8_100%)] px-7 py-14 sm:min-h-[480px] sm:px-16 sm:py-20">
             <div className="w-full max-w-[480px] text-center">
               {item.label ? <p className="mb-4 text-[10px] uppercase tracking-[0.28em] text-[rgba(10,22,40,0.45)]">{item.label}</p> : null}
-              <h2 className="font-display-title text-[clamp(2.25rem,8vw,4.75rem)] leading-[0.92] tracking-[-0.03em] text-[var(--theme-ink)]">{item.title}</h2>
+              <h2 className={`${veloriaFont.variable} font-test-veloria text-[clamp(2.25rem,8vw,4.75rem)] leading-[0.92] tracking-[-0.03em] text-[var(--theme-ink)]`}>{item.title}</h2>
               {item.description ? <p className="mx-auto mt-6 max-w-[40ch] text-[14px] leading-7 text-[rgba(10,22,40,0.64)] sm:text-[16px]">{item.description}</p> : null}
               {emailAction}
               <p className="mx-auto mt-7 max-w-[44ch] text-[9px] leading-5 text-[rgba(10,22,40,0.42)] sm:text-[10px]">Promotion only valid on select styles. This code cannot be used during sale periods or in combination with other promotion codes.</p>
@@ -228,7 +229,7 @@ export default function PromotionPopup() {
                 ) : null}
 
                 <h2
-                  className="font-display-title text-[var(--theme-ink)] text-[clamp(1.35rem,8vw,2.35rem)] sm:text-[clamp(2.1rem,4vw,3.9rem)]"
+                  className={`${veloriaFont.variable} font-test-veloria text-[var(--theme-ink)] text-[clamp(1.35rem,8vw,2.35rem)] sm:text-[clamp(2.1rem,4vw,3.9rem)]`}
                   style={{
                     fontWeight: 400,
                     lineHeight: 0.9,

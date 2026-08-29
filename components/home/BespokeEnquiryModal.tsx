@@ -52,8 +52,8 @@ const fallbackConfig: FormConfigState = {
   ],
   stoneOptions: [
     { label: 'Natural Diamond' },
-    { label: 'CVD Colourless Diamond' },
-    { label: 'CVD Fancy Colour Diamond' },
+    { label: 'Colourless Lab-Grown Diamond' },
+    { label: 'Fancy Colour Lab-Grown Diamond' },
     { label: 'Natural Ruby' },
     { label: 'Natural Emerald' },
     { label: 'Natural Sapphire' },

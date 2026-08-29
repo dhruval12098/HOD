@@ -13,7 +13,7 @@ const ArrowIcon = () => (
 const posts = [
   {
     cat: 'Diamond Guide',
-    title: 'Natural vs CVD Diamonds: The Complete 2025 Guide',
+    title: 'Natural vs Lab-Grown Diamonds: The Complete Guide',
     excerpt: 'Everything you need to know about choosing between natural and lab-grown diamonds. We break down the science, the value, and the emotional weight behind each choice.',
     date: 'April 12, 2025',
     featured: true,

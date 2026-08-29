@@ -22,7 +22,7 @@ export async function generateMetadata({
   const params = await searchParams
   const metadata = createPageMetadata({
     title: 'Shop',
-    description: 'Browse our collection of fine jewellery and hip hop jewellery with natural and CVD diamonds.',
+    description: 'Browse our collection of fine jewellery and hip hop jewellery with certified lab-grown diamonds.',
     path: '/shop',
   })
 

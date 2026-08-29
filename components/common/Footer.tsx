@@ -323,7 +323,7 @@ export default function Footer() {
           </p>
 
           <p className="m-0 mb-[26px] max-w-[320px] text-[11px] font-light leading-[1.9] tracking-[0.04em] text-[rgba(255,255,255,0.68)]">
-            Fine jewellery with natural and CVD diamonds, crafted in Surat, India - the diamond capital of the world. Ethically sourced. Globally trusted.
+            House of Diams is a fine jewellery house specialising in lab-grown diamonds. Every piece is IGI or GIA certified. Engagement rings, wedding bands, T-bar jewellery, and bespoke commissions, shipped worldwide with free insured delivery.
           </p>
 
           <div className="mt-2 flex gap-[10px]">
@@ -402,7 +402,7 @@ export default function Footer() {
           <span className="mx-2">·</span>
           <BottomLink href="/terms">Terms</BottomLink>
           <span className="mx-2">·</span>
-          <span>Fine Jewellery · Surat, India</span>
+          <span>Surat, India</span>
         </div>
       </div>
     </footer>

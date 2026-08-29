@@ -30,6 +30,11 @@ export type HomeHeroContent = {
   }>;
 };
 
+export type HomeSeoData = {
+  title?: string;
+  description?: string;
+};
+
 export type HomeMarqueeData = {
   title: string;
   items: Array<{ quote: string; author: string }>;
@@ -1059,4 +1064,29 @@ const loadHomePageData = unstable_cache(
 
 export async function getHomePageData() {
   return loadHomePageData();
+}
+
+const loadHomeSeoData = unstable_cache(
+  async (): Promise<HomeSeoData> => {
+    const supabase = createHomeSupabaseClient();
+    const { data, error } = await supabase
+      .from('homepage_hero')
+      .select('seo_title, seo_description')
+      .eq('section_key', 'home_hero')
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    return {
+      title: data?.seo_title?.trim() || undefined,
+      description: data?.seo_description?.trim() || undefined,
+    };
+  },
+  ['home-seo-data-v1'],
+  { revalidate: 30 }
+);
+
+export async function getHomeSeoData() {
+  return loadHomeSeoData();
 }

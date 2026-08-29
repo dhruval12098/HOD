@@ -73,7 +73,7 @@ const fallbackHero: Required<HeroContent> = {
   heading_line_1: 'Your Vision.',
   heading_line_2: 'Our Craft.',
   subtitle:
-    "Every piece at House of Diams is conceived and created to order in natural or CVD diamonds. Share your idea and we'll bring it to life from our Surat workshops to your hands.",
+    "Every piece at House of Diams is conceived and created to order with certified lab-grown diamonds. Share your idea and we'll bring it to life from our Surat workshops to your hands.",
   primary_cta_label: 'Start Your Commission',
   secondary_cta_label: 'Configure Your Piece',
   secondary_cta_action: '#bespoke-form',
