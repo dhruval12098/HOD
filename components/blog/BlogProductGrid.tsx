@@ -2,6 +2,7 @@
 
 import ProductCard from '@/components/shop/ProductCard'
 import type { StorefrontProduct } from '@/lib/catalog-products'
+import { veloriaFont } from '@/app/fonts'
 
 export default function BlogProductGrid({ products }: { products: StorefrontProduct[] }) {
   if (products.length === 0) return null
@@ -13,7 +14,7 @@ export default function BlogProductGrid({ products }: { products: StorefrontProd
           <p className="mb-2 text-[10px] uppercase tracking-[0.24em] text-[#A17842]">
             Selected Pieces
           </p>
-          <h2 className="font-['Cormorant_Garamond',Georgia,serif] text-[34px] font-light leading-none text-[#0A0A0A]">
+          <h2 className={`${veloriaFont.variable} font-test-veloria text-[34px] font-light leading-none text-[#0A0A0A]`}>
             Shop the Edit
           </h2>
         </div>

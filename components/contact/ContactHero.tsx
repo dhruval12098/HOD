@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { veloriaFont } from '@/app/fonts';
 
 function RevealDiv({
   children,
@@ -88,7 +89,7 @@ export default function ContactHero() {
 
       <RevealDiv delay={100}>
         <h1
-          className="font-serif font-light leading-[1] tracking-[-0.01em] text-[#0A1628] mt-6 mb-7 mx-auto max-w-[900px]"
+          className={`${veloriaFont.variable} font-test-veloria font-light leading-[1] tracking-[-0.01em] text-[#0A1628] mt-6 mb-7 mx-auto max-w-[900px]`}
           style={{ fontSize: 'clamp(56px, 7vw, 108px)' }}
         >
           {headingLead}{' '}

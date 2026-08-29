@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { veloriaFont } from '@/app/fonts'
 import type { HomeBestSellerProduct, HomeBestSellerSection } from '@/lib/home-data'
 import { useWishlistStore } from '@/lib/hooks/useWishlistStore'
 import { getProductKey } from '@/lib/product-keys'
@@ -173,7 +174,7 @@ export default function BestSellers({
       <RevealDiv className="mb-12 flex flex-wrap items-end justify-between gap-6">
         <div>
           <h2
-            className="font-display-title font-light uppercase leading-[1.08] tracking-[0.01em] text-[var(--theme-heading)] max-md:text-[28px]"
+            className={`${veloriaFont.variable} font-test-veloria font-light leading-[1.08] tracking-[0.01em] text-[var(--theme-heading)] max-md:text-[28px]`}
             style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}
           >
             {headingParts.start}{' '}

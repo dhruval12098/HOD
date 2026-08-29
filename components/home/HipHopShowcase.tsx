@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { veloriaFont } from "@/app/fonts";
 import type { HomeHipHopSection } from "@/lib/home-data";
 
 type HipHopSection = {
@@ -53,7 +54,7 @@ export default function HipHopShowcase({ initialSection }: { initialSection?: Ho
       <div className="relative z-10 flex h-full items-end px-5 py-12 md:px-8 md:py-16 lg:px-12 lg:py-20">
         <div className="max-w-[620px]">
           <h2
-            className="font-serif font-light leading-[0.96] tracking-[0.01em] text-white"
+            className={`${veloriaFont.variable} font-test-veloria font-light leading-[0.96] tracking-[0.01em] text-white`}
             style={{ fontSize: "clamp(42px, 7vw, 88px)" }}
           >
             {section.heading_line_1}

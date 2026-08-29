@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { veloriaFont } from '@/app/fonts';
 import type { HomeTestimonialsData } from '@/lib/home-data';
 
 type TestimonialItem = {
@@ -120,7 +121,7 @@ export default function Testimonials({ initialData }: { initialData?: HomeTestim
       <div className="text-center mb-2">
         <RevealDiv>
           <h2
-            className="font-display-title font-light uppercase leading-[1.08] tracking-[0.01em] text-[#0A1628] text-center max-md:text-[28px]"
+            className={`${veloriaFont.variable} font-test-veloria font-light leading-[1.08] tracking-[0.01em] text-[#0A1628] text-center max-md:text-[28px]`}
             style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}
           >
             {heading}

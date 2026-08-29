@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
+import { veloriaFont } from '@/app/fonts';
 import type { HomeCoupleItem } from '@/lib/home-data';
 
 type CoupleItem = {
@@ -195,7 +196,7 @@ export default function CouplesSection({
       <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg,transparent,rgba(10,22,40,0.3),transparent)' }} />
       <div className="max-w-350 mx-auto">
         <div className="text-center mb-16">
-          <h2 className="font-display-title font-light uppercase text-[#0A1628] leading-[1.08] tracking-[0.01em] mb-3.5 max-md:text-[28px]" style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}>
+          <h2 className={`${veloriaFont.variable} font-test-veloria font-light text-[#0A1628] leading-[1.08] tracking-[0.01em] mb-3.5 max-md:text-[28px]`} style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}>
             {heading}
           </h2>
           <p className="text-[12px] font-light tracking-[0.12em] text-[#777] leading-[1.9] max-w-140 mx-auto">

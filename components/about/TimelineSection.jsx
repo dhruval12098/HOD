@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { veloriaFont } from "@/app/fonts";
 
 /**
  * @typedef {Object} TimelineItem
@@ -136,8 +137,8 @@ export default function TimelineSection({ initialItems = [] }) {
           Our Journey
         </div>
         <h2
+          className={`${veloriaFont.variable} font-test-veloria`}
           style={{
-            fontFamily: "var(--serif)",
             fontSize: "clamp(40px, 5.5vw, 72px)",
             fontWeight: 300,
             letterSpacing: ".02em",

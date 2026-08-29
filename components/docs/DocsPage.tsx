@@ -1,4 +1,5 @@
 import { sanitizeRichText } from '@/lib/sanitize-html'
+import { veloriaFont } from '@/app/fonts'
 
 type DocsPageProps = {
   eyebrow: string
@@ -17,7 +18,7 @@ export default function DocsPage({ eyebrow, title, subtitle, blocks }: DocsPageP
       <section className="border-b border-black/5 bg-white/70">
         <div className="mx-auto max-w-6xl px-5 py-20 sm:px-7 lg:px-[52px]">
           <p className="text-[11px] uppercase tracking-[0.3em] text-[#0A1628]">{eyebrow}</p>
-          <h1 className="mt-4 max-w-3xl font-[var(--font-cormorant)] text-5xl leading-none text-[#181512] sm:text-6xl">{title}</h1>
+          <h1 className={`${veloriaFont.variable} font-test-veloria mt-4 max-w-3xl text-5xl leading-none text-[#181512] sm:text-6xl`}>{title}</h1>
           <p className="mt-5 max-w-3xl text-sm leading-7 text-[#5E5648] sm:text-base">{subtitle}</p>
         </div>
       </section>
@@ -30,7 +31,7 @@ export default function DocsPage({ eyebrow, title, subtitle, blocks }: DocsPageP
                 <section key={`${block.heading}-${index}`} className="space-y-3">
                   <div>
                     <p className="text-[10px] uppercase tracking-[0.28em] text-[#0A1628]">Section {index + 1}</p>
-                    <h3 className="mt-2 font-[var(--font-cormorant)] text-3xl leading-none text-[#181512]">{block.heading}</h3>
+                    <h3 className={`${veloriaFont.variable} font-test-veloria mt-2 text-3xl leading-none text-[#181512]`}>{block.heading}</h3>
                     <p className="mt-2 text-sm leading-7 text-[#5E5648]">{block.description}</p>
                   </div>
                   {block.body ? (

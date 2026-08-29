@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { veloriaFont } from "@/app/fonts";
 
 /**
  * @typedef {Object} FounderItem
@@ -53,7 +54,7 @@ export default function FoundersSection({ initialItems = [] }) {
           <span style={{ width: "24px", height: "1px", background: "#0A1628", display: "inline-block" }} />
           The Team
         </div>
-        <h2 style={{ fontFamily: "var(--serif)", fontSize: "clamp(40px, 5.5vw, 72px)", fontWeight: 300, letterSpacing: ".02em", color: "#0A1628", lineHeight: 1.05 }}>
+        <h2 className={`${veloriaFont.variable} font-test-veloria`} style={{ fontSize: "clamp(40px, 5.5vw, 72px)", fontWeight: 300, letterSpacing: ".02em", color: "#0A1628", lineHeight: 1.05 }}>
           Meet the <em style={{ fontStyle: "normal", color: "#0A1628", fontWeight: 400 }}>Founders</em>
         </h2>
       </div>

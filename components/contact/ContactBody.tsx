@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Select } from '@/components/ui/select';
+import { veloriaFont } from '@/app/fonts';
 
 function RevealDiv({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -72,7 +73,7 @@ export default function ContactBody({ onSuccess }: ContactBodyProps) {
   return (
     <section id="contact-form" className="max-w-[1200px] mx-auto py-20 px-[52px] grid grid-cols-[1fr_1.4fr] gap-[70px] items-start max-lg:grid-cols-1 max-lg:gap-10 max-lg:px-7 max-md:px-5 max-md:py-10">
       <RevealDiv>
-        <h2 className="font-serif text-[32px] font-normal text-[#0A1628] mb-8 tracking-[0.02em]">Reach Us</h2>
+        <h2 className={`${veloriaFont.variable} font-test-veloria text-[32px] font-normal text-[#0A1628] mb-8 tracking-[0.02em]`}>Reach Us</h2>
         {contactRows.map((row, i) => (
           <div key={row.id ?? row.label} className={`flex items-start gap-[18px] py-[22px] ${i < contactRows.length - 1 ? 'border-b border-[rgba(10,22,40,0.10)]' : ''}`}>
             <div className="w-11 h-11 flex-shrink-0 border border-[rgba(10,22,40,0.25)] rounded-full bg-[#F5F7FC] flex items-center justify-center">

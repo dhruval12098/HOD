@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { veloriaFont } from "@/app/fonts";
 
 /**
  * @typedef {Object} ValueItem
@@ -146,8 +147,8 @@ export default function ValuesSection({ initialItems = [] }) {
           What Drives Us
         </div>
         <h2
+          className={`${veloriaFont.variable} font-test-veloria`}
           style={{
-            fontFamily: "var(--serif)",
             fontSize: "clamp(40px, 5.5vw, 72px)",
             fontWeight: 300,
             letterSpacing: ".02em",

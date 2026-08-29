@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { gsap } from 'gsap';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { houseOfDiamsWordmarkFont } from '@/app/fonts';
+import { houseOfDiamsWordmarkFont, veloriaFont } from '@/app/fonts';
 
 type RingItem = {
   id: string;
@@ -194,7 +194,7 @@ export default function DiscoverRings({
         {/* Heading */}
         <div className="mx-auto max-w-[820px] text-center">
           <h2
-            className="font-display-title font-light uppercase leading-[1.08] tracking-[0.01em] text-[#0A0A0A] max-md:text-[28px]"
+            className={`${veloriaFont.variable} font-test-veloria font-light leading-[1.08] tracking-[0.01em] text-[#0A0A0A] max-md:text-[28px]`}
             style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}
           >
             Discover Rings

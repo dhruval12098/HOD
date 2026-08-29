@@ -2,6 +2,7 @@
 
 import { getStorageImageUrl, type BlogPostContentBlock } from "@/lib/data/blog-posts";
 import { sanitizeEmphasisTitle, sanitizeRichText } from "@/lib/sanitize-html";
+import { veloriaFont } from "@/app/fonts";
 
 interface BlogPostBodyProps {
   title: string;
@@ -14,7 +15,7 @@ export default function BlogPostBody({ title, subtitle, body, contentBlocks = []
   return (
     <>
       <h1
-        className="blog-title-font mb-6 max-w-[19ch] text-[clamp(36px,5vw,58px)] font-semibold leading-[1.12] tracking-[-0.04em] text-[#0A1628] [&_em]:font-[inherit] [&_em]:italic"
+        className={`${veloriaFont.variable} font-test-veloria mb-6 max-w-[19ch] text-[clamp(36px,5vw,58px)] font-semibold leading-[1.12] tracking-[-0.04em] text-[#0A1628] [&_em]:font-[inherit] [&_em]:italic`}
         dangerouslySetInnerHTML={{ __html: sanitizeEmphasisTitle(title) }}
       />
       {subtitle ? (
@@ -26,9 +27,9 @@ export default function BlogPostBody({ title, subtitle, body, contentBlocks = []
 
       {/* Rich body — scoped Tailwind via [&_*] selectors */}
       <div
-        className="
+        className={`${veloriaFont.variable}
           [&_p]:font-[var(--font-manrope)] [&_p]:text-[15.5px] [&_p]:leading-[1.95] [&_p]:text-[#333A44] [&_p]:mb-6 [&_p]:font-normal
-          [&_h3]:font-[var(--font-manrope)] [&_h3]:text-[27px] [&_h3]:font-semibold [&_h3]:text-[#0A0A0A] [&_h3]:mt-11 [&_h3]:mb-4 [&_h3]:leading-[1.28]
+          [&_h3]:font-[var(--font-veloria)] [&_h3]:text-[27px] [&_h3]:font-semibold [&_h3]:text-[#0A0A0A] [&_h3]:mt-11 [&_h3]:mb-4 [&_h3]:leading-[1.28]
           [&_h3_em]:italic [&_h3_em]:text-[#0A1628]
           [&_blockquote]:border-l-2 [&_blockquote]:border-[#0A1628] [&_blockquote]:px-7 [&_blockquote]:py-5 [&_blockquote]:my-9 [&_blockquote]:bg-[#FAFBFD]
           [&_blockquote_p]:font-[var(--font-manrope)] [&_blockquote_p]:text-[18px] [&_blockquote_p]:font-medium [&_blockquote_p]:text-[#0A0A0A] [&_blockquote_p]:m-0 [&_blockquote_p]:leading-[1.75]
@@ -36,7 +37,7 @@ export default function BlogPostBody({ title, subtitle, body, contentBlocks = []
           [&_ul]:my-4 [&_ul]:mb-6 [&_ul]:p-0 [&_ul]:list-none
           [&_ul_li]:font-[var(--font-manrope)] [&_ul_li]:text-[15.5px] [&_ul_li]:leading-[1.9] [&_ul_li]:text-[#333A44] [&_ul_li]:py-1.5 [&_ul_li]:pl-5 [&_ul_li]:relative
           [&_ul_li]:before:content-[''] [&_ul_li]:before:absolute [&_ul_li]:before:left-0 [&_ul_li]:before:top-[17px] [&_ul_li]:before:w-1.5 [&_ul_li]:before:h-px [&_ul_li]:before:bg-[#0A1628]
-        "
+        `}
         dangerouslySetInnerHTML={{ __html: sanitizeRichText(body) }}
       />
 
@@ -65,7 +66,7 @@ export default function BlogPostBody({ title, subtitle, body, contentBlocks = []
               return (
                 <h3
                   key={block.id}
-                  className="font-[var(--font-manrope)] text-[27px] font-semibold text-[#0A0A0A] leading-[1.28]"
+                  className={`${veloriaFont.variable} font-test-veloria text-[27px] font-semibold text-[#0A0A0A] leading-[1.28]`}
                 >
                   {block.heading}
                 </h3>

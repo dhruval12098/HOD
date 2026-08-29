@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { veloriaFont } from '@/app/fonts';
 
 interface Step {
   num: string;
@@ -264,7 +265,7 @@ export default function Manufacturing({ initialItems = [] }: { initialItems?: Cm
             </div>
           </RevealDiv>
           <RevealDiv delay={200}>
-            <h2 className="font-display-title font-light uppercase tracking-[0.01em] text-[#0A1628] leading-[1.08] mb-[18px] max-md:text-[28px]" style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}>
+            <h2 className={`${veloriaFont.variable} font-test-veloria font-light tracking-[0.01em] text-[#0A1628] leading-[1.08] mb-[18px] max-md:text-[28px]`} style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}>
               Inside the <em className="not-italic text-[#0A1628] font-normal">Workshop</em>
             </h2>
           </RevealDiv>
@@ -335,7 +336,7 @@ export default function Manufacturing({ initialItems = [] }: { initialItems?: Cm
 
                 {/* Content */}
                 <div className={`py-5 ${step.kind === 'cms' && step.alt ? 'lg:order-1' : ''}`}>
-                  <h3 className="font-serif font-light text-[#0A1628] tracking-[0.02em] leading-[1.1] mb-[18px] text-[clamp(30px,3.4vw,44px)]">
+                  <h3 className={`${veloriaFont.variable} font-test-veloria font-light text-[#0A1628] tracking-[0.02em] leading-[1.1] mb-[18px] text-[clamp(30px,3.4vw,44px)]`}>
                     {step.title}
                   </h3>
                   <p className="text-[13px] font-light leading-[2] text-[#6A6A6A] tracking-[0.04em] max-w-[460px]">

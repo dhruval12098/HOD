@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { veloriaFont } from '@/app/fonts';
 import type { HomeDiamondInfoConfig, HomeDiamondInfoItem } from '@/lib/home-data';
 import { sanitizeInlineSvg } from '@/lib/sanitize-html';
 
@@ -132,7 +133,7 @@ export default function DiamondInfoSequence({
           <div className="flex items-center bg-[#F5F7FC]">
             <div className="w-full px-5 py-6 sm:px-8 sm:py-8 lg:px-10 lg:py-8 xl:px-12">
               <div className="mx-auto max-w-[520px]">
-                <h2 className="text-center font-display-title font-light uppercase leading-[1.08] tracking-[0.01em] text-[#0A1628] max-md:text-[28px] lg:text-left" style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}>
+                <h2 className={`${veloriaFont.variable} font-test-veloria text-center font-light leading-[1.08] tracking-[0.01em] text-[#0A1628] max-md:text-[28px] lg:text-left`} style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}>
                   {heading}
                 </h2>
 

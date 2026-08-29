@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { veloriaFont } from '@/app/fonts';
 import type { CollectionPageConfig } from '@/lib/home-data';
 
 export default function CollectionShowcase({ config }: { config: CollectionPageConfig }) {
@@ -29,7 +30,7 @@ export default function CollectionShowcase({ config }: { config: CollectionPageC
           </div>
           <div className="mt-5 h-px w-16 bg-[#0A1628]" />
           <h2
-            className="mt-7 font-display-title font-light uppercase leading-[1.05] tracking-[0.01em] text-[#0A1628]"
+            className={`${veloriaFont.variable} font-test-veloria mt-7 font-light leading-[1.05] tracking-[0.01em] text-[#0A1628]`}
             style={{ fontSize: 'clamp(36px, 5vw, 52px)' }}
           >
             {config.showcaseHeading || 'Collection'}

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Plus_Jakarta_Sans } from 'next/font/google';
 import { supabase } from '@/lib/supabase';
+import { veloriaFont } from '@/app/fonts';
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -152,7 +153,7 @@ export default function FAQ() {
         </RevealDiv>
         <RevealDiv delay={100}>
           <h2
-            className="mt-[18px] font-serif text-[#0A1628] leading-[1.05] tracking-[0.02em] max-md:text-[30px]"
+            className={`${veloriaFont.variable} font-test-veloria mt-[18px] text-[#0A1628] leading-[1.05] tracking-[0.02em] max-md:text-[30px]`}
             style={{ fontSize: 'clamp(30px, 5.5vw, 72px)' }}
           >
             {section.title || 'Frequently Asked Questions'}
