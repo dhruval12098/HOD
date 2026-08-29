@@ -127,10 +127,7 @@ export default function Collection({ items = [] }: CollectionProps) {
                 <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,22,40,0.06)_0%,rgba(10,22,40,0.18)_48%,rgba(10,22,40,0.76)_100%)]" />
 
                 <div className="absolute inset-x-0 bottom-0 z-[1] p-3 sm:p-5">
-                  <div className="-translate-y-1 text-[7px] font-medium uppercase tracking-[0.18em] text-white/72 sm:text-[9px]">
-                    {panel.label}
-                  </div>
-                  <h3 className="mt-1 font-serif text-[16px] font-normal leading-[1.05] text-white min-[420px]:text-[19px] sm:mt-1.5 sm:text-[28px]">
+                  <h3 className="font-serif text-[16px] font-normal leading-[1.05] text-white min-[420px]:text-[19px] sm:text-[28px]">
                     {panel.name}
                   </h3>
                   <div className="mt-1.5 inline-flex items-center gap-1.5 text-[7px] font-medium uppercase tracking-[0.16em] text-white/92 sm:mt-2 sm:gap-2.5 sm:text-[10px]">
