@@ -16,9 +16,12 @@ import { useCurrency } from '@/context/CurrencyContext';
 import { getCollectionHref } from '@/lib/browse-context';
 import { supabase } from '@/lib/supabase';
 import { useCart } from '@/lib/hooks/useCart';
-import { getProductKey } from '@/lib/product-keys';
+import { getProductKey, type CartProductSnapshot } from '@/lib/product-keys';
 import type { StorefrontProduct } from '@/lib/catalog-products';
 import { clearLoveLetterDraft, readLoveLetterDraft, type LoveLetterDraft } from '@/lib/love-letter';
+import { PromotionBanner, type StorefrontPromotion } from '@/components/commerce/PromotionBanner';
+
+const APPLIED_COUPON_KEY = 'hod_applied_coupon'
 
 type RazorpayCheckoutSuccess = {
   razorpay_payment_id: string
@@ -177,7 +180,7 @@ const EMPTY_PROFILE_FORM: CheckoutProfileForm = {
 export default function CheckoutPageClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { items: cartItems, clearCart } = useCart();
+  const { items: cartItems, clearCart, isHydrated: isCartHydrated } = useCart();
   const { currencyCode, format } = useCurrency();
   const [currentStep, setCurrentStep] = useState(0);
   const [sessionLoading, setSessionLoading] = useState(true);
@@ -197,8 +200,15 @@ export default function CheckoutPageClient() {
     discountType: 'percentage' | 'fixed'
     discountValue: number
     discountAmount: number
+    rewardType?: 'percentage' | 'fixed' | 'free_gift'
+    minimumOrderAmount?: number
+    gift?: { productId: string; name: string; slug: string; sku: string | null; imageUrl: string; originalUnitPrice: number; variantData: Record<string, unknown> } | null
+    bannerTitle?: string | null
+    bannerDescription?: string | null
+    bannerImageUrl?: string
   } | null>(null);
   const [couponLoading, setCouponLoading] = useState(false);
+  const [promotions, setPromotions] = useState<StorefrontPromotion[]>([])
   const [pendingPaymentSession, setPendingPaymentSession] = useState<PendingPaymentSession | null>(null)
   const [chargeQuote, setChargeQuote] = useState<CheckoutChargeQuote | null>(null)
   const [quoteStatus, setQuoteStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle')
@@ -209,10 +219,11 @@ export default function CheckoutPageClient() {
     couponDiscountAmount: number
     totalAmount: number
     lines: Array<{ slug: string; unitPrice: number; quantity: number }>
+    gift?: { productId: string; name: string; slug: string; sku: string | null; imageUrl: string; originalUnitPrice: number; variantData: Record<string, unknown> } | null
   } | null>(null)
   const [postalLookup, setPostalLookup] = useState<CheckoutPostalLookupState | null>(null)
   const [postalAreaOptions, setPostalAreaOptions] = useState<CheckoutPostalAreaOption[]>([])
-  const [cartProducts, setCartProducts] = useState<Array<Pick<StorefrontProduct, 'id' | 'dbId' | 'slug' | 'name' | 'imageUrl' | 'priceFrom'>>>([]);
+  const [cartProducts, setCartProducts] = useState<CartProductSnapshot[]>([]);
   const [taxMap, setTaxMap] = useState<Record<string, { gstLabel: string; gstPercentage: number }>>({});
   const lastPostalAutofillRef = useRef<{
     country: string
@@ -225,6 +236,16 @@ export default function CheckoutPageClient() {
   const checkoutAttemptKeyRef = useRef<string | null>(null)
   const lastPostalLookupKeyRef = useRef<string>('')
   const cartMode = searchParams.get('mode') === 'cart';
+
+  useEffect(() => {
+    void fetch('/api/public/promotions', { cache: 'no-store' }).then((response) => response.json()).then((payload) => setPromotions(Array.isArray(payload?.items) ? payload.items : [])).catch(() => {})
+    if (!cartMode) {
+      setAppliedCoupon(null)
+      setCouponCodeInput('')
+      return
+    }
+    try { const stored = localStorage.getItem(APPLIED_COUPON_KEY); if (stored) { const parsed = JSON.parse(stored); setAppliedCoupon(parsed); setCouponCodeInput(parsed.code || '') } } catch {}
+  }, [cartMode])
 
   const singleItem = useMemo<CheckoutDisplayItem>(() => ({
     name: searchParams.get('name') ?? 'Selected Piece',
@@ -244,10 +265,12 @@ export default function CheckoutPageClient() {
   }), [searchParams, taxInfo]);
 
   useEffect(() => {
-    if (!cartMode) return;
+    if (!cartMode || !isCartHydrated) return;
+    const legacy = cartItems.filter((item) => !item.snapshot)
+    if (!legacy.length) { setCartProducts([]); return }
     let ignore = false;
     void (async () => {
-      const response = await fetch('/api/public/products', { cache: 'no-store' });
+      const response = await fetch('/api/public/products/cart', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ slugs: legacy.map((item) => item.productSlug).filter(Boolean), ids: legacy.map((item) => item.productKey).filter(Boolean) }) });
       const payload = await response.json().catch(() => null);
       if (!ignore && response.ok && Array.isArray(payload?.items)) {
         setCartProducts(payload.items);
@@ -256,13 +279,13 @@ export default function CheckoutPageClient() {
     return () => {
       ignore = true;
     };
-  }, [cartMode]);
+  }, [cartItems, cartMode, isCartHydrated]);
 
   const resolvedCartItems = useMemo(() => {
     if (!cartMode) return [];
     return cartItems
       .map((entry) => {
-        const product = cartProducts.find((candidate) => getProductKey(candidate) === entry.productKey || candidate.slug === entry.productSlug);
+        const product = entry.snapshot || cartProducts.find((candidate) => getProductKey(candidate) === entry.productKey || candidate.slug === entry.productSlug);
         if (!product) return null;
         return { entry, product };
       })
@@ -426,6 +449,12 @@ export default function CheckoutPageClient() {
           setAuthoritativePricing(null)
           setQuoteStatus('error')
           setQuoteError(response.status >= 500 ? 'We could not confirm pricing right now. Please try again shortly.' : payload?.error || 'One or more products need your attention before checkout.')
+          if (appliedCoupon && response.status < 500) {
+            setAppliedCoupon(null)
+            setCouponCodeInput('')
+            if (cartMode) localStorage.removeItem(APPLIED_COUPON_KEY)
+            setErrorMessage(payload?.error || 'This coupon is not valid for the current checkout.')
+          }
         }
       } catch {
         if (!ignore) {
@@ -440,7 +469,7 @@ export default function CheckoutPageClient() {
     return () => {
       ignore = true
     }
-  }, [appliedCoupon, checkoutItems, currencyCode, customerForm.country])
+  }, [appliedCoupon, cartMode, checkoutItems, currencyCode, customerForm.country])
 
   const setPostalCodeFieldError = useCallback((message?: string) => {
     setFieldErrors((current) => {
@@ -1038,6 +1067,7 @@ export default function CheckoutPageClient() {
 
       setAppliedCoupon(payload.coupon)
       setCouponCodeInput(payload.coupon.code)
+      if (cartMode) localStorage.setItem(APPLIED_COUPON_KEY, JSON.stringify(payload.coupon))
       setErrorMessage('')
     } catch {
       setErrorMessage('We could not validate that coupon. Check your connection and try again.')
@@ -1049,6 +1079,7 @@ export default function CheckoutPageClient() {
   const handleRemoveCoupon = () => {
     setAppliedCoupon(null)
     setCouponCodeInput('')
+    if (cartMode) localStorage.removeItem(APPLIED_COUPON_KEY)
   }
 
   if (sessionLoading) {
@@ -1255,6 +1286,7 @@ export default function CheckoutPageClient() {
 
           <div className="lg:sticky lg:top-[140px] lg:self-start">
             <div className="space-y-4">
+              {(promotions[0] || (appliedCoupon ? { id: appliedCoupon.id, code: appliedCoupon.code, title: appliedCoupon.title, rewardType: appliedCoupon.rewardType || appliedCoupon.discountType, discountValue: appliedCoupon.discountValue, minimumOrderAmount: appliedCoupon.minimumOrderAmount || 0, bannerTitle: appliedCoupon.bannerTitle, bannerDescription: appliedCoupon.bannerDescription, bannerImageUrl: appliedCoupon.bannerImageUrl, gift: appliedCoupon.gift ? { name: appliedCoupon.gift.name, slug: appliedCoupon.gift.slug, sku: appliedCoupon.gift.sku, imageUrl: appliedCoupon.gift.imageUrl, variantLabel: String(appliedCoupon.gift.variantData?.label || '') } : null } : null)) ? <PromotionBanner promotion={(promotions.find((item) => item.id === appliedCoupon?.id) || promotions[0] || { id: appliedCoupon!.id, code: appliedCoupon!.code, title: appliedCoupon!.title, rewardType: appliedCoupon!.rewardType || appliedCoupon!.discountType, discountValue: appliedCoupon!.discountValue, minimumOrderAmount: appliedCoupon!.minimumOrderAmount || 0, bannerTitle: appliedCoupon!.bannerTitle, bannerDescription: appliedCoupon!.bannerDescription, bannerImageUrl: appliedCoupon!.bannerImageUrl, gift: appliedCoupon!.gift ? { name: appliedCoupon!.gift.name, slug: appliedCoupon!.gift.slug, sku: appliedCoupon!.gift.sku, imageUrl: appliedCoupon!.gift.imageUrl, variantLabel: String(appliedCoupon!.gift.variantData?.label || '') } : null }) as StorefrontPromotion} subtotal={subtotal} applied={Boolean(appliedCoupon)} /> : null}
               <div className="rounded-[24px] border border-[#e7ebf0] bg-white p-5 shadow-[0_18px_50px_rgba(15,23,42,0.04)] sm:p-6">
                 <div className="text-[18px] font-semibold tracking-[-0.02em] text-[#101828]">Coupon</div>
                 <div className="mt-4 flex gap-2">
@@ -1285,7 +1317,7 @@ export default function CheckoutPageClient() {
                 </div>
                 {appliedCoupon ? (
                   <div className="mt-3 text-sm text-[#12b76a]">
-                    {appliedCoupon.code} applied. You saved {format(appliedCoupon.discountAmount)}.
+                    {appliedCoupon.rewardType === 'free_gift' ? `${appliedCoupon.gift?.name || 'Complimentary gift'} added free.` : `${appliedCoupon.code} applied. You saved ${format(appliedCoupon.discountAmount)}.`}
                   </div>
                 ) : null}
               </div>
@@ -1296,6 +1328,7 @@ export default function CheckoutPageClient() {
                   couponDiscount,
                   loveLetter: loveLetterDraft,
                   chargeQuote,
+                  gift: authoritativePricing?.gift || appliedCoupon?.gift || null,
                 }}
               />
             </div>

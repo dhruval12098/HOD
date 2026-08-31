@@ -130,6 +130,11 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-plus-jakarta), Arial, Helvetica, sans-serif !important;
 }
 
+/* Scoped override for promotion banner titles only. */
+.promotion-banner-title {
+  font-family: var(--font-manrope), Manrope, Arial, Helvetica, sans-serif !important;
+}
+
 /* Also force Tailwind's `font-serif` utility to resolve to Forfelast everywhere. */
 .font-serif {
   font-family: var(--serif) !important;

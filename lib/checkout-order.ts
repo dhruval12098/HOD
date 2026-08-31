@@ -162,6 +162,8 @@ type PreparedCheckout = {
   couponId: number | null
   couponCode: string | null
   couponDiscountAmount: number
+  couponRewardType: 'percentage' | 'fixed' | 'free_gift' | null
+  gift: { productId: string; name: string; slug: string; sku: string | null; imageUrl: string; originalUnitPrice: number; variantData: Record<string, unknown> } | null
   totalAmount: number
   loveLetter: CheckoutPayload['loveLetter'] | null
   chargeQuote: Awaited<ReturnType<typeof buildCheckoutChargeQuote>>
@@ -230,6 +232,8 @@ function buildGatewayPayload(input: {
             id: input.prepared.couponId,
             code: input.prepared.couponCode,
             discountAmount: input.prepared.couponDiscountAmount,
+            rewardType: input.prepared.couponRewardType,
+            gift: input.prepared.gift,
           }
         : null,
       loveLetter: input.payload.loveLetter || null,
@@ -341,7 +345,7 @@ export async function prepareCheckoutPayload({
   })
   if (selectionError) return { error: selectionError, status: 400 as const }
 
-  const { subtotalAmount, gstAmount, gstLabel, gstPercentage, couponId, couponCode, couponDiscountAmount, totalAmount } = pricing
+  const { subtotalAmount, gstAmount, gstLabel, gstPercentage, couponId, couponCode, couponDiscountAmount, couponRewardType, gift, totalAmount } = pricing
   const loveLetter = payload?.loveLetter ?? null
   const customer = payload?.customer ?? {}
   const resolvedCustomer = {
@@ -395,6 +399,8 @@ export async function prepareCheckoutPayload({
       couponId,
       couponCode,
       couponDiscountAmount,
+      couponRewardType,
+      gift,
       totalAmount,
       loveLetter,
       chargeQuote,
@@ -419,7 +425,7 @@ export async function createPendingOrder({
   const gatewayPayload = buildGatewayPayload({ payload, prepared, razorpayOrderId })
   const notes = [
     'Created from Razorpay checkout flow.',
-    prepared.couponCode ? `Coupon selected: ${prepared.couponCode} (-${prepared.couponDiscountAmount}).` : null,
+    prepared.couponCode ? (prepared.couponRewardType === 'free_gift' ? `Gift coupon selected: ${prepared.couponCode}.` : `Coupon selected: ${prepared.couponCode} (-${prepared.couponDiscountAmount}).`) : null,
   ]
     .filter(Boolean)
     .join(' ')
@@ -467,7 +473,7 @@ export async function createPendingOrder({
       print_status: prepared.loveLetter.wantsLetter ? 'pending' : 'skipped',
     }
     : null
-  const itemInputs = prepared.normalizedItems.map(({ entry, product, quantity, unitPrice, subtotalAmount, gstSlabId, gstPercentage, gstAmount, selectedCustomDropdowns }) => ({
+  const itemInputs: Array<Record<string, unknown>> = prepared.normalizedItems.map(({ entry, product, quantity, unitPrice, subtotalAmount, gstSlabId, gstPercentage, gstAmount, selectedCustomDropdowns }) => ({
       product_id: product?.id || null,
       product_name: entry.name,
       product_slug: entry.slug,
@@ -485,7 +491,36 @@ export async function createPendingOrder({
       gst_amount: gstAmount,
       image_url: entry.imageUrl || null,
       selected_custom_dropdowns: selectedCustomDropdowns,
+      item_type: 'regular',
+      promotion_coupon_id: null,
+      original_unit_price: null,
+      promotion_metadata: {},
     }))
+  if (prepared.gift && prepared.couponId && prepared.couponCode) {
+    itemInputs.push({
+      product_id: prepared.gift.productId,
+      product_name: prepared.gift.name,
+      product_slug: prepared.gift.slug,
+      sku: prepared.gift.sku,
+      quantity: 1,
+      unit_price: 0,
+      line_total: 0,
+      selected_metal: typeof prepared.gift.variantData.label === 'string' ? prepared.gift.variantData.label : null,
+      selected_purity: null,
+      selected_size_or_fit: null,
+      selected_gemstone: null,
+      selected_carat: null,
+      gst_slab_id: null,
+      gst_percentage: 0,
+      gst_amount: 0,
+      image_url: prepared.gift.imageUrl || null,
+      selected_custom_dropdowns: [],
+      item_type: 'free_gift',
+      promotion_coupon_id: prepared.couponId,
+      original_unit_price: prepared.gift.originalUnitPrice,
+      promotion_metadata: { coupon_code: prepared.couponCode, reward_type: 'free_gift', variant: prepared.gift.variantData },
+    })
+  }
 
   const { data: order, error: orderError } = await adminClient
     .rpc('create_pending_order_atomic', {

@@ -1,6 +1,7 @@
 import { unstable_cache } from 'next/cache';
 import { createClient } from '@supabase/supabase-js';
 import { formatUsd } from '@/lib/money';
+import { buildOptionPath, buildSubcategoryPath } from '@/lib/catalog-paths';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -380,10 +381,15 @@ function buildDiscoverSubcategoryHref(args: {
     });
   }
 
-  params.set('subcategory', subcategory.slug);
-
   const category = categoriesById.get(subcategory.category_id);
-  return category?.slug ? buildCategoryCollectionHref(category.slug, params) : `/shop?${params.toString()}`;
+  if (category?.slug) {
+    const path = buildSubcategoryPath(category, subcategory);
+    const query = params.toString();
+    return query ? `${path}?${query}` : path;
+  }
+
+  params.set('subcategory', subcategory.slug);
+  return `/shop?${params.toString()}`;
 }
 
 function buildDiscoverOptionHref(args: {
@@ -402,13 +408,16 @@ function buildDiscoverOptionHref(args: {
     });
   }
 
-  if (subcategory?.slug) {
-    params.set('subcategory', subcategory.slug);
-  }
-  params.set('option', option.slug);
-
   const category = subcategory ? categoriesById.get(subcategory.category_id) : null;
-  return category?.slug ? buildCategoryCollectionHref(category.slug, params) : `/shop?${params.toString()}`;
+  if (category?.slug && subcategory?.slug) {
+    const path = buildOptionPath(category, subcategory, option);
+    const query = params.toString();
+    return query ? `${path}?${query}` : path;
+  }
+
+  if (subcategory?.slug) params.set('subcategory', subcategory.slug);
+  params.set('option', option.slug);
+  return `/shop?${params.toString()}`;
 }
 
 function buildDiscoverFilterHref(filters: Record<string, string | null | undefined>) {

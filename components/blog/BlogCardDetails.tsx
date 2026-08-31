@@ -31,7 +31,7 @@ export function BlogCardDetails({
     return (
       <div className={`${compact ? "p-4 lg:px-5 lg:py-4" : "p-5 sm:px-6 sm:py-5"} flex shrink-0 flex-col`}>
         <h2
-          className={`${compact ? "line-clamp-2 text-[16px] leading-[1.2] lg:text-[18px]" : "line-clamp-2 text-[clamp(22px,2vw,30px)] leading-[1.2]"} blog-title-font font-semibold tracking-[-0.025em] text-[#0A1628] [&_em]:font-[inherit] [&_em]:italic`}
+          className={`${compact ? "line-clamp-2 text-[16px] leading-[1.2] lg:text-[18px]" : "line-clamp-2 text-[clamp(22px,2vw,30px)] leading-[1.2]"} blog-title-font font-normal tracking-[-0.025em] text-[#0A0A0A] [&_em]:font-[inherit] [&_em]:italic`}
           dangerouslySetInnerHTML={{ __html: sanitizeEmphasisTitle(post.title) }}
         />
         <span className="mt-3 inline-flex w-fit items-center gap-2 border-b border-[#0A1628]/30 pb-1 font-[var(--font-manrope)] text-[11px] font-bold uppercase tracking-[0.14em] text-[#0A1628] transition-[gap,border-color] duration-300 group-hover:gap-3 group-hover:border-[#0A1628] lg:text-[12px]">

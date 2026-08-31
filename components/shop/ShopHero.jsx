@@ -40,13 +40,17 @@ export default function ShopHero({
 
   const matchedSectionId = useMemo(() => {
     const currentSubcategory = activeFilters.subcategory?.[0] || searchParams?.get('subcategory');
-    if (!currentSubcategory) return '';
 
     for (const section of browseSections) {
       if (section.href) {
         try {
           const target = new URL(section.href, 'https://houseofdiams.local');
-          if (target.pathname === pathname && target.searchParams.get('subcategory') === currentSubcategory) {
+          const legacyMatch = currentSubcategory &&
+            target.pathname === pathname &&
+            target.searchParams.get('subcategory') === currentSubcategory;
+          const nestedMatch = target.search === '' &&
+            (target.pathname === pathname || pathname.startsWith(`${target.pathname}/`));
+          if (legacyMatch || nestedMatch) {
             return section.id;
           }
         } catch {}
@@ -55,7 +59,10 @@ export default function ShopHero({
       for (const option of section.options ?? []) {
         try {
           const target = new URL(option.href, 'https://houseofdiams.local');
-          if (target.pathname === pathname && target.searchParams.get('subcategory') === currentSubcategory) {
+          const legacyMatch = currentSubcategory &&
+            target.pathname === pathname &&
+            target.searchParams.get('subcategory') === currentSubcategory;
+          if (legacyMatch || target.pathname === pathname) {
             return section.id;
           }
         } catch {
@@ -85,6 +92,8 @@ export default function ShopHero({
   const isOptionActive = (href) => {
     try {
       const target = new URL(href, 'https://houseofdiams.local');
+      if (target.search === '' && target.pathname === pathname) return true;
+
       const filterKeys = ['category', 'subcategory', 'option', 'shape', 'style', 'metal', 'certificate'];
       const targetEntries = filterKeys
         .map((key) => [key, target.searchParams.get(key)])

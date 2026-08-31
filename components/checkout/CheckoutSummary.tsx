@@ -54,6 +54,8 @@ export default function CheckoutSummary({ summary }: { summary: CheckoutSummaryD
         ))}
       </div>
 
+      {summary.gift ? <div className="mt-4 rounded-[20px] border border-[#d8bd80] bg-[#fffaf0] p-4"><div className="flex gap-4"><div className="h-20 w-20 overflow-hidden rounded-[16px] bg-white">{summary.gift.imageUrl ? <img src={summary.gift.imageUrl} alt={summary.gift.name} className="h-full w-full object-cover" /> : null}</div><div className="flex-1"><div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#9a7129]">Free gift</div><div className="mt-1 font-semibold text-[#101828]">{summary.gift.name}</div><div className="mt-1 text-sm text-[#667085]"><span className="line-through">{format(summary.gift.originalUnitPrice)}</span> <span className="ml-2 font-semibold text-[#12b76a]">Free</span></div><div className="mt-1 text-xs text-[#667085]">Quantity: 1</div></div></div></div> : null}
+
       {summary.loveLetter ? (
         <div className="mt-5 rounded-[20px] border border-[#eaecf0] bg-[#fcfcfd] p-4">
           <div className="text-[11px] font-medium uppercase tracking-[0.24em] text-[#98a2b3]">Love Letter</div>

@@ -57,6 +57,7 @@ export async function POST(request: Request) {
       couponDiscountAmount: pricing.couponDiscountAmount,
       totalAmount: pricing.totalAmount,
       lines: pricing.lines.map((line) => ({ slug: line.product.slug, unitPrice: line.unitPrice, quantity: line.quantity })),
+      gift: pricing.gift,
     },
   })
 }

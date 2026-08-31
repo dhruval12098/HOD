@@ -1,3 +1,5 @@
+import { buildCategoryPath, buildOptionPath, buildSubcategoryPath } from '@/lib/catalog-paths'
+
 export type NavbarSectionType =
   | 'category_list'
   | 'manual_links'
@@ -222,7 +224,7 @@ function getMetalType(entry: Pick<PublicMetalRow, 'slug' | 'name'>): 'yellow' | 
 }
 
 function buildItemBaseHref(slug: string) {
-  return `/${slug}`
+  return buildCategoryPath({ slug })
 }
 
 function buildCategoryFilterHref(itemHref: string, filterKey: 'shape' | 'style' | 'certificate' | 'metal', value: string) {
@@ -239,11 +241,11 @@ function slugifyValue(value: string) {
 }
 
 function buildCategoryListLinks(args: {
-  itemHref: string
+  category: PublicCategoryRow
   subcategory: PublicSubcategoryRow
   options: PublicOptionRow[]
 }): NavbarRenderLink[] {
-  const { itemHref, subcategory, options } = args
+  const { category, subcategory, options } = args
   return options
     .filter((entry) => entry.subcategory_id === subcategory.id && entry.status === 'active')
     .sort((left, right) => left.display_order - right.display_order)
@@ -251,7 +253,7 @@ function buildCategoryListLinks(args: {
       const iconUrl = resolveStoragePublicUrl(entry.icon_svg_path)
       return {
         label: entry.name,
-        href: `${itemHref}?subcategory=${subcategory.slug}&option=${entry.slug}`,
+        href: buildOptionPath(category, subcategory, entry),
         iconUrl,
         type: iconUrl ? 'icon' : 'default',
       }
@@ -369,6 +371,9 @@ export function buildNavbarRenderItems(args: {
     .sort((left, right) => left.display_order - right.display_order)
     .map((item) => {
       const itemHref = item.direct_link_url ?? buildItemBaseHref(item.slug)
+      const itemCategorySlug = (item.linked_category_id ? categoriesById.get(item.linked_category_id)?.slug : null) ?? item.slug
+      const itemCategory = (item.linked_category_id ? categoriesById.get(item.linked_category_id) : null)
+        ?? categories.find((entry) => entry.slug === itemCategorySlug)
       const visibleSections = sections
         .filter((entry) => entry.navbar_item_id === item.id && entry.status === 'active')
         .sort((left, right) => {
@@ -400,7 +405,7 @@ export function buildNavbarRenderItems(args: {
             ? [
                 {
                   label: injectedCategory.name,
-                  href: `/${injectedCategory.slug}`,
+                  href: buildCategoryPath(injectedCategory),
                   isCategoryLink: true,
                 },
               ]
@@ -492,7 +497,7 @@ export function buildNavbarRenderItems(args: {
               links: [
                 {
                   label: section.title,
-                  href: `/${section.source_category_slug}`,
+                  href: buildCategoryPath({ slug: section.source_category_slug }),
                   isCategoryLink: true,
                 },
               ],
@@ -504,11 +509,13 @@ export function buildNavbarRenderItems(args: {
 
           const links = subcategory
             ? filteredSubcategoryOptions.length > 0
-              ? buildCategoryListLinks({ itemHref, subcategory, options: filteredSubcategoryOptions })
+              ? itemCategory
+                ? buildCategoryListLinks({ category: itemCategory, subcategory, options: filteredSubcategoryOptions })
+                : []
               : [
                   {
                     label: subcategory.name,
-                    href: `${itemHref}?subcategory=${subcategory.slug}`,
+                    href: itemCategory ? buildSubcategoryPath(itemCategory, subcategory) : itemHref,
                     iconUrl: resolveStoragePublicUrl(subcategory.icon_svg_path),
                     type: resolveStoragePublicUrl(subcategory.icon_svg_path) ? 'icon' : 'default',
                   } satisfies NavbarRenderLink,
@@ -535,16 +542,18 @@ export function buildNavbarRenderItems(args: {
           ? subcategories
               .filter((entry) => entry.category_id === item.linked_category_id && entry.status === 'active')
               .sort((left, right) => left.display_order - right.display_order)
-              .map((subcategory, index) => ({
+              .map((subcategory) => ({
                 id: `fallback-${item.id}-${subcategory.id}`,
                 title: subcategory.name,
                 iconUrl: resolveStoragePublicUrl(subcategory.icon_svg_path),
                 type: 'category_list' as const,
-                links: buildCategoryListLinks({
-                  itemHref,
-                  subcategory,
-                  options: optionsBySubcategory.get(subcategory.id) ?? [],
-                }),
+                links: itemCategory
+                  ? buildCategoryListLinks({
+                      category: itemCategory,
+                      subcategory,
+                      options: optionsBySubcategory.get(subcategory.id) ?? [],
+                    })
+                  : [],
                 showAsFilter: false,
               }))
               .filter((section) => (section.links?.length ?? 0) > 0)

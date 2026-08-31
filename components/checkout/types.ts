@@ -34,6 +34,7 @@ export type CheckoutSummaryData = {
   couponDiscount?: number
   loveLetter?: LoveLetterDraft | null
   chargeQuote?: CheckoutChargeQuote | null
+  gift?: { name: string; slug: string; imageUrl?: string; originalUnitPrice: number; variantData?: Record<string, unknown> } | null
 }
 
 export type CheckoutProfileForm = {

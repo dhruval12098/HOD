@@ -20,7 +20,7 @@ export default function BlogPostPage({
   const router = useRouter()
 
   return (
-    <div className="min-h-screen bg-[#faf7f2] font-[var(--font-manrope)] text-[#0A1628]">
+    <div className="min-h-screen bg-[var(--theme-base)] font-[var(--font-manrope)] text-[#0A1628]">
       <BlogPostBack onBack={() => router.push('/blog')} />
       <BlogPostHero post={post} />
 

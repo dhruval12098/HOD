@@ -89,6 +89,10 @@ export default function ProductTabs({
     () => visibleSections.flatMap((section) => section.rows.map(([label, value]) => ({ label, value, section: section.title }))),
     [visibleSections]
   );
+  const accordionDetailsRows = useMemo(
+    () => detailsRows.filter((row) => !['metal', 'crafted in'].includes(String(row.label).trim().toLowerCase())),
+    [detailsRows]
+  );
   const visibleFaqs = useMemo(
     () => faqItems.filter((item) => item?.question?.trim() && item?.answer?.trim()),
     [faqItems]
@@ -126,8 +130,9 @@ export default function ProductTabs({
       <div className="min-w-0">
         {showSections ? (
           <div className="animate-[fadeUp_0.4s_ease]">
-            {detailsAccordion && detailsRows.length > 0 ? (
-              <div className="overflow-hidden border-y border-[rgba(10,22,40,0.10)] bg-transparent">
+            {detailsAccordion ? (
+              description || accordionDetailsRows.length > 0 ? (
+                <div className="overflow-hidden border-y border-[rgba(10,22,40,0.10)] bg-transparent">
                 {description ? (
                   <>
                     <button
@@ -151,32 +156,37 @@ export default function ProductTabs({
                     </div>
                   </>
                 ) : null}
-                <button
-                  type="button"
-                  onClick={() => togglePanel('details')}
-                  className="flex w-full items-center justify-between border-b border-[rgba(10,22,40,0.08)] px-1 py-4 text-left"
-                >
-                  <div className="flex items-center font-sans text-[16px] font-medium text-[#0A1628]">
-                    Details
-                  </div>
-                  <ChevronDown className={`h-5 w-5 text-[#8B94A5] transition-transform duration-300 ${openPanels.details ? 'rotate-180' : ''}`} />
-                </button>
-                <div className={`${openPanels.details ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'} grid transition-all duration-300`}>
-                  <div className="overflow-hidden">
-                    <div className="px-1 py-5">
-                      <div className="mb-5 font-sans text-[13px] font-semibold text-[#0A1628]">Details</div>
-                      <div className="space-y-3">
-                        {detailsRows.map((row, index) => (
-                          <div key={`${row.label}-${index}`} className="grid grid-cols-[minmax(120px,0.9fr)_minmax(0,1.2fr)] gap-5 font-sans text-[13px] leading-[1.35]">
-                            <div className="text-[#6A6A6A]">{row.label}</div>
-                            <div className="font-medium text-[#0A1628]">{row.value}</div>
+                {accordionDetailsRows.length > 0 ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => togglePanel('details')}
+                      className="flex w-full items-center justify-between border-b border-[rgba(10,22,40,0.08)] px-1 py-4 text-left"
+                    >
+                      <div className="flex items-center font-sans text-[16px] font-medium text-[#0A1628]">
+                        Details
+                      </div>
+                      <ChevronDown className={`h-5 w-5 text-[#8B94A5] transition-transform duration-300 ${openPanels.details ? 'rotate-180' : ''}`} />
+                    </button>
+                    <div className={`${openPanels.details ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'} grid transition-all duration-300`}>
+                      <div className="overflow-hidden">
+                        <div className="px-1 py-5">
+                          <div className="mb-5 font-sans text-[13px] font-semibold text-[#0A1628]">Details</div>
+                          <div className="space-y-3">
+                            {accordionDetailsRows.map((row, index) => (
+                              <div key={`${row.label}-${index}`} className="grid grid-cols-[minmax(120px,0.9fr)_minmax(0,1.2fr)] gap-5 font-sans text-[13px] leading-[1.35]">
+                                <div className="text-[#6A6A6A]">{row.label}</div>
+                                <div className="font-medium text-[#0A1628]">{row.value}</div>
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  </>
+                ) : null}
                 </div>
-              </div>
+              ) : null
             ) : cardGrid && detailsRows.length > 0 ? (
               <div className="rounded-[28px] bg-[#F5F6F9] p-5 shadow-[0_18px_45px_rgba(10,22,40,0.04)] sm:p-6">
                 <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">

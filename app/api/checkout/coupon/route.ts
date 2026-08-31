@@ -31,7 +31,7 @@ export async function POST(request: Request) {
   const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
   const { data: coupon, error } = await supabase
     .from('coupons')
-    .select('id, code, title, discount_type, discount_value, usage_limit, usage_count, is_active')
+    .select('id, code, title, discount_type, discount_value, reward_type, minimum_order_amount, gift_product_id, gift_variant_data, gift_banner_image_url, banner_title, banner_description, usage_limit, usage_count, is_active')
     .eq('code', code)
     .maybeSingle()
 
@@ -64,6 +64,12 @@ export async function POST(request: Request) {
       discountType: coupon.discount_type,
       discountValue: Number(coupon.discount_value || 0),
       discountAmount: pricingResult.data.couponDiscountAmount,
+      rewardType: pricingResult.data.couponRewardType,
+      minimumOrderAmount: Number(coupon.minimum_order_amount ?? 0),
+      gift: pricingResult.data.gift,
+      bannerTitle: coupon.banner_title,
+      bannerDescription: coupon.banner_description,
+      bannerImageUrl: coupon.gift_banner_image_url || pricingResult.data.gift?.imageUrl || '',
     },
   })
 }

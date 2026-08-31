@@ -12,6 +12,8 @@ import { filterStorefrontProducts, getStorefrontProducts, toStorefrontProductCar
 import { createPageMetadata } from '@/lib/seo'
 import JsonLd from '@/components/seo/JsonLd'
 import { createBreadcrumbSchema } from '@/lib/structured-data'
+import { buildCategoryPath, buildOptionPath, buildSubcategoryPath } from '@/lib/catalog-paths'
+import type { ResolvedCatalogTaxonomy } from '@/lib/catalog-taxonomy'
 
 function slugifyValue(value: string) {
   return value
@@ -195,6 +197,11 @@ function deriveSectionFilterHref(
       const target = new URL(option.href, 'https://houseofdiams.local')
       const subcategory = target.searchParams.get('subcategory')
       if (subcategory) return `/${currentCategorySlug}?subcategory=${subcategory}`
+
+      const segments = target.pathname.split('/').filter(Boolean)
+      if (segments[0] === currentCategorySlug && segments[1]) {
+        return `/${currentCategorySlug}/${segments[1]}`
+      }
     } catch {}
   }
 
@@ -228,7 +235,7 @@ export async function generateMetadata({
   const metadata = createPageMetadata({
     title: category.name,
     description: category.banner_subtitle || `Browse ${category.name} from the live catalog.`,
-    path: `/${category.slug}`,
+    path: buildCategoryPath(category),
     image: toPublicUrl(category.banner_desktop_image_path),
   })
 
@@ -243,12 +250,33 @@ export async function generateMetadata({
   }
 }
 
+export async function generateCatalogMetadata(
+  taxonomy: ResolvedCatalogTaxonomy,
+  query: Record<string, string | string[] | undefined>
+): Promise<Metadata> {
+  const path = taxonomy.option
+    ? buildOptionPath(taxonomy.category, taxonomy.subcategory, taxonomy.option)
+    : buildSubcategoryPath(taxonomy.category, taxonomy.subcategory)
+  const title = taxonomy.option?.name ?? taxonomy.subcategory.name
+  const metadata = createPageMetadata({
+    title: `${title} | ${taxonomy.category.name}`,
+    description: `Browse ${title} in ${taxonomy.category.name}.`,
+    path,
+  })
+
+  return hasFilterQuery(query)
+    ? { ...metadata, robots: { index: false, follow: true } }
+    : metadata
+}
+
 export default async function CategoryCollectionPage({
   params,
   searchParams,
+  taxonomy = null,
 }: {
   params: Promise<{ categorySlug: string }>
   searchParams: Promise<Record<string, string | string[] | undefined>>
+  taxonomy?: ResolvedCatalogTaxonomy | null
 }) {
   const { categorySlug } = await params
   const category = await getCategoryBySlug(categorySlug)
@@ -371,10 +399,10 @@ export default async function CategoryCollectionPage({
         id: `fallback-${subcategory.id}`,
         title: subcategory.name,
         iconUrl: toPublicUrl(subcategory.icon_svg_path) ?? null,
-        href: `/${categorySlug}?subcategory=${subcategory.slug}`,
+        href: buildSubcategoryPath(category, subcategory),
         options: subcategoryOptions.map((option) => ({
           label: option.name,
-          href: `/${categorySlug}?subcategory=${subcategory.slug}&option=${option.slug}`,
+          href: buildOptionPath(category, subcategory, option),
           type: option.icon_svg_path ? ('icon' as const) : ('default' as const),
           iconUrl: toPublicUrl(option.icon_svg_path) ?? null,
         })),
@@ -392,8 +420,8 @@ export default async function CategoryCollectionPage({
   const filteredProducts = filterStorefrontProducts(categoryProducts, {
     productLane: resolvedProductLane,
     categorySlug,
-    subcategorySlug: typeof query.subcategory === 'string' ? query.subcategory : null,
-    optionSlug: typeof query.option === 'string' ? query.option : null,
+    subcategorySlug: taxonomy?.subcategory.slug ?? (typeof query.subcategory === 'string' ? query.subcategory : null),
+    optionSlug: taxonomy?.option?.slug ?? (typeof query.option === 'string' ? query.option : null),
     shapeSlug: typeof query.shape === 'string' ? query.shape : null,
     styleSlug: typeof query.style === 'string' ? query.style : null,
     metalSlug: typeof query.metal === 'string' ? query.metal : null,
@@ -405,13 +433,19 @@ export default async function CategoryCollectionPage({
       <JsonLd
         data={createBreadcrumbSchema([
           { name: 'Home', path: '/' },
-          { name: category.name, path: `/${category.slug}` },
+          { name: category.name, path: buildCategoryPath(category) },
+          ...(taxonomy
+            ? [{ name: taxonomy.subcategory.name, path: buildSubcategoryPath(taxonomy.category, taxonomy.subcategory) }]
+            : []),
+          ...(taxonomy?.option
+            ? [{ name: taxonomy.option.name, path: buildOptionPath(taxonomy.category, taxonomy.subcategory, taxonomy.option) }]
+            : []),
         ])}
       />
       <ShopClient
         products={filteredProducts.map(toStorefrontProductCard)}
         sourceProducts={categoryProducts.map(toStorefrontProductCard)}
-        heroTitle={category.banner_title || category.name}
+        heroTitle={taxonomy?.option?.name ?? taxonomy?.subcategory.name ?? category.banner_title ?? category.name}
         heroSubtitle={category.banner_subtitle || `Browse ${category.name} from the live catalog.`}
         heroDesktopImageUrl={toPublicUrl(category.banner_desktop_image_path) || undefined}
         heroMobileImageUrl={toPublicUrl(category.banner_mobile_image_path) || undefined}
@@ -430,8 +464,12 @@ export default async function CategoryCollectionPage({
           }))}
         headerBrowseSections={headerBrowseSections}
         initialFilters={{
-          ...(typeof query.subcategory === 'string' ? { subcategory: [query.subcategory] } : {}),
-          ...(typeof query.option === 'string' ? { option: [query.option] } : {}),
+          ...(taxonomy?.subcategory.slug
+            ? { subcategory: [taxonomy.subcategory.slug] }
+            : typeof query.subcategory === 'string' ? { subcategory: [query.subcategory] } : {}),
+          ...(taxonomy?.option?.slug
+            ? { option: [taxonomy.option.slug] }
+            : typeof query.option === 'string' ? { option: [query.option] } : {}),
           ...(typeof query.shape === 'string' ? { shape: [query.shape] } : {}),
           ...(typeof query.style === 'string' ? { style: [query.style] } : {}),
           ...(typeof query.metal === 'string' ? { metal: [query.metal] } : {}),

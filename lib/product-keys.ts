@@ -31,6 +31,17 @@ export type StoredCartItem = {
   quantity: number
   selection: CartItemSelection
   addedAt: number
+  snapshot?: CartProductSnapshot
+}
+
+export type CartProductSnapshot = {
+  id: string
+  dbId?: string
+  slug: string
+  name: string
+  shortMeta: string
+  imageUrl: string
+  priceFrom: number
 }
 
 export function buildCartItemKey(product: { dbId?: string | null; id?: string | number | null; slug?: string | null }, selection: CartItemSelection) {

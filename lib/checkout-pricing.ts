@@ -1,6 +1,13 @@
 import 'server-only'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+const collectionBucket = process.env.NEXT_PUBLIC_SUPABASE_COLLECTION_BUCKET || 'hod'
+function publicImageUrl(path: unknown) {
+  if (typeof path !== 'string' || !path) return ''
+  return /^https?:\/\//.test(path) ? path : `${supabaseUrl}/storage/v1/object/public/${collectionBucket}/${path}`
+}
+
 export type AuthoritativePricingItem = {
   slug: string
   name?: string
@@ -28,6 +35,7 @@ type ProductRow = {
   product_lane: 'standard' | 'hiphop' | 'collection' | null
   status: string | null
   custom_dropdowns_enabled: boolean | null
+  image_1_path?: string | null
 }
 
 type MetalVariantRow = { id: string; product_id: string; price: number | null }
@@ -62,7 +70,7 @@ export async function resolveAuthoritativeCheckoutPricing({
   const slugs = [...new Set(items.map((item) => item.slug))]
   const { data: productRows, error: productError } = await adminClient
     .from('products')
-    .select('id, slug, name, sku, gst_slab_id, base_price, default_purity_price_id, stock_quantity, allow_checkout, product_lane, status, custom_dropdowns_enabled')
+    .select('id, slug, name, sku, gst_slab_id, base_price, default_purity_price_id, stock_quantity, allow_checkout, product_lane, status, custom_dropdowns_enabled, image_1_path')
     .in('slug', slugs)
 
   if (productError) return { error: productError.message, status: 500 as const }
@@ -172,23 +180,63 @@ export async function resolveAuthoritativeCheckoutPricing({
   let couponId: number | null = null
   let couponCode: string | null = null
   let couponDiscountAmount = 0
+  let couponRewardType: 'percentage' | 'fixed' | 'free_gift' | null = null
+  let gift: {
+    productId: string
+    name: string
+    slug: string
+    sku: string | null
+    imageUrl: string
+    originalUnitPrice: number
+    variantData: Record<string, unknown>
+  } | null = null
 
   if (coupon?.id && coupon?.code) {
     const { data: couponRow, error: couponError } = await adminClient
       .from('coupons')
-      .select('id, code, discount_type, discount_value, usage_limit, usage_count, is_active')
+      .select('id, code, discount_type, discount_value, reward_type, minimum_order_amount, gift_product_id, gift_variant_data, starts_at, ends_at, usage_limit, usage_count, is_active')
       .eq('id', coupon.id)
       .eq('code', coupon.code.trim().toUpperCase())
       .maybeSingle()
     if (couponError) return { error: couponError.message, status: 500 as const }
     if (!couponRow?.is_active) return { error: 'Selected coupon is no longer valid.', status: 400 as const }
+    const now = Date.now()
+    if (couponRow.starts_at && new Date(couponRow.starts_at).getTime() > now) return { error: 'This coupon is not active yet.', status: 400 as const }
+    if (couponRow.ends_at && new Date(couponRow.ends_at).getTime() <= now) return { error: 'This coupon has expired.', status: 400 as const }
     if (couponRow.usage_limit != null && couponRow.usage_count >= couponRow.usage_limit) {
       return { error: 'Coupon usage limit has been reached.', status: 400 as const }
     }
-    const calculated = couponRow.discount_type === 'percentage'
-      ? subtotalAmount * (Number(couponRow.discount_value || 0) / 100)
-      : Number(couponRow.discount_value || 0)
-    couponDiscountAmount = Math.max(0, Math.min(subtotalAmount, Number(calculated.toFixed(2))))
+    couponRewardType = couponRow.reward_type === 'free_gift' ? 'free_gift' : couponRow.reward_type === 'fixed' ? 'fixed' : 'percentage'
+    const minimumOrderAmount = Number(couponRow.minimum_order_amount ?? 0)
+    if (subtotalAmount < minimumOrderAmount) {
+      return { error: `Add $${Number((minimumOrderAmount - subtotalAmount).toFixed(2))} more to use this coupon.`, status: 400 as const }
+    }
+    if (couponRewardType === 'free_gift') {
+      if (!couponRow.gift_product_id) return { error: 'This gift offer is not configured correctly.', status: 400 as const }
+      const { data: giftProduct, error: giftError } = await adminClient
+        .from('products')
+        .select('id, name, slug, sku, status, stock_quantity, base_price, image_1_path, product_lane, allow_checkout')
+        .eq('id', couponRow.gift_product_id)
+        .maybeSingle()
+      if (giftError) return { error: giftError.message, status: 500 as const }
+      if (!giftProduct || giftProduct.status !== 'active' || Number(giftProduct.stock_quantity ?? 0) < 1) return { error: 'The complimentary gift is currently unavailable.', status: 400 as const }
+      const variantData = couponRow.gift_variant_data && typeof couponRow.gift_variant_data === 'object' ? couponRow.gift_variant_data as Record<string, unknown> : {}
+      const variantId = typeof variantData.variant_id === 'string' ? variantData.variant_id : null
+      let originalUnitPrice = Number(variantData.price ?? giftProduct.base_price ?? 0)
+      if (variantId) {
+        const { data: variant } = await adminClient.from('product_metal_variants').select('id, product_id, price').eq('id', variantId).eq('product_id', giftProduct.id).maybeSingle()
+        if (!variant) return { error: 'The selected gift variant is no longer available.', status: 400 as const }
+        originalUnitPrice = Number(variant.price ?? originalUnitPrice)
+      }
+      const alreadyRequested = requestedQuantityByProduct.get(giftProduct.id) || 0
+      if (alreadyRequested + 1 > Number(giftProduct.stock_quantity ?? 0)) return { error: 'The complimentary gift does not have enough stock.', status: 400 as const }
+      gift = { productId: giftProduct.id, name: giftProduct.name, slug: giftProduct.slug, sku: giftProduct.sku, imageUrl: publicImageUrl(variantData.image_url || giftProduct.image_1_path), originalUnitPrice, variantData }
+    } else {
+      const calculated = couponRow.discount_type === 'percentage'
+        ? subtotalAmount * (Number(couponRow.discount_value || 0) / 100)
+        : Number(couponRow.discount_value || 0)
+      couponDiscountAmount = Math.max(0, Math.min(subtotalAmount, Number(calculated.toFixed(2))))
+    }
     couponId = couponRow.id
     couponCode = couponRow.code
   }
@@ -210,6 +258,8 @@ export async function resolveAuthoritativeCheckoutPricing({
       couponId,
       couponCode,
       couponDiscountAmount,
+      couponRewardType,
+      gift,
       totalAmount: Number((Math.max(0, subtotalAmount - couponDiscountAmount) + gstAmount).toFixed(2)),
     },
   } as const

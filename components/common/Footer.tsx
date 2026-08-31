@@ -54,7 +54,6 @@ type ContactInfoRow = {
 const FALLBACK_CONTACT_ROWS: ContactInfoRow[] = [
   { id: 'fallback-email', label: 'Email', value: 'info@houseofdiams.com', href: 'mailto:info@houseofdiams.com' },
   { id: 'fallback-phone', label: 'Phone & WhatsApp', value: '+91 93285 36178', href: 'tel:+919328536178' },
-  { id: 'fallback-surat', label: 'Address', value: 'Surat, Gujarat, India' },
   { id: 'fallback-new-york', label: 'Address', value: '36 W 44th Street, Suite 1000B, New York, 10036, USA' },
 ];
 
@@ -401,8 +400,6 @@ export default function Footer() {
           <BottomLink href="/privacy-policy">Privacy</BottomLink>
           <span className="mx-2">·</span>
           <BottomLink href="/terms">Terms</BottomLink>
-          <span className="mx-2">·</span>
-          <span>Surat, India</span>
         </div>
       </div>
     </footer>

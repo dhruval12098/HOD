@@ -424,7 +424,7 @@ export type StorefrontProductCard = Pick<
   metalsFull: Pick<StorefrontProduct['metalsFull'][number], 'id' | 'name' | 'slug' | 'colorHex' | 'displayLabel'>[]
   metalMediaRows: Array<Pick<ProductMetalMediaRow, 'product_id' | 'metal_id' | 'image_1_path'>>
   metalPurityVariants: Array<
-    Pick<StorefrontProduct['metalPurityVariants'][number], 'id' | 'metalId' | 'metalSlug' | 'isDefault'> & {
+    Pick<StorefrontProduct['metalPurityVariants'][number], 'id' | 'metalId' | 'metalSlug' | 'label' | 'price' | 'isDefault'> & {
       mediaItems: StorefrontProduct['metalPurityVariants'][number]['mediaItems']
     }
   >
@@ -463,10 +463,12 @@ export function toStorefrontProductCard(product: StorefrontProduct): StorefrontP
     shapeOptions: product.shapeOptions,
     metalsFull: product.metalsFull.map(({ id, name, slug, colorHex, displayLabel }) => ({ id, name, slug, colorHex, displayLabel })),
     metalMediaRows: product.metalMediaRows.map(({ product_id, metal_id, image_1_path }) => ({ product_id, metal_id, image_1_path })),
-    metalPurityVariants: product.metalPurityVariants.map(({ id, metalId, metalSlug, isDefault, mediaItems }) => ({
+    metalPurityVariants: product.metalPurityVariants.map(({ id, metalId, metalSlug, label, price, isDefault, mediaItems }) => ({
       id,
       metalId,
       metalSlug,
+      label,
+      price,
       isDefault,
       mediaItems: mediaItems.filter((item) => item.type === 'image' && item.url).slice(0, 1),
     })),

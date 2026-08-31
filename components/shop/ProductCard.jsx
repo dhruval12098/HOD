@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useCurrency } from "@/context/CurrencyContext";
 import { METAL_META } from "@/lib/data/product-config";
+import { useCart } from "@/lib/hooks/useCart";
 
 // ── Gem SVG renderer ──────────────────────────────────────────────────────────
 export function GemSVG({ style, size = 110, color = "#20304A" }) {
@@ -199,16 +200,19 @@ function getMetalSwatchStyle(metal) {
 
 export default function ProductCard({ product, wishlisted, onWishlist, onEnquire, forceLight = false }) {
   const { format } = useCurrency();
+  const { addItem } = useCart();
   const isDark = !forceLight && product.category === "hiphop";
   const gemSize = LARGE_GEM_STYLES.includes(product.gemStyle) ? 140 : 110;
   const metalSwatches = getMetalSwatches(product);
   const visibleMetalSwatches = metalSwatches.slice(0, 3);
   const [activeMetalId, setActiveMetalId] = useState("");
   const [failedImageUrl, setFailedImageUrl] = useState("");
+  const [addedToCart, setAddedToCart] = useState(false);
 
   useEffect(() => {
     setActiveMetalId("");
     setFailedImageUrl("");
+    setAddedToCart(false);
   }, [product?.id, product?.slug]);
 
   const activeMetalSwatch = metalSwatches.find((metal) => metal.id === activeMetalId) || metalSwatches[0] || null;
@@ -216,6 +220,24 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
   const visibleImageUrl = activeImageUrl && activeImageUrl !== failedImageUrl ? activeImageUrl : "";
   const r2PublicBaseUrl = process.env.NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_BASE_URL?.replace(/\/+$/, "") || "";
   const isDirectR2Image = Boolean(r2PublicBaseUrl && visibleImageUrl.startsWith(`${r2PublicBaseUrl}/`));
+  const activeVariant = (product.metalPurityVariants || []).find((variant) => (
+    variant.metalId === activeMetalSwatch?.metalId || variant.metalSlug === activeMetalSwatch?.slug
+  )) || (product.metalPurityVariants || []).find((variant) => variant.isDefault) || product.metalPurityVariants?.[0] || null;
+
+  const handleQuickAdd = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    addItem(product, {
+      metalVariantId: activeVariant?.id || undefined,
+      metal: activeVariant?.label || activeMetalSwatch?.name || undefined,
+      metalSlug: activeVariant?.metalSlug || activeMetalSwatch?.slug || undefined,
+      resolvedPrice: Number(activeVariant?.price ?? product.priceFrom ?? 0),
+      resolvedImageUrl: visibleImageUrl || product.imageUrl || undefined,
+      loveLetter: null,
+    });
+    setAddedToCart(true);
+    window.setTimeout(() => setAddedToCart(false), 1800);
+  };
 
   const visualBorder = isDark ? "rgba(255,255,255,0.12)" : "rgba(10,22,40,0.06)";
   const namColor = isDark ? "#FFFFFF" : "#0A1628";
@@ -606,11 +628,7 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
           </button>
           <button
             type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              window.location.href = `/shop/${product.slug}`;
-            }}
+            onClick={handleQuickAdd}
             style={{
               height: "40px",
               borderRadius: "999px",
@@ -624,7 +642,7 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
               boxShadow: isDark ? "0 8px 18px rgba(0,0,0,0.18)" : "0 8px 18px rgba(10,22,40,0.10)",
             }}
           >
-            Add to Cart
+            {addedToCart ? "Added" : "Add to Cart"}
           </button>
         </div>
       </div>

@@ -10,7 +10,7 @@ export default function BlogClient({ blogPosts = posts }: { blogPosts?: BlogPost
   const safePosts = blogPosts.length > 0 ? blogPosts : posts
 
   return (
-    <div className="min-h-screen bg-[#faf7f2] text-[#0A1628]">
+    <div className="min-h-screen bg-[var(--theme-base)] text-[#0A1628]">
       <section className="mx-auto max-w-[1400px] px-5 pb-20 pt-10 sm:px-7 lg:px-[52px] lg:pb-28 lg:pt-16">
         <div className="mb-10 flex flex-col gap-5 md:mb-12 md:flex-row md:items-end md:justify-between">
           <div className="max-w-[720px]">
@@ -29,6 +29,7 @@ export default function BlogClient({ blogPosts = posts }: { blogPosts?: BlogPost
         <BlogGrid
           posts={safePosts}
           maxPosts={0}
+          simplifiedCards
           onPostClick={(id) => {
             const target = safePosts.find((post) => post.id === id)
             router.push(target?.slug ? `/blog/${target.slug}` : '/blog')

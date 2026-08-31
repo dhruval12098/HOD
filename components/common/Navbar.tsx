@@ -102,6 +102,18 @@ function MetalDot({ type, colorHex }: { type: keyof typeof METAL_COLORS; colorHe
 }
 
 function MegaSection({ section }: { section: NavbarRenderSection }) {
+  const entries = [
+    ...(section.metals?.map((metal) => ({
+      kind: 'metal' as const, key: `${metal.type}-${metal.label}`, label: metal.label,
+      href: metal.href, type: metal.type, colorHex: metal.colorHex,
+    })) ?? []),
+    ...(section.links?.map((link) => ({
+      kind: 'link' as const, key: `${section.title}-${link.label}`, label: link.label,
+      href: link.href, iconUrl: link.iconUrl,
+    })) ?? []),
+  ];
+  const rowCount = Math.min(5, entries.length);
+
   return (
     <div className="flex flex-col">
       <div
@@ -119,80 +131,31 @@ function MegaSection({ section }: { section: NavbarRenderSection }) {
         <span>{section.title}</span>
       </div>
 
-      {section.metals && (
-        <div className={section.twoCol ? 'grid grid-cols-2 gap-x-7 gap-y-1' : 'flex flex-col'}>
-          {section.metals.map((metal) => (
+      {entries.length > 0 ? (
+        <div
+          className="grid grid-flow-col gap-x-7 gap-y-1"
+          style={{
+            gridTemplateRows: `repeat(${rowCount}, minmax(0, auto))`,
+            gridAutoColumns: 'minmax(0, 1fr)',
+          }}
+        >
+          {entries.map((entry) => (
             <SmartNavLink
-              key={`${metal.type}-${metal.label}`}
-              href={metal.href}
+              key={entry.key}
+              href={entry.href}
               className="flex items-center gap-[14px] py-[10px] text-[13.5px] font-light tracking-[0.02em] text-[#555] no-underline transition-all duration-250 hover:text-[#0A1628] hover:pl-1.5 group"
               style={{ fontFamily: "'Montserrat', sans-serif" }}
             >
-              <MetalDot type={metal.type as keyof typeof METAL_COLORS} colorHex={metal.colorHex} />
-              {metal.label}
-            </SmartNavLink>
-          ))}
-        </div>
-      )}
-
-      {section.metals && section.links && section.links.length > 0 && (
-        <div className={`mt-4 border-t border-black/[0.06] pt-4 ${section.twoCol ? 'grid grid-cols-2 gap-x-7 gap-y-1' : 'flex flex-col'}`}>
-          {section.links.map((link) => (
-            <SmartNavLink
-              key={`${section.title}-${link.label}`}
-              href={link.href}
-              className="block py-[10px] text-[13.5px] font-light tracking-[0.02em] text-[#555] no-underline transition-all duration-250 hover:text-[#0A1628] hover:pl-1.5"
-              style={{ fontFamily: "'Montserrat', sans-serif" }}
-            >
-              {link.label}
-            </SmartNavLink>
-          ))}
-        </div>
-      )}
-
-      {section.twoCol && section.links && !section.metals && (
-        <div className="grid grid-cols-2 gap-x-7">
-          {section.links.map((link) => (
-            <SmartNavLink
-              key={`${section.title}-${link.label}`}
-              href={link.href}
-              className="flex items-center gap-[12px] py-[10px] text-[13.5px] font-light tracking-[0.02em] text-[#555] no-underline transition-all duration-250 hover:text-[#0A1628] hover:pl-1.5"
-              style={{ fontFamily: "'Montserrat', sans-serif" }}
-            >
-              {link.iconUrl ? (
-                <img
-                  src={link.iconUrl}
-                  alt={link.label}
-                  className="h-7 w-7 flex-shrink-0 object-contain"
-                />
+              {entry.kind === 'metal' ? (
+                <MetalDot type={entry.type as keyof typeof METAL_COLORS} colorHex={entry.colorHex} />
+              ) : entry.iconUrl ? (
+                <img src={entry.iconUrl} alt={entry.label} className="h-7 w-7 flex-shrink-0 object-contain" />
               ) : null}
-              {link.label}
+              {entry.label}
             </SmartNavLink>
           ))}
         </div>
-      )}
-
-      {!section.twoCol && !section.metals && section.links && (
-        <div className="flex flex-col">
-          {section.links.map((link) => (
-            <SmartNavLink
-              key={`${section.title}-${link.label}`}
-              href={link.href}
-              className="flex items-center gap-[12px] py-[10px] text-[13.5px] font-light tracking-[0.02em] text-[#555] no-underline transition-all duration-250 hover:text-[#0A1628] hover:pl-1.5"
-              style={{ fontFamily: "'Montserrat', sans-serif" }}
-            >
-              {link.iconUrl ? (
-                <img
-                  src={link.iconUrl}
-                  alt={link.label}
-                  className="h-7 w-7 flex-shrink-0 object-contain"
-                />
-              ) : null}
-              {link.label}
-            </SmartNavLink>
-          ))}
-        </div>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -222,8 +185,12 @@ function getMobileSectionEntries(section: NavbarRenderSection) {
 }
 
 function getMegaMenuColumnCount(item: NavbarRenderItem) {
-  const sectionCount = item.mega?.sections.length ?? 0;
-  return Math.max(1, Math.min(4, sectionCount || 1));
+  return item.mega?.sections.reduce((total, section) => total + getSectionColumnCount(section), 0) ?? 1;
+}
+
+function getSectionColumnCount(section: NavbarRenderSection) {
+  const optionCount = (section.metals?.length ?? 0) + (section.links?.length ?? 0);
+  return Math.max(1, Math.ceil(optionCount / 5));
 }
 
 export default function Navbar({ onReady }: { onReady?: () => void }) {
@@ -751,7 +718,7 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
                           className="grid gap-y-10"
                           style={{
                             gridTemplateColumns: item.mega.featuredImage?.imageUrl
-                              ? `repeat(${getMegaMenuColumnCount(item)}, minmax(0, 1fr)) minmax(420px, 1.1fr)`
+                              ? `repeat(${getMegaMenuColumnCount(item)}, minmax(0, 1fr)) minmax(360px, 1.5fr)`
                               : `repeat(${getMegaMenuColumnCount(item)}, minmax(0, 1fr))`,
                           }}
                         >
@@ -759,10 +726,11 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
                             <div
                               key={`${item.label}-${section.title}-${idx}`}
                               className={[
-                                getMegaMenuColumnCount(item) >= 5 ? 'px-[24px]' : getMegaMenuColumnCount(item) === 4 ? 'px-[34px]' : 'px-[52px]',
+                                getMegaMenuColumnCount(item) >= 5 ? 'px-[18px]' : getMegaMenuColumnCount(item) === 4 ? 'px-[34px]' : 'px-[52px]',
                                 idx === 0 ? 'pl-0' : '',
                                 idx === item.mega!.sections.length - 1 ? 'pr-0' : 'border-r border-black/[0.05]',
                               ].join(' ')}
+                              style={{ gridColumn: `span ${getSectionColumnCount(section)} / span ${getSectionColumnCount(section)}` }}
                             >
                               <MegaSection section={section} />
                             </div>

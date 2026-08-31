@@ -8,7 +8,8 @@ const STORAGE_KEY = 'hod_cart'
 type CartContextValue = {
   items: StoredCartItem[]
   count: number
-  addItem: (product: { dbId?: string | null; id?: string | number | null; slug?: string | null }, selection: CartItemSelection) => void
+  addItem: (product: { dbId?: string | null; id?: string | number | null; slug?: string | null; name?: string | null; shortMeta?: string | null; imageUrl?: string | null; priceFrom?: number | null }, selection: CartItemSelection) => void
+  isHydrated: boolean
   removeItem: (key: string) => void
   clearCart: () => void
   updateQuantity: (key: string, quantity: number) => void
@@ -18,6 +19,7 @@ const CartContext = createContext<CartContextValue | null>(null)
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<StoredCartItem[]>([])
+  const [isHydrated, setIsHydrated] = useState(false)
   const hasLoadedStoredCart = useRef(false)
 
   useEffect(() => {
@@ -47,6 +49,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         // Ignore unavailable or malformed browser storage and start with an empty cart.
       } finally {
         hasLoadedStoredCart.current = true
+        setIsHydrated(true)
       }
     })
 
@@ -78,14 +81,24 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo<CartContextValue>(() => ({
     items,
+    isHydrated,
     count: items.reduce((sum, item) => sum + item.quantity, 0),
     addItem: (product, selection) => {
       const key = buildCartItemKey(product, selection)
       const productKey = getProductKey(product)
       setItems((currentItems) => {
         const existing = currentItems.find((item) => item.key === key)
+        const snapshot = {
+          id: String(product.id ?? product.dbId ?? product.slug ?? ''),
+          dbId: product.dbId || undefined,
+          slug: product.slug || '',
+          name: product.name || 'Selected piece',
+          shortMeta: product.shortMeta || '',
+          imageUrl: selection.resolvedImageUrl || product.imageUrl || '',
+          priceFrom: Number(selection.resolvedPrice ?? product.priceFrom ?? 0),
+        }
         if (existing) {
-          return currentItems.map((item) => (item.key === key ? { ...item, quantity: item.quantity + 1 } : item))
+          return currentItems.map((item) => (item.key === key ? { ...item, quantity: item.quantity + 1, snapshot } : item))
         }
         return [
           ...currentItems,
@@ -96,6 +109,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             quantity: 1,
             selection,
             addedAt: Date.now(),
+            snapshot,
           },
         ]
       })
@@ -110,7 +124,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         return currentItems.map((item) => (item.key === key ? { ...item, quantity } : item))
       })
     },
-  }), [items])
+  }), [isHydrated, items])
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>
 }
