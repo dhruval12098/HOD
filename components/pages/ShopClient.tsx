@@ -21,6 +21,14 @@ const clientFilterKeys = ['category', 'subcategory', 'option', 'shape', 'style',
 function filtersFromHref(href: string, products: StorefrontProductCard[]) {
   const target = new URL(href, window.location.origin)
   const filters: Record<string, string[]> = {}
+  const pathSegments = target.pathname.split('/').filter(Boolean)
+
+  // Category browse links use clean nested paths. Convert those segments into
+  // the same client-side filters as their legacy query-string equivalents.
+  if (pathSegments[0] && pathSegments[0] !== 'shop') {
+    if (pathSegments[1]) filters.subcategory = [pathSegments[1]]
+    if (pathSegments[2]) filters.option = [pathSegments[2]]
+  }
 
   for (const key of clientFilterKeys) {
     const value = target.searchParams.get(key)
@@ -54,6 +62,7 @@ export default function ShopClient({
   initialFilters,
   initialPage = 1,
   filterGroups,
+  masterShapeOptions,
   headerBrowseSections,
   gridPosters,
 }: {
@@ -69,6 +78,7 @@ export default function ShopClient({
   initialFilters?: Record<string, string[]>
   initialPage?: number
   filterGroups?: { id: string; title: string; options: { value: string; label: string }[] }[]
+  masterShapeOptions?: { value: string; label: string; iconUrl?: string | null; displayOrder: number }[]
   gridPosters?: CategoryGridPoster[]
   headerBrowseSections?: {
     id: string
@@ -87,7 +97,9 @@ export default function ShopClient({
 
   const applyClientBrowseHref = useCallback((href: string) => {
     const { target, filters, page } = filtersFromHref(href, clientProducts)
-    if (target.origin !== window.location.origin || target.pathname !== window.location.pathname) return false
+    const currentCategory = window.location.pathname.split('/').filter(Boolean)[0]
+    const targetCategory = target.pathname.split('/').filter(Boolean)[0]
+    if (target.origin !== window.location.origin || targetCategory !== currentCategory) return false
 
     setActiveFilters(filters)
     setActivePage(page)
@@ -132,6 +144,7 @@ export default function ShopClient({
         initialFilters={activeFilters}
         initialPage={activePage}
         filterGroups={filterGroups}
+        masterShapeOptions={masterShapeOptions}
         gridPosters={gridPosters}
         onEnquire={handleEnquire}
       />

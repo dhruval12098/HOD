@@ -527,7 +527,8 @@ export default function CheckoutPageClient() {
   const lookupPostalCode = useCallback(
     async (postalCode: string) => {
       const normalizedPostalCode = normalizePostalCodeValue(postalCode)
-      const lookupKey = normalizedPostalCode.toUpperCase()
+      const selectedCountry = customerForm.country.trim()
+      const lookupKey = `${selectedCountry.toUpperCase()}:${normalizedPostalCode.toUpperCase()}`
 
       if (!normalizedPostalCode || normalizedPostalCode.length < 3) {
         setPostalLookup(null)
@@ -565,13 +566,12 @@ export default function CheckoutPageClient() {
         city: '',
         district: '',
         state: '',
-        country: '',
       }))
       setPostalCodeFieldError()
 
       try {
         const response = await fetch(
-          `/api/checkout/postal-lookup?postalCode=${encodeURIComponent(normalizedPostalCode)}`,
+          `/api/checkout/postal-lookup?postalCode=${encodeURIComponent(normalizedPostalCode)}${selectedCountry ? `&country=${encodeURIComponent(selectedCountry)}` : ''}`,
           {
             cache: 'no-store',
             signal: controller.signal,
@@ -600,11 +600,13 @@ export default function CheckoutPageClient() {
 
         setPostalAreaOptions(areas)
         applyPostalArea(areas[0], normalizedPostalCode)
-        lastPostalLookupKeyRef.current = lookupKey
+        lastPostalLookupKeyRef.current = `${areas[0].country.trim().toUpperCase()}:${normalizedPostalCode.toUpperCase()}`
       } catch (error) {
         if (controller.signal.aborted) return
         console.error('Postal lookup failed:', error)
-        const message = 'Could not fetch location, try again'
+        const message = error instanceof Error && error.message
+          ? error.message
+          : 'Could not fetch location, try again'
         setPostalLookup({
           status: 'error',
           message,
@@ -617,7 +619,7 @@ export default function CheckoutPageClient() {
         }
       }
     },
-    [applyPostalArea, setPostalCodeFieldError]
+    [applyPostalArea, customerForm.country, setPostalCodeFieldError]
   )
 
   const handlePostalCodeBlur = useCallback(() => {
@@ -1029,13 +1031,6 @@ export default function CheckoutPageClient() {
       }
     };
 
-  const paymentButtonLabel =
-    paymentUiStage === 'confirming'
-      ? 'Confirming Order...'
-      : paymentUiStage === 'starting'
-        ? 'Starting Payment...'
-        : 'Starting Payment...'
-
   const handleApplyCoupon = async () => {
     const normalizedCode = couponCodeInput.trim().toUpperCase()
     if (!normalizedCode) return
@@ -1232,7 +1227,7 @@ export default function CheckoutPageClient() {
                ) : null}
                 {currentStep === 2 ? <CheckoutDeliveryStep /> : null}
                 {currentStep === 3 ? <CheckoutPaymentStep totalAmount={totalPayable} chargeQuote={chargeQuote} /> : null}
-                {currentStep === 4 ? <CheckoutReviewStep onPayNow={handlePayNow} isProcessingPayment={processingPayment} paymentButtonLabel={paymentButtonLabel} continueHref={continueHref} loveLetter={loveLetterDraft} totalAmount={totalPayable} chargeQuote={chargeQuote} isPaymentDisabled={quoteStatus !== 'ready' || unavailableCartItemCount > 0} paymentAvailabilityMessage={unavailableCartItemCount > 0 ? 'Resolve unavailable cart items before payment.' : quoteStatus === 'loading' ? 'Confirming the latest price and availability…' : quoteStatus === 'error' ? quoteError : undefined} /> : null}
+                {currentStep === 4 ? <CheckoutReviewStep onPayNow={handlePayNow} isProcessingPayment={processingPayment} continueHref={continueHref} loveLetter={loveLetterDraft} totalAmount={totalPayable} chargeQuote={chargeQuote} isPaymentDisabled={quoteStatus !== 'ready' || unavailableCartItemCount > 0} paymentAvailabilityMessage={unavailableCartItemCount > 0 ? 'Resolve unavailable cart items before payment.' : quoteStatus === 'loading' ? 'Confirming the latest price and availability…' : quoteStatus === 'error' ? quoteError : undefined} /> : null}
             </div>
 
             {!isLastStep ? (

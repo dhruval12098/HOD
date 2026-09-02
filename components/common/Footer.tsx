@@ -6,6 +6,7 @@ import { Check, ChevronUp } from 'lucide-react';
 import ReactCountryFlag from 'react-country-flag';
 import { useCurrency } from '@/context/CurrencyContext';
 import { supabase } from '@/lib/supabase';
+import type { NavbarRenderItem } from '@/lib/navbar';
 
 const SOCIAL = [
   {
@@ -220,17 +221,20 @@ function CurrencySelector() {
   );
 }
 
-export default function Footer() {
+export default function Footer({ navItems = [] }: { navItems?: NavbarRenderItem[] }) {
   const [serviceCategories, setServiceCategories] = useState<FooterCategory[]>([]);
   const [collectionConfig, setCollectionConfig] = useState<CollectionPageConfigRow | null>(null);
   const [contactRows, setContactRows] = useState<ContactInfoRow[]>([]);
-  const [visibleNavbarHrefs, setVisibleNavbarHrefs] = useState<Set<string> | null>(null);
+  const visibleNavbarHrefs = useMemo(
+    () => new Set(navItems.map((item) => item.href?.split('?')[0]?.replace(/\/$/, '') || '/').filter(Boolean)),
+    [navItems]
+  );
 
   useEffect(() => {
     let ignore = false;
 
     const loadCategories = async () => {
-      const [{ data, error }, { data: configData }, contactResponse, navbarResponse] = await Promise.all([
+      const [{ data, error }, { data: configData }, contactResponse] = await Promise.all([
         supabase
           .from('catalog_categories')
           .select('id, name, slug')
@@ -241,8 +245,7 @@ export default function Footer() {
           .select('page_enabled, show_in_footer, showcase_cta_href, showcase_cta_label')
           .eq('section_key', 'main_collection_page')
           .maybeSingle(),
-        fetch('/api/public/contact/info', { cache: 'no-store' }).catch(() => null),
-        fetch('/api/public/navbar', { cache: 'no-store' }).catch(() => null),
+        fetch('/api/public/contact/info').catch(() => null),
       ]);
 
       if (ignore) return;
@@ -256,18 +259,6 @@ export default function Footer() {
         }
       }
 
-      if (navbarResponse?.ok) {
-        const payload = await navbarResponse.json().catch(() => null);
-        if (!ignore && Array.isArray(payload?.items)) {
-          setVisibleNavbarHrefs(
-            new Set(
-              payload.items
-                .map((item: { href?: string | null }) => item.href?.split('?')[0]?.replace(/\/$/, '') || '/')
-                .filter(Boolean)
-            )
-          );
-        }
-      }
     };
 
     void loadCategories();
@@ -394,7 +385,7 @@ export default function Footer() {
       >
         <div className="flex flex-col gap-3">
           <CurrencySelector />
-          <span>© 2025 House of Diams. All rights reserved.</span>
+          <span>© {new Date().getFullYear()} House of Diams. All rights reserved.</span>
         </div>
         <div className="flex items-center gap-0">
           <BottomLink href="/privacy-policy">Privacy</BottomLink>

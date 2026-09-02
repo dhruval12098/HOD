@@ -23,6 +23,7 @@ import { useWishlistStore } from '@/lib/hooks/useWishlistStore';
 import { useCart } from '@/lib/hooks/useCart';
 import { getProductKey } from '@/lib/product-keys';
 import { saveLoveLetterDraft, type LoveLetterDraft } from '@/lib/love-letter';
+import { useCurrency } from '@/context/CurrencyContext';
 
 interface ProductClientProps {
   product: StorefrontProduct;
@@ -54,6 +55,7 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
   const [customSelections, setCustomSelections] = useState<Record<string, string>>(() => Object.fromEntries(storefrontProduct.customDropdowns.filter((group) => group.isRequired && group.options[0]).map((group) => [group.id, group.options[0].id])));
   const { wishlist, contains, toggle } = useWishlistStore();
   const { addItem } = useCart();
+  const { format } = useCurrency();
   const [isEnquireOpen, setIsEnquireOpen] = useState(false);
   const [isLoveLetterOpen, setIsLoveLetterOpen] = useState(false);
   const [loveLetterIntent, setLoveLetterIntent] = useState<'cart' | 'checkout' | null>(null);
@@ -358,7 +360,7 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] uppercase tracking-[0.14em] text-[#7A8496]">
               {stickySummary ? <span>{stickySummary}</span> : null}
-              <span className="font-medium text-[#0A1628]">${activePrice.toLocaleString()}</span>
+              <span className="font-medium text-[#0A1628]">{format(activePrice)}</span>
             </div>
           </div>
           <button

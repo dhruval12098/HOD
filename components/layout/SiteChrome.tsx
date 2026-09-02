@@ -2,14 +2,19 @@
 
 import type { ReactNode } from 'react';
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
+import NextTopLoader from 'nextjs-toploader';
 import Navbar from '@/components/common/Navbar';
-import Footer from '@/components/common/Footer';
-import FloatingWidgets from '@/components/home/FloatingWidgets';
 import Loader from '@/components/home/Loader';
+import ViewportDeferred from '@/components/home/ViewportDeferred';
 import { HomeLoaderProvider } from '@/components/layout/HomeLoaderContext';
-import PromotionPopup from '@/components/layout/PromotionPopup';
 import { shouldSkipHomeLoader } from '@/lib/home-loader-cache';
+import type { NavbarRenderItem } from '@/lib/navbar';
+
+const Footer = dynamic(() => import('@/components/common/Footer'), { loading: () => null });
+const FloatingWidgets = dynamic(() => import('@/components/home/FloatingWidgets'), { loading: () => null });
+const PromotionPopup = dynamic(() => import('@/components/layout/PromotionPopup'), { loading: () => null });
 
 const AUTH_ROUTES = new Set(['/login', '/signup']);
 const OVERLAY_NAVBAR_ROUTES = new Set(['/', '/hiphop', '/bespoke']);
@@ -21,10 +26,42 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
   const [isHomeLoaderExiting, setIsHomeLoaderExiting] = useState(false);
   const [isHomeReady, setIsHomeReady] = useState(!isHomeRoute);
   const [isNavbarReady, setIsNavbarReady] = useState(false);
+  const [navItems, setNavItems] = useState<NavbarRenderItem[]>([]);
+  const [showNonCriticalChrome, setShowNonCriticalChrome] = useState(false);
   const usesDesktopOverlayNavbar = pathname ? OVERLAY_NAVBAR_ROUTES.has(pathname) : false;
   const isMinimalChromeRoute = pathname
     ? AUTH_ROUTES.has(pathname) || pathname.startsWith('/checkout')
     : false;
+
+  useEffect(() => {
+    let ignore = false;
+    void fetch('/api/public/navbar')
+      .then((response) => response.json().then((payload) => ({ ok: response.ok, payload })))
+      .then(({ ok, payload }) => {
+        if (!ignore && ok && Array.isArray(payload?.items)) setNavItems(payload.items);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!ignore) setIsNavbarReady(true);
+      });
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const reveal = () => setShowNonCriticalChrome(true);
+    const idleWindow = window as Window & {
+      requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number;
+      cancelIdleCallback?: (handle: number) => void;
+    };
+    if (idleWindow.requestIdleCallback) {
+      const idleId = idleWindow.requestIdleCallback(reveal, { timeout: 2000 });
+      return () => idleWindow.cancelIdleCallback?.(idleId);
+    }
+    const timeoutId = window.setTimeout(reveal, 1200);
+    return () => window.clearTimeout(timeoutId);
+  }, []);
 
   useLayoutEffect(() => {
     if (isHomeRoute) {
@@ -98,10 +135,6 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
     };
   }, [isHomeLoading, isHomeReady, isHomeRoute, isNavbarReady]);
 
-  const handleNavbarReady = useCallback(() => {
-    setIsNavbarReady(true);
-  }, []);
-
   const handleHomeLoaderComplete = useCallback(() => {
     setIsHomeLoading(false);
     setIsHomeLoaderExiting(false);
@@ -115,6 +148,17 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
 
   return (
     <HomeLoaderProvider value={{ isHomeLoading, setIsHomeLoading, isHomeReady, setIsHomeReady }}>
+      <NextTopLoader
+        color="#B8924A"
+        height={3}
+        showSpinner={false}
+        crawl
+        speed={240}
+        crawlSpeed={180}
+        initialPosition={0.12}
+        shadow="0 0 10px rgba(184, 146, 74, 0.45), 0 0 4px rgba(184, 146, 74, 0.3)"
+        zIndex={12000}
+      />
       {isMinimalChromeRoute ? (
         <main className="flex-1">{children}</main>
       ) : (
@@ -123,22 +167,27 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
             id="site-navbar-shell"
             className={`transition-opacity duration-500 ease-out ${hideHomeChrome ? 'pointer-events-none opacity-0' : 'pointer-events-auto opacity-100'}`}
           >
-            <Navbar onReady={handleNavbarReady} />
+            <Navbar navItems={navItems} />
           </div>
           <main className={`flex-1 ${usesDesktopOverlayNavbar ? 'pt-[91px] lg:pt-0' : 'pt-[118px] lg:pt-[146px]'}`}>{children}</main>
           <div
             id="site-footer-shell"
             className={`transition-opacity duration-500 ease-out ${hideHomeChrome ? 'pointer-events-none opacity-0' : 'pointer-events-auto opacity-100'}`}
           >
-            <Footer />
+            <ViewportDeferred minHeight={520}>
+              <Footer navItems={navItems} />
+            </ViewportDeferred>
           </div>
-          <PromotionPopup />
-          <div className={`transition-opacity duration-500 ease-out ${hideHomeChrome ? 'pointer-events-none opacity-0' : 'pointer-events-auto opacity-100'}`}>
-            <FloatingWidgets />
-          </div>
+          {showNonCriticalChrome ? <PromotionPopup /> : null}
+          {showNonCriticalChrome ? (
+            <div className={`transition-opacity duration-500 ease-out ${hideHomeChrome ? 'pointer-events-none opacity-0' : 'pointer-events-auto opacity-100'}`}>
+              <FloatingWidgets />
+            </div>
+          ) : null}
           {isHomeRoute && isHomeLoading ? (
             <Loader
               ready={isHomeReady && isNavbarReady}
+              minDurationMs={0}
               onExitStart={handleHomeLoaderExitStart}
               onComplete={handleHomeLoaderComplete}
             />

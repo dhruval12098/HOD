@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { unstable_noStore as noStore } from 'next/cache'
 import { buildNavbarRenderItems, type NavbarRenderItem } from '@/lib/navbar'
+
+export const revalidate = 300
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -36,8 +37,6 @@ async function loadHiddenDirectNavSlugs(supabase: SupabaseClient) {
 }
 
 export async function GET() {
-  noStore()
-
   const supabase = getServerClient()
   if (!supabase) {
     return NextResponse.json({ error: 'Missing Supabase environment variables.' }, { status: 500 })
@@ -150,7 +149,7 @@ export async function GET() {
     { items: visibleNavItems },
     {
       headers: {
-        'Cache-Control': 'no-store, max-age=0',
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
       },
     }
   )

@@ -158,6 +158,11 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-veloria) !important;
 }
 
+/* Rich blog content headings must retain Veloria over the site-wide heading rule. */
+.blog-article-content :is(h1, h2, h3, h4, h5, h6) {
+  font-family: var(--font-veloria) !important;
+}
+
 .font-test-veneza {
   font-family: var(--font-veneza) !important;
 }
@@ -206,6 +211,18 @@ h1, h2, h3, h4, h5, h6 {
 ::selection {
   background: rgba(10, 22, 40, 0.14);
   color: var(--theme-heading);
+}
+
+footer::selection,
+footer *::selection {
+  background: rgba(255, 255, 255, 0.28);
+  color: #ffffff;
+}
+
+footer::-moz-selection,
+footer *::-moz-selection {
+  background: rgba(255, 255, 255, 0.28);
+  color: #ffffff;
 }
 
 /* Announcement Marquee Animation */

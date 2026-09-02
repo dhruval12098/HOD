@@ -9,8 +9,7 @@ import TestimonialMarquee from '@/components/home/TestimonialMarquee';
 import TrustedPartnersMarquee from '@/components/home/TrustedPartnersMarquee';
 import Collection from '@/components/home/Collection';
 import Certifications from '@/components/home/Certifications';
-import DiscoverShapes from '@/components/home/DiscoverShapes';
-import BlogGrid from '@/components/blog/BlogGrid';
+import ViewportDeferred from '@/components/home/ViewportDeferred';
 import { posts } from '@/lib/data/blog-posts';
 import type { BlogPost } from '@/lib/data/blog-posts';
 import EnquireModal from '@/components/home/EnquireModal';
@@ -34,6 +33,7 @@ import type {
 } from '@/lib/home-data';
 
 const HipHopShowcase = dynamic(() => import('@/components/home/HipHopShowcase'), { loading: () => null });
+const DiscoverShapes = dynamic(() => import('@/components/home/DiscoverShapes'), { loading: () => null });
 const BestSellers = dynamic(() => import('@/components/home/BestSellers'), { loading: () => null });
 const CollectionShowcase = dynamic(() => import('@/components/home/CollectionShowcase'), { loading: () => null });
 const BespokeShowcase = dynamic(() => import('@/components/home/BespokeShowcase'), { loading: () => null });
@@ -285,18 +285,30 @@ export default function HomeClient({
           {/* <TestimonialMarquee initialData={marqueeData} /> */}
           <Collection items={collectionItems} />
           <Certifications />
-          <DiscoverShapes initialItems={discoverShapesItems} />
+          <ViewportDeferred minHeight={520}>
+            <DiscoverShapes initialItems={discoverShapesItems} />
+          </ViewportDeferred>
         </>
       ) : null}
       {showDeferredSections ? (
         <>
           {hiphopSection.is_enabled ? <HipHopShowcase initialSection={hiphopSection} /> : null}
-          <BestSellers initialSection={bestSellerSection} initialProducts={bestSellerProducts} />
+          <ViewportDeferred minHeight={620}>
+            <BestSellers initialSection={bestSellerSection} initialProducts={bestSellerProducts} />
+          </ViewportDeferred>
           {collectionPageConfig.pageEnabled && collectionPageConfig.showHomeShowcase ? <CollectionShowcase config={collectionPageConfig} /> : null}
-          <DiscoverRings initialItems={discoverRingsItems} />
-          <DiamondInfoSequence items={diamondInfoItems} config={diamondInfoConfig} />
-          <Testimonials initialData={testimonialsData} />
-          <CouplesSection initialData={couplesData} />
+          <ViewportDeferred minHeight={560}>
+            <DiscoverRings initialItems={discoverRingsItems} />
+          </ViewportDeferred>
+          <ViewportDeferred minHeight={520}>
+            <DiamondInfoSequence items={diamondInfoItems} config={diamondInfoConfig} />
+          </ViewportDeferred>
+          <ViewportDeferred minHeight={520}>
+            <Testimonials initialData={testimonialsData} />
+          </ViewportDeferred>
+          <ViewportDeferred minHeight={520}>
+            <CouplesSection initialData={couplesData} />
+          </ViewportDeferred>
 
           <section className="bg-[var(--theme-surface-warm)] px-5 py-8 md:px-8 lg:px-12">
             <div className="mx-auto max-w-[1320px]">

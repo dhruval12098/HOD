@@ -12,7 +12,7 @@ const SORT_OPTIONS = [
   { value: "newest", label: "Newest First" },
 ];
 
-export default function ShopToolbar({ count, sort, onSortChange, onToggleFilters }) {
+export default function ShopToolbar({ count, sort, onSortChange, quickFilters }) {
   return (
     <div
       className="shop-toolbar"
@@ -32,11 +32,7 @@ export default function ShopToolbar({ count, sort, onSortChange, onToggleFilters
             gap: 10px !important;
             align-items: center !important;
           }
-          .shop-toolbar .filter-btn {
-            padding: 9px 14px !important;
-            border-radius: 999px !important;
-            letter-spacing: .16em !important;
-          }
+          .shop-toolbar { align-items: stretch !important; }
           .shop-toolbar .shop-toolbar-count {
             order: 3;
             width: 100%;
@@ -53,29 +49,7 @@ export default function ShopToolbar({ count, sort, onSortChange, onToggleFilters
         }
       `}</style>
 
-      {/* Filter button */}
-      <button
-        onClick={onToggleFilters}
-        style={{
-          display: "inline-flex",
-          padding: "10px 20px",
-          background: "#0A1628",
-          color: "#FAFBFD",
-          border: "none",
-          cursor: "pointer",
-          fontSize: "10px",
-          letterSpacing: ".24em",
-          textTransform: "uppercase",
-          alignItems: "center",
-          gap: "10px",
-        }}
-        className="filter-btn"
-      >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-          <path d="M1 2H11M2 6H10M3 10H9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-        </svg>
-        Filters
-      </button>
+      {quickFilters}
 
       {/* Result count */}
       <div className="shop-toolbar-count" style={{ fontSize: "11px", letterSpacing: ".08em", color: "#6A6A6A" }}>

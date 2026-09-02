@@ -101,7 +101,7 @@ function MetalDot({ type, colorHex }: { type: keyof typeof METAL_COLORS; colorHe
   );
 }
 
-function MegaSection({ section }: { section: NavbarRenderSection }) {
+function MegaSection({ section, onNavigate }: { section: NavbarRenderSection; onNavigate?: () => void }) {
   const entries = [
     ...(section.metals?.map((metal) => ({
       kind: 'metal' as const, key: `${metal.type}-${metal.label}`, label: metal.label,
@@ -143,6 +143,7 @@ function MegaSection({ section }: { section: NavbarRenderSection }) {
             <SmartNavLink
               key={entry.key}
               href={entry.href}
+              onClick={onNavigate}
               className="flex items-center gap-[14px] py-[10px] text-[13.5px] font-light tracking-[0.02em] text-[#555] no-underline transition-all duration-250 hover:text-[#0A1628] hover:pl-1.5 group"
               style={{ fontFamily: "'Montserrat', sans-serif" }}
             >
@@ -193,7 +194,7 @@ function getSectionColumnCount(section: NavbarRenderSection) {
   return Math.max(1, Math.ceil(optionCount / 5));
 }
 
-export default function Navbar({ onReady }: { onReady?: () => void }) {
+export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[] }) {
   const router = useRouter();
   const pathname = usePathname();
   const { count: wishlistCount } = useWishlistStore();
@@ -210,8 +211,6 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
   const [searchItems, setSearchItems] = useState<Array<{ dbId?: string; slug: string; name: string; shortMeta: string; imageUrl?: string; priceFrom: number }>>([]);
   const [detectedCountry, setDetectedCountry] = useState('');
   const displayedCountry = selected.countryCode || detectedCountry;
-  // Start empty so builder-hidden items never flash while the live configuration loads.
-  const [navItems, setNavItems] = useState<NavbarRenderItem[]>([]);
   const [announcementItems, setAnnouncementItems] = useState<
     Array<{ message: string; link_url: string; open_in_new_tab: boolean }>
   >([
@@ -225,8 +224,11 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
   const [authReady, setAuthReady] = useState(false);
   const lastScrollY = useRef(0);
   const searchRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const searchOptionRefs = useRef<Array<HTMLAnchorElement | null>>([]);
   const megaCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const prefetchedNavRoutesRef = useRef(new Set<string>());
+  const searchLoadStartedRef = useRef(false);
 
   useEffect(() => {
     let ignore = false;
@@ -278,31 +280,41 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
   }, []);
 
   useEffect(() => {
-    document.body.style.overflow = menuOpen ? 'hidden' : '';
+    const shouldLockPage = menuOpen || searchOpen;
+    document.body.style.overflow = shouldLockPage ? 'hidden' : '';
+    document.documentElement.style.overscrollBehavior = shouldLockPage ? 'none' : '';
     return () => {
       document.body.style.overflow = '';
+      document.documentElement.style.overscrollBehavior = '';
     };
-  }, [menuOpen]);
+  }, [menuOpen, searchOpen]);
 
   useEffect(() => {
+    if (!searchOpen || searchItems.length > 0 || searchLoadStartedRef.current) return;
     let ignore = false;
+    searchLoadStartedRef.current = true;
     const loadProducts = async () => {
-      const response = await fetch('/api/public/products', { cache: 'no-store' });
-      const payload = await response.json().catch(() => null);
-      if (!ignore && response.ok && Array.isArray(payload?.items)) {
-        setSearchItems(payload.items);
+      try {
+        const response = await fetch('/api/public/products/search');
+        const payload = await response.json().catch(() => null);
+        if (!ignore && response.ok && Array.isArray(payload?.items)) {
+          setSearchItems(payload.items);
+        }
+      } finally {
+        if (!ignore) searchLoadStartedRef.current = false;
       }
     };
     void loadProducts();
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [searchItems.length, searchOpen]);
 
   useEffect(() => {
     if (!searchOpen) return;
     const onPointerDown = (event: MouseEvent) => {
-      if (!searchRef.current?.contains(event.target as Node)) {
+      const target = event.target as Element | null;
+      if (!target?.closest('[data-navbar-search-root]')) {
         setSearchOpen(false);
         setActiveSearchIndex(-1);
       }
@@ -312,39 +324,25 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
   }, [searchOpen]);
 
   useEffect(() => {
+    if (!searchOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setSearchOpen(false);
+        setSearchQuery('');
+        setActiveSearchIndex(-1);
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [searchOpen]);
+
+  useEffect(() => {
     return () => {
       if (megaCloseTimeoutRef.current) {
         clearTimeout(megaCloseTimeoutRef.current);
       }
     };
   }, []);
-
-  useEffect(() => {
-    let ignore = false;
-
-    const loadNavbar = async () => {
-      try {
-        const response = await fetch('/api/public/navbar', { cache: 'no-store' });
-        const payload = await response.json().catch(() => null);
-
-        if (!ignore && response.ok && Array.isArray(payload?.items)) {
-          setNavItems(payload.items as NavbarRenderItem[]);
-        }
-      } catch {
-        // Keep the navbar shell usable even if its optional live configuration is unavailable.
-      } finally {
-        if (!ignore) {
-          onReady?.();
-        }
-      }
-    };
-
-    void loadNavbar();
-
-    return () => {
-      ignore = true;
-    };
-  }, [onReady]);
 
   useEffect(() => {
     let ignore = false;
@@ -416,6 +414,30 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
     setActiveMegaItem(label);
   };
 
+  const prefetchMegaMenu = (item: NavbarRenderItem) => {
+    const hrefs = [
+      item.href,
+      ...(item.mega?.sections.flatMap((section) => [
+        ...(section.metals?.map((metal) => metal.href) ?? []),
+        ...(section.links?.map((link) => link.href) ?? []),
+      ]) ?? []),
+    ];
+
+    for (const href of hrefs) {
+      if (!href?.startsWith('/') || href.startsWith('//') || prefetchedNavRoutesRef.current.has(href)) continue;
+      prefetchedNavRoutesRef.current.add(href);
+      router.prefetch(href);
+    }
+  };
+
+  const closeMegaMenu = () => {
+    if (megaCloseTimeoutRef.current) {
+      clearTimeout(megaCloseTimeoutRef.current);
+      megaCloseTimeoutRef.current = null;
+    }
+    setActiveMegaItem(null);
+  };
+
   const queueCloseMegaMenu = (label: string) => {
     if (megaCloseTimeoutRef.current) {
       clearTimeout(megaCloseTimeoutRef.current);
@@ -462,8 +484,7 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
           .toLowerCase();
 
         return queryTokens.every((token) => haystack.includes(token));
-      })
-      .slice(0, 6);
+      });
   }, [searchItems, searchQuery]);
 
   useEffect(() => {
@@ -585,7 +606,7 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
           'transition-[transform,shadow] duration-300 ease-out',
         ].join(' ')}
         style={{
-          transform: navHidden ? 'translateY(-120%)' : 'translateY(0)',
+          transform: navHidden && !searchOpen && !menuOpen ? 'translateY(-120%)' : 'translateY(0)',
           background: desktopHeaderBg,
           boxShadow: desktopHeaderShadow,
           borderBottom: desktopOverlayMode && !scrolled ? 'none' : `1px solid ${desktopHeaderBorder}`,
@@ -679,7 +700,10 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
                   className={item.mega ? `mega-parent${activeMegaItem === item.label ? ' mega-open' : ''}` : ''}
                   style={{ position: 'static' }}
                   onMouseEnter={() => {
-                    if (item.mega) openMegaMenu(item.label);
+                    if (item.mega) {
+                      openMegaMenu(item.label);
+                      prefetchMegaMenu(item);
+                    }
                   }}
                   onMouseLeave={() => {
                     if (item.mega) queueCloseMegaMenu(item.label);
@@ -687,6 +711,7 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
                 >
                   <SmartNavLink
                     href={item.href ?? '#'}
+                    onClick={closeMegaMenu}
                     className="nav-link-underline relative block px-[18px] py-[11px] text-[11px] font-semibold tracking-[0.19em] uppercase no-underline cursor-pointer transition-colors duration-300"
                     style={{
                       fontFamily: "'Montserrat', sans-serif",
@@ -732,7 +757,7 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
                               ].join(' ')}
                               style={{ gridColumn: `span ${getSectionColumnCount(section)} / span ${getSectionColumnCount(section)}` }}
                             >
-                              <MegaSection section={section} />
+                              <MegaSection section={section} onNavigate={closeMegaMenu} />
                             </div>
                           ))}
                           {item.mega.featuredImage?.imageUrl ? (
@@ -756,7 +781,7 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
           </nav>
 
           <div className="relative z-[30] flex items-center justify-end gap-2.5">
-          <div ref={searchRef} className="relative">
+          <div ref={searchRef} data-navbar-search-root className="relative">
             <div
               className={`flex h-[34px] items-center overflow-hidden rounded-full border transition-all duration-300 ${searchOpen ? 'w-[34px]' : 'w-[34px]'}`}
               style={{
@@ -782,10 +807,15 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
                 id="navbar-search-results"
                 role="listbox"
                 aria-label="Product search results"
-                className="absolute right-0 top-[calc(100%+24px)] w-[760px] overflow-hidden rounded-[22px] border border-black/8 bg-white shadow-[0_24px_56px_rgba(10,22,40,0.14)]"
+                className="absolute right-0 top-[calc(100%+24px)] w-[min(760px,calc(100vw-32px))] overflow-hidden rounded-[22px] border border-black/8 bg-white shadow-[0_24px_56px_rgba(10,22,40,0.14)]"
               >
                 {filteredSearchItems.length ? (
-                  <div className="max-h-[420px] overflow-y-auto py-2">
+                  <div
+                    className="max-h-[min(420px,calc(100dvh-190px))] touch-pan-y overflow-y-auto overscroll-contain py-2"
+                    style={{ WebkitOverflowScrolling: 'touch' }}
+                    onWheel={(event) => event.stopPropagation()}
+                    onTouchMove={(event) => event.stopPropagation()}
+                  >
                     {filteredSearchItems.map((item, index) => (
                       <Link
                         key={item.dbId || item.slug}
@@ -879,13 +909,14 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
           </div>
         </div>
         {searchOpen ? (
-          <div className="relative z-[20] hidden border-t border-black/[0.06] bg-white lg:block">
+          <div data-navbar-search-root className="relative z-[20] hidden border-t border-black/[0.06] bg-white lg:block">
             <div className="mx-auto flex max-w-[1180px] items-center gap-4 px-[34px] py-4">
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#0A1628" strokeWidth="1.4">
                 <circle cx="7.5" cy="7.5" r="5.5" />
                 <path d="M12 12L16 16" strokeLinecap="round" />
               </svg>
               <input
+                ref={searchInputRef}
                 autoFocus
                 value={searchQuery}
                 onChange={(event) => {
@@ -911,10 +942,18 @@ export default function Navbar({ onReady }: { onReady?: () => void }) {
               </span>
               <button
                 type="button"
-                onClick={closeSearch}
+                onClick={() => {
+                  if (searchQuery) {
+                    setSearchQuery('');
+                    setActiveSearchIndex(-1);
+                    searchInputRef.current?.focus();
+                  } else {
+                    closeSearch();
+                  }
+                }}
                 className="text-[12px] text-[#0A1628] underline underline-offset-4"
               >
-                clear
+                {searchQuery ? 'clear' : 'close'}
               </button>
             </div>
           </div>

@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import ProductCard from "./ProductCard";
-import ShopSidebar from "./ShopSidebar";
 import ShopToolbar from "./ShopToolbar";
+import CategoryQuickFilters from "./CategoryQuickFilters";
 import { useWishlistStore } from "@/lib/hooks/useWishlistStore";
 import { getProductKey } from "@/lib/product-keys";
 
@@ -106,21 +106,18 @@ function buildGridItems(products, posters) {
  *   initialFilters?: Record<string, string[]>
  *   initialPage?: number
  *   filterGroups?: ProductGridFilterGroup[]
+ *   masterShapeOptions?: { value: string; label: string; iconUrl?: string | null; displayOrder: number }[]
  *   gridPosters?: CategoryGridPoster[]
  *   onEnquire: (name?: string) => void
  * }} props
  */
-export default function ProductGrid({ products, sourceProducts = products, initialFilters = {}, initialPage = 1, filterGroups: externalFilterGroups = [], gridPosters = [], onEnquire }) {
+export default function ProductGrid({ products, sourceProducts = products, initialFilters = {}, initialPage = 1, filterGroups: externalFilterGroups = [], masterShapeOptions = [], gridPosters = [], onEnquire }) {
   const { wishlist, toggle } = useWishlistStore();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [filters, setFilters] = useState(initialFilters);
   const [page, setPage] = useState(initialPage);
-  const [priceMin, setPriceMin] = useState("");
-  const [priceMax, setPriceMax] = useState("");
   const [sort, setSort] = useState("featured");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const sidebarTopOffset = 146;
 
   const pageSize = 24;
 
@@ -141,7 +138,22 @@ export default function ProductGrid({ products, sourceProducts = products, initi
   const handleFiltersChange = (nextFilters) => {
     setFilters(nextFilters);
     setPage(1);
-    window.history.replaceState(null, "", pageHref(1));
+    const params = new URLSearchParams(window.location.search);
+    params.delete("page");
+    ["metal", "shape"].forEach((key) => {
+      const value = nextFilters[key]?.[0];
+      if (value) params.set(key, value);
+      else params.delete(key);
+    });
+    const query = params.toString();
+    window.history.pushState(null, "", query ? `${pathname}?${query}` : pathname);
+  };
+
+  const handleQuickFilterChange = (key, value) => {
+    const nextFilters = { ...filters };
+    if (value) nextFilters[key] = [value];
+    else delete nextFilters[key];
+    handleFiltersChange(nextFilters);
   };
 
   const handleWishlist = (product) => {
@@ -149,19 +161,11 @@ export default function ProductGrid({ products, sourceProducts = products, initi
   };
 
   const handleClear = () => {
-    setFilters({});
-    setPage(1);
-    window.history.replaceState(null, "", pageHref(1));
-    setPriceMin("");
-    setPriceMax("");
+    const nextFilters = { ...filters };
+    delete nextFilters.metal;
+    delete nextFilters.shape;
+    handleFiltersChange(nextFilters);
     setSort("featured");
-  };
-
-  const handlePriceChange = (key, value) => {
-    if (key === "min") setPriceMin(value);
-    else setPriceMax(value);
-    setPage(1);
-    window.history.replaceState(null, "", pageHref(1));
   };
 
   const handleSortChange = (value) => {
@@ -232,9 +236,6 @@ export default function ProductGrid({ products, sourceProducts = products, initi
   }, [externalFilterGroups, baseFilterGroups]);
 
   const filtered = useMemo(() => {
-    const pMin = parseFloat(priceMin) || 0;
-    const pMax = parseFloat(priceMax) || Infinity;
-
       const list = products.filter((product) => {
       const productCategoryValue = product.mainCategorySlug || product.category;
       if (filters.category?.length && !filters.category.includes(productCategoryValue)) return false;
@@ -254,7 +255,6 @@ export default function ProductGrid({ products, sourceProducts = products, initi
       if (filters.metal?.length && !product.metalsFull.some((metal) => filters.metal.includes(metal.slug))) return false;
       if (filters.certificate?.length && !(product.certificateNames || []).some((certificate) => filters.certificate.includes(certificate))) return false;
       if (filters.size?.length && !(product.ringSizeNames || []).some((size) => filters.size.includes(size))) return false;
-      if (product.priceFrom < pMin || product.priceFrom > pMax) return false;
       return true;
     });
 
@@ -278,37 +278,22 @@ export default function ProductGrid({ products, sourceProducts = products, initi
     });
 
     return list;
-  }, [filters, priceMin, priceMax, sort, products]);
+  }, [filters, sort, products]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const resolvedPage = Math.min(page, totalPages);
   const paginatedProducts = filtered.slice((resolvedPage - 1) * pageSize, resolvedPage * pageSize);
 
-  useEffect(() => {
-    if (!sidebarOpen) {
-      document.body.style.overflow = "";
-      document.documentElement.style.overflow = "";
-      document.body.style.touchAction = "";
-      return;
-    }
-
-    const lenis = typeof window !== "undefined" ? window.__lenis : null;
-    document.body.style.overflow = "hidden";
-    document.documentElement.style.overflow = "hidden";
-    document.body.style.touchAction = "pan-y";
-    if (lenis && typeof lenis.stop === "function") {
-      lenis.stop();
-    }
-
-    return () => {
-      document.body.style.overflow = "";
-      document.documentElement.style.overflow = "";
-      document.body.style.touchAction = "";
-      if (lenis && typeof lenis.start === "function") {
-        lenis.start();
-      }
-    };
-  }, [sidebarOpen]);
+  const metalOptions = filterGroups.find((group) => group.id === "metal")?.options.map((option) => {
+    const metal = sourceProducts.flatMap((product) => product.metalsFull || []).find((entry) => entry.slug === option.value);
+    return { ...option, color: metal?.colorHex || null };
+  }) || [];
+  const availableShapeSlugs = new Set(sourceProducts.flatMap((product) => product.shapeOptions?.map((shape) => shape.slug) || []));
+  const shapeOptions = (masterShapeOptions.length > 0
+    ? masterShapeOptions
+    : filterGroups.find((group) => group.id === "shape")?.options || [])
+    .filter((option) => availableShapeSlugs.has(option.value))
+    .sort((left, right) => Number(left.displayOrder || 0) - Number(right.displayOrder || 0));
 
   return (
     <>
@@ -344,42 +329,13 @@ export default function ProductGrid({ products, sourceProducts = products, initi
         }
       `}</style>
 
-      {sidebarOpen && (
-        <div
-          onClick={() => setSidebarOpen(false)}
-          aria-hidden="true"
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: "rgba(10,22,40,0.45)",
-            zIndex: 1090,
-          }}
-        />
-      )}
-
       <div className="shop-grid-layout">
-        <ShopSidebar
-          filterGroups={filterGroups}
-          filters={filters}
-          onFiltersChange={handleFiltersChange}
-          priceMin={priceMin}
-          priceMax={priceMax}
-          onPriceChange={handlePriceChange}
-          onClear={handleClear}
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-          topOffset={sidebarOpen ? 0 : sidebarTopOffset}
-        />
-
         <div>
           <ShopToolbar
             count={filtered.length}
             sort={sort}
             onSortChange={handleSortChange}
-            onToggleFilters={() => setSidebarOpen((open) => !open)}
+            quickFilters={<CategoryQuickFilters metalOptions={metalOptions} shapeOptions={shapeOptions} selectedMetal={filters.metal?.[0] || ""} selectedShape={filters.shape?.[0] || ""} onChange={handleQuickFilterChange} />}
           />
 
           {filtered.length === 0 ? (
@@ -430,6 +386,7 @@ export default function ProductGrid({ products, sourceProducts = products, initi
                   wishlisted={wishlist.includes(getProductKey(item.product))}
                   onWishlist={handleWishlist}
                   onEnquire={onEnquire}
+                  selectedMetalSlug={filters.metal?.[0] || ""}
                 />
               ))}
             </div>

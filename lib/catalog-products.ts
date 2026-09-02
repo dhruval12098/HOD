@@ -1,5 +1,6 @@
 import type { Product } from '@/lib/data/products'
 import { cache } from 'react'
+import { unstable_cache } from 'next/cache'
 import { createSupabaseServerClient } from '@/lib/server-supabase'
 
 const collectionBucket = process.env.NEXT_PUBLIC_SUPABASE_COLLECTION_BUCKET || 'hod'
@@ -400,6 +401,7 @@ export type StorefrontProductCard = Pick<
   | 'stone'
   | 'cut'
   | 'metals'
+  | 'purities'
   | 'priceFrom'
   | 'carat'
   | 'featured'
@@ -441,6 +443,7 @@ export function toStorefrontProductCard(product: StorefrontProduct): StorefrontP
     stone: product.stone,
     cut: product.cut,
     metals: product.metals,
+    purities: product.purities,
     priceFrom: product.priceFrom,
     carat: product.carat,
     featured: product.featured,
@@ -1057,6 +1060,19 @@ export async function getStorefrontProducts(productLane?: StorefrontProductLane)
   return getRequestStorefrontProducts(productLane)
 }
 
+const getCachedStorefrontProductCards = unstable_cache(
+  async (productLane?: StorefrontProductLane) => {
+    const products = await fetchStorefrontProducts(productLane)
+    return products.map(toStorefrontProductCard)
+  },
+  ['storefront-product-cards-v1'],
+  { revalidate: 300, tags: ['storefront-products'] }
+)
+
+export async function getStorefrontProductCards(productLane?: StorefrontProductLane) {
+  return getCachedStorefrontProductCards(productLane)
+}
+
 export async function getStorefrontProductBySlug(slug: string) {
   const products = await getRequestStorefrontProducts()
   const exactMatch = products.find((entry) => entry.slug === slug)
@@ -1070,8 +1086,8 @@ export async function getStorefrontProductBySlug(slug: string) {
   return null
 }
 
-export function filterStorefrontProducts(
-  products: StorefrontProduct[],
+export function filterStorefrontProducts<T extends StorefrontProductCard>(
+  products: T[],
   filters: {
     productLane?: 'standard' | 'hiphop' | 'collection' | null
     categorySlug?: string
@@ -1083,7 +1099,7 @@ export function filterStorefrontProducts(
     purity?: string | null
     certificate?: string | null
   }
-) {
+): T[] {
   const { productLane, categorySlug, subcategorySlug, optionSlug, shapeSlug, styleSlug, metalSlug, purity, certificate } = filters
 
   return products.filter((product) => {

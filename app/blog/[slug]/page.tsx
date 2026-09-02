@@ -5,7 +5,8 @@ import { getPublishedBlogPostBySlug, getPublishedBlogPosts } from '@/lib/blog'
 import { createPageMetadata } from '@/lib/seo'
 import { getStorageImageUrl } from '@/lib/data/blog-posts'
 import JsonLd from '@/components/seo/JsonLd'
-import { createBlogPostingSchema } from '@/lib/structured-data'
+import { createBlogPostingSchema, createFaqSchema } from '@/lib/structured-data'
+import { extractBlogFaqItems } from '@/lib/blog-faq'
 
 type BlogPostRouteProps = {
   params: Promise<{ slug: string }>
@@ -43,10 +44,12 @@ export default async function BlogPostRoute({ params }: BlogPostRouteProps) {
   }
 
   const relatedPosts = posts.filter((entry) => entry.id !== post.id).slice(0, 3)
+  const faqItems = extractBlogFaqItems(post)
 
   return (
     <>
       <JsonLd data={createBlogPostingSchema(post, getStorageImageUrl(post.heroImagePath))} />
+      {faqItems.length ? <JsonLd data={createFaqSchema(faqItems)} /> : null}
       <BlogPostPage post={post} relatedPosts={relatedPosts} />
     </>
   )

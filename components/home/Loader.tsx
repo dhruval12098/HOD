@@ -18,7 +18,7 @@ const LOADER_COPY = 'House of Diams';
 export default function Loader({
   onComplete,
   onExitStart,
-  minDurationMs = 1200,
+  minDurationMs = 0,
   maxDurationMs = 8000,
   mode = 'overlay',
   ready = true,

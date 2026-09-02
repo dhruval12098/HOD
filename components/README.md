@@ -82,13 +82,11 @@ This folder contains the reusable UI and page-specific components used across th
 - `Certifications.tsx`
 - `Collection.tsx`
 - `CouplesSection.tsx`
-- `DiamondInfo.tsx`
+- `DiamondInfoSequence.tsx`
 - `EnquireModal.tsx`
 - `FAQ.tsx`
-- `FloatingGems.tsx`
 - `FloatingWidgets.tsx`
 - `Hero.tsx`
-- `HeroDiamondCanvas.tsx`
 - `HipHopShowcase.tsx`
 - `InstagramReels.tsx`
 - `Loader.tsx`
@@ -97,6 +95,7 @@ This folder contains the reusable UI and page-specific components used across th
 - `Newsletter.tsx`
 - `StatsStrip.tsx`
 - `TestimonialMarquee.tsx`
+- `ViewportDeferred.tsx`
 - `Testimonials.tsx`
 - `Toast.tsx`
 - `TrustStrip.tsx`

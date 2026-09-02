@@ -37,6 +37,10 @@ export default function ShopHero({
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const collectionRootPath = useMemo(() => {
+    const rootSegment = pathname.split('/').filter(Boolean)[0];
+    return rootSegment ? `/${rootSegment}` : pathname;
+  }, [pathname]);
 
   const matchedSectionId = useMemo(() => {
     const currentSubcategory = activeFilters.subcategory?.[0] || searchParams?.get('subcategory');
@@ -117,8 +121,8 @@ export default function ShopHero({
   };
 
   const tabSections = useMemo(
-    () => [{ id: allSectionId, title: 'All', href: pathname, options: [] }, ...browseSections],
-    [browseSections, pathname]
+    () => [{ id: allSectionId, title: 'All', href: collectionRootPath, options: [] }, ...browseSections],
+    [browseSections, collectionRootPath]
   );
 
   const tabsWrapWidth = useMemo(() => {
@@ -479,9 +483,9 @@ export default function ShopHero({
                   href={option.href}
                   className="shop-hero-option"
                   style={{
-                    width: isTextOnly ? "auto" : "110px",
+                    width: isTextOnly ? "auto" : "118px",
                     minWidth: isTextOnly ? "148px" : undefined,
-                    minHeight: isTextOnly ? "46px" : "104px",
+                    minHeight: isTextOnly ? "46px" : "116px",
                     padding: isTextOnly ? "12px 20px" : "14px 10px",
                     border: `1px solid ${isActive || isPending ? "#0A1628" : "transparent"}`,
                     borderRadius: isTextOnly ? "14px" : "16px",
@@ -521,8 +525,8 @@ export default function ShopHero({
                   {option.type === "swatch" ? (
                     <span
                       style={{
-                        width: "18px",
-                        height: "18px",
+                        width: "31px",
+                        height: "31px",
                         borderRadius: "999px",
                         background: option.colorHex || "#D9D9D9",
                         border: "1px solid rgba(10,22,40,0.12)",
@@ -534,8 +538,8 @@ export default function ShopHero({
                       src={option.iconUrl}
                       alt={option.label}
                       style={{
-                        width: "38px",
-                        height: "38px",
+                        width: "52px",
+                        height: "52px",
                         objectFit: "contain",
                         flexShrink: 0,
                       }}

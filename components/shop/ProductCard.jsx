@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { useCurrency } from "@/context/CurrencyContext";
 import { METAL_META } from "@/lib/data/product-config";
@@ -198,28 +198,25 @@ function getMetalSwatchStyle(metal) {
   };
 }
 
-export default function ProductCard({ product, wishlisted, onWishlist, onEnquire, forceLight = false }) {
+export default function ProductCard({ product, wishlisted, onWishlist, onEnquire, forceLight = false, selectedMetalSlug = "" }) {
   const { format } = useCurrency();
   const { addItem } = useCart();
   const isDark = !forceLight && product.category === "hiphop";
   const gemSize = LARGE_GEM_STYLES.includes(product.gemStyle) ? 140 : 110;
   const metalSwatches = getMetalSwatches(product);
-  const visibleMetalSwatches = metalSwatches.slice(0, 3);
   const [activeMetalId, setActiveMetalId] = useState("");
   const [failedImageUrl, setFailedImageUrl] = useState("");
   const [addedToCart, setAddedToCart] = useState(false);
 
-  useEffect(() => {
-    setActiveMetalId("");
-    setFailedImageUrl("");
-    setAddedToCart(false);
-  }, [product?.id, product?.slug]);
-
-  const activeMetalSwatch = metalSwatches.find((metal) => metal.id === activeMetalId) || metalSwatches[0] || null;
-  const activeImageUrl = getMetalImages(product, activeMetalSwatch)[0] || product.imageUrl;
+  const globalMetalSwatch = selectedMetalSlug ? metalSwatches.find((metal) => metal.slug === selectedMetalSlug) : null;
+  const firstThreeMetalSwatches = metalSwatches.slice(0, 3);
+  const visibleMetalSwatches = globalMetalSwatch && !firstThreeMetalSwatches.some((metal) => metal.id === globalMetalSwatch.id)
+    ? [globalMetalSwatch, ...metalSwatches.filter((metal) => metal.id !== globalMetalSwatch.id)].slice(0, 3)
+    : firstThreeMetalSwatches;
+  const activeMetalSwatch = globalMetalSwatch || metalSwatches.find((metal) => metal.id === activeMetalId) || metalSwatches[0] || null;
+  const metalImageUrl = getMetalImages(product, activeMetalSwatch)[0] || "";
+  const activeImageUrl = selectedMetalSlug ? metalImageUrl : (metalImageUrl || product.imageUrl);
   const visibleImageUrl = activeImageUrl && activeImageUrl !== failedImageUrl ? activeImageUrl : "";
-  const r2PublicBaseUrl = process.env.NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_BASE_URL?.replace(/\/+$/, "") || "";
-  const isDirectR2Image = Boolean(r2PublicBaseUrl && visibleImageUrl.startsWith(`${r2PublicBaseUrl}/`));
   const activeVariant = (product.metalPurityVariants || []).find((variant) => (
     variant.metalId === activeMetalSwatch?.metalId || variant.metalSlug === activeMetalSwatch?.slug
   )) || (product.metalPurityVariants || []).find((variant) => variant.isDefault) || product.metalPurityVariants?.[0] || null;
@@ -250,8 +247,13 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
           height: 208px !important;
         }
         .shop-product-card-info {
+          display: grid !important;
+          grid-template-columns: minmax(0, 1fr) !important;
           padding: 12px 12px 16px !important;
           gap: 4px !important;
+        }
+        .shop-product-card-heading-row {
+          display: contents !important;
         }
         .shop-product-card-title {
           font-size: 14px !important;
@@ -259,12 +261,17 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
           letter-spacing: .01em !important;
         }
         .shop-product-card-title-wrap {
+          order: 1;
           min-height: 36px !important;
         }
         .shop-product-card-swatches {
+          order: 3;
+          justify-content: flex-start !important;
+          padding-top: 4px !important;
           gap: 8px !important;
         }
         .shop-product-card-bottom {
+          order: 2;
           padding-top: 4px !important;
         }
         .shop-product-card-price {
@@ -439,7 +446,6 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
             src={visibleImageUrl}
             alt={`${product.name} jewellery`}
             fill
-            unoptimized={isDirectR2Image}
             sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
             className="card-gem"
             onError={() => setFailedImageUrl(visibleImageUrl)}
@@ -451,6 +457,10 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
               transition: "transform .75s cubic-bezier(.16,1,.3,1)",
             }}
           />
+        ) : selectedMetalSlug ? (
+          <div role="img" aria-label={`${product.name} image unavailable in selected metal`} style={{ color: isDark ? "#D7DCE5" : "#697386", fontSize: "12px", letterSpacing: ".08em", textAlign: "center", padding: "24px" }}>
+            Image unavailable<br />in this metal
+          </div>
         ) : (
           <div
             className="card-gem"
@@ -484,6 +494,7 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
         }}
       >
         <div
+          className="shop-product-card-heading-row"
           style={{
             display: "grid",
             gridTemplateColumns: metalSwatches.length > 0 ? "minmax(0,1fr) auto" : "minmax(0,1fr)",

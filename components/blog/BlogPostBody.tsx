@@ -28,7 +28,7 @@ export default function BlogPostBody({ title, subtitle, body, contentBlocks = []
 
       {/* Rich body — scoped Tailwind via [&_*] selectors */}
       <div
-        className={`${veloriaFont.variable}
+        className={`${veloriaFont.variable} blog-article-content
           [&_p]:font-[var(--font-manrope)] [&_p]:text-[15.5px] [&_p]:leading-[1.95] [&_p]:text-[#333A44] [&_p]:mb-6 [&_p]:font-normal
           [&_:is(h1,h2,h3,h4,h5,h6)]:font-[var(--font-veloria)] [&_:is(h1,h2,h3,h4,h5,h6)]:font-normal [&_:is(h1,h2,h3,h4,h5,h6)]:tracking-[0.01em] [&_:is(h1,h2,h3,h4,h5,h6)]:text-[#0A1628] [&_:is(h1,h2,h3,h4,h5,h6)]:mt-11 [&_:is(h1,h2,h3,h4,h5,h6)]:mb-4 [&_:is(h1,h2,h3,h4,h5,h6)]:leading-[1.1]
           [&_h1]:text-[34px] [&_h2]:text-[27px] [&_h2]:!font-normal [&_h3]:text-[33px] [&_h3]:!font-semibold [&_h4]:text-[23px] [&_h5]:text-[20px] [&_h6]:text-[18px]
@@ -47,7 +47,7 @@ export default function BlogPostBody({ title, subtitle, body, contentBlocks = []
       />
 
       {contentBlocks.length > 0 ? (
-        <div className="mt-10 space-y-10">
+        <div className={`${veloriaFont.variable} blog-article-content mt-10 space-y-10`}>
           {contentBlocks.map((block) => {
             if (block.type === 'image') {
               const imageUrl = getStorageImageUrl(block.imagePath)

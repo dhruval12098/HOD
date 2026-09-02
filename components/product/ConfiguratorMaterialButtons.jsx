@@ -8,7 +8,7 @@ const FALLBACK_COLORS = {
   default: ['#E9E0D1', '#C7B083', '#8F7442', '#F4E6C7', '#A8864D', '#8F7442'],
 };
 
-function getMaterialParts(label = '', fallbackColor) {
+export function getMaterialParts(label = '', fallbackColor) {
   const normalized = label.toLowerCase();
   const purityMatch = label.match(/\b(10k|12k|14k|18k|22k|24k|pt|platinum)\b/i);
   const purity = normalized.includes('platinum') ? 'PT' : (purityMatch?.[1] || '').toUpperCase();
@@ -37,7 +37,7 @@ function getMaterialParts(label = '', fallbackColor) {
   return { purity: purity || ' ', baseName, colors: FALLBACK_COLORS[family] || FALLBACK_COLORS.default };
 }
 
-function MaterialIcon({ label, color, id }) {
+export function MaterialIcon({ label, color, id }) {
   const { purity, colors } = getMaterialParts(label, color);
   const gradOne = `material-${id}-one`;
   const gradTwo = `material-${id}-two`;

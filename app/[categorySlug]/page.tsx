@@ -8,7 +8,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import ShopClient from '@/components/pages/ShopClient'
 import { buildNavbarRenderItems } from '@/lib/navbar'
 import { createSupabaseServerClient } from '@/lib/server-supabase'
-import { filterStorefrontProducts, getStorefrontProducts, toStorefrontProductCard } from '@/lib/catalog-products'
+import { filterStorefrontProducts, getStorefrontProductCards } from '@/lib/catalog-products'
 import { createPageMetadata } from '@/lib/seo'
 import JsonLd from '@/components/seo/JsonLd'
 import { createBreadcrumbSchema } from '@/lib/structured-data'
@@ -144,8 +144,8 @@ function uniqueBrowseSections<T extends { id: string; title: string; href?: stri
 function resolveMasterFilterHref(args: {
   href: string
   currentCategorySlug: string
-  categoryProducts: Awaited<ReturnType<typeof getStorefrontProducts>>
-  allProducts: Awaited<ReturnType<typeof getStorefrontProducts>>
+  categoryProducts: Awaited<ReturnType<typeof getStorefrontProductCards>>
+  allProducts: Awaited<ReturnType<typeof getStorefrontProductCards>>
 }) {
   const { href, currentCategorySlug, categoryProducts, allProducts } = args
 
@@ -288,7 +288,7 @@ export default async function CategoryCollectionPage({
   const query = await searchParams
   const resolvedProductLane = category.category_lane ?? 'standard'
   const [products, referenceData, gridPostersResult] = await Promise.all([
-    getStorefrontProducts(resolvedProductLane),
+    getStorefrontProductCards(resolvedProductLane),
     getCategoryReferenceData(),
     getCategoryGridPosters(category.id),
   ])
@@ -417,17 +417,6 @@ export default async function CategoryCollectionPage({
       ? (certificatesResult.error ? [] : certificatesResult.data ?? []).find((entry) => slugifyValue(entry.name) === query.certificate)?.name ?? query.certificate
       : null
 
-  const filteredProducts = filterStorefrontProducts(categoryProducts, {
-    productLane: resolvedProductLane,
-    categorySlug,
-    subcategorySlug: taxonomy?.subcategory.slug ?? (typeof query.subcategory === 'string' ? query.subcategory : null),
-    optionSlug: taxonomy?.option?.slug ?? (typeof query.option === 'string' ? query.option : null),
-    shapeSlug: typeof query.shape === 'string' ? query.shape : null,
-    styleSlug: typeof query.style === 'string' ? query.style : null,
-    metalSlug: typeof query.metal === 'string' ? query.metal : null,
-    certificate: typeof query.certificate === 'string' ? query.certificate : null,
-  })
-
   return (
     <>
       <JsonLd
@@ -443,8 +432,7 @@ export default async function CategoryCollectionPage({
         ])}
       />
       <ShopClient
-        products={filteredProducts.map(toStorefrontProductCard)}
-        sourceProducts={categoryProducts.map(toStorefrontProductCard)}
+        products={categoryProducts}
         heroTitle={taxonomy?.option?.name ?? taxonomy?.subcategory.name ?? category.banner_title ?? category.name}
         heroSubtitle={category.banner_subtitle || `Browse ${category.name} from the live catalog.`}
         heroDesktopImageUrl={toPublicUrl(category.banner_desktop_image_path) || undefined}
@@ -462,6 +450,12 @@ export default async function CategoryCollectionPage({
             insertAfter: poster.insert_after ?? 6,
             displayOrder: poster.display_order ?? 0,
           }))}
+        masterShapeOptions={(stoneShapesResult.error ? [] : stoneShapesResult.data ?? []).map((shape) => ({
+          value: shape.slug,
+          label: shape.name,
+          iconUrl: toPublicUrl(shape.svg_asset_url) ?? shape.svg_asset_url ?? null,
+          displayOrder: shape.display_order ?? 0,
+        }))}
         headerBrowseSections={headerBrowseSections}
         initialFilters={{
           ...(taxonomy?.subcategory.slug

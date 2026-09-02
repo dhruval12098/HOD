@@ -117,7 +117,7 @@ export default function DiamondInfoSequence({
                 muted
                 loop
                 playsInline
-                preload="metadata"
+                preload="none"
               />
             ) : resolvedConfig.videoPosterUrl ? (
               <img

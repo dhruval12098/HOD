@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { createSupabaseServerClient } from '@/lib/server-supabase'
 import { enforceRateLimit } from '@/lib/rate-limit'
 
 type GoogleAddressComponent = {
@@ -15,6 +14,7 @@ type GoogleGeocodeResult = {
 
 type GoogleGeocodeResponse = {
   status?: string
+  error_message?: string
   results?: GoogleGeocodeResult[]
 }
 
@@ -28,14 +28,6 @@ type ZippopotamResponse = {
   country?: string
   'country abbreviation'?: string
   places?: ZippopotamPlace[]
-}
-
-type IndiaPincodeRow = {
-  pincode: string
-  office_name?: string | null
-  district?: string | null
-  state?: string | null
-  region?: string | null
 }
 
 const COUNTRY_ALIASES: Record<string, string> = {
@@ -127,14 +119,17 @@ function mapGoogleResult(result: GoogleGeocodeResult, index: number) {
   }
 }
 
-async function lookupPostalCodeWithGoogle(postalCode: string) {
+async function lookupPostalCodeWithGoogle(postalCode: string, countryCode?: string | null) {
   const googleGeocodingKey = process.env.GOOGLE_GEOCODING_KEY
   if (!googleGeocodingKey) {
     return NextResponse.json({ error: 'Postal lookup is not configured.' }, { status: 503 })
   }
 
   const googleUrl = new URL('https://maps.googleapis.com/maps/api/geocode/json')
-  googleUrl.searchParams.set('components', `postal_code:${postalCode}`)
+  googleUrl.searchParams.set(
+    'components',
+    [`postal_code:${postalCode}`, countryCode ? `country:${countryCode}` : ''].filter(Boolean).join('|')
+  )
   googleUrl.searchParams.set('key', googleGeocodingKey)
 
   try {
@@ -143,6 +138,14 @@ async function lookupPostalCodeWithGoogle(postalCode: string) {
       next: { revalidate: 3600 },
     })
     const payload = (await response.json().catch(() => null)) as GoogleGeocodeResponse | null
+
+    if (payload?.status === 'REQUEST_DENIED') {
+      console.error('Google Geocoding request denied:', payload.error_message || 'No reason provided')
+      return NextResponse.json(
+        { error: 'Google postal lookup is not configured correctly. Enable billing and the Geocoding API for the Google Cloud project.' },
+        { status: 503 }
+      )
+    }
 
     if (!response.ok || (payload?.status && payload.status !== 'OK' && payload.status !== 'ZERO_RESULTS')) {
       return NextResponse.json({ error: 'Postal lookup is unavailable right now.' }, { status: 502 })
@@ -160,49 +163,6 @@ async function lookupPostalCodeWithGoogle(postalCode: string) {
   } catch {
     return NextResponse.json({ error: 'Postal lookup is unavailable right now.' }, { status: 502 })
   }
-}
-
-async function lookupIndianPincode(postalCode: string) {
-  const pincode = normalizeIndianPincode(postalCode)
-  if (!pincode) {
-    return NextResponse.json({ error: 'Enter a valid 6-digit Indian PIN code.' }, { status: 400 })
-  }
-
-  const supabase = createSupabaseServerClient()
-  const { data, error } = await supabase
-    .from('india_pincodes')
-    .select('pincode, office_name, district, state, region')
-    .eq('pincode', pincode)
-    .order('office_name', { ascending: true })
-    .limit(25)
-
-  if (error) {
-    return NextResponse.json({ error: 'PIN code lookup table is not ready. Please import the India PIN code dataset first.' }, { status: 503 })
-  }
-
-  const rows = (data || []) as IndiaPincodeRow[]
-  if (rows.length < 1) {
-    return NextResponse.json({ error: 'PIN code not found in the India PIN code database.' }, { status: 404 })
-  }
-
-  const first = rows[0]
-  const officeNames = [...new Set(rows.map((row) => row.office_name?.trim()).filter(Boolean) as string[])]
-  const district = first.district?.trim() || ''
-  const state = first.state?.trim() || ''
-  const city = officeNames[0] || district
-
-  return NextResponse.json({
-    lookup: {
-      country: 'India',
-      countryCode: 'IN',
-      city,
-      district,
-      state,
-      postalCode: pincode,
-      postOffices: officeNames,
-      source: 'india_pincodes',
-    },
-  })
 }
 
 export async function GET(request: Request) {
@@ -225,7 +185,11 @@ export async function GET(request: Request) {
   }
 
   if (isIndiaCountry(countryCode)) {
-    return lookupIndianPincode(normalizedPostalCode)
+    const pincode = normalizeIndianPincode(normalizedPostalCode)
+    if (!pincode) {
+      return NextResponse.json({ error: 'Enter a valid 6-digit Indian PIN code.' }, { status: 400 })
+    }
+    return lookupPostalCodeWithGoogle(pincode, countryCode)
   }
 
   try {
