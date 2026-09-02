@@ -210,7 +210,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
   const [activeSearchIndex, setActiveSearchIndex] = useState(-1);
   const [searchItems, setSearchItems] = useState<Array<{ dbId?: string; slug: string; name: string; shortMeta: string; imageUrl?: string; priceFrom: number }>>([]);
   const [detectedCountry, setDetectedCountry] = useState('');
-  const displayedCountry = selected.countryCode || detectedCountry;
+  const displayedCountry = detectedCountry || selected.countryCode;
   const [announcementItems, setAnnouncementItems] = useState<
     Array<{ message: string; link_url: string; open_in_new_tab: boolean }>
   >([
