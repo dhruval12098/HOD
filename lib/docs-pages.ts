@@ -4,6 +4,7 @@ export type DocsPageContent = {
 }
 
 export async function getDocsPageContent(slug: string): Promise<DocsPageContent> {
+  await connection()
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim()
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim()
   if (!supabaseUrl || !supabaseAnonKey) return { page: null, blocks: [] }
@@ -43,3 +44,4 @@ export async function getDocsPageContent(slug: string): Promise<DocsPageContent>
     return { page: null, blocks: [] }
   }
 }
+import { connection } from 'next/server'
