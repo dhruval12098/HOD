@@ -96,16 +96,33 @@ export default function BespokeEnquiryModal({ open, onClose }: BespokeEnquiryMod
   useEffect(() => {
     if (!open) return;
 
-    const previousBodyOverflow = document.body.style.overflow;
-    const previousHtmlOverflow = document.documentElement.style.overflow;
+    const scrollY = window.scrollY;
+    const htmlStyle = document.documentElement.style;
+    const bodyStyle = document.body.style;
+    const previousBodyOverflow = bodyStyle.overflow;
+    const previousHtmlOverflow = htmlStyle.overflow;
+    const previousBodyPosition = bodyStyle.position;
+    const previousBodyTop = bodyStyle.top;
+    const previousBodyWidth = bodyStyle.width;
+    const lenis = (window as typeof window & { __lenis?: { stop?: () => void; start?: () => void } }).__lenis;
+
+    lenis?.stop?.();
     document.body.classList.add('modal-open');
-    document.body.style.overflow = 'hidden';
-    document.documentElement.style.overflow = 'hidden';
+    bodyStyle.overflow = 'hidden';
+    htmlStyle.overflow = 'hidden';
+    bodyStyle.position = 'fixed';
+    bodyStyle.top = `-${scrollY}px`;
+    bodyStyle.width = '100%';
 
     return () => {
       document.body.classList.remove('modal-open');
-      document.body.style.overflow = previousBodyOverflow;
-      document.documentElement.style.overflow = previousHtmlOverflow;
+      bodyStyle.overflow = previousBodyOverflow;
+      htmlStyle.overflow = previousHtmlOverflow;
+      bodyStyle.position = previousBodyPosition;
+      bodyStyle.top = previousBodyTop;
+      bodyStyle.width = previousBodyWidth;
+      window.scrollTo(0, scrollY);
+      lenis?.start?.();
     };
   }, [open]);
 
@@ -209,12 +226,19 @@ export default function BespokeEnquiryModal({ open, onClose }: BespokeEnquiryMod
 
   return (
     <div
-      className="fixed inset-0 z-[10002] flex items-center justify-center overflow-hidden bg-[rgba(10,22,40,0.6)] p-5 backdrop-blur-md"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Bespoke enquiry"
+      className="fixed inset-0 z-[10002] flex items-center justify-center overflow-hidden overscroll-none bg-[rgba(10,22,40,0.6)] p-3 backdrop-blur-md sm:p-5"
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <div className="relative max-h-[90vh] w-full max-w-[760px] overflow-y-auto overscroll-contain border border-[rgba(10,22,40,0.12)] bg-white px-6 py-8 shadow-[0_24px_80px_rgba(10,22,40,0.2)] md:px-10 md:py-10">
+      <div
+        data-lenis-prevent
+        onWheel={(event) => event.stopPropagation()}
+        className="relative max-h-[calc(100dvh-24px)] w-full max-w-[760px] touch-pan-y overflow-x-hidden overflow-y-auto overscroll-contain border border-[rgba(10,22,40,0.12)] bg-white px-6 py-8 shadow-[0_24px_80px_rgba(10,22,40,0.2)] [scrollbar-color:rgba(10,22,40,0.28)_transparent] [scrollbar-width:thin] sm:max-h-[90dvh] md:px-10 md:py-10 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[rgba(10,22,40,0.28)] [&::-webkit-scrollbar-track]:bg-transparent"
+      >
         <button
           type="button"
           onClick={onClose}
