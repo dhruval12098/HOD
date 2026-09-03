@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
-import { createClient } from '@supabase/supabase-js'
 import DocsPage from '@/components/docs/DocsPage'
 import { createPageMetadata } from '@/lib/seo'
+import { getDocsPageContent } from '@/lib/docs-pages'
 
 export const metadata: Metadata = createPageMetadata({
   title: 'Returns',
@@ -13,20 +13,7 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 export default async function ReturnsPage() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  let page = null
-  let blocks: Array<{ heading: string; description: string; body: string }> = []
-
-  if (supabaseUrl && supabaseKey) {
-    const supabase = createClient(supabaseUrl, supabaseKey)
-    const { data: pageData } = await supabase.from('docs_pages').select('id, eyebrow, title, subtitle').eq('slug', 'returns').maybeSingle()
-    page = pageData ?? null
-    if (pageData?.id) {
-      const { data: blockData } = await supabase.from('docs_blocks').select('heading, description, body').eq('page_id', pageData.id).order('sort_order', { ascending: true })
-      blocks = blockData ?? []
-    }
-  }
+  const { page, blocks } = await getDocsPageContent('returns')
 
   return (
     <DocsPage
