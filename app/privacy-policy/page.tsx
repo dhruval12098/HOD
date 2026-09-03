@@ -9,9 +9,6 @@ export const metadata: Metadata = createPageMetadata({
   path: '/privacy-policy',
 })
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
-
 export default async function PrivacyPolicyPage() {
   const { page, blocks } = await getDocsPageContent('privacy-policy')
 

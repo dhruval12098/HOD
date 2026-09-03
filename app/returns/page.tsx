@@ -9,9 +9,6 @@ export const metadata: Metadata = createPageMetadata({
   path: '/returns',
 })
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
-
 export default async function ReturnsPage() {
   const { page, blocks } = await getDocsPageContent('returns')
 
