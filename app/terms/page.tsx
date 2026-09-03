@@ -9,14 +9,17 @@ export const metadata: Metadata = createPageMetadata({
   path: '/terms',
 })
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export default async function TermsPage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   let page = null
   let blocks: Array<{ heading: string; description: string; body: string }> = []
 
-  if (supabaseUrl && supabaseServiceRoleKey) {
-    const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
+  if (supabaseUrl && supabaseKey) {
+    const supabase = createClient(supabaseUrl, supabaseKey)
     const { data: pageData } = await supabase.from('docs_pages').select('id, eyebrow, title, subtitle').eq('slug', 'terms').maybeSingle()
     page = pageData ?? null
     if (pageData?.id) {
