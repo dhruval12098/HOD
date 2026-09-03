@@ -1,4 +1,4 @@
-import DOMPurify from 'isomorphic-dompurify'
+import sanitizeHtml from 'sanitize-html'
 
 const RICH_TEXT_TAGS = [
   'p', 'br', 'hr',
@@ -27,28 +27,30 @@ const SVG_ATTRIBUTES = [
 ]
 
 export function sanitizeRichText(html: string) {
-  return DOMPurify.sanitize(html, {
-    ALLOWED_TAGS: RICH_TEXT_TAGS,
-    ALLOWED_ATTR: RICH_TEXT_ATTRIBUTES,
-    ALLOW_DATA_ATTR: false,
-    ALLOW_ARIA_ATTR: false,
+  return sanitizeHtml(html, {
+    allowedTags: RICH_TEXT_TAGS,
+    allowedAttributes: { '*': RICH_TEXT_ATTRIBUTES },
+    allowedSchemes: ['http', 'https', 'mailto', 'tel'],
+    allowProtocolRelative: false,
   })
 }
 
 export function sanitizeEmphasisTitle(html: string) {
-  return DOMPurify.sanitize(html, {
-    ALLOWED_TAGS: ['em'],
-    ALLOWED_ATTR: [],
-    ALLOW_DATA_ATTR: false,
-    ALLOW_ARIA_ATTR: false,
+  return sanitizeHtml(html, {
+    allowedTags: ['em'],
+    allowedAttributes: {},
   })
 }
 
 export function sanitizeInlineSvg(svg: string) {
-  return DOMPurify.sanitize(svg, {
-    ALLOWED_TAGS: SVG_TAGS,
-    ALLOWED_ATTR: SVG_ATTRIBUTES,
-    ALLOW_DATA_ATTR: false,
-    ALLOW_ARIA_ATTR: false,
+  return sanitizeHtml(svg, {
+    allowedTags: SVG_TAGS,
+    allowedAttributes: { '*': SVG_ATTRIBUTES },
+    allowedSchemes: [],
+    allowProtocolRelative: false,
+    parser: {
+      lowerCaseTags: false,
+      lowerCaseAttributeNames: false,
+    },
   })
 }
