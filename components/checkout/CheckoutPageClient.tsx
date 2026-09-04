@@ -736,41 +736,44 @@ export default function CheckoutPageClient() {
         return;
       }
 
-      const response = await fetch('/api/checkout/profile', {
-        headers: {
-          authorization: `Bearer ${accessToken}`,
-        },
-      });
-      const payload = await response.json().catch(() => null);
       const sessionUser = data.session?.user;
+      setCustomerForm((current) => ({
+        ...current,
+        email: current.email || sessionUser?.email || '',
+      }));
+      setSessionReady(true);
+      setSessionLoading(false);
 
-      if (response.ok) {
-        const nextProfile = payload?.profile ?? null;
-        setCustomerForm({
-          first_name: nextProfile?.first_name ?? '',
-          last_name: nextProfile?.last_name ?? '',
-          email: nextProfile?.email ?? sessionUser?.email ?? '',
-          phone: nextProfile?.phone ?? '',
-          country: nextProfile?.country ?? '',
-          state: nextProfile?.state ?? '',
-          district: '',
-          city: nextProfile?.city ?? '',
-          postal_code: nextProfile?.postal_code ?? '',
-          address_line_1: nextProfile?.address_line_1 ?? '',
-          address_line_2: nextProfile?.address_line_2 ?? '',
+      try {
+        const response = await fetch('/api/checkout/profile', {
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+          },
         });
-        setSessionReady(true);
-        setErrorMessage('');
-      } else {
+        const payload = await response.json().catch(() => null);
+
+        if (!response.ok) {
+          setErrorMessage(payload?.error ?? 'Profile could not be prefilled, but you can enter checkout details manually.');
+          return;
+        }
+
+        const nextProfile = payload?.profile ?? null;
         setCustomerForm((current) => ({
           ...current,
-          email: current.email || sessionUser?.email || '',
+          first_name: current.first_name || nextProfile?.first_name || '',
+          last_name: current.last_name || nextProfile?.last_name || '',
+          email: current.email || nextProfile?.email || sessionUser?.email || '',
+          phone: current.phone || nextProfile?.phone || '',
+          country: current.country || nextProfile?.country || '',
+          state: current.state || nextProfile?.state || '',
+          city: current.city || nextProfile?.city || '',
+          postal_code: current.postal_code || nextProfile?.postal_code || '',
+          address_line_1: current.address_line_1 || nextProfile?.address_line_1 || '',
+          address_line_2: current.address_line_2 || nextProfile?.address_line_2 || '',
         }));
-        setSessionReady(true);
-        setErrorMessage(payload?.error ?? 'Profile could not be prefilled, but you can enter checkout details manually.');
+      } catch {
+        setErrorMessage('Profile could not be prefilled, but you can enter checkout details manually.');
       }
-
-      setSessionLoading(false);
     })();
   }, []);
   const isFirstStep = currentStep === 0;
