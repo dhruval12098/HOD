@@ -1011,6 +1011,7 @@ export default function CheckoutPageClient() {
             },
           },
           handler: async (paymentResponse) => {
+            setProcessingPayment(true)
             setPaymentUiStage('confirming')
             const verifyResponse = await fetch('/api/payments/verify', {
               method: 'POST',
@@ -1052,6 +1053,8 @@ export default function CheckoutPageClient() {
 
       popupOpened = true
       razorpayInstance.open()
+      setPaymentUiStage('idle')
+      setProcessingPayment(false)
       } catch (error) {
         console.error('Unable to start Razorpay checkout:', error)
         setPaymentUiStage('idle')
