@@ -34,11 +34,12 @@ function toPublicUrl(path: string | null | undefined) {
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 function getPublicNavbarDataClient() {
-  return supabaseUrl && supabaseAnonKey
-    ? createClient(supabaseUrl, supabaseAnonKey)
-    : null
+  if (!supabaseUrl) return null
+  const serverKey = supabaseServiceRoleKey || supabaseAnonKey
+  return serverKey ? createClient(supabaseUrl, serverKey) : null
 }
 
 async function loadNavbarItems(client: SupabaseClient) {

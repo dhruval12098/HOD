@@ -27,7 +27,7 @@ function addDetectedCurrency(request: NextRequest, response: NextResponse) {
 type TaxonomyRow = { id: string; slug: string }
 
 function getSupabaseHeaders() {
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   return key ? { apikey: key, Authorization: `Bearer ${key}` } : null
 }
 

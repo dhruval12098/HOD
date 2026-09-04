@@ -8,10 +8,12 @@ export const dynamic = 'force-static'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 function getServerClient() {
-  if (!supabaseUrl || !supabaseAnonKey) return null
-  return createClient(supabaseUrl, supabaseAnonKey, {
+  const serverKey = supabaseServiceRoleKey || supabaseAnonKey
+  if (!supabaseUrl || !serverKey) return null
+  return createClient(supabaseUrl, serverKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   })
 }
