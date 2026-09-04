@@ -21,12 +21,11 @@ type MemoryEntry = {
 }
 
 const RATE_LIMIT_ERROR_MESSAGE = 'Too many requests. Please wait a bit and try again.'
-const IP_HEADER_CANDIDATES = [
-  'x-forwarded-for',
-  'x-real-ip',
-  'cf-connecting-ip',
-  'x-vercel-forwarded-for',
-]
+function trustedIpHeaders() {
+  if (process.env.VERCEL) return ['x-vercel-forwarded-for']
+  if (process.env.CF_PAGES || process.env.CLOUDFLARE_ENV) return ['cf-connecting-ip']
+  return ['x-forwarded-for', 'x-real-ip']
+}
 
 const memoryStore = globalThis as typeof globalThis & {
   __hodRateLimitMemory?: Map<string, MemoryEntry>
@@ -43,7 +42,7 @@ function getMemoryStore() {
 }
 
 function getClientIp(request: Request) {
-  for (const headerName of IP_HEADER_CANDIDATES) {
+  for (const headerName of trustedIpHeaders()) {
     const value = request.headers.get(headerName)
     if (!value) continue
     const first = value.split(',')[0]?.trim()

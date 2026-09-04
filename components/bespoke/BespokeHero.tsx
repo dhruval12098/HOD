@@ -109,7 +109,7 @@ export default function BespokeHero({ onEnquireClick, initialHero = null, initia
     let active = true;
     (async () => {
       try {
-        const response = await fetch('/api/public/bespoke/hero', { cache: 'no-store' });
+        const response = await fetch('/api/public/bespoke/hero');
         const payload = await response.json();
         if (!active || !payload?.item) return;
         setHero({

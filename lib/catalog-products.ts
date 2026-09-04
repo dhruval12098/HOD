@@ -1054,10 +1054,18 @@ const fetchStorefrontProducts = async (productLane?: StorefrontProductLane) => {
   })
 }
 
+const getCachedStorefrontProducts = unstable_cache(
+  fetchStorefrontProducts,
+  ['storefront-products-v1'],
+  { revalidate: 300, tags: ['storefront-products'] }
+)
+
 const getRequestStorefrontProducts = cache(fetchStorefrontProducts)
 
 export async function getStorefrontProducts(productLane?: StorefrontProductLane) {
-  return getRequestStorefrontProducts(productLane)
+  return productLane
+    ? getCachedStorefrontProducts(productLane)
+    : getRequestStorefrontProducts()
 }
 
 const getCachedStorefrontProductCards = unstable_cache(
@@ -1073,17 +1081,23 @@ export async function getStorefrontProductCards(productLane?: StorefrontProductL
   return getCachedStorefrontProductCards(productLane)
 }
 
+const getCachedStorefrontProductBySlug = unstable_cache(
+  async (slug: string) => {
+    const products = await fetchStorefrontProducts()
+    const exactMatch = products.find((entry) => entry.slug === slug)
+    if (exactMatch) return exactMatch
+
+    const legacySlug = slug.replace(/-\d+$/, '')
+    return legacySlug !== slug
+      ? products.find((entry) => entry.slug === legacySlug) || null
+      : null
+  },
+  ['storefront-product-by-slug-v1'],
+  { revalidate: 300, tags: ['storefront-products'] }
+)
+
 export async function getStorefrontProductBySlug(slug: string) {
-  const products = await getRequestStorefrontProducts()
-  const exactMatch = products.find((entry) => entry.slug === slug)
-  if (exactMatch) return exactMatch
-
-  const legacySlug = slug.replace(/-\d+$/, '')
-  if (legacySlug !== slug) {
-    return products.find((entry) => entry.slug === legacySlug) || null
-  }
-
-  return null
+  return getCachedStorefrontProductBySlug(slug)
 }
 
 export function filterStorefrontProducts<T extends StorefrontProductCard>(

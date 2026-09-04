@@ -5,14 +5,13 @@ import { buildOptionPath, buildSubcategoryPath } from '@/lib/catalog-paths';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 function createHomeSupabaseClient() {
   if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error('Missing Supabase environment variables for home data.');
   }
 
-  return createClient(supabaseUrl, supabaseServiceRoleKey || supabaseAnonKey, {
+  return createClient(supabaseUrl, supabaseAnonKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 }
@@ -1068,7 +1067,7 @@ const loadHomePageData = unstable_cache(
     };
   },
   ['home-page-data-v4'],
-  { revalidate: 30 }
+  { revalidate: 300 }
 );
 
 export async function getHomePageData() {
@@ -1093,7 +1092,7 @@ const loadHomeSeoData = unstable_cache(
     };
   },
   ['home-seo-data-v1'],
-  { revalidate: 30 }
+  { revalidate: 300 }
 );
 
 export async function getHomeSeoData() {

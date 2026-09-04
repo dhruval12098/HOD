@@ -55,7 +55,7 @@ export default function StatsStrip() {
 
   useEffect(() => {
     const load = async () => {
-      const response = await fetch('/api/public/stats', { cache: 'no-store' });
+      const response = await fetch('/api/public/stats');
       const payload = (await response.json().catch(() => null)) as StatsPayload | null;
       if (!response.ok) return;
       setStats(payload?.items ?? []);

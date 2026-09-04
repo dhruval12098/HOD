@@ -45,7 +45,7 @@ export default function CartClient() {
   }, [isHydrated, legacyLookupKey])
 
   useEffect(() => {
-    void fetch('/api/public/promotions', { cache: 'no-store' }).then((response) => response.json()).then((payload) => setPromotions(Array.isArray(payload?.items) ? payload.items : [])).catch(() => {})
+    void fetch('/api/public/promotions').then((response) => response.json()).then((payload) => setPromotions(Array.isArray(payload?.items) ? payload.items : [])).catch(() => {})
     try { const stored = localStorage.getItem(APPLIED_COUPON_KEY); if (stored) { const parsed = JSON.parse(stored); setAppliedCoupon(parsed); setCouponCode(parsed.code || '') } } catch {}
   }, [])
 

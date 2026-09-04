@@ -5,7 +5,8 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 const sectionKey = 'home_testimonial_marquee'
 
-export const dynamic = 'force-dynamic'
+export const dynamic = 'force-static'
+export const revalidate = 300
 
 export async function GET() {
   if (!supabaseUrl || !supabaseAnonKey) {

@@ -234,11 +234,13 @@ export default function CheckoutPageClient() {
   } | null>(null)
   const postalLookupAbortRef = useRef<AbortController | null>(null)
   const checkoutAttemptKeyRef = useRef<string | null>(null)
+  const paymentSessionPromiseRef = useRef<Promise<PendingPaymentSession | null> | null>(null)
+  const paymentAccessTokenRef = useRef<string | null>(null)
   const lastPostalLookupKeyRef = useRef<string>('')
   const cartMode = searchParams.get('mode') === 'cart';
 
   useEffect(() => {
-    void fetch('/api/public/promotions', { cache: 'no-store' }).then((response) => response.json()).then((payload) => setPromotions(Array.isArray(payload?.items) ? payload.items : [])).catch(() => {})
+    void fetch('/api/public/promotions').then((response) => response.json()).then((payload) => setPromotions(Array.isArray(payload?.items) ? payload.items : [])).catch(() => {})
     if (!cartMode) {
       setAppliedCoupon(null)
       setCouponCodeInput('')
@@ -403,6 +405,7 @@ export default function CheckoutPageClient() {
 
   useEffect(() => {
     setPendingPaymentSession(null)
+    paymentSessionPromiseRef.current = null
     checkoutAttemptKeyRef.current = null
   }, [paymentSessionSignature])
 
@@ -875,6 +878,66 @@ export default function CheckoutPageClient() {
 
     setErrorMessage('')
     setCurrentStep((step) => Math.min(CHECKOUT_STEPS.length - 1, step + 1))
+    if (currentStep === CHECKOUT_STEPS.length - 2) {
+      void preparePaymentSession(false)
+    }
+  }
+
+  const preparePaymentSession = async (showErrors: boolean) => {
+    if (pendingPaymentSession) return pendingPaymentSession
+    if (paymentSessionPromiseRef.current) return paymentSessionPromiseRef.current
+
+    const request = (async () => {
+      const { data } = await supabase.auth.getSession()
+      const accessToken = data.session?.access_token
+      if (!accessToken) {
+        if (showErrors) setErrorMessage('Please sign in to continue checkout.')
+        return null
+      }
+      paymentAccessTokenRef.current = accessToken
+
+      const idempotencyKey = checkoutAttemptKeyRef.current || window.crypto.randomUUID()
+      checkoutAttemptKeyRef.current = idempotencyKey
+      const response = await fetch('/api/checkout/place', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          idempotencyKey,
+          item: cartMode ? null : buildCheckoutRequestItem(singleItem),
+          items: cartMode ? checkoutItems.map(buildCheckoutRequestItem) : undefined,
+          customer: customerForm,
+          loveLetter: loveLetterDraft,
+          currencyCode,
+          coupon: appliedCoupon
+            ? {
+                id: appliedCoupon.id,
+                code: appliedCoupon.code,
+              }
+            : null,
+        }),
+      })
+      const payload = await response.json().catch(() => null)
+
+      if (!response.ok) {
+        if (payload?.retryable) checkoutAttemptKeyRef.current = null
+        if (showErrors) setErrorMessage(payload?.error ?? 'Unable to start payment.')
+        return null
+      }
+
+      const nextSession = payload as PendingPaymentSession
+      setPendingPaymentSession(nextSession)
+      return nextSession
+    })()
+
+    paymentSessionPromiseRef.current = request
+    try {
+      return await request
+    } finally {
+      paymentSessionPromiseRef.current = null
+    }
   }
 
   const handlePayNow = async () => {
@@ -905,59 +968,14 @@ export default function CheckoutPageClient() {
     setErrorMessage('');
     let popupOpened = false
     try {
-      const { data } = await supabase.auth.getSession();
-        const accessToken = data.session?.access_token;
-        if (!accessToken) {
-          setErrorMessage('Please sign in to continue checkout.');
-          setPaymentUiStage('idle')
-          setProcessingPayment(false)
-          return;
-        }
+      const paymentSession = await preparePaymentSession(true)
+      const accessToken = paymentAccessTokenRef.current
 
-      const paymentSession =
-        pendingPaymentSession ||
-        (await (async () => {
-          const idempotencyKey = checkoutAttemptKeyRef.current || window.crypto.randomUUID()
-          checkoutAttemptKeyRef.current = idempotencyKey
-          const response = await fetch('/api/checkout/place', {
-            method: 'POST',
-            headers: {
-              'content-type': 'application/json',
-              authorization: `Bearer ${accessToken}`,
-            },
-            body: JSON.stringify({
-              idempotencyKey,
-              item: cartMode ? null : buildCheckoutRequestItem(singleItem),
-              items: cartMode ? checkoutItems.map(buildCheckoutRequestItem) : undefined,
-              customer: customerForm,
-              loveLetter: loveLetterDraft,
-              currencyCode,
-              coupon: appliedCoupon
-                ? {
-                    id: appliedCoupon.id,
-                    code: appliedCoupon.code,
-                  }
-                : null,
-            }),
-          })
-          const payload = await response.json().catch(() => null)
-
-          if (!response.ok) {
-            if (payload?.retryable) checkoutAttemptKeyRef.current = null
-            setErrorMessage(payload?.error ?? 'Unable to start payment.')
-            return null
-          }
-
-          const nextSession = payload as PendingPaymentSession
-          setPendingPaymentSession(nextSession)
-          return nextSession
-        })())
-
-        if (!paymentSession) {
+      if (!accessToken || !paymentSession) {
         setPaymentUiStage('idle')
         setProcessingPayment(false)
-          return
-        }
+        return
+      }
 
         const razorpayInstance = new window.Razorpay({
         key: paymentSession.razorpay.keyId,
@@ -972,9 +990,21 @@ export default function CheckoutPageClient() {
         },
           modal: {
             ondismiss: () => {
+              void fetch('/api/checkout/cancel', {
+                method: 'POST',
+                headers: {
+                  'content-type': 'application/json',
+                  authorization: `Bearer ${accessToken}`,
+                },
+                body: JSON.stringify({ orderId: paymentSession.orderId }),
+                keepalive: true,
+              }).catch(() => {})
+              setPendingPaymentSession(null)
+              paymentSessionPromiseRef.current = null
+              checkoutAttemptKeyRef.current = null
               setPaymentUiStage('idle')
               setProcessingPayment(false)
-              setErrorMessage('Payment popup closed. Your order is still pending payment and you can try again.')
+              setErrorMessage('Payment popup closed. Reserved stock has been released and you can try again.')
             },
           },
           handler: async (paymentResponse) => {

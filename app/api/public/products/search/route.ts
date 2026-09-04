@@ -3,6 +3,7 @@ import { unstable_cache } from 'next/cache'
 import { getStorefrontProductCards } from '@/lib/catalog-products'
 
 export const revalidate = 300
+export const dynamic = 'force-static'
 
 const getSearchItems = unstable_cache(
   async () => {

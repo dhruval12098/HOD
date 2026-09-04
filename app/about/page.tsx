@@ -9,16 +9,16 @@ export const metadata: Metadata = createPageMetadata({
   path: '/about',
 });
 
-export const revalidate = 30;
+export const revalidate = 300;
 
 export default async function AboutPage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   let hero = null;
   let manufacturingItems: any[] = [];
 
-  if (supabaseUrl && supabaseServiceRoleKey) {
-    const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+  if (supabaseUrl && supabaseAnonKey) {
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
     const bucket = process.env.NEXT_PUBLIC_SUPABASE_COLLECTION_BUCKET ?? 'hod';
     const buildPublicUrl = (path?: string | null) => {
       if (!path) return '';

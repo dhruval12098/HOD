@@ -5,7 +5,8 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const collectionBucket = process.env.NEXT_PUBLIC_SUPABASE_COLLECTION_BUCKET || 'hod'
 const publicImageUrl = (path: unknown) => typeof path === 'string' && path ? (/^https?:\/\//.test(path) ? path : `${supabaseUrl}/storage/v1/object/public/${collectionBucket}/${path}`) : ''
 
-export const dynamic = 'force-dynamic'
+export const dynamic = 'force-static'
+export const revalidate = 300
 
 export async function GET() {
   const adminClient = createSupabaseServerClient()

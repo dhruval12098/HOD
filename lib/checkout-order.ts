@@ -129,6 +129,7 @@ type OrderEmailItemRow = {
 type StockFinalizationResult = {
   ok: boolean
   message?: string | null
+  error_code?: string | null
   already_paid?: boolean | null
   order_id: string
   order_number: string
@@ -604,6 +605,12 @@ export async function markOrderPaymentFailed({
     })
     .eq('id', order.id)
 
+  const { error: releaseError } = await adminClient
+    .rpc('release_order_inventory_reservation', { p_order_id: order.id })
+  if (releaseError) {
+    console.error('Failed to release inventory reservation after payment failure:', releaseError)
+  }
+
   return order.id as string
 }
 
@@ -663,7 +670,7 @@ export async function finalizePaidOrder({
     .single()
 
   if (stockFinalizationError) {
-    return { error: stockFinalizationError.message }
+    return { error: stockFinalizationError.message, errorCode: 'finalization_rpc_error', orderId: order.id }
   }
 
   const finalization = stockFinalization as StockFinalizationResult | null
@@ -672,6 +679,8 @@ export async function finalizePaidOrder({
       error:
         finalization?.message ||
         'Payment was verified, but stock could not be allocated. Please contact support.',
+      errorCode: finalization?.error_code || 'inventory_finalization_failed',
+      orderId: finalization?.order_id || order.id,
     }
   }
 

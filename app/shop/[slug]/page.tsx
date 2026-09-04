@@ -45,7 +45,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
     redirect(`/shop/${product.slug}`);
   }
 
-  const relatedProducts = (await getStorefrontProducts())
+  const relatedProducts = (await getStorefrontProducts(product.productLane))
     .filter((item) => item.slug !== slug && item.mainCategorySlug === product.mainCategorySlug && item.productLane === product.productLane)
     .slice(0, 4);
 

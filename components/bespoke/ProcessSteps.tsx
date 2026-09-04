@@ -46,7 +46,7 @@ export default function ProcessSteps({ initialItems = [] }: { initialItems?: { i
     let active = true;
     (async () => {
       try {
-        const response = await fetch('/api/public/bespoke/process', { cache: 'no-store' });
+        const response = await fetch('/api/public/bespoke/process');
         const payload = await response.json();
         if (!active) return;
         setItems(Array.isArray(payload?.items) ? payload.items : []);

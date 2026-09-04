@@ -43,7 +43,7 @@ export default function HipHopHero({
     let active = true
     ;(async () => {
       try {
-        const response = await fetch('/api/public/hiphop/hero', { cache: 'no-store' })
+        const response = await fetch('/api/public/hiphop/hero')
         const payload = await response.json().catch(() => null)
         if (!active) return
 
@@ -61,7 +61,7 @@ export default function HipHopHero({
           return
         }
 
-        const legacyResponse = await fetch('/api/public/hiphop-showcase', { cache: 'no-store' })
+        const legacyResponse = await fetch('/api/public/hiphop-showcase')
         const legacyPayload = await legacyResponse.json().catch(() => null)
         const legacySection = legacyPayload?.section
 

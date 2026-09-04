@@ -47,7 +47,7 @@ export default function ContactHero() {
     let active = true;
     async function load() {
       try {
-        const response = await fetch('/api/public/contact/hero', { cache: 'no-store' });
+        const response = await fetch('/api/public/contact/hero');
         const payload = await response.json();
         if (!active) return;
         setContent(payload?.item ?? null);

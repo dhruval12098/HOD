@@ -74,7 +74,7 @@ export default function PromotionPopup() {
 
     const load = async () => {
       try {
-        const response = await fetch('/api/public/promotion-popup', { cache: 'no-store' })
+        const response = await fetch('/api/public/promotion-popup')
         const payload = await response.json().catch(() => null)
         if (!response.ok || ignore) return
 

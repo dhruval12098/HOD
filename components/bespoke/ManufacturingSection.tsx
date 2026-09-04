@@ -26,7 +26,7 @@ export default function ManufacturingSection() {
     let active = true;
     (async () => {
       try {
-        const response = await fetch('/api/public/bespoke/manufacturing', { cache: 'no-store' });
+        const response = await fetch('/api/public/bespoke/manufacturing');
         const payload = await response.json();
         if (!active) return;
         setItems(Array.isArray(payload?.items) ? payload.items : []);

@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { finalizePaidOrder, markOrderPaymentFailed } from '@/lib/checkout-order'
 import { getRazorpayClient, verifyRazorpayPaymentSignature } from '@/lib/razorpay'
 import { enforceRateLimit } from '@/lib/rate-limit'
+import { recoverCapturedPayment } from '@/lib/payment-recovery'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -113,6 +114,31 @@ export async function POST(request: Request) {
     })
 
     if ('error' in finalized) {
+      const refundableInventoryErrors = new Set([
+        'insufficient_stock',
+        'missing_product_reference',
+        'product_not_found',
+      ])
+      if (finalized.errorCode && refundableInventoryErrors.has(finalized.errorCode)) {
+        const recovery = await recoverCapturedPayment({
+          adminClient,
+          orderId: finalized.orderId,
+          paymentId: payload.razorpay_payment_id,
+          amountInSubunits: Number(payment.amount),
+          currency: paymentCurrency,
+          reasonCode: finalized.errorCode,
+        })
+        if (!recovery.durable) {
+          return NextResponse.json({ error: 'Payment recovery could not be recorded. Support has been notified.' }, { status: 500 })
+        }
+        const customerMessage = recovery.status === 'failed'
+          ? 'Payment was captured, but the item became unavailable. Your refund requires urgent review by support.'
+          : 'Payment was captured, but the item became unavailable. A full refund has been initiated.'
+        return NextResponse.json(
+          { error: customerMessage, recoveryStatus: recovery.status },
+          { status: 202 }
+        )
+      }
       return NextResponse.json({ error: finalized.error }, { status: 500 })
     }
 

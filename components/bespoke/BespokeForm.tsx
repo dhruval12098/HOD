@@ -146,7 +146,7 @@ export default function BespokeForm({ onSuccess, initialConfig }: BespokeFormPro
     let active = true;
     (async () => {
       try {
-        const response = await fetch('/api/public/bespoke/form-config', { cache: 'no-store' });
+        const response = await fetch('/api/public/bespoke/form-config');
         const payload = await response.json();
         if (!active) return;
         setConfig({

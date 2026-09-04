@@ -140,7 +140,7 @@ export default function BespokeEnquiryModal({ open, onClose }: BespokeEnquiryMod
 
     (async () => {
       try {
-        const response = await fetch('/api/public/bespoke/form-config', { cache: 'no-store' });
+        const response = await fetch('/api/public/bespoke/form-config');
         const payload = await response.json();
         if (!active) return;
         setConfig({

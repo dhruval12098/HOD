@@ -273,7 +273,7 @@ export default function BespokePortfolio({
     let active = true;
     (async () => {
       try {
-        const response = await fetch('/api/public/bespoke/portfolio', { cache: 'no-store' });
+        const response = await fetch('/api/public/bespoke/portfolio');
         const payload = await response.json();
         if (!active) return;
         setCategories(Array.isArray(payload?.categories) ? payload.categories : []);

@@ -59,7 +59,7 @@ export default function ContactMap() {
 
     const loadContactInfo = async () => {
       try {
-        const response = await fetch('/api/public/contact/info', { cache: 'no-store' });
+        const response = await fetch('/api/public/contact/info');
         const payload = await response.json().catch(() => null);
         if (ignore) return;
         setRows(Array.isArray(payload?.items) ? payload.items : []);

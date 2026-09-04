@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { finalizePaidOrder, markOrderPaymentFailed } from '@/lib/checkout-order'
 import { verifyRazorpayWebhookSignature } from '@/lib/razorpay'
+import { recoverCapturedPayment } from '@/lib/payment-recovery'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -29,6 +30,13 @@ type RazorpayWebhookPayload = {
     order?: {
       entity?: {
         id?: string
+        status?: string
+      }
+    }
+    refund?: {
+      entity?: {
+        id?: string
+        payment_id?: string
         status?: string
       }
     }
@@ -64,35 +72,45 @@ export async function POST(request: Request) {
   const eventType = payload.event || 'unknown'
   const paymentEntity = payload.payload?.payment?.entity
   const orderEntity = payload.payload?.order?.entity
+  const refundEntity = payload.payload?.refund?.entity
   const razorpayOrderId = paymentEntity?.order_id || orderEntity?.id || null
   const razorpayPaymentId = paymentEntity?.id || null
 
   if (eventId) {
-    const { data: existingEvent } = await adminClient
-      .from('payment_webhook_events')
-      .select('id, processed')
-      .eq('provider', 'razorpay')
-      .eq('event_id', eventId)
-      .maybeSingle()
-
-    if (existingEvent?.processed) {
-      return NextResponse.json({ ok: true, duplicate: true })
-    }
-
-    if (!existingEvent) {
-      await adminClient.from('payment_webhook_events').insert({
-        provider: 'razorpay',
-        event_id: eventId,
-        event_type: eventType,
-        razorpay_order_id: razorpayOrderId,
-        razorpay_payment_id: razorpayPaymentId,
-        payload,
-        processed: false,
+    const { data: claimed, error: claimError } = await adminClient
+      .rpc('claim_payment_webhook_event', {
+        p_provider: 'razorpay',
+        p_event_id: eventId,
+        p_event_type: eventType,
+        p_razorpay_order_id: razorpayOrderId,
+        p_razorpay_payment_id: razorpayPaymentId || refundEntity?.payment_id || null,
+        p_payload: payload,
       })
-    }
+    if (claimError) throw new Error('Unable to claim webhook event.')
+    if (!claimed) return NextResponse.json({ ok: true, duplicate: true })
   }
 
   try {
+    if ((eventType === 'refund.processed' || eventType === 'refund.failed') && refundEntity?.id) {
+      const status = eventType === 'refund.processed' ? 'refunded' : 'failed'
+      const now = new Date().toISOString()
+      let recoveryUpdate = adminClient
+        .from('payment_recovery_actions')
+        .update({
+          status,
+          provider_refund_id: refundEntity.id,
+          completed_at: status === 'refunded' ? now : null,
+          last_error: status === 'failed' ? 'Razorpay reported that the refund failed.' : null,
+          leased_until: null,
+          updated_at: now,
+        })
+      recoveryUpdate = refundEntity.payment_id
+        ? recoveryUpdate.eq('payment_id', refundEntity.payment_id)
+        : recoveryUpdate.eq('provider_refund_id', refundEntity.id)
+      const { error: recoveryError } = await recoveryUpdate
+      if (recoveryError) throw recoveryError
+    }
+
     if ((eventType === 'payment.captured' || eventType === 'order.paid') && razorpayOrderId && razorpayPaymentId) {
       if (paymentEntity?.status !== 'captured' || !Number.isFinite(Number(paymentEntity.amount)) || !paymentEntity?.currency) {
         throw new Error('Captured payment details are incomplete.')
@@ -111,7 +129,24 @@ export async function POST(request: Request) {
       })
 
       if ('error' in finalized) {
-        throw new Error(finalized.error)
+        const refundableInventoryErrors = new Set([
+          'insufficient_stock',
+          'missing_product_reference',
+          'product_not_found',
+        ])
+        if (finalized.errorCode && refundableInventoryErrors.has(finalized.errorCode)) {
+          const recovery = await recoverCapturedPayment({
+            adminClient,
+            orderId: finalized.orderId,
+            paymentId: razorpayPaymentId,
+            amountInSubunits: Number(paymentEntity.amount),
+            currency: paymentEntity.currency,
+            reasonCode: finalized.errorCode,
+          })
+          if (!recovery.durable) throw new Error('Captured payment recovery could not be recorded.')
+        } else {
+          throw new Error(finalized.error)
+        }
       }
     }
 
@@ -141,6 +176,7 @@ export async function POST(request: Request) {
         .update({
           processed: true,
           processed_at: new Date().toISOString(),
+          processing_started_at: null,
         })
         .eq('provider', 'razorpay')
         .eq('event_id', eventId)

@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { getStorefrontProducts } from '@/lib/catalog-products'
 
+export const revalidate = 300
+export const dynamic = 'force-static'
+
 export async function GET() {
   try {
     const products = await getStorefrontProducts()
@@ -24,7 +27,7 @@ export async function GET() {
         mainCategoryName: product.mainCategoryName,
         mainCategorySlug: product.mainCategorySlug,
       })),
-    })
+    }, { headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' } })
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : 'Unable to load products.' }, { status: 500 })
   }

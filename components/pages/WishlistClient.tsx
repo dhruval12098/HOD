@@ -46,7 +46,7 @@ export default function WishlistClient() {
   useEffect(() => {
     let ignore = false
     const load = async () => {
-      const response = await fetch('/api/public/products', { cache: 'no-store' })
+      const response = await fetch('/api/public/products')
       const payload = await response.json().catch(() => null)
       if (!ignore && response.ok && Array.isArray(payload?.items)) setProducts(payload.items)
       if (!ignore) setIsLoading(false)

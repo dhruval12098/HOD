@@ -40,7 +40,7 @@ export default function ContactBody({ onSuccess }: ContactBodyProps) {
     let active = true;
     (async () => {
       try {
-        const response = await fetch('/api/public/contact/info', { cache: 'no-store' });
+        const response = await fetch('/api/public/contact/info');
         const payload = await response.json();
         if (!active) return;
         setContactRows(Array.isArray(payload?.items) ? payload.items : []);

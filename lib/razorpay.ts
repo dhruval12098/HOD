@@ -4,7 +4,7 @@ import Razorpay from 'razorpay'
 export const RAZORPAY_CURRENCY = process.env.RAZORPAY_CURRENCY || 'INR'
 
 export function getRazorpayKeyId() {
-  return process.env.RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || ''
+  return process.env.RAZORPAY_KEY_ID || ''
 }
 
 export function isRazorpayConfigured() {
