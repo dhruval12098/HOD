@@ -42,7 +42,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Supabase migrations are part of the reproducible database schema and must be
-# committed. Keep generated local Supabase state out of Git instead.
-/supabase/.branches
-/supabase/.temp
+# Keep local Supabase migrations and generated state out of Git.
+/supabase/
