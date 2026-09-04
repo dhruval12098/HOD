@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { useState } from 'react';
 import AppleIcon from '@mui/icons-material/Apple';
 import CheckoutSectionCard from '@/components/checkout/CheckoutSectionCard';
 import { useCurrency } from '@/context/CurrencyContext';
@@ -27,8 +28,15 @@ export default function CheckoutReviewStep({
   paymentAvailabilityMessage?: string
 }) {
   const { format } = useCurrency();
+  const [selectedPaymentButton, setSelectedPaymentButton] = useState<'razorpay' | 'apple-pay' | null>(null);
 
   const paymentBlocked = isProcessingPayment || isPaymentDisabled;
+  const loadingIndicator = (
+    <span
+      aria-hidden="true"
+      className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent"
+    />
+  );
 
   return (
     <CheckoutSectionCard
@@ -83,21 +91,41 @@ export default function CheckoutReviewStep({
           <div className="grid gap-3 sm:grid-cols-2">
             <button
               type="button"
-              onClick={onPayNow}
+              onClick={() => {
+                setSelectedPaymentButton('razorpay');
+                onPayNow();
+              }}
               disabled={paymentBlocked}
               className="inline-flex min-h-[58px] items-center justify-center rounded-[14px] bg-[linear-gradient(135deg,#2f74d0_0%,#123b78_55%,#091c3d_100%)] px-6 py-3 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(18,59,120,0.24)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#397ed8] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-55 disabled:shadow-none disabled:hover:brightness-100"
             >
-              Proceed to Pay
+              {isProcessingPayment && selectedPaymentButton === 'razorpay' ? (
+                <span className="inline-flex items-center gap-2" role="status">
+                  {loadingIndicator}
+                  Opening secure payment…
+                </span>
+              ) : 'Proceed to Pay'}
             </button>
             <button
               type="button"
-              onClick={onPayNow}
+              onClick={() => {
+                setSelectedPaymentButton('apple-pay');
+                onPayNow();
+              }}
               disabled={paymentBlocked}
               aria-describedby="apple-pay-availability"
               className="inline-flex min-h-[58px] items-center justify-center gap-2.5 rounded-[14px] bg-[#050505] px-6 py-3 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(5,5,5,0.2)] transition hover:bg-[#1a1a1a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#667085] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-55 disabled:shadow-none"
             >
-              <AppleIcon aria-hidden="true" sx={{ fontSize: 24 }} />
-              Pay with Apple Pay
+              {isProcessingPayment && selectedPaymentButton === 'apple-pay' ? (
+                <span className="inline-flex items-center gap-2" role="status">
+                  {loadingIndicator}
+                  Opening secure payment…
+                </span>
+              ) : (
+                <>
+                  <AppleIcon aria-hidden="true" sx={{ fontSize: 24 }} />
+                  Pay with Apple Pay
+                </>
+              )}
             </button>
           </div>
           <p id="apple-pay-availability" className="mt-3 text-xs leading-5 text-[#667085]">
