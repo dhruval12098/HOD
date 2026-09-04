@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { Box, ChevronLeft, ChevronRight, LogOut, Package, UserRound } from 'lucide-react';
+import type { Session } from '@supabase/supabase-js';
 import { getCollectionHref } from '@/lib/browse-context';
 import { formatUsd } from '@/lib/money';
 import { supabase } from '@/lib/supabase';
@@ -45,6 +46,17 @@ type OrderRecord = {
   items: OrderItem[];
 };
 
+type SignedInProfileState = Extract<ProfileState, { status: 'signed-in' }>;
+type OrdersCacheEntry = {
+  orders: OrderRecord[];
+  totalPages: number;
+  cachedAt: number;
+};
+
+const ORDERS_CACHE_TTL_MS = 60_000;
+let cachedProfileState: SignedInProfileState | null = null;
+const ordersCache = new Map<string, OrdersCacheEntry>();
+
 function buildSelectionLabel(metal?: string | null, purity?: string | null) {
   const normalizedMetal = metal?.trim() || ''
   const normalizedPurity = purity?.trim() || ''
@@ -70,7 +82,7 @@ export default function ProfileClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tab = searchParams.get('tab') === 'orders' ? 'orders' : 'profile';
-  const [state, setState] = useState<ProfileState>({ status: 'loading' });
+  const [state, setState] = useState<ProfileState>(() => cachedProfileState ?? { status: 'loading' });
   const [signingOut, setSigningOut] = useState(false);
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
@@ -81,23 +93,31 @@ export default function ProfileClient() {
   useEffect(() => {
     let mounted = true;
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const applySession = (session: Session | null) => {
       const user = session?.user;
-
       if (!mounted) return;
 
       if (!user) {
+        cachedProfileState = null;
         setState({ status: 'signed-out' });
         return;
       }
 
-      setState({
+      const nextState: SignedInProfileState = {
         status: 'signed-in',
         email: user.email ?? 'No email available',
         username: getUsername(user.email, user.user_metadata),
         createdAt: user.created_at ?? '',
         userId: user.id,
-      });
+      };
+      cachedProfileState = nextState;
+      setState(nextState);
+    };
+
+    void supabase.auth.getSession().then(({ data }) => applySession(data.session));
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      applySession(session);
     });
 
     return () => {
@@ -106,13 +126,25 @@ export default function ProfileClient() {
     };
   }, []);
 
+  const signedInUserId = state.status === 'signed-in' ? state.userId : '';
+
   useEffect(() => {
-    if (tab !== 'orders' || state.status !== 'signed-in') return;
+    if (!signedInUserId) return;
 
     let ignore = false;
+    const cacheKey = `${signedInUserId}:${ordersPage}`;
+    const cached = ordersCache.get(cacheKey);
+
+    if (cached) {
+      setOrders(cached.orders);
+      setOrdersTotalPages(cached.totalPages);
+      setOrdersError('');
+      setOrdersLoading(false);
+      if (Date.now() - cached.cachedAt < ORDERS_CACHE_TTL_MS) return;
+    }
 
     const loadOrders = async () => {
-      setOrdersLoading(true);
+      setOrdersLoading(!cached);
       setOrdersError('');
 
       try {
@@ -137,8 +169,11 @@ export default function ProfileClient() {
 
         if (ignore) return;
 
-        setOrders(Array.isArray(payload?.orders) ? payload.orders : []);
-        setOrdersTotalPages(Math.max(1, Number(payload?.pagination?.totalPages || 1)));
+        const nextOrders = Array.isArray(payload?.orders) ? payload.orders : [];
+        const nextTotalPages = Math.max(1, Number(payload?.pagination?.totalPages || 1));
+        ordersCache.set(cacheKey, { orders: nextOrders, totalPages: nextTotalPages, cachedAt: Date.now() });
+        setOrders(nextOrders);
+        setOrdersTotalPages(nextTotalPages);
       } catch (loadError) {
         if (ignore) return;
         setOrdersError(loadError instanceof Error ? loadError.message : 'Unable to load your orders right now.');
@@ -154,7 +189,7 @@ export default function ProfileClient() {
     return () => {
       ignore = true;
     };
-  }, [ordersPage, state, tab]);
+  }, [ordersPage, signedInUserId]);
 
   const joinedLabel = useMemo(() => {
     if (state.status !== 'signed-in' || !state.createdAt) return 'Recently joined';
@@ -174,7 +209,7 @@ export default function ProfileClient() {
   };
 
   const setTab = (nextTab: AccountTab) => {
-    router.replace(nextTab === 'profile' ? '/profile' : '/profile?tab=orders');
+    window.history.replaceState(null, '', nextTab === 'profile' ? '/profile' : '/profile?tab=orders');
   };
 
   const formatMoney = (amount: number | null | undefined) => formatUsd(amount);

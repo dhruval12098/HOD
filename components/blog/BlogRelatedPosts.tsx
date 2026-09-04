@@ -32,7 +32,7 @@ export default function BlogRelatedPosts({ posts, onPostClick, basePath = "/blog
             <Link
               key={post.id}
               href={post.slug ? `${basePath}/${post.slug}` : basePath}
-              onNavigate={(event) => { event.preventDefault(); onPostClick(post.id); }}
+              prefetch
               className="group flex h-full flex-col overflow-hidden rounded-[10px] border border-[rgba(10,22,40,0.12)] bg-white transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_36px_rgba(10,22,40,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0A1628] focus-visible:ring-offset-4"
             >
               <div className="relative flex aspect-[16/10] items-center justify-center overflow-hidden" style={{ background: post.bgColor }}>

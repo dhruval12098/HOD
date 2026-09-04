@@ -19,7 +19,7 @@ interface BlogCardSmallProps {
   simplifiedDetails?: boolean;
 }
 
-export default function BlogCardSmall({ post, onClick, basePath = "/blog", simplifiedDetails = false }: BlogCardSmallProps) {
+export default function BlogCardSmall({ post, basePath = "/blog", simplifiedDetails = false }: BlogCardSmallProps) {
   const variant = gemVariants[post.id % gemVariants.length] ?? "diamond";
   const imageUrl = getStorageImageUrl(post.heroImagePath);
   const href = post.slug ? `${basePath}/${post.slug}` : basePath;
@@ -27,7 +27,7 @@ export default function BlogCardSmall({ post, onClick, basePath = "/blog", simpl
   return (
     <Link
       href={href}
-      onNavigate={(event) => { event.preventDefault(); onClick(); }}
+      prefetch
       className="group relative flex h-full flex-col overflow-hidden rounded-[10px] border border-[var(--theme-border)] bg-[var(--theme-surface)] shadow-[0_1px_0_rgba(10,22,40,0.04)] transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_36px_rgba(10,22,40,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0A1628] focus-visible:ring-offset-4"
     >
       <div
