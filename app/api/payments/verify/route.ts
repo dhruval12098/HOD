@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { finalizePaidOrder, markOrderPaymentFailed } from '@/lib/checkout-order'
 import { getRazorpayClient, verifyRazorpayPaymentSignature } from '@/lib/razorpay'
 import { enforceRateLimit } from '@/lib/rate-limit'
-import { recoverCapturedPayment } from '@/lib/payment-recovery'
+import { REFUNDABLE_FINALIZATION_ERRORS, recoverCapturedPayment } from '@/lib/payment-recovery'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -114,12 +114,8 @@ export async function POST(request: Request) {
     })
 
     if ('error' in finalized) {
-      const refundableInventoryErrors = new Set([
-        'insufficient_stock',
-        'missing_product_reference',
-        'product_not_found',
-      ])
-      if (finalized.errorCode && refundableInventoryErrors.has(finalized.errorCode)) {
+      console.error('Paid order finalization failed:', finalized.error)
+      if (finalized.errorCode && REFUNDABLE_FINALIZATION_ERRORS.has(finalized.errorCode)) {
         const recovery = await recoverCapturedPayment({
           adminClient,
           orderId: finalized.orderId,
@@ -139,7 +135,12 @@ export async function POST(request: Request) {
           { status: 202 }
         )
       }
-      return NextResponse.json({ error: finalized.error }, { status: 500 })
+      return NextResponse.json(
+        {
+          error: 'Payment was captured, but we could not finalize your order automatically. Our team has been notified and will resolve this shortly.',
+        },
+        { status: 500 }
+      )
     }
 
     return NextResponse.json({

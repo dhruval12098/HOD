@@ -1,8 +1,8 @@
 'use client'
 
-import { type FormEvent, useEffect, useState } from 'react'
+import { type FormEvent, useEffect, useRef, useState } from 'react'
 import { Check, Copy } from 'lucide-react'
-import { veloriaFont } from '@/app/fonts'
+import { cinzelFont } from '@/app/fonts'
 
 type PromotionPopupData = {
   label: string
@@ -68,6 +68,7 @@ export default function PromotionPopup() {
   const [redirectUrl, setRedirectUrl] = useState('')
   const [couponCopied, setCouponCopied] = useState(false)
   const [imageFailed, setImageFailed] = useState(false)
+  const dialogRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     let ignore = false
@@ -100,6 +101,27 @@ export default function PromotionPopup() {
     }
   }, [])
 
+  useEffect(() => {
+    const openFromOffer = async () => {
+      try {
+        const response = await fetch('/api/public/promotion-popup', { cache: 'no-store' })
+        const payload = await response.json().catch(() => null)
+        const nextItem = payload?.item as PromotionPopupData | null
+        if (!response.ok || !nextItem?.is_active || nextItem.cta_action !== 'reveal_coupon' || !nextItem.selected_coupon_id) return
+        // A deliberate click is never blocked by the automatic show-once gate.
+        setItem(nextItem)
+        setEmail('')
+        setSubmitError('')
+        setRevealedCoupon(null)
+        setCouponCopied(false)
+        setImageFailed(false)
+        setVisible(true)
+      } catch {}
+    }
+    window.addEventListener('hod:open-coupon-offer', openFromOffer)
+    return () => window.removeEventListener('hod:open-coupon-offer', openFromOffer)
+  }, [])
+
   const close = () => {
     if (typeof window !== 'undefined') {
       window.sessionStorage.setItem(SESSION_KEY, '1')
@@ -111,9 +133,23 @@ export default function PromotionPopup() {
   useEffect(() => {
     if (!visible) return
     const previous = document.body.style.overflow
+    const previouslyFocused = document.activeElement as HTMLElement | null
     document.body.style.overflow = 'hidden'
+    const focusTimer = window.setTimeout(() => dialogRef.current?.querySelector<HTMLInputElement>('input[type=email]')?.focus(), 0)
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') close()
+      if (event.key !== 'Tab' || !dialogRef.current) return
+      const focusable = [...dialogRef.current.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), a[href]')]
+      if (!focusable.length) return
+      if (event.shiftKey && document.activeElement === focusable[0]) { event.preventDefault(); focusable[focusable.length - 1].focus() }
+      if (!event.shiftKey && document.activeElement === focusable[focusable.length - 1]) { event.preventDefault(); focusable[0].focus() }
+    }
+    document.addEventListener('keydown', onKeyDown)
     return () => {
+      window.clearTimeout(focusTimer)
+      document.removeEventListener('keydown', onKeyDown)
       document.body.style.overflow = previous
+      previouslyFocused?.focus()
     }
   }, [visible])
 
@@ -174,7 +210,7 @@ export default function PromotionPopup() {
 
   return (
     <div className="fixed inset-0 z-[1300] flex items-center justify-center bg-[rgba(10,22,40,0.48)] p-3 backdrop-blur-[6px] sm:p-5">
-      <div className="relative max-h-[calc(100vh-24px)] w-full max-w-[calc(100vw-24px)] overflow-hidden rounded-[18px] border border-[rgba(10,22,40,0.1)] bg-[#f4f6f8] shadow-[0_28px_80px_rgba(10,22,40,0.24)] sm:max-h-[calc(100vh-40px)] sm:max-w-[760px] sm:rounded-[12px]">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Promotion offer" className="relative max-h-[calc(100vh-24px)] w-full max-w-[calc(100vw-24px)] overflow-hidden rounded-[18px] border border-[rgba(10,22,40,0.1)] bg-[#f4f6f8] shadow-[0_28px_80px_rgba(10,22,40,0.24)] sm:max-h-[calc(100vh-40px)] sm:max-w-[760px] sm:rounded-[12px]">
         <button
           type="button"
           onClick={close}
@@ -188,12 +224,11 @@ export default function PromotionPopup() {
 
         {useTextOnlyLayout ? (
           <div className="flex min-h-[380px] items-center justify-center overflow-y-auto bg-[linear-gradient(180deg,#ffffff_0%,#f3f5f8_100%)] px-7 py-14 sm:min-h-[480px] sm:px-16 sm:py-20">
-            <div className="w-full max-w-[480px] text-center">
+            <div className="w-full max-w-[480px] text-left">
               {item.label ? <p className="mb-4 text-[10px] uppercase tracking-[0.28em] text-[rgba(10,22,40,0.45)]">{item.label}</p> : null}
-              <h2 className={`${veloriaFont.variable} font-test-veloria text-[clamp(2.25rem,8vw,4.75rem)] leading-[0.92] tracking-[-0.03em] text-[var(--theme-ink)]`}>{item.title}</h2>
+              <h2 className={`${cinzelFont.variable} font-primary-display text-left text-[clamp(1.75rem,5vw,3.25rem)] leading-[1.05] tracking-[-0.03em] text-[var(--theme-ink)]`}>{item.title}</h2>
               {item.description ? <p className="mx-auto mt-6 max-w-[40ch] text-[14px] leading-7 text-[rgba(10,22,40,0.64)] sm:text-[16px]">{item.description}</p> : null}
               {emailAction}
-              <p className="mx-auto mt-7 max-w-[44ch] text-[9px] leading-5 text-[rgba(10,22,40,0.42)] sm:text-[10px]">Promotion only valid on select styles. This code cannot be used during sale periods or in combination with other promotion codes.</p>
             </div>
           </div>
         ) : (
@@ -221,7 +256,7 @@ export default function PromotionPopup() {
             </div>
 
             <div className="flex min-h-full items-center justify-center bg-[linear-gradient(180deg,#ffffff_0%,#f3f5f8_100%)] px-5 py-5 sm:px-9 sm:py-8 md:px-10">
-              <div className="w-full max-w-[240px] text-center sm:max-w-[300px]">
+              <div className="w-full max-w-[240px] text-left sm:max-w-[300px]">
                 {item.label ? (
                   <p className="mb-3 text-[9px] uppercase tracking-[0.22em] text-[rgba(10,22,40,0.42)] sm:mb-4 sm:text-[10px] sm:tracking-[0.26em]">
                     {item.label}
@@ -229,10 +264,9 @@ export default function PromotionPopup() {
                 ) : null}
 
                 <h2
-                  className={`${veloriaFont.variable} font-test-veloria text-[var(--theme-ink)] text-[clamp(1.35rem,8vw,2.35rem)] sm:text-[clamp(2.1rem,4vw,3.9rem)]`}
+                  className={`${cinzelFont.variable} font-primary-display text-left text-[var(--theme-ink)] text-[clamp(1.25rem,5vw,1.85rem)] sm:text-[clamp(1.75rem,3vw,2.75rem)]`}
                   style={{
-                    fontWeight: 400,
-                    lineHeight: 0.9,
+                    lineHeight: 1.05,
                     letterSpacing: '-0.025em',
                   }}
                 >
@@ -245,9 +279,6 @@ export default function PromotionPopup() {
 
                 {emailAction}
 
-                <p className="mx-auto mt-4 max-w-[28ch] text-[9px] leading-4 text-[rgba(10,22,40,0.42)] sm:mt-6 sm:max-w-[30ch] sm:text-[10px] sm:leading-5">
-                  Promotion only valid on select styles. This code cannot be used during sale periods or in combination with other promotion codes.
-                </p>
               </div>
             </div>
           </div>

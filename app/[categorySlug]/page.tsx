@@ -54,7 +54,7 @@ const getCategoryBySlug = cache(async (slug: string) => {
   const supabase = createSupabaseServerClient()
   const { data } = await supabase
     .from('catalog_categories')
-    .select('id, name, slug, status, category_lane, banner_desktop_image_path, banner_mobile_image_path, banner_title, banner_subtitle, banner_cta_label, banner_cta_link, banner_enabled')
+    .select('id, name, slug, status, category_lane, banner_desktop_image_path, banner_mobile_image_path, banner_desktop_image_alt, banner_mobile_image_alt, banner_title, banner_subtitle, banner_cta_label, banner_cta_link, banner_enabled')
     .eq('slug', slug)
     .eq('status', 'active')
     .maybeSingle()
@@ -73,8 +73,8 @@ const getCategoryReferenceData = unstable_cache(
       client.from('navbar_section_source_items').select('*').eq('is_active', true).order('sort_order', { ascending: true }),
       client.from('navbar_featured_cards').select('*'),
       client.from('catalog_categories').select('id, name, slug, display_order, status').eq('status', 'active').order('display_order', { ascending: true }),
-      client.from('catalog_subcategories').select('id, category_id, name, slug, icon_svg_path, display_order, status').eq('status', 'active').order('display_order', { ascending: true }),
-      client.from('catalog_options').select('id, subcategory_id, name, slug, icon_svg_path, display_order, status').eq('status', 'active').order('display_order', { ascending: true }),
+      client.from('catalog_subcategories').select('id, category_id, name, slug, icon_svg_path, image_path, image_alt, display_order, status').eq('status', 'active').order('display_order', { ascending: true }),
+      client.from('catalog_options').select('id, subcategory_id, name, slug, icon_svg_path, image_path, image_alt, display_order, status').eq('status', 'active').order('display_order', { ascending: true }),
       client.from('catalog_certificates').select('*').order('display_order', { ascending: true }),
       client.from('catalog_metals').select('*').eq('status', 'active').order('display_order', { ascending: true }),
       client.from('catalog_stone_shapes').select('*').eq('status', 'active').order('display_order', { ascending: true }),
@@ -390,13 +390,13 @@ export default async function CategoryCollectionPage({
       return {
         id: `fallback-${subcategory.id}`,
         title: subcategory.name,
-        iconUrl: toPublicUrl(subcategory.icon_svg_path) ?? null,
+        iconUrl: toPublicUrl(subcategory.image_path ?? subcategory.icon_svg_path) ?? null,
         href: buildSubcategoryPath(category, subcategory),
         options: subcategoryOptions.map((option) => ({
           label: option.name,
           href: buildOptionPath(category, subcategory, option),
-          type: option.icon_svg_path ? ('icon' as const) : ('default' as const),
-          iconUrl: toPublicUrl(option.icon_svg_path) ?? null,
+          type: (option.image_path ?? option.icon_svg_path) ? ('icon' as const) : ('default' as const),
+          iconUrl: toPublicUrl(option.image_path ?? option.icon_svg_path) ?? null,
         })),
       }
     })
@@ -429,6 +429,7 @@ export default async function CategoryCollectionPage({
         heroSubtitle={category.banner_subtitle || `Browse ${category.name} from the live catalog.`}
         heroDesktopImageUrl={toPublicUrl(category.banner_desktop_image_path) || undefined}
         heroMobileImageUrl={toPublicUrl(category.banner_mobile_image_path) || undefined}
+        heroImageAlt={category.banner_desktop_image_alt || category.banner_mobile_image_alt || category.name}
         heroCtaLabel={category.banner_cta_label || undefined}
         heroCtaHref={category.banner_cta_link || undefined}
         heroBannerEnabled={Boolean(category.banner_enabled)}

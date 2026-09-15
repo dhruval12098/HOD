@@ -38,11 +38,15 @@ export async function POST(request: Request) {
 
     const { data, error } = await supabase
       .from('coupons')
-      .select('id, code, title, usage_limit, usage_count, is_active')
+      .select('id, code, title, usage_limit, usage_count, is_active, starts_at, ends_at')
       .eq('id', promotion.selected_coupon_id)
       .maybeSingle()
 
-    if (error || !data?.is_active || (data.usage_limit != null && Number(data.usage_count ?? 0) >= Number(data.usage_limit))) {
+    const now = Date.now()
+    if (error || !data?.is_active ||
+      (data.starts_at && Date.parse(data.starts_at) > now) ||
+      (data.ends_at && Date.parse(data.ends_at) <= now) ||
+      (data.usage_limit != null && Number(data.usage_count ?? 0) >= Number(data.usage_limit))) {
       return NextResponse.json({ error: 'This coupon is no longer available.' }, { status: 410 })
     }
     coupon = { id: Number(data.id), code: data.code, title: data.title }

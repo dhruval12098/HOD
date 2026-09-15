@@ -26,6 +26,8 @@ export type HomeHeroContent = {
     sort_order: number;
     image_path: string;
     mobile_image_path?: string;
+    headline: string;
+    subtitle: string;
     button_text: string;
     button_link: string;
   }>;
@@ -563,16 +565,10 @@ const loadHomePageData = unstable_cache(
       collectionResult,
       materialResult,
       discoverShapesResult,
-      discoverRingsResult,
-      discoverCategoriesResult,
-      discoverSubcategoriesResult,
-      discoverOptionsResult,
       discoverStoneShapesResult,
-      discoverStylesResult,
       hiphopResult,
       collectionPageConfigResult,
       bespokeShowcaseResult,
-      couplesSectionResult,
       diamondInfoResult,
       diamondInfoConfigResult,
       testimonialsSectionResult,
@@ -606,32 +602,7 @@ const loadHomePageData = unstable_cache(
         .eq('status', 'active')
         .order('sort_order', { ascending: true }),
       supabase
-        .from('discover_rings_items')
-        .select('*')
-        .eq('status', 'active')
-        .order('sort_order', { ascending: true }),
-      supabase
-        .from('catalog_categories')
-        .select('id, name, slug')
-        .eq('status', 'active')
-        .order('display_order', { ascending: true }),
-      supabase
-        .from('catalog_subcategories')
-        .select('id, category_id, name, slug')
-        .eq('status', 'active')
-        .order('display_order', { ascending: true }),
-      supabase
-        .from('catalog_options')
-        .select('id, subcategory_id, name, slug')
-        .eq('status', 'active')
-        .order('display_order', { ascending: true }),
-      supabase
         .from('catalog_stone_shapes')
-        .select('id, name, slug')
-        .eq('status', 'active')
-        .order('display_order', { ascending: true }),
-      supabase
-        .from('catalog_styles')
         .select('id, name, slug')
         .eq('status', 'active')
         .order('display_order', { ascending: true }),
@@ -649,11 +620,6 @@ const loadHomePageData = unstable_cache(
         .from('home_bespoke_showcase_section')
         .select('is_enabled, eyebrow, heading, subtitle, cta_label, image_path, mobile_image_path, image_alt')
         .eq('section_key', 'home_bespoke_showcase')
-        .maybeSingle(),
-      supabase
-        .from('couples_section')
-        .select('id, eyebrow, heading, subtitle')
-        .eq('section_key', 'home_couples')
         .maybeSingle(),
       supabase
         .from('diamond_info_feature_items')
@@ -697,20 +663,10 @@ const loadHomePageData = unstable_cache(
     if (heroData?.id && heroData.slider_enabled) {
         const { data: itemsData } = await supabase
           .from('homepage_hero_slider_items')
-          .select('sort_order, image_path, mobile_image_path, button_text, button_link')
+          .select('sort_order, image_path, mobile_image_path, headline, subtitle, button_text, button_link')
           .eq('hero_id', heroData.id)
           .order('sort_order', { ascending: true });
-      sliderItems = itemsData ?? [];
-    }
-
-    let couplesItems: HomeCoupleItem[] = [];
-    if (couplesSectionResult.data?.id) {
-      const { data } = await supabase
-        .from('couples_items')
-        .select('sort_order, names, location, story, product_name, product_link, product_detail, image_path')
-        .eq('section_id', couplesSectionResult.data.id)
-        .order('sort_order', { ascending: true });
-      couplesItems = data ?? [];
+      sliderItems = (itemsData ?? []).map((item) => ({ ...item, headline: item.headline ?? '', subtitle: item.subtitle ?? '' }));
     }
 
     let testimonialsItems: HomeTestimonialsData['items'] = [];
@@ -752,11 +708,7 @@ const loadHomePageData = unstable_cache(
     }
 
     let bestSellerProducts: HomeBestSellerProduct[] = [];
-    const discoverCategories = (discoverCategoriesResult.data ?? []) as DiscoverCategoryRow[];
-    const discoverSubcategories = (discoverSubcategoriesResult.data ?? []) as DiscoverSubcategoryRow[];
-    const discoverOptions = (discoverOptionsResult.data ?? []) as DiscoverOptionRow[];
     const discoverStoneShapes = (discoverStoneShapesResult.data ?? []) as DiscoverStoneShapeRow[];
-    const discoverStyles = (discoverStylesResult.data ?? []) as DiscoverStyleRow[];
 
     if (bestSellerSectionResult.data?.id) {
       const productIds = (bestSellerProductSelectionsResult.data ?? [])
@@ -967,20 +919,6 @@ const loadHomePageData = unstable_cache(
         image_path: toPublicUrl(item.image_path) || item.image_path,
         href: resolveDiscoverShapeHref(item.shape_id, discoverStoneShapes),
       })),
-      discoverRingsItems: (discoverRingsResult.data ?? []).map((item) => ({
-        ...item,
-        image_path: toPublicUrl(item.image_path) || item.image_path,
-        href: resolveDiscoverRingHref({
-          title: item.title,
-          targetKind: item.target_kind,
-          targetId: item.target_id,
-          categories: discoverCategories,
-          subcategories: discoverSubcategories,
-          options: discoverOptions,
-          stoneShapes: discoverStoneShapes,
-          styles: discoverStyles,
-        }),
-      })),
       hiphopSection: {
         is_enabled: hiphopResult.data?.is_enabled ?? true,
         eyebrow: hiphopResult.data?.eyebrow ?? 'Hip Hop Collection · House of Diams',
@@ -1014,14 +952,6 @@ const loadHomePageData = unstable_cache(
         imageUrl: toPublicUrl(bespokeShowcaseResult.data?.image_path),
         mobileImageUrl: toPublicUrl(bespokeShowcaseResult.data?.mobile_image_path),
         imageAlt: bespokeShowcaseResult.data?.image_alt ?? 'House of Diams bespoke jewellery showcase',
-      },
-      couplesData: {
-        eyebrow: couplesSectionResult.data?.eyebrow ?? 'Love Stories',
-        heading: couplesSectionResult.data?.heading ?? 'Our Cute Couples',
-        subtitle:
-          couplesSectionResult.data?.subtitle ??
-          'Real couples. Real proposals. Real diamonds. Every ring tells a story.',
-        items: couplesItems,
       },
       diamondInfoItems: isMissingDiamondInfoFeatureTable
         ? []
@@ -1073,6 +1003,44 @@ const loadHomePageData = unstable_cache(
 
 export async function getHomePageData() {
   return loadHomePageData();
+}
+
+/**
+ * Keep the large homepage payload cached, but read the admin-managed hero fresh.
+ * This ensures banner edits are visible on the next request instead of waiting
+ * for the five-minute homepage cache to expire.
+ */
+export async function getFreshHomeHeroContent(): Promise<HomeHeroContent | undefined> {
+  const supabase = createHomeSupabaseClient();
+  const { data: hero, error: heroError } = await supabase
+    .from('homepage_hero')
+    .select('id, eyebrow, headline, subtitle, slider_enabled')
+    .eq('section_key', 'home_hero')
+    .eq('is_active', true)
+    .maybeSingle();
+
+  if (heroError) throw heroError;
+  if (!hero) return undefined;
+
+  let sliderItems: HomeHeroContent['slider_items'] = [];
+  if (hero.slider_enabled) {
+    const { data: items, error: itemsError } = await supabase
+      .from('homepage_hero_slider_items')
+      .select('sort_order, image_path, mobile_image_path, headline, subtitle, button_text, button_link')
+      .eq('hero_id', hero.id)
+      .order('sort_order', { ascending: true });
+
+    if (itemsError) throw itemsError;
+    sliderItems = (items ?? []).map((item) => ({ ...item, headline: item.headline ?? '', subtitle: item.subtitle ?? '' }));
+  }
+
+  return {
+    eyebrow: hero.eyebrow,
+    headline: hero.headline,
+    subtitle: hero.subtitle,
+    slider_enabled: hero.slider_enabled,
+    slider_items: sliderItems,
+  };
 }
 
 const loadHomeSeoData = unstable_cache(

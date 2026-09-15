@@ -76,6 +76,8 @@ export type PublicSubcategoryRow = {
   name: string
   slug: string
   icon_svg_path?: string | null
+  image_path?: string | null
+  image_alt?: string | null
   display_order: number
   status: 'active' | 'hidden'
 }
@@ -86,6 +88,8 @@ export type PublicOptionRow = {
   name: string
   slug: string
   icon_svg_path?: string | null
+  image_path?: string | null
+  image_alt?: string | null
   display_order: number
   status: 'active' | 'hidden'
 }
@@ -250,7 +254,7 @@ function buildCategoryListLinks(args: {
     .filter((entry) => entry.subcategory_id === subcategory.id && entry.status === 'active')
     .sort((left, right) => left.display_order - right.display_order)
     .map((entry) => {
-      const iconUrl = resolveStoragePublicUrl(entry.icon_svg_path)
+      const iconUrl = resolveStoragePublicUrl(entry.image_path ?? entry.icon_svg_path)
       return {
         label: entry.name,
         href: buildOptionPath(category, subcategory, entry),
@@ -516,8 +520,8 @@ export function buildNavbarRenderItems(args: {
                   {
                     label: subcategory.name,
                     href: itemCategory ? buildSubcategoryPath(itemCategory, subcategory) : itemHref,
-                    iconUrl: resolveStoragePublicUrl(subcategory.icon_svg_path),
-                    type: resolveStoragePublicUrl(subcategory.icon_svg_path) ? 'icon' : 'default',
+                    iconUrl: resolveStoragePublicUrl(subcategory.image_path ?? subcategory.icon_svg_path),
+                    type: resolveStoragePublicUrl(subcategory.image_path ?? subcategory.icon_svg_path) ? 'icon' : 'default',
                   } satisfies NavbarRenderLink,
                 ]
             : []
@@ -545,7 +549,7 @@ export function buildNavbarRenderItems(args: {
               .map((subcategory) => ({
                 id: `fallback-${item.id}-${subcategory.id}`,
                 title: subcategory.name,
-                iconUrl: resolveStoragePublicUrl(subcategory.icon_svg_path),
+                iconUrl: resolveStoragePublicUrl(subcategory.image_path ?? subcategory.icon_svg_path),
                 type: 'category_list' as const,
                 links: itemCategory
                   ? buildCategoryListLinks({

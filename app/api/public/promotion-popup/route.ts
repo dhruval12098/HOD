@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-export const dynamic = 'force-static'
-export const revalidate = 300
+export const dynamic = 'force-dynamic'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -23,5 +22,5 @@ export async function GET() {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ item: data })
+  return NextResponse.json({ item: data }, { headers: { 'Cache-Control': 'no-store' } })
 }

@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import * as SelectPrimitive from '@radix-ui/react-select';
-import { Check, ChevronUp } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, Mail, MapPin, Phone } from 'lucide-react';
 import ReactCountryFlag from 'react-country-flag';
 import { useCurrency } from '@/context/CurrencyContext';
 import { supabase } from '@/lib/supabase';
 import type { NavbarRenderItem } from '@/lib/navbar';
+import { PaymentIcons } from '@/components/common/PaymentIcons';
 
 const SOCIAL = [
   {
@@ -62,22 +64,11 @@ function ColLink({ href, children }: { href: string; children: React.ReactNode }
   return (
     <a
       href={href}
-      className="group block py-[7px] text-[11px] font-light tracking-[0.08em] text-white no-underline transition-all duration-300 hover:pl-1.5 hover:text-white/80"
-      style={{ fontFamily: 'var(--font-plus-jakarta), Arial, Helvetica, sans-serif' }}
+      className="group block py-[7px] text-[12px] font-normal leading-relaxed text-white/75 no-underline transition-colors duration-200 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+      style={{ fontFamily: 'var(--font-family-secondary)' }}
     >
       {children}
     </a>
-  );
-}
-
-function ColText({ children }: { children: React.ReactNode }) {
-  return (
-    <p
-      className="m-0 max-w-full whitespace-normal break-words py-[7px] text-[11px] font-light leading-[1.9] tracking-[0.08em] text-white"
-      style={{ fontFamily: 'var(--font-plus-jakarta), Arial, Helvetica, sans-serif' }}
-    >
-      {children}
-    </p>
   );
 }
 
@@ -87,45 +78,14 @@ function isLinkHref(value?: string | null) {
   return /^(https?:\/\/|mailto:|tel:|\/)/i.test(trimmed);
 }
 
-function ContactText({ value, note, extra }: { value: string; note?: string | null; extra?: string | null }) {
-  const trimmedNote = note?.trim();
-  const trimmedExtra = extra?.trim();
-
-  return (
-    <ColText>
-      {value}
-      {trimmedNote ? (
-        <>
-          <br />
-          <span className="text-white/68">{trimmedNote}</span>
-        </>
-      ) : null}
-      {trimmedExtra ? (
-        <>
-          <br />
-          <span className="text-white/68">{trimmedExtra}</span>
-        </>
-      ) : null}
-    </ColText>
-  );
-}
-
 function ColTitle({ children }: { children: React.ReactNode }) {
   return (
     <p
-      className="m-0 mb-[22px] text-[14px] font-medium uppercase tracking-[0.28em] text-white"
-      style={{ fontFamily: 'var(--font-plus-jakarta), Arial, Helvetica, sans-serif' }}
+      className="m-0 mb-[var(--space-4)] text-[12px] font-semibold uppercase tracking-[0.12em] text-white"
+      style={{ fontFamily: 'var(--font-family-tertiary)' }}
     >
       {children}
     </p>
-  );
-}
-
-function BottomLink({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <a href={href} className="text-white no-underline transition-colors duration-300 hover:text-white/80">
-      {children}
-    </a>
   );
 }
 
@@ -133,14 +93,14 @@ function CurrencySelector() {
   const { currencies, selected, changeCurrency, isLoadingRate } = useCurrency();
 
   return (
-    <div className="flex flex-wrap items-center gap-2 text-white">
+    <div className="flex flex-wrap items-center gap-2 text-white" style={{ fontFamily: 'var(--font-family-secondary)' }}>
       <SelectPrimitive.Root value={selected.code} onValueChange={changeCurrency}>
         <SelectPrimitive.Trigger
           aria-label="Select country and currency"
-          className="group inline-flex h-11 min-w-[250px] items-center justify-between gap-3 rounded-[12px] border border-white/15 bg-white/[0.07] px-3.5 text-left shadow-[0_14px_34px_rgba(0,0,0,0.16)] outline-none backdrop-blur-md transition-all duration-300 hover:border-white/28 hover:bg-white/[0.1] focus:border-white/45 focus:ring-2 focus:ring-white/10 max-sm:min-w-full"
+          className="group inline-flex h-10 min-w-[230px] items-center justify-between gap-3 rounded-[4px] border border-white/10 bg-white/[0.14] px-3 text-left outline-none transition-colors duration-200 hover:bg-white/[0.2] focus-visible:ring-2 focus-visible:ring-white max-sm:min-w-full"
         >
           <span className="flex min-w-0 items-center gap-3">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/10">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full">
               <ReactCountryFlag
                 countryCode={selected.countryCode}
                 svg
@@ -149,17 +109,14 @@ function CurrencySelector() {
               />
             </span>
             <span className="min-w-0">
-              <span className="block truncate text-[12px] font-medium normal-case tracking-[0.02em] text-white">
-                {selected.label}
-              </span>
-              <span className="mt-0.5 block text-[9px] uppercase tracking-[0.2em] text-white/48">
-                {selected.code} {selected.symbol}
+              <span className="block truncate text-[11px] font-medium normal-case text-white">
+                {selected.label} ({selected.code})
               </span>
             </span>
           </span>
           <SelectPrimitive.Icon asChild>
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.08] text-white/72 transition group-data-[state=open]:rotate-180">
-              <ChevronUp className="h-3.5 w-3.5" strokeWidth={1.8} />
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center text-white/75 transition group-data-[state=open]:rotate-180">
+              <ChevronDown className="h-3.5 w-3.5" strokeWidth={1.8} />
             </span>
           </SelectPrimitive.Icon>
         </SelectPrimitive.Trigger>
@@ -172,9 +129,9 @@ function CurrencySelector() {
             align="start"
             onWheel={(event) => event.stopPropagation()}
             onTouchMove={(event) => event.stopPropagation()}
-            className="z-[1500] max-h-[320px] min-w-[var(--radix-select-trigger-width)] touch-pan-y overflow-hidden rounded-[16px] border border-[rgba(10,22,40,0.10)] bg-white p-1.5 text-[#0A1628] shadow-[0_28px_70px_rgba(0,0,0,0.26)]"
+            className="z-[1500] max-h-[320px] min-w-[var(--radix-select-trigger-width)] touch-pan-y overflow-hidden rounded-[4px] border border-white/20 bg-[var(--color-brand-primary)] p-1.5 text-white shadow-[0_20px_55px_rgba(0,0,0,0.35)]"
           >
-            <SelectPrimitive.ScrollUpButton className="flex h-7 cursor-default items-center justify-center rounded-[10px] text-[#667085]">
+            <SelectPrimitive.ScrollUpButton className="flex h-7 cursor-default items-center justify-center text-white/70">
               <ChevronUp className="h-3.5 w-3.5" strokeWidth={1.8} />
             </SelectPrimitive.ScrollUpButton>
             <SelectPrimitive.Viewport
@@ -186,9 +143,9 @@ function CurrencySelector() {
                 <SelectPrimitive.Item
                   key={option.code}
                   value={option.code}
-                  className="relative flex cursor-pointer select-none items-center gap-3 rounded-[12px] px-3 py-2.5 pr-9 outline-none transition-colors duration-200 focus:bg-[#F4F6F8] data-[state=checked]:bg-[#0A1628] data-[state=checked]:text-white"
+                  className="relative flex cursor-pointer select-none items-center gap-3 rounded-[2px] px-3 py-2.5 pr-9 outline-none transition-colors duration-200 focus:bg-white/15 data-[state=checked]:bg-white/20 data-[state=checked]:text-white"
                 >
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[rgba(10,22,40,0.08)] bg-white shadow-[0_6px_14px_rgba(10,22,40,0.06)]">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full">
                     <ReactCountryFlag
                       countryCode={option.countryCode}
                       svg
@@ -210,7 +167,7 @@ function CurrencySelector() {
                 </SelectPrimitive.Item>
               ))}
             </SelectPrimitive.Viewport>
-            <SelectPrimitive.ScrollDownButton className="flex h-7 cursor-default items-center justify-center rounded-[10px] text-[#667085]">
+            <SelectPrimitive.ScrollDownButton className="flex h-7 cursor-default items-center justify-center text-white/70">
               <ChevronUp className="h-3.5 w-3.5 rotate-180" strokeWidth={1.8} />
             </SelectPrimitive.ScrollDownButton>
           </SelectPrimitive.Content>
@@ -283,40 +240,37 @@ export default function Footer({ navItems = [] }: { navItems?: NavbarRenderItem[
 
   return (
     <footer
-      className="relative px-5 pt-20 sm:px-7 lg:px-[52px]"
-      style={{ background: 'var(--theme-ink)', color: '#FFFFFF', fontFamily: 'var(--font-plus-jakarta), Arial, Helvetica, sans-serif' }}
+      className="w-full border-t border-white/15 px-[var(--space-4)] pt-[var(--space-10)] text-white sm:px-[var(--space-6)] lg:px-[var(--space-8)]"
+      style={{ backgroundColor: 'var(--color-brand-primary)', fontFamily: 'var(--font-family-secondary)' }}
     >
-      <div
-        className="pointer-events-none absolute top-0 left-0 right-0 h-px"
-        style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent)' }}
-      />
-
-      <div
-        className="hod-footer-grid mx-auto max-w-[1400px] pb-[60px]"
-        style={{ display: 'grid', gridTemplateColumns: '1.8fr 0.9fr 0.9fr 0.9fr minmax(260px, 1.6fr)', gap: '48px' }}
-      >
-        <style>{`
-          @media (max-width: 1024px) {
-            .hod-footer-grid { grid-template-columns: 1fr 1fr !important; gap: 28px !important; }
-          }
-          @media (max-width: 640px) {
-            .hod-footer-grid { grid-template-columns: 1fr !important; }
-          }
-        `}</style>
-
-        <div>
-          <p
-            className="m-0 mb-[18px] text-[26px] font-normal uppercase tracking-[0.24em] text-white"
-            style={{ fontFamily: 'var(--serif)' }}
-          >
+      <div className="mx-auto grid max-w-[1600px] grid-cols-1 gap-y-[var(--space-8)] pb-[var(--space-8)] sm:grid-cols-2 sm:gap-x-[var(--space-8)] lg:grid-cols-[minmax(290px,1.5fr)_repeat(3,minmax(145px,1fr))] lg:gap-x-[var(--space-8)]">
+        <div className="sm:col-span-2 lg:col-span-1">
+          <Link href="/" className="inline-block text-[22px] font-medium uppercase tracking-[0.08em] text-white no-underline transition-opacity hover:opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white sm:text-[26px] lg:text-[clamp(22px,2.1vw,32px)]" style={{ fontFamily: 'var(--font-family-primary)' }}>
             House of Diams
-          </p>
+          </Link>
 
-          <p className="m-0 mb-[26px] max-w-[320px] text-[11px] font-light leading-[1.9] tracking-[0.04em] text-[rgba(255,255,255,0.68)]">
+          <p className="m-0 mt-[var(--space-4)] max-w-[390px] text-[12px] leading-[1.8] text-white/70">
             House of Diams is a fine jewellery house specialising in lab-grown diamonds. Every piece is IGI or GIA certified. Engagement rings, wedding bands, T-bar jewellery, and bespoke commissions, shipped worldwide with free insured delivery.
           </p>
 
-          <div className="mt-2 flex gap-[10px]">
+          <div className="mt-[var(--space-6)] flex flex-col gap-1.5" aria-label="Contact information">
+            {footerContactRows.map((row, index) => {
+              const value = row.value?.trim();
+              if (!value) return null;
+              const href = row.href?.trim();
+              const label = row.label?.toLowerCase() || '';
+              const Icon = label.includes('mail') ? Mail : label.includes('phone') || label.includes('whatsapp') ? Phone : MapPin;
+              const key = row.id ?? `${row.label}-${index}`;
+              const content = <><Icon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-white/60" strokeWidth={1.6} /><span>{value}{row.note?.trim() ? <span className="block text-white/55">{row.note.trim()}</span> : null}{href && !isLinkHref(href) ? <span className="block text-white/55">{href}</span> : null}</span></>;
+              return href && isLinkHref(href) ? (
+                <a key={key} href={href} className="flex max-w-[390px] items-start gap-2.5 py-1.5 text-[11px] leading-relaxed text-white/70 no-underline transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white">{content}</a>
+              ) : (
+                <p key={key} className="m-0 flex max-w-[390px] items-start gap-2.5 py-1.5 text-[11px] leading-relaxed text-white/70">{content}</p>
+              );
+            })}
+          </div>
+
+          <div className="mt-[var(--space-6)] flex gap-[var(--space-3)]">
             {SOCIAL.map((item) => (
               <a
                 key={item.name}
@@ -324,8 +278,7 @@ export default function Footer({ navItems = [] }: { navItems?: NavbarRenderItem[
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={item.name}
-                className="flex h-9 w-9 items-center justify-center rounded-full text-white transition-all duration-300 hover:-translate-y-0.5 hover:border-white hover:bg-white hover:text-[var(--theme-ink)]"
-                style={{ border: '1px solid rgba(255,255,255,0.24)' }}
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/25 text-white transition-colors duration-200 hover:border-white hover:bg-white hover:text-[var(--color-brand-primary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
               >
                 {item.icon}
               </a>
@@ -362,35 +315,15 @@ export default function Footer({ navItems = [] }: { navItems?: NavbarRenderItem[
           <ColLink href="/privacy-policy">Privacy Policy</ColLink>
         </div>
 
-        <div>
-          <ColTitle>CONTACT</ColTitle>
-          {footerContactRows.map((row, index) => {
-            const value = row.value?.trim();
-            if (!value) return null;
-            const href = row.href?.trim();
-            return href && isLinkHref(href) ? (
-              <ColLink key={row.id ?? `${row.label}-${index}`} href={href}>
-                {value}
-              </ColLink>
-            ) : (
-              <ContactText key={row.id ?? `${row.label}-${index}`} value={value} note={row.note} extra={href} />
-            );
-          })}
-        </div>
       </div>
 
-      <div
-        className="mx-auto flex max-w-[1400px] flex-wrap justify-between gap-3.5 py-7 text-[10px] uppercase tracking-[0.18em] text-[rgba(255,255,255,0.5)]"
-        style={{ borderTop: '1px solid rgba(255,255,255,0.12)' }}
-      >
-        <div className="flex flex-col gap-3">
+      <div className="mx-auto grid max-w-[1600px] grid-cols-1 items-center gap-[var(--space-4)] border-t border-white/25 py-[var(--space-4)] text-[11px] text-white/60 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:gap-[var(--space-6)]">
+        <div className="flex items-center justify-center lg:justify-start">
           <CurrencySelector />
-          <span>© {new Date().getFullYear()} House of Diams. All rights reserved.</span>
         </div>
-        <div className="flex items-center gap-0">
-          <BottomLink href="/privacy-policy">Privacy</BottomLink>
-          <span className="mx-2">·</span>
-          <BottomLink href="/terms">Terms</BottomLink>
+        <span className="w-full text-center">© {new Date().getFullYear()} House of Diams. All rights reserved.</span>
+        <div className="flex min-w-0 items-center justify-center lg:justify-end">
+          <PaymentIcons />
         </div>
       </div>
     </footer>

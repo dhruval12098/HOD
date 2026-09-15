@@ -372,7 +372,7 @@ export default function BlogSection() {
               From the Atelier
             </div>
             <h2
-              className="font-numeric font-light text-[#0A1628] leading-[1.05]"
+              className="font-numeric section-title font-light text-[#0A1628] leading-[1.05]"
               style={{ fontSize: 'clamp(40px, 5vw, 64px)', fontFamily: 'Manrope, sans-serif' }}
             >
               Our Jewellery <span className="text-[#0A1628]">Blog</span>
@@ -380,7 +380,7 @@ export default function BlogSection() {
           </div>
           <a
             href="#"
-            className="font-numeric text-[10px] font-medium tracking-[0.28em] uppercase text-[#0A1628] no-underline cursor-pointer
+            className="font-[family-name:var(--font-family-button)] text-[10px] font-medium tracking-[0.28em] uppercase text-[#0A1628] no-underline cursor-pointer
                        inline-flex items-center gap-[10px] pb-1 border-b border-[#0A1628]
                        transition-[color,border-color,gap] duration-300
                        hover:text-[#0A1628] hover:border-[#0A1628] hover:gap-4"

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { veloriaFont } from '@/app/fonts';
+import { cinzelFont } from '@/app/fonts';
 
 interface NewsletterProps {
   onToast?: (msg: string) => void;
@@ -78,7 +78,7 @@ export default function Newsletter({ onToast }: NewsletterProps) {
         </div>
 
         <h3
-          className={`${veloriaFont.variable} font-test-veloria`}
+          className={`${cinzelFont.variable} font-primary-display section-title`}
           style={{
             fontSize: 'clamp(30px, 8vw, 52px)',
             fontWeight: 300,

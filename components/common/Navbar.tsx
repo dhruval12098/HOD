@@ -1,9 +1,8 @@
 'use client';
 import { useEffect, useMemo, useRef, useState, type AnchorHTMLAttributes, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import ReactCountryFlag from 'react-country-flag';
-import { loaderWordmarkFont } from '@/app/fonts';
 import { supabase } from '@/lib/supabase';
 import {
   type NavbarRenderItem,
@@ -22,7 +21,6 @@ const METAL_COLORS: Record<string, string> = {
   default: 'linear-gradient(135deg,#E5E7EB,#9CA3AF)',
 };
 
-const OVERLAY_NAVBAR_ROUTES = new Set(['/', '/hiphop', '/bespoke']);
 const DETECTED_COUNTRY_COOKIE = 'detected_country';
 
 function readDetectedCountryCookie() {
@@ -118,7 +116,7 @@ function MegaSection({ section, onNavigate }: { section: NavbarRenderSection; on
     <div className="flex flex-col">
       <div
         className="mb-[22px] flex items-center gap-2 border-b border-black/[0.06] pb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#0A1628]"
-        style={{ fontFamily: "'Montserrat', sans-serif" }}
+        style={{ fontFamily: 'var(--font-family-secondary)' }}
       >
         {section.iconUrl ? (
           <img
@@ -145,7 +143,7 @@ function MegaSection({ section, onNavigate }: { section: NavbarRenderSection; on
               href={entry.href}
               onClick={onNavigate}
               className="flex items-center gap-[14px] py-[10px] text-[13.5px] font-light tracking-[0.02em] text-[#555] no-underline transition-all duration-250 hover:text-[#0A1628] hover:pl-1.5 group"
-              style={{ fontFamily: "'Montserrat', sans-serif" }}
+              style={{ fontFamily: 'var(--font-family-secondary)' }}
             >
               {entry.kind === 'metal' ? (
                 <MetalDot type={entry.type as keyof typeof METAL_COLORS} colorHex={entry.colorHex} />
@@ -196,7 +194,6 @@ function getSectionColumnCount(section: NavbarRenderSection) {
 
 export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[] }) {
   const router = useRouter();
-  const pathname = usePathname();
   const { count: wishlistCount } = useWishlistStore();
   const { count: cartCount } = useCart();
   const { format, selected } = useCurrency();
@@ -211,15 +208,16 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
   const [searchItems, setSearchItems] = useState<Array<{ dbId?: string; slug: string; name: string; shortMeta: string; imageUrl?: string; priceFrom: number }>>([]);
   const [detectedCountry, setDetectedCountry] = useState('');
   const displayedCountry = detectedCountry || selected.countryCode;
-  const [announcementItems, setAnnouncementItems] = useState<
-    Array<{ message: string; link_url: string; open_in_new_tab: boolean }>
-  >([
-    { message: 'Free Worldwide Insured Shipping', link_url: '', open_in_new_tab: false },
-    { message: 'IGI & GIA Certified', link_url: '', open_in_new_tab: false },
-    { message: 'Bespoke Orders Accepted', link_url: '/contact', open_in_new_tab: false },
-  ]);
+  const [announcementItem, setAnnouncementItem] = useState<{
+    message: string;
+    linkUrl: string;
+    openInNewTab: boolean;
+  } | null>({
+    message: 'Free Worldwide Insured Shipping',
+    linkUrl: '',
+    openInNewTab: false,
+  });
   const [announcementActive, setAnnouncementActive] = useState(true);
-  const [announcementSpeed, setAnnouncementSpeed] = useState(40);
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
   const lastScrollY = useRef(0);
@@ -345,46 +343,48 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
   }, []);
 
   useEffect(() => {
-    let ignore = false;
+    const controller = new AbortController();
 
     const loadAnnouncementBar = async () => {
-      const { data: sectionData, error: sectionError } = await supabase
-        .from('support_announcement_bar')
-        .select('id, is_active, speed_ms')
-        .eq('section_key', 'global_support_announcement_bar')
-        .maybeSingle();
+      try {
+        const response = await fetch('/api/public/announcement-bar', {
+          cache: 'no-store',
+          signal: controller.signal,
+        });
+        const payload = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(payload?.error || 'Unable to load announcement bar.');
+        if (controller.signal.aborted) return;
 
-      if (ignore || sectionError || !sectionData?.id) return;
-
-      const { data: itemData, error: itemError } = await supabase
-        .from('support_announcement_bar_items')
-        .select('message, link_url, open_in_new_tab, is_active, sort_order')
-        .eq('bar_id', sectionData.id)
-        .eq('is_active', true)
-        .order('sort_order', { ascending: true });
-
-      if (ignore || itemError) return;
-
-      setAnnouncementActive(sectionData.is_active);
-      setAnnouncementSpeed(sectionData.speed_ms || 40);
-
-      if ((itemData?.length ?? 0) > 0) {
-        setAnnouncementItems(
-          itemData.map((item) => ({
-            message: item.message,
-            link_url: item.link_url ?? '',
-            open_in_new_tab: Boolean(item.open_in_new_tab),
-          }))
+        setAnnouncementActive(Boolean(payload?.active));
+        setAnnouncementItem(
+          payload?.item && typeof payload.item.message === 'string'
+            ? {
+                message: payload.item.message,
+                linkUrl: typeof payload.item.linkUrl === 'string' ? payload.item.linkUrl : '',
+                openInNewTab: Boolean(payload.item.openInNewTab),
+              }
+            : null
         );
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return;
+        // Retain the single safe initial fallback only when the endpoint fails.
       }
     };
 
     void loadAnnouncementBar();
-
-    return () => {
-      ignore = true;
-    };
+    return () => controller.abort();
   }, []);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty(
+      '--hod-announcement-current-height',
+      announcementActive && announcementItem ? 'var(--hod-announcement-height, 35px)' : '0px'
+    );
+    return () => {
+      root.style.removeProperty('--hod-announcement-current-height');
+    };
+  }, [announcementActive, announcementItem]);
 
   useEffect(() => {
     let mounted = true;
@@ -528,73 +528,105 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
     }
   };
 
-  const desktopOverlayMode = pathname ? OVERLAY_NAVBAR_ROUTES.has(pathname) : false;
-  const desktopSolidMode = !desktopOverlayMode || scrolled || Boolean(activeMegaItem) || searchOpen;
-  const desktopHeaderText = desktopSolidMode ? '#0A1628' : '#FFFFFF';
-  const desktopHeaderMuted = desktopSolidMode ? '#333333' : 'rgba(255,255,255,0.88)';
-  const desktopHeaderBorder = desktopSolidMode ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.12)';
-  const desktopUtilityBg = desktopSolidMode ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.08)';
-  const desktopHeaderBg = desktopSolidMode ? '#FFFFFF' : 'transparent';
+  const desktopHeaderText = 'var(--color-brand-primary, #000000)';
+  const desktopHeaderMuted = 'var(--color-brand-primary, #000000)';
+  const desktopHeaderBorder = 'rgba(0,0,0,0.06)';
+  const desktopUtilityBg = 'rgba(255,255,255,0.92)';
+  const desktopHeaderBg = 'var(--color-brand-accent, #ffffff)';
   const desktopHeaderShadow = scrolled ? '0 2px 20px rgba(0,0,0,0.06)' : 'none';
 
   return (
     <>
       <style>{`
+        :root {
+          --hod-announcement-height: 35px;
+          --hod-announcement-current-height: var(--hod-announcement-height);
+          --hod-navbar-height: 83px;
+          --hod-site-header-height: calc(var(--hod-announcement-current-height) + var(--hod-navbar-height));
+        }
+
+        @media (min-width: 64rem) {
+          :root {
+            --hod-navbar-height: 96px;
+          }
+        }
+
+        #hod-announcement-bar {
+          height: var(--hod-announcement-height, 35px);
+          min-height: var(--hod-announcement-height, 35px);
+          max-height: var(--hod-announcement-height, 35px);
+          background-color: var(--color-brand-primary, #000000) !important;
+          background-image: none !important;
+          color: var(--color-brand-accent, #ffffff);
+          opacity: 1 !important;
+          mix-blend-mode: normal !important;
+          isolation: isolate;
+        }
+
+        #hod-announcement-bar::before,
+        #hod-announcement-bar::after {
+          content: none !important;
+          display: none !important;
+        }
+
+        #hod-nav,
+        #hod-nav .nav-desktop-row {
+          background-color: var(--color-brand-accent, #ffffff);
+        }
+
+        #hod-nav .nav-desktop-row {
+          padding-inline: var(--space-4, 1rem);
+        }
+
+        @media (min-width: 64rem) {
+          #hod-nav .nav-desktop-row {
+            padding-inline: var(--space-8, 2rem);
+          }
+        }
+
+        @media (min-width: 90rem) {
+          #hod-nav .nav-desktop-row {
+            padding-inline: var(--space-12, 3rem);
+          }
+        }
+
         .mega-parent.mega-open .mega-drop {
           opacity: 1 !important;
           visibility: visible !important;
           pointer-events: auto !important;
           transform: translateY(0) !important;
         }
-        .nav-desktop-row::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          opacity: 0;
-          transition: opacity .3s ease;
-          background: linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.26) 55%, rgba(0,0,0,0) 100%);
-        }
-        .nav-desktop-row[data-overlay='true']::before {
-          opacity: 1;
-        }
       `}</style>
 
-      {announcementActive ? (
+      {announcementActive && announcementItem ? (
         <div
-          className="fixed top-0 left-0 right-0 z-[1001] flex h-[35px] items-center overflow-hidden bg-[var(--theme-ink)] text-left text-[10px] font-light uppercase tracking-[0.24em] text-white select-none"
+          id="hod-announcement-bar"
+          className="fixed left-0 right-0 top-0 z-[1001] flex items-center justify-center overflow-hidden px-[var(--space-4,1rem)] text-center text-[9px] font-medium uppercase leading-[1.2] tracking-[0.16em] select-none sm:text-[10px] sm:tracking-[0.2em]"
           style={{
-            fontFamily: "'Montserrat', sans-serif",
-            ['--announcement-speed' as string]: `${Math.max(announcementSpeed, 10)}s`,
+            backgroundColor: 'var(--color-brand-primary, #000000)',
+            backgroundImage: 'none',
+            color: 'var(--color-brand-accent, #ffffff)',
+            fontFamily: 'var(--font-family-secondary, Inter, Arial, sans-serif)',
+            opacity: 1,
+            mixBlendMode: 'normal',
+            isolation: 'isolate',
           }}
         >
-          <div
-            className="flex w-max animate-marquee-slow items-center hover:[animation-play-state:paused]"
-            style={{ animationDuration: 'var(--announcement-speed, 40s)' }}
-          >
-            {[0, 1].map((groupIndex) => (
-              <div key={groupIndex} className="flex shrink-0 items-center gap-x-[28px] px-[14px]">
-                {Array.from({ length: 10 }, (_, repeatIndex) =>
-                  announcementItems.map((item, itemIndex) => (
-                  <span key={`${groupIndex}-${repeatIndex}-${itemIndex}`} className="flex items-center gap-x-[28px] whitespace-nowrap">
-                    {item.link_url ? (
+          <div className="flex max-w-full items-center justify-center gap-x-[var(--space-3)]">
+                  <span className="block max-w-full">
+                    {announcementItem.linkUrl ? (
                       <Link
-                        href={item.link_url}
-                        target={item.open_in_new_tab ? '_blank' : undefined}
-                        rel={item.open_in_new_tab ? 'noreferrer' : undefined}
+                        href={announcementItem.linkUrl}
+                        target={announcementItem.openInNewTab ? '_blank' : undefined}
+                        rel={announcementItem.openInNewTab ? 'noreferrer' : undefined}
                         className="transition-opacity duration-200 hover:opacity-70"
                       >
-                        {item.message}
+                        {announcementItem.message}
                       </Link>
                     ) : (
-                      <span>{item.message}</span>
+                      <span>{announcementItem.message}</span>
                     )}
-                    <span className="inline-block h-1 w-1 rounded-full bg-[var(--theme-surface-soft)] align-middle" />
                   </span>
-                  ))
-                )}
-              </div>
-            ))}
           </div>
         </div>
       ) : null}
@@ -602,19 +634,19 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
       <header
         id="hod-nav"
         className={[
-          `fixed left-0 right-0 ${announcementActive ? 'top-[35px]' : 'top-0'} z-[1000]`,
+          'fixed left-0 right-0 z-[1000]',
           'transition-[transform,shadow] duration-300 ease-out',
         ].join(' ')}
         style={{
+          top: announcementActive && announcementItem ? 'var(--hod-announcement-height, 35px)' : 0,
           transform: navHidden && !searchOpen && !menuOpen ? 'translateY(-120%)' : 'translateY(0)',
-          background: desktopHeaderBg,
+          backgroundColor: desktopHeaderBg,
           boxShadow: desktopHeaderShadow,
-          borderBottom: desktopOverlayMode && !scrolled ? 'none' : `1px solid ${desktopHeaderBorder}`,
+          borderBottom: `1px solid ${desktopHeaderBorder}`,
         }}
       >
         <div
-          className="nav-desktop-row relative px-0 py-0 lg:px-[34px] lg:py-[10px]"
-          data-overlay={desktopOverlayMode && !desktopSolidMode ? 'true' : 'false'}
+          className="nav-desktop-row relative h-[var(--hod-navbar-height)] py-0 lg:pb-[34px] lg:pt-0"
         >
           <div className="relative flex items-center justify-center border-b border-black/[0.06] bg-white px-4 py-[14px] lg:hidden">
           <div className="absolute left-3 top-1/2 flex -translate-y-1/2 items-center gap-1.5 min-[375px]:left-4 min-[375px]:gap-2.5 sm:gap-3">
@@ -671,29 +703,33 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
             className="flex items-center no-underline cursor-pointer transition-opacity duration-300 hover:opacity-60"
           >
             <span
-              className={`${loaderWordmarkFont.className} text-[13px] min-[375px]:text-[16px] sm:text-[20px] font-semibold tracking-[0.18em] min-[375px]:tracking-[0.24em] sm:tracking-[0.3em] uppercase`}
-              style={{ color: '#0A1628' }}
+              className="text-[11px] min-[360px]:text-[13px] min-[390px]:text-[15px] sm:text-[20px] font-medium tracking-[0.1em] min-[360px]:tracking-[0.15em] min-[390px]:tracking-[0.2em] sm:tracking-[0.26em] uppercase"
+              style={{ color: 'var(--color-brand-primary, #000000)', fontFamily: 'var(--font-family-primary, Cinzel, serif)' }}
             >
               House of Diams
             </span>
           </Link>
           </div>
 
-          <div className="hidden lg:grid lg:grid-cols-[auto_auto_1fr] lg:items-center lg:gap-5">
+          <div className="relative hidden min-h-[62px] lg:flex lg:items-center lg:justify-between" style={{ color: desktopHeaderText, fontFamily: 'var(--font-family-secondary, Inter, sans-serif)' }}>
+          <button type="button" onClick={() => setSearchOpen((prev) => !prev)} className="relative z-[2] flex min-w-[184px] items-center gap-2 border-b pb-2 text-[10px] font-medium uppercase tracking-[0.1em]" style={{ color: desktopHeaderText, borderColor: desktopHeaderBorder }} aria-label="Search">
+            <svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.4"><circle cx="7.5" cy="7.5" r="5.5" /><path d="M12 12L16 16" strokeLinecap="round" /></svg>
+            <span>Search</span>
+          </button>
           <Link
             href="/"
-            className="relative z-[2] flex items-center no-underline transition-opacity duration-300 hover:opacity-70"
+            className="absolute left-1/2 top-1/2 z-[2] flex -translate-x-1/2 -translate-y-1/2 items-center whitespace-nowrap no-underline transition-opacity duration-300 hover:opacity-70"
           >
             <span
-              className={`${loaderWordmarkFont.className} text-[16px] font-semibold uppercase tracking-[0.27em]`}
-              style={{ color: desktopHeaderText }}
+              className="text-[clamp(22px,2.1vw,32px)] font-medium uppercase tracking-[0.08em]"
+              style={{ color: desktopHeaderText, fontFamily: 'var(--font-family-primary, Cinzel, serif)' }}
             >
               House of Diams
             </span>
           </Link>
 
-          <nav className="z-[2] flex items-center justify-start">
-            <ul className="flex items-center list-none m-0 p-0">
+          <nav className="contents" aria-label="Primary navigation">
+            <ul className="absolute left-1/2 top-[58px] flex -translate-x-1/2 items-center whitespace-nowrap list-none m-0 p-0">
               {navItems.map((item) => (
                 <li
                   key={item.label}
@@ -714,7 +750,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
                     onClick={closeMegaMenu}
                     className="nav-link-underline relative block px-[18px] py-[11px] text-[11px] font-semibold tracking-[0.19em] uppercase no-underline cursor-pointer transition-colors duration-300"
                     style={{
-                      fontFamily: "'Montserrat', sans-serif",
+                      fontFamily: 'var(--font-family-secondary, Inter, sans-serif)',
                       color: desktopHeaderMuted,
                     }}
                   >
@@ -783,7 +819,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
           <div className="relative z-[30] flex items-center justify-end gap-2.5">
           <div ref={searchRef} data-navbar-search-root className="relative">
             <div
-              className={`flex h-[34px] items-center overflow-hidden rounded-full border transition-all duration-300 ${searchOpen ? 'w-[34px]' : 'w-[34px]'}`}
+              className="sr-only"
               style={{
                 borderColor: desktopHeaderBorder,
                 background: desktopUtilityBg,
@@ -909,8 +945,8 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
           </div>
         </div>
         {searchOpen ? (
-          <div data-navbar-search-root className="relative z-[20] hidden border-t border-black/[0.06] bg-white lg:block">
-            <div className="mx-auto flex max-w-[1180px] items-center gap-4 px-[34px] py-4">
+          <div data-navbar-search-root className="relative z-[20] border-t border-black/[0.06]" style={{ backgroundColor: desktopHeaderBg, fontFamily: 'var(--font-family-secondary, Inter, sans-serif)' }}>
+            <div className="mx-auto flex max-w-[1180px] items-center gap-4 px-[var(--space-4)] py-[var(--space-3)] lg:px-[var(--space-8)] lg:py-[var(--space-4)]">
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#0A1628" strokeWidth="1.4">
                 <circle cx="7.5" cy="7.5" r="5.5" />
                 <path d="M12 12L16 16" strokeLinecap="round" />
@@ -978,13 +1014,26 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
         style={{
           transform: menuOpen ? 'translateX(0)' : 'translateX(100%)',
           transition: 'transform 0.5s cubic-bezier(0.77,0,0.18,1)',
+          fontFamily: 'var(--font-family-secondary, Arial, sans-serif)',
         }}
       >
+        <button
+          type="button"
+          onClick={() => {
+            closeMenu();
+            setSearchOpen(true);
+          }}
+          className="mb-[var(--space-4)] flex items-center gap-3 border-b border-black/10 py-3 text-left text-[12px] font-medium uppercase tracking-[0.18em] text-[var(--color-brand-primary)]"
+          style={{ fontFamily: 'var(--font-family-secondary)' }}
+        >
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.4"><circle cx="7.5" cy="7.5" r="5.5" /><path d="M12 12L16 16" strokeLinecap="round" /></svg>
+          Search
+        </button>
         <SmartNavLink
           href="/"
           onClick={closeMenu}
           className="block py-3.5 text-[20px] font-normal tracking-[0.04em] border-b border-black/[0.06] no-underline text-[#0A1628] transition-all duration-300 hover:text-[#0A1628] hover:pl-2"
-          style={{ fontFamily: 'var(--display-title)' }}
+          style={{ fontFamily: 'var(--font-family-secondary)' }}
         >
           Home
         </SmartNavLink>
@@ -1000,7 +1049,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
                 href={item.href ?? '#'}
                 onClick={closeMenu}
                 className="block py-3.5 text-[20px] font-normal tracking-[0.04em] border-b border-black/[0.06] no-underline text-[#0A1628] transition-all duration-300 hover:text-[#0A1628] hover:pl-2"
-                style={{ fontFamily: 'var(--display-title)' }}
+                style={{ fontFamily: 'var(--font-family-secondary)' }}
               >
                 {item.label}
               </SmartNavLink>
@@ -1020,7 +1069,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
                   setMobileOpenItem(item.label);
                 }}
                 className="flex w-full items-center justify-between py-3.5 text-left text-[20px] font-normal tracking-[0.04em] text-[#0A1628]"
-                style={{ fontFamily: 'var(--display-title)' }}
+                style={{ fontFamily: 'var(--font-family-secondary)' }}
               >
                 <span>{item.label}</span>
                 <svg
@@ -1046,7 +1095,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
                       <div key={`${item.label}-${section.id}`} className="pb-3 last:pb-0">
                         <div
                           className="flex items-center gap-2 pb-2 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#6A6A6A]"
-                          style={{ fontFamily: 'var(--display-title)' }}
+                          style={{ fontFamily: 'var(--font-family-secondary)' }}
                         >
                           {section.iconUrl ? (
                             <img
@@ -1065,7 +1114,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
                               href={entry.href}
                               onClick={closeMenu}
                             className="flex items-center gap-3 rounded-xl px-2 py-2 text-[13px] font-light tracking-[0.02em] text-[#253246] no-underline transition-colors duration-200 hover:bg-black/[0.03] hover:text-[#0A1628]"
-                              style={{ fontFamily: "'Montserrat', sans-serif" }}
+                              style={{ fontFamily: 'var(--font-family-secondary)' }}
                             >
                               {entry.icon}
                               <span>{entry.label}</span>
@@ -1092,7 +1141,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
             href={item.href}
             onClick={closeMenu}
             className="block py-3.5 text-[20px] font-normal tracking-[0.04em] border-b border-black/[0.06] no-underline text-[#0A1628] transition-all duration-300 hover:text-[#0A1628] hover:pl-2"
-            style={{ fontFamily: 'var(--display-title)' }}
+            style={{ fontFamily: 'var(--font-family-secondary)' }}
           >
             {item.label}
           </SmartNavLink>
@@ -1140,7 +1189,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
           <Link
             href="/contact"
             className="text-[10px] tracking-[0.25em] uppercase text-[#0A1628] no-underline py-1.5 font-normal transition-opacity duration-300 hover:opacity-70"
-            style={{ fontFamily: "'Montserrat', sans-serif" }}
+            style={{ fontFamily: 'var(--font-family-secondary)' }}
           >
             Enquire →
           </Link>

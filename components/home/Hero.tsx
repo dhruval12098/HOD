@@ -4,11 +4,14 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import BrandButton from '@/components/ui/BrandButton';
 
 type HeroSlide = {
   sort_order: number;
   image_path: string;
   mobile_image_path?: string;
+  headline: string;
+  subtitle: string;
   button_text: string;
   button_link: string;
 };
@@ -81,11 +84,11 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
         if (heroData.slider_enabled) {
           const { data: itemsData } = await supabase
             .from('homepage_hero_slider_items')
-            .select('sort_order, image_path, mobile_image_path, button_text, button_link')
+            .select('sort_order, image_path, mobile_image_path, headline, subtitle, button_text, button_link')
             .eq('hero_id', heroData.id)
             .order('sort_order', { ascending: true });
 
-        sliderItems = itemsData ?? [];
+        sliderItems = (itemsData ?? []).map((item) => ({ ...item, headline: item.headline ?? '', subtitle: item.subtitle ?? '' }));
       }
 
       setContent({
@@ -193,9 +196,7 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
 
       {content.slider_enabled && currentSlide ? (
         <div className="relative z-[2] w-full">
-          <h1 className="sr-only">{content.headline}</h1>
           <div className="relative overflow-hidden rounded-none border-0 bg-transparent shadow-none backdrop-blur-0">
-            <div className="absolute inset-0 z-10 bg-gradient-to-t from-[rgba(10,22,40,0.42)] via-[rgba(10,22,40,0.1)] to-transparent" />
             <div className="relative h-[360px] sm:hidden">
               {slides.map((slide, index) => {
                 const mobileImageUrl = getPublicImageUrl(slide.mobile_image_path || slide.image_path);
@@ -222,7 +223,7 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
                 );
               })}
             </div>
-            <div className="relative hidden sm:block aspect-[1440/720]">
+            <div className="relative hidden aspect-[5/2] sm:block">
               {slides.map((slide, index) => {
                 const desktopImageUrl = getPublicImageUrl(slide.image_path);
                 return (
@@ -249,8 +250,42 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
               })}
             </div>
 
+            {(currentSlide.headline.trim() ||
+              currentSlide.subtitle.trim() ||
+              (currentSlide.button_text.trim() && currentSlide.button_link.trim())) ? (
+              <div className="pointer-events-none absolute inset-0 z-20 flex items-center px-[var(--space-4)] sm:px-[var(--space-8)] lg:px-[var(--space-12)] xl:px-[var(--space-16)]">
+                <div className="relative w-[min(78%,22rem)] py-[var(--space-6)] pr-[var(--space-5)] sm:w-full sm:max-w-[25rem] sm:py-[var(--space-10)] sm:pr-0">
+                  {currentSlide.headline.trim() ? (
+                    <h1
+                      className="hero-slide-heading text-[clamp(1.75rem,7vw,2.25rem)] font-medium leading-[1.12] tracking-[-0.02em] text-[var(--color-brand-primary,#000)] sm:text-[clamp(2.25rem,3.4vw,3.25rem)]"
+                    >
+                      {currentSlide.headline}
+                    </h1>
+                  ) : null}
+
+                  {currentSlide.subtitle.trim() ? (
+                    <p
+                      className="mt-[var(--space-3)] max-w-[22rem] text-[clamp(0.75rem,2.8vw,0.95rem)] leading-[1.55] text-[var(--color-brand-primary,#000)] sm:mt-[var(--space-5)] sm:max-w-[25rem] sm:text-[clamp(0.9rem,1.15vw,1.1rem)]"
+                      style={{ fontFamily: 'var(--font-family-secondary)' }}
+                    >
+                      {currentSlide.subtitle}
+                    </p>
+                  ) : null}
+
+                  {currentSlide.button_text.trim() && currentSlide.button_link.trim() ? (
+                    <BrandButton
+                      href={currentSlide.button_link}
+                      className="pointer-events-auto mt-[var(--space-5)] sm:mt-[var(--space-8)]"
+                    >
+                      {currentSlide.button_text}
+                    </BrandButton>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+
             {slides.length > 1 ? (
-              <div className="absolute inset-x-0 top-1/2 z-20 flex -translate-y-1/2 items-center justify-between px-4 sm:px-6 lg:px-8">
+              <div className="absolute inset-x-0 bottom-4 z-30 flex items-center justify-end gap-2 px-4 sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2 sm:justify-between sm:px-6 lg:px-8">
                 <button
                   type="button"
                   onClick={goToPrevSlide}
@@ -272,7 +307,7 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
               </div>
             ) : null}
 
-            <div className="absolute inset-x-0 bottom-0 z-20 flex items-end justify-between gap-6 px-4 pb-4 sm:px-6 sm:pb-6 lg:px-8 lg:pb-8">
+            <div className="absolute inset-x-0 bottom-0 z-30 flex items-end px-4 pb-4 sm:px-6 sm:pb-6 lg:px-8 lg:pb-8">
               <div className="flex min-h-[48px] items-end">
                 {slides.length > 1 ? (
                   <div className="flex items-center gap-2">
@@ -287,15 +322,6 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
                     ))}
                   </div>
                 ) : null}
-              </div>
-
-              <div className="flex min-h-[48px] items-end justify-end">
-                <Link
-                  href={currentSlide.button_link || '#'}
-                  className="inline-flex items-center justify-center gap-2.5 bg-[var(--theme-ink)] px-[24px] py-3 text-[9px] uppercase tracking-[0.22em] text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#20304a] sm:px-[28px] sm:py-4 sm:text-[10px] sm:tracking-[0.28em]"
-                >
-                  {currentSlide.button_text || 'Explore'}
-                </Link>
               </div>
             </div>
           </div>
@@ -323,14 +349,14 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
           <div className="flex gap-[18px] justify-center flex-wrap animate-[fadeUp_1.2s_0.8s_ease_forwards] max-md:flex-col max-md:w-full">
             <Link
               href="/shop"
-              className="group relative inline-flex cursor-pointer items-center gap-2.5 overflow-hidden border-none bg-[var(--theme-ink)] px-[34px] py-4 text-[10px] font-normal uppercase tracking-[0.28em] text-white no-underline transition-all duration-400 max-md:justify-center hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(10,22,40,0.18)]"
+              className="group relative inline-flex cursor-pointer items-center gap-2.5 overflow-hidden border-none bg-[var(--theme-ink)] px-[34px] py-4 font-[family-name:var(--font-family-button)] text-[10px] font-normal uppercase tracking-[0.28em] text-white no-underline transition-all duration-400 max-md:justify-center hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(10,22,40,0.18)]"
             >
               <span className="absolute inset-0 z-0 translate-y-full bg-[#20304a] transition-transform duration-[450ms] ease-[cubic-bezier(0.77,0,0.18,1)] group-hover:translate-y-0" />
               <span className="relative z-10">Explore Collection</span>
             </Link>
             <Link
               href="/bespoke"
-              className="inline-flex cursor-pointer items-center justify-center gap-2.5 border border-[var(--theme-ink)] bg-transparent px-8 py-[15px] text-[10px] font-normal uppercase tracking-[0.28em] text-[var(--theme-ink)] no-underline transition-all duration-400 hover:bg-[var(--theme-ink)] hover:text-white"
+              className="inline-flex cursor-pointer items-center justify-center gap-2.5 border border-[var(--theme-ink)] bg-transparent px-8 py-[15px] font-[family-name:var(--font-family-button)] text-[10px] font-normal uppercase tracking-[0.28em] text-[var(--theme-ink)] no-underline transition-all duration-400 hover:bg-[var(--theme-ink)] hover:text-white"
             >
               Commission a Piece
             </Link>

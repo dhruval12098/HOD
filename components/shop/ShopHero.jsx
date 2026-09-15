@@ -14,6 +14,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
  *   subtitle?: string
  *   desktopImageUrl?: string
  *   mobileImageUrl?: string
+ *   imageAlt?: string
  *   ctaLabel?: string
  *   ctaHref?: string
  *   bannerEnabled?: boolean
@@ -27,6 +28,7 @@ export default function ShopHero({
   subtitle = 'Browse our curated selection of fine jewellery with certified lab-grown diamonds. Every piece certified, every stone responsibly sourced.',
   desktopImageUrl = '',
   mobileImageUrl = '',
+  imageAlt = '',
   ctaLabel = '',
   ctaHref = '',
   bannerEnabled = false,
@@ -181,7 +183,7 @@ export default function ShopHero({
                 {mobileImageUrl ? <source media="(max-width: 960px)" srcSet={mobileImageUrl} /> : null}
                 <img
                   src={desktopImageUrl || mobileImageUrl}
-                  alt={title}
+                  alt={imageAlt || title}
                   style={{
                     position: "absolute",
                     inset: 0,
@@ -204,7 +206,7 @@ export default function ShopHero({
               <picture>
                 <img
                   src={desktopImageUrl || mobileImageUrl}
-                  alt={title}
+                  alt={imageAlt || title}
                   style={{
                     position: "absolute",
                     inset: 0,

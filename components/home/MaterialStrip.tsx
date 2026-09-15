@@ -42,7 +42,7 @@ export default function MaterialStrip({ items = [] }: { items?: HomeMaterialItem
         <div className="text-[10px] font-normal tracking-[0.32em] text-[#0A1628] uppercase mb-3.5 inline-flex items-center gap-3 before:content-[''] before:w-6 before:h-px before:bg-[#0A1628]">
           Precious Materials
         </div>
-        <h2 className="font-display-title font-light uppercase tracking-[0.01em] text-[#0A1628] leading-[1.08] mb-[22px] max-md:text-[28px]" style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}>
+        <h2 className="font-display-title section-title font-light uppercase tracking-[0.01em] text-[#0A1628] leading-[1.08] mb-[22px] max-md:text-[28px]" style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}>
           More Than <em className="not-italic text-[#0A1628] font-normal">Diamonds</em>
         </h2>
         <p className="text-[13px] font-light leading-[2] text-[#6A6A6A] tracking-[0.04em] mb-8">
@@ -51,7 +51,7 @@ export default function MaterialStrip({ items = [] }: { items?: HomeMaterialItem
         </p>
         <Link
           href="/bespoke"
-          className="inline-flex items-center gap-2.5 text-[10px] font-normal tracking-[0.28em] text-[#0A1628] bg-transparent px-8 py-[15px] border border-[#0A1628] cursor-pointer uppercase no-underline transition-all duration-400 hover:bg-[#0A1628] hover:text-[#FAFBFD]"
+          className="inline-flex items-center gap-2.5 font-[family-name:var(--font-family-button)] text-[10px] font-normal tracking-[0.28em] text-[#0A1628] bg-transparent px-8 py-[15px] border border-[#0A1628] cursor-pointer uppercase no-underline transition-all duration-400 hover:bg-[#0A1628] hover:text-[#FAFBFD]"
         >
           Explore Custom Orders
         </Link>

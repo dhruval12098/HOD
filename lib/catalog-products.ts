@@ -1054,18 +1054,15 @@ const fetchStorefrontProducts = async (productLane?: StorefrontProductLane) => {
   })
 }
 
-const getCachedStorefrontProducts = unstable_cache(
-  fetchStorefrontProducts,
-  ['storefront-products-v1'],
-  { revalidate: 300, tags: ['storefront-products'] }
-)
-
 const getRequestStorefrontProducts = cache(fetchStorefrontProducts)
 
 export async function getStorefrontProducts(productLane?: StorefrontProductLane) {
-  return productLane
-    ? getCachedStorefrontProducts(productLane)
-    : getRequestStorefrontProducts()
+  // The complete storefront product model includes variant and media payloads
+  // and can exceed Next.js' 2 MB per-entry data-cache limit. Keep this fetch
+  // deduplicated within the current render/request without persisting the full
+  // result in `unstable_cache`. Compact card and single-product reads retain
+  // their dedicated caches below.
+  return getRequestStorefrontProducts(productLane)
 }
 
 const getCachedStorefrontProductCards = unstable_cache(

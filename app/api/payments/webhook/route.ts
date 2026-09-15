@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { finalizePaidOrder, markOrderPaymentFailed } from '@/lib/checkout-order'
 import { verifyRazorpayWebhookSignature } from '@/lib/razorpay'
-import { recoverCapturedPayment } from '@/lib/payment-recovery'
+import { REFUNDABLE_FINALIZATION_ERRORS, recoverCapturedPayment } from '@/lib/payment-recovery'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -76,21 +76,22 @@ export async function POST(request: Request) {
   const razorpayOrderId = paymentEntity?.order_id || orderEntity?.id || null
   const razorpayPaymentId = paymentEntity?.id || null
 
-  if (eventId) {
-    const { data: claimed, error: claimError } = await adminClient
-      .rpc('claim_payment_webhook_event', {
-        p_provider: 'razorpay',
-        p_event_id: eventId,
-        p_event_type: eventType,
-        p_razorpay_order_id: razorpayOrderId,
-        p_razorpay_payment_id: razorpayPaymentId || refundEntity?.payment_id || null,
-        p_payload: payload,
-      })
-    if (claimError) throw new Error('Unable to claim webhook event.')
-    if (!claimed) return NextResponse.json({ ok: true, duplicate: true })
-  }
-
   try {
+    if (eventId) {
+      // TODO(sql-audit): Review claim_payment_webhook_event for ambiguous column references in its SQL definition.
+      const { data: claimed, error: claimError } = await adminClient
+        .rpc('claim_payment_webhook_event', {
+          p_provider: 'razorpay',
+          p_event_id: eventId,
+          p_event_type: eventType,
+          p_razorpay_order_id: razorpayOrderId,
+          p_razorpay_payment_id: razorpayPaymentId || refundEntity?.payment_id || null,
+          p_payload: payload,
+        })
+      if (claimError) throw new Error('Unable to claim webhook event.')
+      if (!claimed) return NextResponse.json({ ok: true, duplicate: true })
+    }
+
     if ((eventType === 'refund.processed' || eventType === 'refund.failed') && refundEntity?.id) {
       const status = eventType === 'refund.processed' ? 'refunded' : 'failed'
       const now = new Date().toISOString()
@@ -129,12 +130,8 @@ export async function POST(request: Request) {
       })
 
       if ('error' in finalized) {
-        const refundableInventoryErrors = new Set([
-          'insufficient_stock',
-          'missing_product_reference',
-          'product_not_found',
-        ])
-        if (finalized.errorCode && refundableInventoryErrors.has(finalized.errorCode)) {
+        console.error('Webhook paid order finalization failed:', finalized.error)
+        if (finalized.errorCode && REFUNDABLE_FINALIZATION_ERRORS.has(finalized.errorCode)) {
           const recovery = await recoverCapturedPayment({
             adminClient,
             orderId: finalized.orderId,
@@ -185,9 +182,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true })
   } catch (error) {
     console.error('Razorpay webhook handling failed:', error)
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Webhook handling failed.' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Webhook handling failed.' }, { status: 500 })
   }
 }

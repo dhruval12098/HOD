@@ -17,7 +17,6 @@ const FloatingWidgets = dynamic(() => import('@/components/home/FloatingWidgets'
 const PromotionPopup = dynamic(() => import('@/components/layout/PromotionPopup'), { loading: () => null });
 
 const AUTH_ROUTES = new Set(['/login', '/signup']);
-const OVERLAY_NAVBAR_ROUTES = new Set(['/', '/hiphop', '/bespoke']);
 
 export default function SiteChrome({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -28,7 +27,6 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
   const [isNavbarReady, setIsNavbarReady] = useState(false);
   const [navItems, setNavItems] = useState<NavbarRenderItem[]>([]);
   const [showNonCriticalChrome, setShowNonCriticalChrome] = useState(false);
-  const usesDesktopOverlayNavbar = pathname ? OVERLAY_NAVBAR_ROUTES.has(pathname) : false;
   const isMinimalChromeRoute = pathname
     ? AUTH_ROUTES.has(pathname) || pathname.startsWith('/checkout')
     : false;
@@ -169,7 +167,7 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
           >
             <Navbar navItems={navItems} />
           </div>
-          <main className={`flex-1 ${usesDesktopOverlayNavbar ? 'pt-[91px] lg:pt-0' : 'pt-[118px] lg:pt-[146px]'}`}>{children}</main>
+          <main className="flex-1" style={{ paddingTop: 'var(--hod-site-header-height, 118px)' }}>{children}</main>
           <div
             id="site-footer-shell"
             className={`transition-opacity duration-500 ease-out ${hideHomeChrome ? 'pointer-events-none opacity-0' : 'pointer-events-auto opacity-100'}`}

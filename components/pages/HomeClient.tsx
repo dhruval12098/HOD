@@ -3,11 +3,11 @@
 import dynamic from 'next/dynamic';
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import BlogSectionHeader from '@/components/blog/BlogSectionHeader';
+import Link from 'next/link';
 import Hero from '@/components/home/Hero';
+import ShopByCategory from '@/components/home/ShopByCategory';
 import TestimonialMarquee from '@/components/home/TestimonialMarquee';
 import TrustedPartnersMarquee from '@/components/home/TrustedPartnersMarquee';
-import Collection from '@/components/home/Collection';
 import Certifications from '@/components/home/Certifications';
 import ViewportDeferred from '@/components/home/ViewportDeferred';
 import { posts } from '@/lib/data/blog-posts';
@@ -21,28 +21,24 @@ import type {
   HomeBestSellerProduct,
   HomeBestSellerSection,
   HomeBespokeShowcaseSection,
-  HomeCollectionItem,
-  HomeCoupleItem,
   HomeDiscoverItem,
   HomeDiamondInfoConfig,
   HomeDiamondInfoItem,
   HomeHipHopSection,
   HomeMarqueeData,
-  HomeTestimonialsData,
   HomeTrustedPartnersData,
 } from '@/lib/home-data';
+import type { ShopByCategoryData } from '@/lib/shop-by-category';
 
 const HipHopShowcase = dynamic(() => import('@/components/home/HipHopShowcase'), { loading: () => null });
 const DiscoverShapes = dynamic(() => import('@/components/home/DiscoverShapes'), { loading: () => null });
 const BestSellers = dynamic(() => import('@/components/home/BestSellers'), { loading: () => null });
 const CollectionShowcase = dynamic(() => import('@/components/home/CollectionShowcase'), { loading: () => null });
 const BespokeShowcase = dynamic(() => import('@/components/home/BespokeShowcase'), { loading: () => null });
-const DiscoverRings = dynamic(() => import('@/components/home/DiscoverRings'), { loading: () => null });
 const DiamondInfoSequence = dynamic(() => import('@/components/home/DiamondInfoSequence'), { loading: () => null });
-const Testimonials = dynamic(() => import('@/components/home/Testimonials'), { loading: () => null });
-const CouplesSection = dynamic(() => import('@/components/home/CouplesSection'), { loading: () => null });
 const Newsletter = dynamic(() => import('@/components/home/Newsletter'), { loading: () => null });
 const DeferredBlogGrid = dynamic(() => import('@/components/blog/BlogGrid'), { loading: () => null });
+const SelectedCouponOffer = dynamic(() => import('@/components/home/SelectedCouponOffer'), { loading: () => null });
 
 type CollectionPageConfig = {
   pageEnabled: boolean
@@ -64,6 +60,9 @@ type HeroContent = {
   slider_items?: Array<{
     sort_order: number;
     image_path: string;
+    mobile_image_path?: string;
+    headline: string;
+    subtitle: string;
     button_text: string;
     button_link: string;
   }>;
@@ -71,34 +70,28 @@ type HeroContent = {
 
 export default function HomeClient({
   heroContent,
+  shopByCategory,
   blogPosts = posts,
-  collectionItems = [],
   discoverShapesItems = [],
-  discoverRingsItems = [],
   hiphopSection,
   collectionPageConfig,
   bespokeShowcaseSection,
-  couplesData,
   diamondInfoItems = [],
   diamondInfoConfig,
-  testimonialsData,
   marqueeData,
   trustedPartnersData,
   bestSellerSection,
   bestSellerProducts = [],
 }: {
   heroContent?: HeroContent
+  shopByCategory: ShopByCategoryData | null
   blogPosts?: BlogPost[]
-  collectionItems?: HomeCollectionItem[]
   discoverShapesItems?: HomeDiscoverItem[]
-  discoverRingsItems?: HomeDiscoverItem[]
   hiphopSection: HomeHipHopSection
   collectionPageConfig: CollectionPageConfig
   bespokeShowcaseSection: HomeBespokeShowcaseSection
-  couplesData: { eyebrow: string; heading: string; subtitle: string; items: HomeCoupleItem[] }
   diamondInfoItems?: HomeDiamondInfoItem[]
   diamondInfoConfig?: HomeDiamondInfoConfig
-  testimonialsData: HomeTestimonialsData
   marqueeData: HomeMarqueeData
   trustedPartnersData?: HomeTrustedPartnersData
   bestSellerSection: HomeBestSellerSection
@@ -276,52 +269,46 @@ export default function HomeClient({
           setHeroReady(true);
         }}
       />
+      <ShopByCategory data={shopByCategory} />
       {showPrimarySections ? (
         <>
-          <TrustedPartnersMarquee data={trustedPartnersData} />
-          {bespokeShowcaseSection.isEnabled ? (
-            <BespokeShowcase section={bespokeShowcaseSection} onEnquireClick={() => setIsBespokeEnquireOpen(true)} />
-          ) : null}
-          {/* <TestimonialMarquee initialData={marqueeData} /> */}
-          <Collection items={collectionItems} />
-          <Certifications />
-          <ViewportDeferred minHeight={520}>
-            <DiscoverShapes initialItems={discoverShapesItems} />
-          </ViewportDeferred>
-        </>
-      ) : null}
-      {showDeferredSections ? (
-        <>
-          {hiphopSection.is_enabled ? <HipHopShowcase initialSection={hiphopSection} /> : null}
+          {collectionPageConfig.pageEnabled && collectionPageConfig.showHomeShowcase ? <CollectionShowcase config={collectionPageConfig} /> : null}
           <ViewportDeferred minHeight={620}>
             <BestSellers initialSection={bestSellerSection} initialProducts={bestSellerProducts} />
           </ViewportDeferred>
-          {collectionPageConfig.pageEnabled && collectionPageConfig.showHomeShowcase ? <CollectionShowcase config={collectionPageConfig} /> : null}
-          <ViewportDeferred minHeight={560}>
-            <DiscoverRings initialItems={discoverRingsItems} />
+          <ViewportDeferred minHeight={520}>
+            <DiscoverShapes initialItems={discoverShapesItems} />
           </ViewportDeferred>
+          {bespokeShowcaseSection.isEnabled ? (
+            <BespokeShowcase section={bespokeShowcaseSection} onEnquireClick={() => setIsBespokeEnquireOpen(true)} />
+          ) : null}
+          {/* <TrustedPartnersMarquee data={trustedPartnersData} /> */}
+          {/* <TestimonialMarquee initialData={marqueeData} /> */}
+          {/* <Certifications /> */}
+          {showDeferredSections ? (
+            <section aria-labelledby="home-blogs-heading" className="bg-[var(--color-brand-accent,#fff)] px-[var(--space-2)] py-[var(--space-12)] sm:px-[var(--space-3)] lg:px-[var(--space-4)] lg:py-[var(--space-12)]">
+              <div className="w-full">
+                <h2 id="home-blogs-heading" className="section-title mb-[var(--space-6)] text-[clamp(1.7rem,2.4vw,2.4rem)] leading-[1.12] text-[var(--theme-heading)]">Blogs</h2>
+                <DeferredBlogGrid posts={blogPosts} maxPosts={4} compactGrid simplifiedCards onPostClick={(id) => {
+                  const target = blogPosts.find((post) => post.id === id)
+                  router.push(target?.slug ? `/blog/${target.slug}` : `/blog?post=${id}`)
+                }} />
+                <div className="mt-[var(--space-6)] flex justify-center">
+                  <Link href="/blog" className="inline-flex min-h-12 items-center justify-center bg-[var(--color-brand-primary,#000)] px-[var(--space-6)] font-[family-name:var(--font-family-button)] text-xs font-semibold uppercase tracking-[0.12em] text-white transition-opacity hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-brand-primary,#000)]">View All Blogs</Link>
+                </div>
+              </div>
+            </section>
+          ) : null}
+          <SelectedCouponOffer />
+        </>
+      ) : null}
+      {/* {hiphopSection.is_enabled ? <HipHopShowcase initialSection={hiphopSection} /> : null} */}
+      {/* About Us video-led section; uncomment to restore:
           <ViewportDeferred minHeight={520}>
             <DiamondInfoSequence items={diamondInfoItems} config={diamondInfoConfig} />
           </ViewportDeferred>
-          <ViewportDeferred minHeight={520}>
-            <Testimonials initialData={testimonialsData} />
-          </ViewportDeferred>
-          <ViewportDeferred minHeight={520}>
-            <CouplesSection initialData={couplesData} />
-          </ViewportDeferred>
-
-          <section className="bg-[var(--theme-surface-warm)] px-5 py-8 md:px-8 lg:px-12">
-            <div className="mx-auto max-w-[1320px]">
-              <BlogSectionHeader title="Blogs" onViewAll={() => router.push('/blog')} useVeloria />
-              <DeferredBlogGrid posts={blogPosts} simplifiedCards onPostClick={(id) => {
-                const target = blogPosts.find((post) => post.id === id)
-                router.push(target?.slug ? `/blog/${target.slug}` : `/blog?post=${id}`)
-              }} />
-            </div>
-          </section>
-          <Newsletter onToast={handleToast} />
-        </>
-      ) : null}
+      */}
+      {/* <Newsletter onToast={handleToast} /> */}
 
       {isEnquireOpen && <EnquireModal open={isEnquireOpen} piece={enquireGemName} onClose={handleEnquireClose} />}
       <BespokeEnquiryModal open={isBespokeEnquireOpen} onClose={() => setIsBespokeEnquireOpen(false)} />

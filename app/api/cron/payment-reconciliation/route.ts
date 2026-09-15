@@ -16,11 +16,13 @@ export async function GET(request: Request) {
   }
 
   const adminClient = createClient(supabaseUrl, serviceRoleKey)
+  // TODO(sql-audit): Review expire_inventory_reservations for ambiguous column references in its SQL definition.
   const { data: expiredReservations, error: expirationError } = await adminClient
     .rpc('expire_inventory_reservations', { p_limit: 1000 })
   if (expirationError) {
     console.error('Inventory reservation expiration failed:', expirationError)
   }
+  // TODO(sql-audit): Review claim_due_payment_recovery_actions for ambiguous column references in its SQL definition.
   const { data, error } = await adminClient
     .rpc('claim_due_payment_recovery_actions', { p_limit: 20 })
 

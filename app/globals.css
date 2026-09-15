@@ -1,9 +1,15 @@
 @import "tailwindcss";
 
-@font-face {
-  font-family: "Forfelast";
-  src: url("/fonts/Forfelast-Royalten-DEMO-VERSION-BF65d0c22e0fa49.otf") format("opentype");
-  font-display: swap;
+.shop-category-grid {
+  grid-template-columns: repeat(var(--shop-cols-mobile), minmax(0, 1fr));
+}
+
+@media (min-width: 640px) {
+  .shop-category-grid { grid-template-columns: repeat(var(--shop-cols-tablet), minmax(0, 1fr)); }
+}
+
+@media (min-width: 1024px) {
+  .shop-category-grid { grid-template-columns: repeat(var(--shop-cols-desktop), minmax(0, 1fr)); }
 }
 
 @font-face {
@@ -19,6 +25,41 @@
 }
 
 :root {
+  /* Primitive design tokens. */
+  --color-black: #000000;
+  --color-off-white: #f9f9f9;
+  --color-white: #ffffff;
+
+  --font-family-cinzel: var(--font-cinzel, Georgia), Georgia, serif;
+  --font-family-inter: var(--font-inter, Arial), Arial, sans-serif;
+  --font-family-montserrat: var(--font-montserrat, Arial), Arial, sans-serif;
+  --font-family-marcellus: var(--font-marcellus, Georgia), Georgia, serif;
+
+  --space-0: 0;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+
+  /* Semantic design tokens. */
+  --color-brand-primary: var(--color-black);
+  --color-brand-secondary: var(--color-off-white);
+  --color-brand-accent: var(--color-white);
+  --font-family-primary: var(--font-family-cinzel);
+  --font-weight-primary: 500;
+  --font-family-secondary: var(--font-family-inter);
+  --font-family-tertiary: var(--font-family-montserrat);
+  --font-family-button: var(--font-family-montserrat);
+  --font-family-section-title: var(--font-family-montserrat);
+
   --background: #fafbfd;
   --foreground: #0a0a0a;
 
@@ -49,10 +90,67 @@
   --border: var(--theme-border);
   --shadow-lg: var(--theme-shadow-lg);
 
-  /* Tailwind config maps `font-serif` to `var(--serif)` */
-  --serif: "Forfelast", "Cormorant Garamond", Georgia, serif;
+  /* Canonical display aliases resolve to the primary Cinzel token. */
+  --serif: var(--font-family-primary);
   --numeric: "Modamode", ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  --display-title: "Grandiosity", "Forfelast", "Cormorant Garamond", Georgia, serif;
+  --display-title: var(--font-family-primary);
+}
+
+.brand-button {
+  display: inline-flex;
+  min-height: 3rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-brand-primary, #000000);
+  border-radius: 0;
+  background: var(--color-brand-primary, #000000);
+  color: var(--color-brand-accent, #ffffff);
+  padding: var(--space-3, 0.75rem) var(--space-8, 2rem);
+  font-family: var(--font-family-button, Arial, sans-serif);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  text-align: center;
+  text-decoration: none;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease,
+    transform 120ms ease;
+}
+
+.brand-button:hover:not(:disabled):not([aria-disabled="true"]) {
+  background: var(--color-brand-accent, #ffffff);
+  color: var(--color-brand-primary, #000000);
+}
+
+.brand-button:focus-visible {
+  outline: 2px solid var(--color-brand-primary, #000000);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 1px var(--color-brand-accent, #ffffff);
+}
+
+.brand-button:active:not(:disabled):not([aria-disabled="true"]) {
+  transform: translateY(1px);
+}
+
+.brand-button:disabled,
+.brand-button[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (max-width: 47.999rem) {
+  .brand-button {
+    min-height: 2.75rem;
+    padding-inline: var(--space-6, 1.5rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-button {
+    transition: none;
+  }
 }
 
 @theme inline {
@@ -123,6 +221,34 @@ body.page-loader-active {
 /* Ensure headings use the requested display font site-wide without touching body copy. */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--serif) !important;
+  font-weight: var(--font-weight-primary) !important;
+}
+
+/* Explicit section-heading token; do not replace brand or article headings. */
+html body .section-title {
+  font-family: var(--font-family-section-title) !important;
+  font-size: clamp(1rem, 1.35vw, 1.375rem) !important;
+  font-weight: 600 !important;
+  line-height: 1.25 !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase;
+}
+
+/* Buttons and button-like calls to action share the Montserrat semantic token. */
+button, [role="button"], input[type="button"], input[type="submit"], input[type="reset"] {
+  font-family: var(--font-family-button) !important;
+}
+
+/* The homepage hero is intentionally branded with the primary Cinzel face. */
+.hero-slide-heading {
+  font-family: var(--font-family-primary) !important;
+  font-weight: var(--font-weight-primary) !important;
+}
+
+/* Homepage collection campaign follows the primary Cinzel brand face. */
+.collection-showcase-heading {
+  font-family: var(--font-family-primary) !important;
+  font-weight: var(--font-weight-primary) !important;
 }
 
 /* Blog editorial titles intentionally use the more compact sans display face. */
@@ -135,9 +261,10 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-manrope), Manrope, Arial, Helvetica, sans-serif !important;
 }
 
-/* Also force Tailwind's `font-serif` utility to resolve to Forfelast everywhere. */
+/* Keep serif utilities aligned with the primary Cinzel face. */
 .font-serif {
   font-family: var(--serif) !important;
+  font-weight: var(--font-weight-primary) !important;
 }
 
 /* Numeric font: apply only where we mark it, to avoid disrupting body text. */
@@ -147,6 +274,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .font-display-title {
   font-family: var(--display-title) !important;
+  font-weight: var(--font-weight-primary) !important;
 }
 
 /* Homepage font comparison: these intentionally override the global heading face. */
@@ -154,13 +282,15 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-aurestia) !important;
 }
 
-.font-test-veloria {
-  font-family: var(--font-veloria) !important;
+.font-primary-display {
+  font-family: var(--font-family-primary) !important;
+  font-weight: var(--font-weight-primary) !important;
 }
 
-/* Rich blog content headings must retain Veloria over the site-wide heading rule. */
+/* Rich blog content headings use the canonical primary Cinzel face. */
 .blog-article-content :is(h1, h2, h3, h4, h5, h6) {
-  font-family: var(--font-veloria) !important;
+  font-family: var(--font-family-primary) !important;
+  font-weight: var(--font-weight-primary) !important;
 }
 
 .font-test-veneza {

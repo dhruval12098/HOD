@@ -980,6 +980,7 @@ export default function CheckoutPageClient() {
         return
       }
 
+        let paymentHandlerStarted = false
         const razorpayInstance = new window.Razorpay({
         key: paymentSession.razorpay.keyId,
         order_id: paymentSession.razorpay.orderId,
@@ -990,10 +991,14 @@ export default function CheckoutPageClient() {
         prefill: paymentSession.razorpay.prefill,
         theme: {
           color: '#101828',
-        },
+          },
           modal: {
-            ondismiss: () => {
-              void fetch('/api/checkout/cancel', {
+            ondismiss: async () => {
+              // Give Razorpay's success callback a brief chance to win the modal-close race.
+              await new Promise((resolve) => window.setTimeout(resolve, 750))
+              if (paymentHandlerStarted) return
+
+              const cancellationResponse = await fetch('/api/checkout/cancel', {
                 method: 'POST',
                 headers: {
                   'content-type': 'application/json',
@@ -1001,16 +1006,32 @@ export default function CheckoutPageClient() {
                 },
                 body: JSON.stringify({ orderId: paymentSession.orderId }),
                 keepalive: true,
-              }).catch(() => {})
+              }).catch(() => null)
+              const cancellationPayload = cancellationResponse
+                ? await cancellationResponse.json().catch(() => null)
+                : null
+
+              if (paymentHandlerStarted) return
+
               setPendingPaymentSession(null)
               paymentSessionPromiseRef.current = null
-              checkoutAttemptKeyRef.current = null
               setPaymentUiStage('idle')
               setProcessingPayment(false)
+              if (
+                !cancellationResponse?.ok ||
+                cancellationPayload?.releaseDenied === true ||
+                cancellationPayload?.released !== true
+              ) {
+                setErrorMessage("We're confirming your payment status — please check your orders page before trying again.")
+                return
+              }
+
+              checkoutAttemptKeyRef.current = null
               setErrorMessage('Payment popup closed. Reserved stock has been released and you can try again.')
             },
           },
           handler: async (paymentResponse) => {
+            paymentHandlerStarted = true
             setProcessingPayment(true)
             setPaymentUiStage('confirming')
             const verifyResponse = await fetch('/api/payments/verify', {

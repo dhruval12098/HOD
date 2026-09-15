@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { veloriaFont } from '@/app/fonts';
+import { cinzelFont } from '@/app/fonts';
 import type { HomeCollectionItem } from '@/lib/home-data';
 
 interface CollectionProps {
@@ -93,7 +93,7 @@ export default function Collection({ items = [] }: CollectionProps) {
   return (
     <section className="mx-auto w-full max-w-[1440px] px-5 py-16 sm:px-8 sm:py-20 lg:px-12">
       <div className="mb-10 text-center sm:mb-14">
-        <h2 className={`${veloriaFont.variable} font-test-veloria font-light leading-[1.08] tracking-[0.01em] text-[#0A1628] max-md:text-[28px]`} style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}>
+        <h2 className={`${cinzelFont.variable} font-primary-display section-title font-light leading-[1.08] tracking-[0.01em] text-[#0A1628] max-md:text-[28px]`} style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}>
           Our <em className="not-italic italic">Collections</em>
         </h2>
         <p className="mx-auto mt-3 max-w-xl text-[12px] font-light tracking-[0.1em] text-[#6A6A6A] sm:text-[13px]">
@@ -130,7 +130,7 @@ export default function Collection({ items = [] }: CollectionProps) {
                   <h3 className="font-serif text-[16px] font-normal leading-[1.05] text-white min-[420px]:text-[19px] sm:text-[28px]">
                     {panel.name}
                   </h3>
-                  <div className="mt-1.5 inline-flex items-center gap-1.5 text-[7px] font-medium uppercase tracking-[0.16em] text-white/92 sm:mt-2 sm:gap-2.5 sm:text-[10px]">
+                  <div className="mt-1.5 inline-flex items-center gap-1.5 font-[family-name:var(--font-family-button)] text-[7px] font-medium uppercase tracking-[0.16em] text-white/92 sm:mt-2 sm:gap-2.5 sm:text-[10px]">
                     <span>{panel.cta}</span>
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
                       <path d="M4 3L9 7L4 11" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />

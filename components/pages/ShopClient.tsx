@@ -56,6 +56,7 @@ export default function ShopClient({
   heroSubtitle,
   heroDesktopImageUrl,
   heroMobileImageUrl,
+  heroImageAlt,
   heroCtaLabel,
   heroCtaHref,
   heroBannerEnabled,
@@ -72,6 +73,7 @@ export default function ShopClient({
   heroSubtitle?: string
   heroDesktopImageUrl?: string
   heroMobileImageUrl?: string
+  heroImageAlt?: string
   heroCtaLabel?: string
   heroCtaHref?: string
   heroBannerEnabled?: boolean
@@ -130,6 +132,7 @@ export default function ShopClient({
         subtitle={heroSubtitle}
         desktopImageUrl={heroDesktopImageUrl}
         mobileImageUrl={heroMobileImageUrl}
+        imageAlt={heroImageAlt}
         ctaLabel={heroCtaLabel}
         ctaHref={heroCtaHref}
         bannerEnabled={heroBannerEnabled}

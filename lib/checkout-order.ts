@@ -523,6 +523,7 @@ export async function createPendingOrder({
     })
   }
 
+  // TODO(sql-audit): Review create_pending_order_atomic for ambiguous column references in its SQL definition.
   const { data: order, error: orderError } = await adminClient
     .rpc('create_pending_order_atomic', {
       p_user_id: userId,
@@ -605,6 +606,7 @@ export async function markOrderPaymentFailed({
     })
     .eq('id', order.id)
 
+  // TODO(sql-audit): Review release_order_inventory_reservation for ambiguous column references in its SQL definition.
   const { error: releaseError } = await adminClient
     .rpc('release_order_inventory_reservation', { p_order_id: order.id })
   if (releaseError) {

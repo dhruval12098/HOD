@@ -1,0 +1,1192 @@
+{
+  "metal": {
+    "id": "metal",
+    "name": "Metal",
+    "blurb": "Gold, white gold, rose",
+    "questions": [
+      {
+        "id": "wardrobe",
+        "text": "Your everyday wardrobe feels",
+        "options": [
+          {
+            "id": "minimal",
+            "label": "Clean & Minimal",
+            "sub": "Monochrome, sharp, precise."
+          },
+          {
+            "id": "classic",
+            "label": "Warm & Classic",
+            "sub": "Earth tones, tailored, timeless."
+          },
+          {
+            "id": "romantic",
+            "label": "Soft & Romantic",
+            "sub": "Blush, cream, flowing."
+          },
+          {
+            "id": "bold",
+            "label": "Bold & Maximalist",
+            "sub": "Dark luxury, statement presence."
+          }
+        ]
+      },
+      {
+        "id": "life",
+        "text": "How do you live in your jewellery?",
+        "options": [
+          {
+            "id": "active",
+            "label": "Active Life",
+            "sub": "Travel, movement, daily wear."
+          },
+          {
+            "id": "professional",
+            "label": "Professional",
+            "sub": "Meetings, desk, everyday polish."
+          },
+          {
+            "id": "social",
+            "label": "Social & Evening",
+            "sub": "Events, dinners, occasions."
+          }
+        ]
+      },
+      {
+        "id": "undertone",
+        "text": "Your undertone",
+        "options": [
+          {
+            "id": "warm",
+            "label": "Warm",
+            "sub": "Veins look green. Gold looks natural on you."
+          },
+          {
+            "id": "cool",
+            "label": "Cool",
+            "sub": "Veins look blue. Silver looks natural on you."
+          },
+          {
+            "id": "neutral",
+            "label": "Neutral",
+            "sub": "Both, or hard to tell. Most metals work."
+          },
+          {
+            "id": "unsure",
+            "label": "Not sure",
+            "sub": "We'll go by your style instead."
+          }
+        ]
+      }
+    ],
+    "colourMatrix": {
+      "warm": {
+        "minimal": "Yellow",
+        "classic": "Yellow",
+        "romantic": "Rose",
+        "bold": "Yellow"
+      },
+      "cool": {
+        "minimal": "White",
+        "classic": "White",
+        "romantic": "Rose",
+        "bold": "White"
+      },
+      "neutral": {
+        "minimal": "White",
+        "classic": "Yellow",
+        "romantic": "Rose",
+        "bold": "Yellow"
+      }
+    },
+    "karatMap": {
+      "active": "10K",
+      "professional": "14K",
+      "social": "14K"
+    },
+    "karatReason": {
+      "active": "it's on you through travel and daily wear, and 10K is the toughest gold alloy we cast",
+      "professional": "14K holds its polish through desk-to-dinner days",
+      "social": "14K carries the depth of colour that evenings deserve"
+    },
+    "colourReason": {
+      "Yellow": "yellow gold matches that warmth instead of muting it",
+      "White": "white gold disappears into that palette instead of interrupting it",
+      "Rose": "rose gold is that palette in metal form"
+    },
+    "altColour": {
+      "Yellow": "Rose",
+      "White": "Rose",
+      "Rose": "Yellow"
+    }
+  },
+  "products": {
+    "ring": {
+      "id": "ring",
+      "name": "Rings",
+      "sub": "Engagement, wedding, everyday",
+      "shape": {
+        "id": "shape",
+        "name": "Shape",
+        "blurb": "The diamond's cut",
+        "questions": [
+          {
+            "id": "energy",
+            "text": "Which energy feels most like you?",
+            "options": [
+              {
+                "id": "elegant",
+                "label": "Elegant",
+                "sub": "Refined and balanced."
+              },
+              {
+                "id": "bold",
+                "label": "Bold",
+                "sub": "Fashion-led and directional."
+              },
+              {
+                "id": "romantic",
+                "label": "Romantic",
+                "sub": "Soft and expressive."
+              },
+              {
+                "id": "modern",
+                "label": "Modern",
+                "sub": "Architectural and clean."
+              }
+            ]
+          },
+          {
+            "id": "visual",
+            "text": "What matters most visually?",
+            "options": [
+              {
+                "id": "sparkle",
+                "label": "Maximum Sparkle",
+                "sub": "Light return first."
+              },
+              {
+                "id": "different",
+                "label": "Something Different",
+                "sub": "Less obvious silhouette."
+              },
+              {
+                "id": "elongate",
+                "label": "Longer Finger Look",
+                "sub": "Elongating shape."
+              },
+              {
+                "id": "classic",
+                "label": "Forever Classic",
+                "sub": "Always relevant."
+              }
+            ]
+          },
+          {
+            "id": "body",
+            "text": "Your hand shape is closest to",
+            "options": [
+              {
+                "id": "long",
+                "label": "Long Fingers",
+                "sub": "Graceful vertical proportion."
+              },
+              {
+                "id": "petite",
+                "label": "Petite Fingers",
+                "sub": "Benefits from elongation."
+              },
+              {
+                "id": "wide",
+                "label": "Wider Hand",
+                "sub": "Needs balanced spread."
+              },
+              {
+                "id": "balance",
+                "label": "Balanced",
+                "sub": "Most shapes can work well."
+              }
+            ]
+          }
+        ],
+        "matrix": {
+          "sparkle": {
+            "elegant": "Round",
+            "bold": "Cushion",
+            "romantic": "Cushion",
+            "modern": "Princess"
+          },
+          "different": {
+            "elegant": "Emerald",
+            "bold": "Pear",
+            "romantic": "Pear",
+            "modern": "Emerald"
+          },
+          "elongate": {
+            "elegant": "Oval",
+            "bold": "Pear",
+            "romantic": "Oval",
+            "modern": "Emerald"
+          },
+          "classic": {
+            "elegant": "Round",
+            "bold": "Princess",
+            "romantic": "Cushion",
+            "modern": "Princess"
+          }
+        },
+        "runnerMap": {
+          "long": {
+            "runner": "Cushion",
+            "copy": "Long fingers carry a wide shape most hands can’t."
+          },
+          "petite": {
+            "runner": "Oval",
+            "copy": "On a petite hand, elongated cuts stretch the finger line."
+          },
+          "wide": {
+            "runner": "Emerald",
+            "copy": "Length balances the spread of a wider hand."
+          },
+          "balance": {
+            "runner": "Oval",
+            "copy": "Balanced proportions mean nothing is off-limits — this is pure preference."
+          }
+        }
+      },
+      "style": {
+        "id": "style",
+        "name": "Style",
+        "blurb": "The overall look",
+        "questions": [
+          {
+            "id": "presence",
+            "text": "How much should it announce itself?",
+            "options": [
+              {
+                "id": "quiet",
+                "label": "Quiet",
+                "sub": "One clean line. Nothing extra."
+              },
+              {
+                "id": "balanced",
+                "label": "Balanced",
+                "sub": "Present, not loud."
+              },
+              {
+                "id": "noticeable",
+                "label": "Noticeable",
+                "sub": "Catches the light across a room."
+              },
+              {
+                "id": "unmissable",
+                "label": "Unmissable",
+                "sub": "Full presence. No apology."
+              }
+            ]
+          },
+          {
+            "id": "job",
+            "text": "What should the setting do for the stone?",
+            "options": [
+              {
+                "id": "protect",
+                "label": "Protect it",
+                "sub": "Built to take a life, no snagging."
+              },
+              {
+                "id": "bigger",
+                "label": "Make it look bigger",
+                "sub": "Maximum size for the carat."
+              },
+              {
+                "id": "float",
+                "label": "Let it float",
+                "sub": "Nothing competing with the stone."
+              },
+              {
+                "id": "sparkle",
+                "label": "Surround it in sparkle",
+                "sub": "Light everywhere, not just the centre."
+              }
+            ]
+          },
+          {
+            "id": "say",
+            "text": "What do you want it to say?",
+            "options": [
+              {
+                "id": "beautiful",
+                "label": "Just beautiful",
+                "sub": "No story needed. It's enough."
+              },
+              {
+                "id": "twoofus",
+                "label": "The two of us",
+                "sub": "Two stones, side by side."
+              },
+              {
+                "id": "story",
+                "label": "Our story over time",
+                "sub": "Past, present, future."
+              },
+              {
+                "id": "nature",
+                "label": "Rooted in nature",
+                "sub": "Organic lines, vines, movement."
+              }
+            ]
+          }
+        ],
+        "base": {
+          "protect": {
+            "quiet": "Bezel",
+            "balanced": "Bezel",
+            "noticeable": "Bezel",
+            "unmissable": "Halo"
+          },
+          "bigger": {
+            "quiet": "Side Stone",
+            "balanced": "Side Stone",
+            "noticeable": "Halo",
+            "unmissable": "Halo"
+          },
+          "float": {
+            "quiet": "Solitaire",
+            "balanced": "Solitaire",
+            "noticeable": "Solitaire",
+            "unmissable": "Pavé"
+          },
+          "sparkle": {
+            "quiet": "Side Stone",
+            "balanced": "Pavé",
+            "noticeable": "Pavé",
+            "unmissable": "Halo"
+          }
+        },
+        "override": {
+          "twoofus": "Toi-moi",
+          "story": "Three Stone",
+          "nature": "Nature Inspired"
+        },
+        "why": {
+          "protect": "you want it built to take a life without snagging",
+          "bigger": "you want maximum size for the carat",
+          "float": "you want nothing competing with the stone",
+          "sparkle": "you want light everywhere, not just at the centre"
+        },
+        "overrideWhy": {
+          "twoofus": "Two stones, side by side — the one setting that says something a solitaire can’t.",
+          "story": "Past, present, future — three stones in one line, and the only setting that carries that meaning.",
+          "nature": "Organic lines and movement instead of hard symmetry — alive up close, quiet from across a room."
+        }
+      },
+      "budget": [
+        {
+          "id": "u1000",
+          "label": "Under $1,000",
+          "sub": "Everyday fine jewellery.",
+          "carat": "0.30 – 0.50 ct",
+          "q": "price=0-1000"
+        },
+        {
+          "id": "m1000",
+          "label": "$1,000 – $2,000",
+          "sub": "The most-chosen range.",
+          "carat": "0.50 – 1.0 ct",
+          "q": "price=1000-2000"
+        },
+        {
+          "id": "a2000",
+          "label": "Above $2,000",
+          "sub": "Full centre-stone scale.",
+          "carat": "1.5 ct and up",
+          "q": "price=2000-plus"
+        }
+      ]
+    },
+    "necklace": {
+      "id": "necklace",
+      "name": "Necklaces & Pendants",
+      "sub": "Chains, solitaire pendants, layering",
+      "shape": {
+        "id": "shape",
+        "name": "Shape",
+        "blurb": "The diamond's cut",
+        "questions": [
+          {
+            "id": "energy",
+            "text": "Which energy feels most like you?",
+            "options": [
+              {
+                "id": "elegant",
+                "label": "Elegant",
+                "sub": "Refined and balanced."
+              },
+              {
+                "id": "bold",
+                "label": "Bold",
+                "sub": "Fashion-led and directional."
+              },
+              {
+                "id": "romantic",
+                "label": "Romantic",
+                "sub": "Soft and expressive."
+              },
+              {
+                "id": "modern",
+                "label": "Modern",
+                "sub": "Architectural and clean."
+              }
+            ]
+          },
+          {
+            "id": "visual",
+            "text": "What matters most visually?",
+            "options": [
+              {
+                "id": "sparkle",
+                "label": "Maximum Sparkle",
+                "sub": "Light return first."
+              },
+              {
+                "id": "different",
+                "label": "Something Different",
+                "sub": "Less obvious silhouette."
+              },
+              {
+                "id": "elongate",
+                "label": "Longer Neckline Look",
+                "sub": "Elongating shape."
+              },
+              {
+                "id": "classic",
+                "label": "Forever Classic",
+                "sub": "Always relevant."
+              }
+            ]
+          },
+          {
+            "id": "body",
+            "text": "Your neckline is usually",
+            "options": [
+              {
+                "id": "open",
+                "label": "Open / V-neck",
+                "sub": "Deep, shows more skin."
+              },
+              {
+                "id": "crew",
+                "label": "Crew / High",
+                "sub": "Close to the collarbone."
+              },
+              {
+                "id": "wide",
+                "label": "Off-shoulder / Wide",
+                "sub": "Broad and open."
+              },
+              {
+                "id": "varies",
+                "label": "Varies",
+                "sub": "Everything, depending on the day."
+              }
+            ]
+          }
+        ],
+        "matrix": {
+          "sparkle": {
+            "elegant": "Round",
+            "bold": "Cushion",
+            "romantic": "Cushion",
+            "modern": "Princess"
+          },
+          "different": {
+            "elegant": "Emerald",
+            "bold": "Pear",
+            "romantic": "Pear",
+            "modern": "Emerald"
+          },
+          "elongate": {
+            "elegant": "Oval",
+            "bold": "Pear",
+            "romantic": "Oval",
+            "modern": "Emerald"
+          },
+          "classic": {
+            "elegant": "Round",
+            "bold": "Princess",
+            "romantic": "Cushion",
+            "modern": "Princess"
+          }
+        },
+        "runnerMap": {
+          "open": {
+            "runner": "Pear",
+            "copy": "An open neckline gives a drop shape room to sit and swing."
+          },
+          "crew": {
+            "runner": "Round",
+            "copy": "Against a high neckline, a compact shape reads cleanly rather than crowding."
+          },
+          "wide": {
+            "runner": "Oval",
+            "copy": "A broad neckline wants length to fill the space between the collarbones."
+          },
+          "varies": {
+            "runner": "Emerald",
+            "copy": "Wearing everything means it needs to work everywhere — nothing is off-limits."
+          }
+        }
+      },
+      "style": {
+        "id": "style",
+        "name": "Style",
+        "blurb": "The overall look",
+        "questions": [
+          {
+            "id": "presence",
+            "text": "How much should it announce itself?",
+            "options": [
+              {
+                "id": "quiet",
+                "label": "Quiet",
+                "sub": "One clean line. Nothing extra."
+              },
+              {
+                "id": "balanced",
+                "label": "Balanced",
+                "sub": "Present, not loud."
+              },
+              {
+                "id": "noticeable",
+                "label": "Noticeable",
+                "sub": "Catches the light across a room."
+              },
+              {
+                "id": "unmissable",
+                "label": "Unmissable",
+                "sub": "Full presence. No apology."
+              }
+            ]
+          },
+          {
+            "id": "job",
+            "text": "What should it do on the neckline?",
+            "options": [
+              {
+                "id": "alone",
+                "label": "Sit alone",
+                "sub": "One focal point, nothing else needed."
+              },
+              {
+                "id": "layer",
+                "label": "Layer with others",
+                "sub": "Built to stack with what you own."
+              },
+              {
+                "id": "lines",
+                "label": "Clean lines, no centre stone",
+                "sub": "Architectural, not sparkly."
+              },
+              {
+                "id": "sparkle",
+                "label": "Sparkle across the collarbone",
+                "sub": "Light all the way round."
+              }
+            ]
+          },
+          {
+            "id": "say",
+            "text": "What do you want it to say?",
+            "options": [
+              {
+                "id": "beautiful",
+                "label": "Just beautiful",
+                "sub": "No story needed."
+              },
+              {
+                "id": "twoofus",
+                "label": "The two of us",
+                "sub": "Two stones, side by side."
+              },
+              {
+                "id": "personal",
+                "label": "Personal to me",
+                "sub": "A letter, a name, a mark."
+              },
+              {
+                "id": "never",
+                "label": "Something I never take off",
+                "sub": "Daily, permanent, mine."
+              }
+            ]
+          }
+        ],
+        "base": {
+          "alone": {
+            "quiet": "Solitaire",
+            "balanced": "Solitaire",
+            "noticeable": "Solitaire",
+            "unmissable": "Tennis Necklace"
+          },
+          "layer": {
+            "quiet": "T Bar",
+            "balanced": "Charm Necklace",
+            "noticeable": "Charm Necklace",
+            "unmissable": "Charm Necklace"
+          },
+          "lines": {
+            "quiet": "T Bar",
+            "balanced": "T Bar",
+            "noticeable": "T Bar",
+            "unmissable": "Tennis Necklace"
+          },
+          "sparkle": {
+            "quiet": "Solitaire",
+            "balanced": "Tennis Necklace",
+            "noticeable": "Tennis Necklace",
+            "unmissable": "Tennis Necklace"
+          }
+        },
+        "override": {
+          "twoofus": "Toi-et-moi",
+          "personal": "Initials"
+        },
+        "why": {
+          "alone": "you want one focal point and nothing else",
+          "layer": "you want it built to stack with what you already own",
+          "lines": "you want architecture rather than sparkle",
+          "sparkle": "you want light all the way round the collarbone"
+        },
+        "overrideWhy": {
+          "twoofus": "Two stones, side by side — the piece that says something a single pendant can’t.",
+          "personal": "A letter, a name, a mark — the only piece here that is unmistakably yours and no one else’s."
+        }
+      },
+      "budget": [
+        {
+          "id": "u1000",
+          "label": "Under $1,000",
+          "sub": "Everyday fine jewellery.",
+          "carat": "0.25 – 0.50 ct",
+          "q": "price=0-1000"
+        },
+        {
+          "id": "m1000",
+          "label": "$1,000 – $2,000",
+          "sub": "The most-chosen range.",
+          "carat": "0.50 – 1.0 ct",
+          "q": "price=1000-2000"
+        },
+        {
+          "id": "a2000",
+          "label": "Above $2,000",
+          "sub": "Full centre-stone scale.",
+          "carat": "1.0 ct and up",
+          "q": "price=2000-plus"
+        }
+      ]
+    },
+    "bracelet": {
+      "id": "bracelet",
+      "name": "Bracelets",
+      "sub": "Tennis, bangles, chain",
+      "shape": {
+        "id": "shape",
+        "name": "Shape",
+        "blurb": "The diamond's cut",
+        "questions": [
+          {
+            "id": "energy",
+            "text": "Which energy feels most like you?",
+            "options": [
+              {
+                "id": "elegant",
+                "label": "Elegant",
+                "sub": "Refined and balanced."
+              },
+              {
+                "id": "bold",
+                "label": "Bold",
+                "sub": "Fashion-led and directional."
+              },
+              {
+                "id": "romantic",
+                "label": "Romantic",
+                "sub": "Soft and expressive."
+              },
+              {
+                "id": "modern",
+                "label": "Modern",
+                "sub": "Architectural and clean."
+              }
+            ]
+          },
+          {
+            "id": "visual",
+            "text": "What matters most visually?",
+            "options": [
+              {
+                "id": "sparkle",
+                "label": "Maximum Sparkle",
+                "sub": "Light return first."
+              },
+              {
+                "id": "different",
+                "label": "Something Different",
+                "sub": "Less obvious silhouette."
+              },
+              {
+                "id": "elongate",
+                "label": "Slimmer Wrist Look",
+                "sub": "Elongating shape."
+              },
+              {
+                "id": "classic",
+                "label": "Forever Classic",
+                "sub": "Always relevant."
+              }
+            ]
+          },
+          {
+            "id": "body",
+            "text": "Your wrist is closest to",
+            "options": [
+              {
+                "id": "slim",
+                "label": "Slim",
+                "sub": "Delicate, narrow frame."
+              },
+              {
+                "id": "avg",
+                "label": "Average",
+                "sub": "Standard proportion."
+              },
+              {
+                "id": "wide",
+                "label": "Wider",
+                "sub": "Needs presence to balance."
+              },
+              {
+                "id": "unsure",
+                "label": "Not sure",
+                "sub": "Most widths work."
+              }
+            ]
+          }
+        ],
+        "matrix": {
+          "sparkle": {
+            "elegant": "Round",
+            "bold": "Cushion",
+            "romantic": "Cushion",
+            "modern": "Princess"
+          },
+          "different": {
+            "elegant": "Emerald",
+            "bold": "Pear",
+            "romantic": "Pear",
+            "modern": "Emerald"
+          },
+          "elongate": {
+            "elegant": "Oval",
+            "bold": "Pear",
+            "romantic": "Oval",
+            "modern": "Emerald"
+          },
+          "classic": {
+            "elegant": "Round",
+            "bold": "Princess",
+            "romantic": "Cushion",
+            "modern": "Princess"
+          }
+        },
+        "runnerMap": {
+          "slim": {
+            "runner": "Oval",
+            "copy": "On a slim wrist, elongated stones keep the line delicate rather than chunky."
+          },
+          "avg": {
+            "runner": "Round",
+            "copy": "Standard proportions carry any shape — this is preference, not correction."
+          },
+          "wide": {
+            "runner": "Emerald",
+            "copy": "A wider wrist takes more stone per link without looking crowded."
+          },
+          "unsure": {
+            "runner": "Cushion",
+            "copy": "Most widths work, so we’d go on the look rather than the fit."
+          }
+        }
+      },
+      "style": {
+        "id": "style",
+        "name": "Style",
+        "blurb": "The overall look",
+        "questions": [
+          {
+            "id": "fit",
+            "text": "How should it sit on you?",
+            "options": [
+              {
+                "id": "fluid",
+                "label": "Fluid",
+                "sub": "Moves and drapes with the wrist."
+              },
+              {
+                "id": "structured",
+                "label": "Structured",
+                "sub": "Holds its shape, sits solid."
+              },
+              {
+                "id": "sparkle",
+                "label": "Sparkle all the way round",
+                "sub": "Light on every side."
+              },
+              {
+                "id": "stack",
+                "label": "Stackable",
+                "sub": "Built to wear with others."
+              }
+            ]
+          },
+          {
+            "id": "presence",
+            "text": "How much should it announce itself?",
+            "options": [
+              {
+                "id": "quiet",
+                "label": "Quiet",
+                "sub": "One clean line. Nothing extra."
+              },
+              {
+                "id": "balanced",
+                "label": "Balanced",
+                "sub": "Present, not loud."
+              },
+              {
+                "id": "noticeable",
+                "label": "Noticeable",
+                "sub": "Catches the light across a room."
+              },
+              {
+                "id": "unmissable",
+                "label": "Unmissable",
+                "sub": "Full presence. No apology."
+              }
+            ]
+          }
+        ],
+        "base2": {
+          "fluid": {
+            "quiet": "Bracelet",
+            "balanced": "Bracelet",
+            "noticeable": "Bracelet",
+            "unmissable": "Tennis"
+          },
+          "structured": {
+            "quiet": "Bangles",
+            "balanced": "Bangles",
+            "noticeable": "Bangles",
+            "unmissable": "Bangles"
+          },
+          "sparkle": {
+            "quiet": "Bracelet",
+            "balanced": "Tennis",
+            "noticeable": "Tennis",
+            "unmissable": "Tennis"
+          },
+          "stack": {
+            "quiet": "Bangles",
+            "balanced": "Bangles",
+            "noticeable": "Bracelet",
+            "unmissable": "Bangles"
+          }
+        },
+        "why": {
+          "fluid": "you want it to move and drape with the wrist",
+          "structured": "you want it to hold its shape and sit solid",
+          "sparkle": "you want light on every side",
+          "stack": "you want it built to wear with others"
+        }
+      },
+      "budget": [
+        {
+          "id": "u1000",
+          "label": "Under $1,000",
+          "sub": "Everyday fine jewellery.",
+          "carat": "0.50 – 1.0 ct total",
+          "q": "price=0-1000"
+        },
+        {
+          "id": "m1000",
+          "label": "$1,000 – $2,000",
+          "sub": "The most-chosen range.",
+          "carat": "1.0 – 3.0 ct total",
+          "q": "price=1000-2000"
+        },
+        {
+          "id": "a2000",
+          "label": "Above $2,000",
+          "sub": "Full tennis-line scale.",
+          "carat": "3.0 ct total and up",
+          "q": "price=2000-plus"
+        }
+      ]
+    },
+    "earring": {
+      "id": "earring",
+      "name": "Earrings",
+      "sub": "Studs, hoops, drops",
+      "shape": {
+        "id": "shape",
+        "name": "Shape",
+        "blurb": "The diamond's cut",
+        "questions": [
+          {
+            "id": "energy",
+            "text": "Which energy feels most like you?",
+            "options": [
+              {
+                "id": "elegant",
+                "label": "Elegant",
+                "sub": "Refined and balanced."
+              },
+              {
+                "id": "bold",
+                "label": "Bold",
+                "sub": "Fashion-led and directional."
+              },
+              {
+                "id": "romantic",
+                "label": "Romantic",
+                "sub": "Soft and expressive."
+              },
+              {
+                "id": "modern",
+                "label": "Modern",
+                "sub": "Architectural and clean."
+              }
+            ]
+          },
+          {
+            "id": "visual",
+            "text": "What matters most visually?",
+            "options": [
+              {
+                "id": "sparkle",
+                "label": "Maximum Sparkle",
+                "sub": "Light return first."
+              },
+              {
+                "id": "different",
+                "label": "Something Different",
+                "sub": "Less obvious silhouette."
+              },
+              {
+                "id": "elongate",
+                "label": "Longer Face Look",
+                "sub": "Elongating shape."
+              },
+              {
+                "id": "classic",
+                "label": "Forever Classic",
+                "sub": "Always relevant."
+              }
+            ]
+          },
+          {
+            "id": "body",
+            "text": "Your face shape is closest to",
+            "options": [
+              {
+                "id": "round",
+                "label": "Round",
+                "sub": "Softer, fuller proportion."
+              },
+              {
+                "id": "oval",
+                "label": "Oval",
+                "sub": "Balanced length and width."
+              },
+              {
+                "id": "square",
+                "label": "Square / Angular",
+                "sub": "Strong jawline."
+              },
+              {
+                "id": "heart",
+                "label": "Heart",
+                "sub": "Wider at the top, narrow chin."
+              }
+            ]
+          }
+        ],
+        "matrix": {
+          "sparkle": {
+            "elegant": "Round",
+            "bold": "Cushion",
+            "romantic": "Cushion",
+            "modern": "Princess"
+          },
+          "different": {
+            "elegant": "Emerald",
+            "bold": "Pear",
+            "romantic": "Pear",
+            "modern": "Emerald"
+          },
+          "elongate": {
+            "elegant": "Oval",
+            "bold": "Pear",
+            "romantic": "Oval",
+            "modern": "Emerald"
+          },
+          "classic": {
+            "elegant": "Round",
+            "bold": "Princess",
+            "romantic": "Cushion",
+            "modern": "Princess"
+          }
+        },
+        "runnerMap": {
+          "round": {
+            "runner": "Pear",
+            "copy": "Length cuts the width on a rounder face."
+          },
+          "oval": {
+            "runner": "Oval",
+            "copy": "An oval face is the most balanced — nothing is off-limits."
+          },
+          "square": {
+            "runner": "Round",
+            "copy": "Curves soften a strong jawline."
+          },
+          "heart": {
+            "runner": "Pear",
+            "copy": "Weight at the bottom balances a narrower chin."
+          }
+        }
+      },
+      "style": {
+        "id": "style",
+        "name": "Style",
+        "blurb": "The overall look",
+        "questions": [
+          {
+            "id": "job",
+            "text": "What should they do?",
+            "options": [
+              {
+                "id": "point",
+                "label": "One point of light",
+                "sub": "A single stone, nothing more."
+              },
+              {
+                "id": "movement",
+                "label": "Movement and length",
+                "sub": "They swing when you move."
+              },
+              {
+                "id": "frame",
+                "label": "Frame the ear",
+                "sub": "Wrap the lobe, follow the curve."
+              },
+              {
+                "id": "forget",
+                "label": "Set and forget",
+                "sub": "In every day, never come out."
+              }
+            ]
+          },
+          {
+            "id": "presence",
+            "text": "How much should they announce themselves?",
+            "options": [
+              {
+                "id": "quiet",
+                "label": "Quiet",
+                "sub": "One clean line. Nothing extra."
+              },
+              {
+                "id": "balanced",
+                "label": "Balanced",
+                "sub": "Present, not loud."
+              },
+              {
+                "id": "noticeable",
+                "label": "Noticeable",
+                "sub": "Catches the light across a room."
+              },
+              {
+                "id": "unmissable",
+                "label": "Unmissable",
+                "sub": "Full presence. No apology."
+              }
+            ]
+          }
+        ],
+        "base2": {
+          "point": {
+            "quiet": "Stud Earrings",
+            "balanced": "Stud Earrings",
+            "noticeable": "Stud Earrings",
+            "unmissable": "Drop & Dangle"
+          },
+          "movement": {
+            "quiet": "Drop & Dangle",
+            "balanced": "Drop & Dangle",
+            "noticeable": "Drop & Dangle",
+            "unmissable": "Drop & Dangle"
+          },
+          "frame": {
+            "quiet": "Hoops & Huggies",
+            "balanced": "Hoops & Huggies",
+            "noticeable": "Hoops & Huggies",
+            "unmissable": "Hoops & Huggies"
+          },
+          "forget": {
+            "quiet": "Stud Earrings",
+            "balanced": "Stud Earrings",
+            "noticeable": "Hoops & Huggies",
+            "unmissable": "Hoops & Huggies"
+          }
+        },
+        "why": {
+          "point": "you want a single stone and nothing more",
+          "movement": "you want length that swings when you move",
+          "frame": "you want them to wrap the lobe and follow the curve",
+          "forget": "you want them in every day, never coming out"
+        }
+      },
+      "budget": [
+        {
+          "id": "u1000",
+          "label": "Under $1,000",
+          "sub": "Everyday fine jewellery.",
+          "carat": "0.30 – 0.60 ct pair",
+          "q": "price=0-1000"
+        },
+        {
+          "id": "m1000",
+          "label": "$1,000 – $2,000",
+          "sub": "The most-chosen range.",
+          "carat": "0.60 – 1.2 ct pair",
+          "q": "price=1000-2000"
+        },
+        {
+          "id": "a2000",
+          "label": "Above $2,000",
+          "sub": "Full statement scale.",
+          "carat": "1.5 ct pair and up",
+          "q": "price=2000-plus"
+        }
+      ]
+    }
+  },
+  "trackOrder": [
+    "metal",
+    "shape",
+    "style",
+    "budget"
+  ]
+}

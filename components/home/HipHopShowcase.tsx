@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { veloriaFont } from "@/app/fonts";
+import { cinzelFont } from "@/app/fonts";
 import type { HomeHipHopSection } from "@/lib/home-data";
 
 type HipHopSection = {
@@ -54,7 +54,7 @@ export default function HipHopShowcase({ initialSection }: { initialSection?: Ho
       <div className="relative z-10 flex h-full items-end px-5 py-12 md:px-8 md:py-16 lg:px-12 lg:py-20">
         <div className="max-w-[620px]">
           <h2
-            className={`${veloriaFont.variable} font-test-veloria font-light leading-[0.96] tracking-[0.01em] text-white`}
+            className={`${cinzelFont.variable} font-primary-display font-light leading-[0.96] tracking-[0.01em] text-white`}
             style={{ fontSize: "clamp(42px, 7vw, 88px)" }}
           >
             {section.heading_line_1}
@@ -66,7 +66,7 @@ export default function HipHopShowcase({ initialSection }: { initialSection?: Ho
 
           <Link
             href={section.cta_link || "/hiphop"}
-            className="mt-8 inline-flex items-center gap-3 rounded-full border border-white/18 bg-white/14 px-7 py-3.5 font-sans text-[10px] uppercase tracking-[0.28em] text-white backdrop-blur-sm transition hover:bg-white hover:text-[#0A1628]"
+            className="mt-8 inline-flex items-center gap-3 rounded-full border border-white/18 bg-white/14 px-7 py-3.5 font-[family-name:var(--font-family-button)] text-[10px] uppercase tracking-[0.28em] text-white backdrop-blur-sm transition hover:bg-white hover:text-[#0A1628]"
           >
             {section.cta_label || "Shop Iced Pieces"}
             <span className="text-sm">→</span>

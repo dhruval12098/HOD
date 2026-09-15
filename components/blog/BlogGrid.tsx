@@ -1,18 +1,37 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { BlogPost } from '@/lib/data/blog-posts';
+import Image from 'next/image';
+import Link from 'next/link';
+import { BlogPost, getStorageImageUrl } from '@/lib/data/blog-posts';
 import BlogCardBig from './BlogCardBig';
 import BlogCardSmall from './BlogCardSmall';
+import GemPlaceholder from './GemPlaceholder';
 
-interface BlogGridProps { posts: BlogPost[]; onPostClick: (id: number) => void; maxPosts?: number; basePath?: string; simplifiedCards?: boolean; }
+interface BlogGridProps { posts: BlogPost[]; onPostClick: (id: number) => void; maxPosts?: number; basePath?: string; simplifiedCards?: boolean; compactGrid?: boolean; }
 
-export default function BlogGrid({ posts, onPostClick, maxPosts = 5, basePath = '/blog', simplifiedCards = false }: BlogGridProps) {
+export default function BlogGrid({ posts, onPostClick, maxPosts = 5, basePath = '/blog', simplifiedCards = false, compactGrid = false }: BlogGridProps) {
   const displayPosts = maxPosts > 0 ? posts.slice(0, maxPosts) : posts;
-  const postGroups = Array.from({ length: Math.ceil(displayPosts.length / 5) }, (_, index) => displayPosts.slice(index * 5, index * 5 + 5));
   const [mobilePage, setMobilePage] = useState(0);
-  const activeMobilePage = Math.min(mobilePage, Math.max(0, displayPosts.length - 1));
   const mobileScrollerRef = useRef<HTMLDivElement | null>(null);
+  if (compactGrid) {
+    return <div className="grid grid-cols-2 gap-[var(--space-1,4px)] lg:grid-cols-4">
+      {displayPosts.map((post) => {
+        const imageUrl = getStorageImageUrl(post.heroImagePath);
+        const href = post.slug ? `${basePath}/${post.slug}` : basePath;
+        return <Link key={post.id} href={href} prefetch className="group relative block h-[clamp(220px,32vw,500px)] min-w-0 overflow-hidden bg-[var(--color-brand-primary,#000)] text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-brand-primary,#000)]">
+          {imageUrl ? <Image src={imageUrl} alt={post.heroImageAlt || post.titleRaw} fill sizes="(max-width: 1023px) 50vw, 25vw" className="object-cover transition-transform duration-500 group-hover:scale-[1.04]" /> : <div className="absolute inset-0 flex items-center justify-center" style={{ background: post.bgColor }}><GemPlaceholder size={78} variant="diamond" /></div>}
+          <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 p-[var(--space-3,12px)] sm:p-[var(--space-4,16px)]">
+            <h3 className="line-clamp-2 !font-[family-name:var(--font-family-secondary)] text-[clamp(0.8rem,1.1vw,1rem)] font-semibold leading-[1.2] tracking-[0.02em] !text-white">{post.titleRaw}</h3>
+            <span className="mt-[var(--space-2,8px)] inline-block border-b border-white/80 pb-0.5 font-[family-name:var(--font-family-button)] text-[10px] font-semibold uppercase tracking-[0.12em] text-white transition-colors group-hover:border-white sm:text-xs">Read article</span>
+          </div>
+        </Link>;
+      })}
+    </div>;
+  }
+  const postGroups = Array.from({ length: Math.ceil(displayPosts.length / 5) }, (_, index) => displayPosts.slice(index * 5, index * 5 + 5));
+  const activeMobilePage = Math.min(mobilePage, Math.max(0, displayPosts.length - 1));
 
   return <>
     <div className="hidden space-y-5 md:block lg:space-y-6">

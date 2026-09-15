@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 import HomeClient from '@/components/pages/HomeClient';
 import { mapBlogPostRecord, posts as fallbackPosts } from '@/lib/data/blog-posts';
-import { getHomePageData, getHomeSeoData } from '@/lib/home-data';
+import { getFreshHomeHeroContent, getHomePageData, getHomeSeoData } from '@/lib/home-data';
 import { createPageMetadata } from '@/lib/seo';
+import { getFreshShopByCategory } from '@/lib/shop-by-category';
 
 type BlogTagRow = { tag: string; sort_order: number | null }
 type BlogPostRow = {
@@ -35,24 +36,24 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Home() {
+  const freshHeroContentPromise = getFreshHomeHeroContent().catch(() => undefined);
+  const shopByCategoryPromise = getFreshShopByCategory().catch(() => null);
   const {
     heroContent,
     blogRows,
-    collectionItems,
     discoverShapesItems,
-    discoverRingsItems,
     hiphopSection,
     collectionPageConfig,
     bespokeShowcaseSection,
-    couplesData,
     diamondInfoItems,
     diamondInfoConfig,
-    testimonialsData,
     marqueeData,
     trustedPartnersData,
     bestSellerSection,
     bestSellerProducts,
   } = await getHomePageData();
+  const freshHeroContent = await freshHeroContentPromise;
+  const shopByCategory = await shopByCategoryPromise;
 
   const blogPosts = ((blogRows as BlogPostRow[] | null)?.map((row) =>
     mapBlogPostRecord({
@@ -67,18 +68,15 @@ export default async function Home() {
 
   return (
     <HomeClient
-      heroContent={heroContent}
+      heroContent={freshHeroContent ?? heroContent}
+      shopByCategory={shopByCategory}
       blogPosts={blogPosts}
-      collectionItems={collectionItems}
       discoverShapesItems={discoverShapesItems}
-      discoverRingsItems={discoverRingsItems}
       hiphopSection={hiphopSection}
       collectionPageConfig={collectionPageConfig}
       bespokeShowcaseSection={bespokeShowcaseSection}
-      couplesData={couplesData}
       diamondInfoItems={diamondInfoItems}
       diamondInfoConfig={diamondInfoConfig}
-      testimonialsData={testimonialsData}
       marqueeData={marqueeData}
       trustedPartnersData={trustedPartnersData}
       bestSellerSection={bestSellerSection}

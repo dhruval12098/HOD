@@ -2,9 +2,18 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Geist, Geist_Mono, Manrope, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
+import { config } from '@fortawesome/fontawesome-svg-core';
+import '@fortawesome/fontawesome-svg-core/styles.css';
 import LenisProvider from "@/app/LenisProvider";
 import SiteChrome from "@/components/layout/SiteChrome";
-import { houseOfDiamsWordmarkFont, loaderWordmarkFont } from "@/app/fonts";
+import {
+  cinzelFont,
+  houseOfDiamsWordmarkFont,
+  interFont,
+  loaderWordmarkFont,
+  montserratFont,
+  marcellusFont,
+} from "@/app/fonts";
 import { CurrencyProvider } from "@/context/CurrencyContext";
 import { CartProvider } from "@/lib/hooks/useCart";
 import { WishlistProvider } from "@/lib/hooks/useWishlistStore";
@@ -18,6 +27,8 @@ import { getMaintenanceMode } from "@/lib/maintenance";
 import { ToastProvider } from "@/components/home/Toast";
 import { cookies, headers } from "next/headers";
 import { currencyForCountry, normalizeCountryCode } from "@/lib/country-currency";
+
+config.autoAddCss = false;
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -75,7 +86,7 @@ export default async function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${plusJakartaSans.variable} ${manrope.variable} ${houseOfDiamsWordmarkFont.variable} ${loaderWordmarkFont.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${plusJakartaSans.variable} ${manrope.variable} ${cinzelFont.variable} ${interFont.variable} ${montserratFont.variable} ${marcellusFont.variable} ${houseOfDiamsWordmarkFont.variable} ${loaderWordmarkFont.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>

@@ -1,7 +1,12 @@
 'use client';
 
-import { veloriaFont } from '@/app/fonts';
+import Image from 'next/image';
+
+import { cinzelFont } from '@/app/fonts';
+import BrandButton from '@/components/ui/BrandButton';
 import type { HomeBespokeShowcaseSection } from '@/lib/home-data';
+
+const VIDEO_FILE_PATTERN = /\.(?:mp4|webm|ogg|mov)(?:$|[?#])/i;
 
 export default function BespokeShowcase({
   section,
@@ -10,49 +15,64 @@ export default function BespokeShowcase({
   section: HomeBespokeShowcaseSection;
   onEnquireClick: () => void;
 }) {
-  const imageUrl = section.imageUrl || section.mobileImageUrl || '';
+  const mediaUrl = section.imageUrl || section.mobileImageUrl || '';
+  const isVideo = VIDEO_FILE_PATTERN.test(mediaUrl);
+  const mobileMediaUrl = section.mobileImageUrl || mediaUrl;
+  const isMobileVideo = VIDEO_FILE_PATTERN.test(mobileMediaUrl);
+
+  const renderMedia = (src: string, video: boolean) =>
+    video ? (
+      <video
+        className="absolute inset-0 h-full w-full object-cover object-center"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        aria-label={section.imageAlt || section.heading || 'House of Diams bespoke jewellery showcase'}
+      >
+        <source src={src} />
+      </video>
+    ) : (
+      <Image
+        src={src}
+        alt={section.imageAlt || section.heading || 'House of Diams bespoke jewellery showcase'}
+        fill
+        sizes="100vw"
+        className="h-full w-full object-cover object-center"
+      />
+    );
 
   return (
-    <section className="bg-[var(--theme-surface-warm)] px-5 py-16 md:px-8 md:py-24 lg:px-12 lg:py-30">
-      <div className="mx-auto grid max-w-[1400px] items-end gap-8 md:grid-cols-[1fr_1.4fr] md:gap-14 lg:gap-20">
-        <div className="pb-0 md:pb-16 lg:pb-20">
-          <div className="text-[10px] font-medium uppercase tracking-[0.28em] text-[#8B7B5C]">
-            {section.eyebrow || 'Bespoke Atelier'}
+    <section className="relative flex min-h-0 items-center justify-center overflow-hidden bg-[var(--color-brand-accent,#fff)] px-0 py-0">
+      <div className="relative z-[2] w-full">
+        <div className="relative overflow-hidden rounded-none border-0 bg-[var(--color-brand-primary,#000)] shadow-none backdrop-blur-0">
+          <div className="relative h-[360px] sm:hidden">
+            {mobileMediaUrl ? renderMedia(mobileMediaUrl, isMobileVideo) : null}
           </div>
-          <div className="mt-5 h-px w-16 bg-[#0A1628]" />
-          <h2
-            className={`${veloriaFont.variable} font-test-veloria mt-7 font-light leading-[1.05] tracking-[0.01em] text-[#0A1628]`}
-            style={{ fontSize: 'clamp(36px, 5vw, 52px)' }}
-          >
-            {section.heading || 'Create Something One of One'}
-          </h2>
+          <div className="relative hidden aspect-[5/2] sm:block">
+            {mediaUrl ? renderMedia(mediaUrl, isVideo) : null}
+          </div>
 
-          <p className="mt-6 max-w-[460px] text-[15px] font-light leading-[1.9] tracking-[0.02em] text-[#6A6A6A] md:text-[16px]">
-            {section.subtitle || 'Begin a bespoke commission with House of Diams, from first sketch to final setting.'}
-          </p>
+          <div className="absolute inset-0 bg-gradient-to-r from-black/72 via-black/36 to-transparent" aria-hidden="true" />
 
-          <button
-            type="button"
-            onClick={onEnquireClick}
-            className="mt-8 inline-flex items-center gap-3 border border-[#0A1628] bg-[#0A1628] px-9 py-3.5 font-sans text-[10px] uppercase tracking-[0.28em] text-[#FAF7F2] transition hover:bg-transparent hover:text-[#0A1628]"
-          >
-            {section.ctaLabel || 'Start Bespoke Enquiry'}
-            <span className="text-sm">&rarr;</span>
-          </button>
-        </div>
+          <div className="absolute inset-0 z-10 flex items-center px-[var(--space-4)] sm:px-[var(--space-8)] lg:px-[var(--space-12)] xl:px-[var(--space-16)]">
+            <div className="max-w-[32rem] text-[var(--color-brand-accent,#fff)]">
+              <h2
+                className={`${cinzelFont.variable} text-[clamp(2rem,4.3vw,3.75rem)] !font-medium leading-[1.08] tracking-[0.01em]`}
+              >
+                {section.heading || 'Create Something One of One'}
+              </h2>
 
-        <div className="relative aspect-[3/4] min-h-[420px] overflow-hidden bg-[radial-gradient(circle_at_18%_22%,rgba(255,255,255,0.42),transparent_36%),linear-gradient(135deg,#F5F7FC_0%,#EAF0FA_42%,#D8E2F2_100%)] md:min-h-[580px]">
-          {imageUrl ? (
-            <picture>
-              {section.mobileImageUrl ? <source media="(max-width: 960px)" srcSet={section.mobileImageUrl} /> : null}
-              <img
-                src={imageUrl}
-                alt={section.imageAlt || section.heading || 'House of Diams bespoke jewellery showcase'}
-                className="absolute inset-0 h-full w-full object-cover object-center"
-                loading="lazy"
-              />
-            </picture>
-          ) : null}
+              <p className="mt-[var(--space-5)] max-w-[28rem] font-[family-name:var(--font-family-secondary)] text-sm font-normal leading-[1.7] tracking-[0.01em] text-white/90 sm:text-[15px] md:text-base">
+                {section.subtitle || 'Begin a bespoke commission with House of Diams, from first sketch to final setting.'}
+              </p>
+
+              <BrandButton onClick={onEnquireClick} className="mt-[var(--space-8)]">
+                {section.ctaLabel || 'Start Bespoke Enquiry'}
+              </BrandButton>
+            </div>
+          </div>
         </div>
       </div>
     </section>

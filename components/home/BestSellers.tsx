@@ -1,27 +1,10 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { veloriaFont } from '@/app/fonts'
+import Image from 'next/image'
+import Link from 'next/link'
+import { useEffect, useRef, useState } from 'react'
+import { cinzelFont } from '@/app/fonts'
 import type { HomeBestSellerProduct, HomeBestSellerSection } from '@/lib/home-data'
-import { useWishlistStore } from '@/lib/hooks/useWishlistStore'
-import { getProductKey } from '@/lib/product-keys'
-import ProductCard from '@/components/shop/ProductCard'
-
-type Product = {
-  dbId: string
-  id: string
-  slug: string
-  name: string
-  shortMeta: string
-  priceFrom: number
-  featured?: boolean
-  isNew?: boolean
-  category?: string
-  imageUrl?: string
-  metalsFull?: { id: string; name: string; slug: string; colorHex?: string | null }[]
-  metalMediaRows?: { product_id: string; metal_id: string; image_1_path?: string | null; is_default_fallback?: boolean | null }[]
-  metalPurityVariants?: HomeBestSellerProduct['metalPurityVariants']
-}
 
 type SectionData = {
   eyebrow: string
@@ -68,15 +51,47 @@ function RevealDiv({
   )
 }
 
-function Chevron({ direction }: { direction: 'left' | 'right' }) {
+function BestSellerTile({ product }: { product: HomeBestSellerProduct }) {
+  const [imageFailed, setImageFailed] = useState(false)
+  const imageUrl = product.image?.trim()
+
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-      {direction === 'left' ? (
-        <path d="M15 6L9 12L15 18" strokeLinecap="round" strokeLinejoin="round" />
+    <Link
+      href={`/shop/${product.slug}`}
+      aria-label={`Shop ${product.name}`}
+      className="group relative block aspect-square overflow-hidden bg-[var(--color-brand-secondary,#F9F9F9)] no-underline outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--color-brand-primary,#000)]"
+    >
+      {imageUrl && !imageFailed ? (
+        <Image
+          src={imageUrl}
+          alt={product.name}
+          fill
+          sizes="(max-width: 639px) 50vw, (max-width: 1023px) 50vw, 25vw"
+          className="object-cover transition-transform duration-700 ease-[cubic-bezier(.16,1,.3,1)] motion-safe:group-hover:scale-[1.035]"
+          onError={() => setImageFailed(true)}
+        />
       ) : (
-        <path d="M9 6L15 12L9 18" strokeLinecap="round" strokeLinejoin="round" />
+        <div className="absolute inset-0 flex items-center justify-center px-[var(--space-4)] text-center font-[family-name:var(--font-family-secondary)] text-xs uppercase tracking-[0.18em] text-[var(--color-brand-primary,#000)]">
+          {product.name}
+        </div>
       )}
-    </svg>
+
+      {imageUrl && !imageFailed ? (
+        <div
+          aria-hidden="true"
+          className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/60 via-black/20 to-transparent"
+        />
+      ) : null}
+
+      <div className={`absolute inset-x-0 bottom-0 z-10 p-[var(--space-3)] sm:p-[var(--space-4)] lg:p-[var(--space-5)] ${imageUrl && !imageFailed ? 'text-[var(--color-brand-accent,#fff)]' : 'text-[var(--color-brand-primary,#000)]'}`}>
+        <h3 className="!font-[family-name:var(--font-family-secondary)] text-[11px] font-semibold uppercase leading-[1.25] tracking-[0.1em] sm:text-sm lg:text-base">
+          {product.name}
+        </h3>
+        <span className="mt-1.5 inline-block border-b border-current pb-0.5 font-[family-name:var(--font-family-button)] text-[9px] font-medium uppercase tracking-[0.14em] sm:mt-2 sm:text-[10px]">
+          Shop Now
+        </span>
+      </div>
+    </Link>
   )
 }
 
@@ -87,94 +102,41 @@ export default function BestSellers({
   initialSection?: HomeBestSellerSection
   initialProducts?: HomeBestSellerProduct[]
 }) {
-  const [section] = useState<SectionData>(
+  const section: SectionData =
     initialSection ?? {
       eyebrow: 'House of Diams',
       heading: 'Our Best Sellers',
       cta_label: 'View All Collection',
       cta_href: '/shop',
     }
-  )
-  const { wishlist, toggle } = useWishlistStore()
-  const [products] = useState<Product[]>(
-    initialProducts.map((product) => ({
-      dbId: product.id,
-      id: product.id,
-      slug: product.slug,
-      name: product.name,
-      shortMeta: product.meta,
-      priceFrom: Number(String(product.price).replace(/[^0-9.]/g, '')) || 0,
-      featured: product.badge !== 'Bestseller',
-      isNew: false,
-      category: product.detailTemplate === 'hiphop' ? 'hiphop' : 'fine-jewellery',
-      imageUrl: product.image,
-      metalsFull: product.metalsFull,
-      metalMediaRows: product.metalMediaRows,
-      metalPurityVariants: product.metalPurityVariants,
-    }))
-  )
-  const [visibleCount, setVisibleCount] = useState(4)
-  const [page, setPage] = useState(0)
-  const mobileScrollerRef = useRef<HTMLDivElement>(null)
-  const [mobilePage, setMobilePage] = useState(0)
+  const products = initialProducts
 
-  const headingParts = useMemo(() => {
+  const headingParts = (() => {
     const parts = section.heading.trim().split(/\s+/)
     if (parts.length < 2) return { start: section.heading, emphasis: '' }
     return {
       start: parts.slice(0, -1).join(' '),
       emphasis: parts[parts.length - 1],
     }
-  }, [section.heading])
+  })()
 
-  useEffect(() => {
-    const updateVisibleCount = () => {
-      if (window.innerWidth < 640) {
-        setVisibleCount(1)
-      } else if (window.innerWidth < 1024) {
-        setVisibleCount(2)
-      } else {
-        setVisibleCount(4)
-      }
-    }
-
-    updateVisibleCount()
-    window.addEventListener('resize', updateVisibleCount, { passive: true })
-    return () => window.removeEventListener('resize', updateVisibleCount)
-  }, [])
-
-  useEffect(() => {
-    const maxPage = Math.max(0, Math.ceil(products.length / visibleCount) - 1)
-    setPage((current) => Math.min(current, maxPage))
-  }, [products.length, visibleCount])
-
-  useEffect(() => {
-    const node = mobileScrollerRef.current
-    if (!node) return
-
-    const handleScroll = () => {
-      const cardWidth = (node.clientWidth - 16) / 2 + 16
-      if (!cardWidth) return
-      const nextPage = Math.round(node.scrollLeft / cardWidth)
-      setMobilePage(Math.max(0, Math.min(products.length - 1, nextPage)))
-    }
-
-    node.addEventListener('scroll', handleScroll, { passive: true })
-    handleScroll()
-    return () => node.removeEventListener('scroll', handleScroll)
-  }, [products.length])
-
-  const totalPages = Math.max(1, Math.ceil(products.length / visibleCount))
-  const showSliderControls = products.length > visibleCount
+  const desktopGridColumns =
+    products.length === 1
+      ? 'lg:grid-cols-1'
+      : products.length === 2
+        ? 'lg:grid-cols-2'
+        : products.length === 3
+          ? 'lg:grid-cols-3'
+          : 'lg:grid-cols-4'
 
   if (!products.length) return null
 
   return (
-    <section className="mx-auto max-w-[1400px] px-[52px] py-[110px] max-lg:px-7 max-md:px-5 max-md:py-[70px]">
-      <RevealDiv className="mb-12 flex flex-wrap items-end justify-between gap-6">
+    <section className="w-full px-[var(--space-2)] py-[var(--space-12)] sm:px-[var(--space-3)] sm:py-[var(--space-16)] lg:px-[var(--space-4)] lg:py-[var(--space-24)]">
+      <RevealDiv className="mb-[var(--space-6)] flex flex-wrap items-end justify-between gap-[var(--space-4)] px-[var(--space-1)] sm:mb-[var(--space-8)] lg:mb-[var(--space-12)]">
         <div>
           <h2
-            className={`${veloriaFont.variable} font-test-veloria font-light leading-[1.08] tracking-[0.01em] text-[var(--theme-heading)] max-md:text-[28px]`}
+            className={`${cinzelFont.variable} font-primary-display section-title font-light leading-[1.08] tracking-[0.01em] text-[var(--theme-heading)] max-md:text-[28px]`}
             style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}
           >
             {headingParts.start}{' '}
@@ -186,91 +148,19 @@ export default function BestSellers({
           </h2>
         </div>
 
-        <a
+        <Link
           href={section.cta_href}
-          className="flex items-center gap-2 border-b border-[var(--theme-border-strong)] pb-1 text-[8px] uppercase tracking-[0.22em] text-[var(--theme-ink)] no-underline transition-[gap] duration-300 hover:gap-[14px]"
+          className="flex items-center gap-2 border-b border-[var(--theme-border-strong)] pb-1 font-[family-name:var(--font-family-button)] text-[8px] uppercase tracking-[0.22em] text-[var(--theme-ink)] no-underline transition-[gap] duration-300 hover:gap-[14px]"
         >
           {section.cta_label} →
-        </a>
+        </Link>
       </RevealDiv>
 
       <RevealDiv delay={150}>
-        <div className="relative">
-          {showSliderControls ? (
-            <>
-              <button
-                type="button"
-                onClick={() => setPage((current) => Math.max(0, current - 1))}
-                disabled={page === 0}
-                aria-label="Previous products"
-                className="absolute left-[-18px] top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--theme-border-strong)] bg-white text-[var(--theme-ink)] shadow-[0_14px_30px_rgba(10,22,40,0.12)] transition disabled:cursor-not-allowed disabled:opacity-35 lg:flex"
-              >
-                <Chevron direction="left" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setPage((current) => Math.min(totalPages - 1, current + 1))}
-                disabled={page >= totalPages - 1}
-                aria-label="Next products"
-                className="absolute right-[-18px] top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--theme-border-strong)] bg-white text-[var(--theme-ink)] shadow-[0_14px_30px_rgba(10,22,40,0.12)] transition disabled:cursor-not-allowed disabled:opacity-35 lg:flex"
-              >
-                <Chevron direction="right" />
-              </button>
-            </>
-          ) : null}
-
-          <div className="hidden overflow-hidden sm:block">
-            <div
-              className="flex gap-5 transition-transform duration-500 ease-[cubic-bezier(.4,0,.2,1)] lg:gap-6"
-              style={{ transform: `translateX(-${page * 100}%)` }}
-            >
-              {products.map((product) => (
-                <div
-                  key={product.id}
-                  className="w-[calc((100%_-_20px)/2)] min-w-[calc((100%_-_20px)/2)] max-w-[calc((100%_-_20px)/2)] flex-none lg:w-[calc((100%_-_72px)/4)] lg:min-w-[calc((100%_-_72px)/4)] lg:max-w-[calc((100%_-_72px)/4)]"
-                >
-                  <ProductCard
-                    product={product}
-                    wishlisted={wishlist.includes(getProductKey(product))}
-                    onWishlist={() => toggle(getProductKey(product))}
-                    onEnquire={() => {}}
-                    forceLight
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div
-            ref={mobileScrollerRef}
-            className="sm:hidden -mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          >
-            {products.map((product) => (
-              <div
-                key={product.id}
-                className="min-w-[calc((100%_-_16px)/2)] snap-start"
-              >
-                <ProductCard
-                  product={product}
-                  wishlisted={wishlist.includes(getProductKey(product))}
-                  onWishlist={() => toggle(getProductKey(product))}
-                  onEnquire={() => {}}
-                  forceLight
-                />
-              </div>
-            ))}
-          </div>
-
-          {products.length > 1 ? (
-            <div className="mt-5 flex items-center justify-center gap-2 sm:hidden">
-              {products.map((_, index) => (
-                <span
-                  key={index}
-                  className={`h-2 rounded-full transition-all ${index === mobilePage ? 'w-8 bg-[var(--theme-ink)]' : 'w-2 bg-[var(--theme-border-strong)]'}`}
-                />
-              ))}
-            </div>
-          ) : null}
+        <div className={`grid grid-cols-2 gap-[var(--space-1)] sm:gap-[var(--space-2)] lg:gap-[var(--space-3)] ${desktopGridColumns}`}>
+          {products.map((product) => (
+            <BestSellerTile key={product.id} product={product} />
+          ))}
         </div>
       </RevealDiv>
     </section>

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { BlogPost, getStorageImageUrl } from "@/lib/data/blog-posts";
 import GemPlaceholder from "./GemPlaceholder";
 import { BlogCardDetails } from "./BlogCardDetails";
-import { veloriaFont } from "@/app/fonts";
+import { cinzelFont } from "@/app/fonts";
 
 interface BlogRelatedPostsProps {
   posts: BlogPost[];
@@ -19,7 +19,7 @@ export default function BlogRelatedPosts({ posts, onPostClick, basePath = "/blog
     <section aria-labelledby="related-posts-title" className="mx-auto max-w-[1400px] px-6 pb-20 lg:px-[52px]">
       <h2
         id="related-posts-title"
-        className={`${veloriaFont.variable} font-test-veloria mb-8 text-[clamp(26px,3vw,36px)] font-normal tracking-[0.01em] text-[#0A1628]`}
+        className={`${cinzelFont.variable} font-primary-display mb-8 text-[clamp(26px,3vw,36px)] font-normal tracking-[0.01em] text-[#0A1628]`}
         style={{ fontWeight: 400 }}
       >
         {heading}

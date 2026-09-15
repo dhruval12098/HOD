@@ -1,5 +1,45 @@
 import localFont from 'next/font/local'
 
+export const cinzelFont = localFont({
+  src: '../public/fonts/Cinzel-VariableFont_wght.ttf',
+  variable: '--font-cinzel',
+  display: 'swap',
+  weight: '100 900',
+  style: 'normal',
+  fallback: ['Georgia', 'serif'],
+  adjustFontFallback: false,
+})
+
+export const interFont = localFont({
+  src: '../public/fonts/Inter-VariableFont_opsz,wght.ttf',
+  variable: '--font-inter',
+  display: 'swap',
+  weight: '100 900',
+  style: 'normal',
+  fallback: ['Arial', 'sans-serif'],
+  adjustFontFallback: 'Arial',
+})
+
+export const montserratFont = localFont({
+  src: '../public/fonts/Montserrat-VariableFont_wght.ttf',
+  variable: '--font-montserrat',
+  display: 'swap',
+  weight: '100 900',
+  style: 'normal',
+  fallback: ['Arial', 'sans-serif'],
+  adjustFontFallback: 'Arial',
+})
+
+export const marcellusFont = localFont({
+  src: '../public/fonts/Marcellus-Regular.ttf',
+  variable: '--font-marcellus',
+  display: 'swap',
+  weight: '400',
+  style: 'normal',
+  fallback: ['Georgia', 'serif'],
+  adjustFontFallback: false,
+})
+
 export const houseOfDiamsWordmarkFont = localFont({
   src: '../public/fonts/Aureva-BF69b26e583d8bb.otf',
   variable: '--font-house-of-diams-wordmark',
@@ -15,12 +55,6 @@ export const loaderWordmarkFont = localFont({
 export const aurestiaFont = localFont({
   src: '../public/fonts/Aurestia-ThinCondensed.otf',
   variable: '--font-aurestia',
-  display: 'swap',
-})
-
-export const veloriaFont = localFont({
-  src: '../public/fonts/Veloria.otf',
-  variable: '--font-veloria',
   display: 'swap',
 })
 

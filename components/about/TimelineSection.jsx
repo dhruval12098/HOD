@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { veloriaFont } from "@/app/fonts";
+import { cinzelFont } from "@/app/fonts";
 
 /**
  * @typedef {Object} TimelineItem
@@ -137,7 +137,7 @@ export default function TimelineSection({ initialItems = [] }) {
           Our Journey
         </div>
         <h2
-          className={`${veloriaFont.variable} font-test-veloria`}
+          className={`${cinzelFont.variable} font-primary-display`}
           style={{
             fontSize: "clamp(40px, 5.5vw, 72px)",
             fontWeight: 300,

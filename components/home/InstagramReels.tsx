@@ -112,7 +112,7 @@ export default function InstagramReels() {
             <span style={{ width: '24px', height: '1px', background: 'var(--theme-ink)', display: 'inline-block' }} />
             @houseofdiams
           </div>
-          <h2
+          <h2 className="section-title"
             style={{
               fontFamily: 'var(--serif)',
               fontSize: 'clamp(40px, 5.5vw, 72px)',
@@ -142,6 +142,7 @@ export default function InstagramReels() {
           href="https://instagram.com/houseofdiams"
           target="_blank"
           rel="noopener noreferrer"
+          className="font-[family-name:var(--font-family-button)]"
           style={{
             display: 'inline-flex',
             alignItems: 'center',

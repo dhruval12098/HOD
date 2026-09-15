@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { gsap } from 'gsap';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { houseOfDiamsWordmarkFont, veloriaFont } from '@/app/fonts';
+import { houseOfDiamsWordmarkFont, cinzelFont } from '@/app/fonts';
 
 type RingItem = {
   id: string;
@@ -194,7 +194,7 @@ export default function DiscoverRings({
         {/* Heading */}
         <div className="mx-auto max-w-[820px] text-center">
           <h2
-            className={`${veloriaFont.variable} font-test-veloria font-light leading-[1.08] tracking-[0.01em] text-[#0A0A0A] max-md:text-[28px]`}
+            className={`${cinzelFont.variable} font-primary-display section-title font-light leading-[1.08] tracking-[0.01em] text-[#0A0A0A] max-md:text-[28px]`}
             style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}
           >
             Discover Rings
@@ -305,7 +305,7 @@ export default function DiscoverRings({
             {displayHref ? (
               <Link
                 href={displayHref}
-                className="mt-4 inline-flex items-center justify-center border-b border-[#0A1628] pb-1 text-[12px] font-semibold uppercase tracking-[0.24em] text-[#0A1628] transition-opacity hover:opacity-70"
+                className="mt-4 inline-flex items-center justify-center border-b border-[#0A1628] pb-1 font-[family-name:var(--font-family-button)] text-[12px] font-semibold uppercase tracking-[0.24em] text-[#0A1628] transition-opacity hover:opacity-70"
               >
                 Explore Rings
               </Link>

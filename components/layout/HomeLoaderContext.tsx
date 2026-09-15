@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext } from 'react';
+import type { Context } from 'react';
 
 export type HomeLoaderContextValue = {
   isHomeLoading: boolean;
@@ -9,7 +10,13 @@ export type HomeLoaderContextValue = {
   setIsHomeReady: (value: boolean) => void;
 };
 
-const HomeLoaderContext = createContext<HomeLoaderContextValue | null>(null);
+// Keep the provider and consumer on the same context instance when Turbopack
+// reloads one client module without reloading the other.
+const contextStore = globalThis as typeof globalThis & {
+  __hodHomeLoaderContext?: Context<HomeLoaderContextValue | null>;
+};
+const HomeLoaderContext = contextStore.__hodHomeLoaderContext ??
+  (contextStore.__hodHomeLoaderContext = createContext<HomeLoaderContextValue | null>(null));
 
 export function HomeLoaderProvider({
   value,

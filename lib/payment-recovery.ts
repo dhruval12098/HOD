@@ -1,6 +1,13 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getRazorpayClient } from '@/lib/razorpay'
 
+export const REFUNDABLE_FINALIZATION_ERRORS = new Set([
+  'insufficient_stock',
+  'missing_product_reference',
+  'product_not_found',
+  'finalization_rpc_error',
+])
+
 type RecoveryClaim = {
   action_id: string
   action_status: string
@@ -54,6 +61,7 @@ export async function recoverCapturedPayment({
   currency: string
   reasonCode: string
 }) {
+  // TODO(sql-audit): Review claim_payment_recovery_action for ambiguous column references in its SQL definition.
   const { data, error } = await adminClient
     .rpc('claim_payment_recovery_action', {
       p_order_id: orderId,
