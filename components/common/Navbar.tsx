@@ -20,6 +20,40 @@ const METAL_COLORS: Record<string, string> = {
   default: 'linear-gradient(135deg,#E5E7EB,#9CA3AF)',
 };
 
+type SearchItem = {
+  dbId?: string
+  slug: string
+  name: string
+  shortMeta: string
+  imageUrl?: string
+  priceFrom: number
+};
+
+let cachedSearchItems: SearchItem[] | null = null;
+let searchItemsRequest: Promise<SearchItem[]> | null = null;
+
+function preloadSearchItems(): Promise<SearchItem[]> {
+  if (cachedSearchItems) return Promise.resolve(cachedSearchItems);
+  if (searchItemsRequest) return searchItemsRequest;
+
+  const request = fetch('/api/public/products/search')
+    .then(async (response) => {
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !Array.isArray(payload?.items)) {
+        throw new Error(payload?.error || 'Unable to load product search.');
+      }
+      const items = payload.items as SearchItem[];
+      cachedSearchItems = items;
+      return items;
+    })
+    .finally(() => {
+      searchItemsRequest = null;
+    });
+
+  searchItemsRequest = request;
+  return request;
+}
+
 function SmartNavLink({ href, ...props }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) {
   const isInternalRoute = href.startsWith('/') && !href.startsWith('//');
   return isInternalRoute ? <Link href={href} {...props} /> : <a href={href} {...props} />;
@@ -125,8 +159,8 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSearchIndex, setActiveSearchIndex] = useState(-1);
-  const [searchItems, setSearchItems] = useState<Array<{ dbId?: string; slug: string; name: string; shortMeta: string; imageUrl?: string; priceFrom: number }>>([]);
-  const [searchLoadState, setSearchLoadState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [searchItems, setSearchItems] = useState<SearchItem[]>(() => cachedSearchItems ?? []);
+  const [searchLoadState, setSearchLoadState] = useState<'idle' | 'loading' | 'ready' | 'error'>(() => cachedSearchItems ? 'ready' : 'idle');
   const [announcementItem, setAnnouncementItem] = useState<{
     message: string;
     linkUrl: string;
@@ -196,27 +230,36 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
   }, [menuOpen, searchOpen]);
 
   useEffect(() => {
-    if (!searchOpen || searchLoadState !== 'loading') return;
+    if (cachedSearchItems) return;
     let ignore = false;
-    const loadProducts = async () => {
-      try {
-        const response = await fetch('/api/public/products/search');
-        const payload = await response.json().catch(() => null);
-        if (!ignore && response.ok && Array.isArray(payload?.items)) {
-          setSearchItems(payload.items);
+    let idleId: number | null = null;
+
+    const loadProducts = () => {
+      setSearchLoadState('loading');
+      void preloadSearchItems()
+        .then((items) => {
+          if (ignore) return;
+          setSearchItems(items);
           setSearchLoadState('ready');
-        } else if (!ignore) {
-          setSearchLoadState('error');
-        }
-      } catch {
-        if (!ignore) setSearchLoadState('error');
-      }
+        })
+        .catch(() => {
+          if (!ignore) setSearchLoadState('error');
+        });
     };
-    void loadProducts();
+
+    if (typeof window.requestIdleCallback === 'function') {
+      idleId = window.requestIdleCallback(loadProducts, { timeout: 1200 });
+    } else {
+      idleId = setTimeout(loadProducts, 250) as unknown as number;
+    }
+
     return () => {
       ignore = true;
+      if (idleId === null) return;
+      if (typeof window.cancelIdleCallback === 'function') window.cancelIdleCallback(idleId);
+      else clearTimeout(idleId);
     };
-  }, [searchLoadState, searchOpen]);
+  }, []);
 
   useEffect(() => {
     if (!searchOpen) return;
@@ -376,11 +419,11 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
       }
       const suggestions: typeof searchItems = [];
       const families = [...groups.values()];
-      while (suggestions.length < 8 && families.some((group) => group.length)) {
+      while (suggestions.length < 10 && families.some((group) => group.length)) {
         for (const group of families) {
           const next = group.shift();
           if (next) suggestions.push(next);
-          if (suggestions.length === 8) break;
+          if (suggestions.length === 10) break;
         }
       }
       return suggestions;
@@ -415,7 +458,20 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
 
   const openSearch = () => {
     setSearchOpen(true);
-    if (searchLoadState === 'idle') setSearchLoadState('loading');
+    if (cachedSearchItems) {
+      setSearchItems(cachedSearchItems);
+      setSearchLoadState('ready');
+      return;
+    }
+    if (searchLoadState === 'loading') return;
+
+    setSearchLoadState('loading');
+    void preloadSearchItems()
+      .then((items) => {
+        setSearchItems(items);
+        setSearchLoadState('ready');
+      })
+      .catch(() => setSearchLoadState('error'));
   };
 
   const handleSearchKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
@@ -1025,3 +1081,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
     </>
   );
 }
+
+
+
+

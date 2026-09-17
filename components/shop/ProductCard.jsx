@@ -191,7 +191,7 @@ function getMetalImages(product, metalSwatch) {
   ].filter(Boolean);
 }
 
-export default function ProductCard({ product, wishlisted, onWishlist, forceLight = false, selectedMetalSlug = "" }) {
+export default function ProductCard({ product, wishlisted, onWishlist, onEnquire: _onEnquire, forceLight = false, selectedMetalSlug = "" }) {
   const { format } = useCurrency();
   const isDark = !forceLight && product.category === "hiphop";
   const gemSize = LARGE_GEM_STYLES.includes(product.gemStyle) ? 140 : 110;
@@ -333,3 +333,4 @@ export default function ProductCard({ product, wishlisted, onWishlist, forceLigh
     </a>
   );
 }
+

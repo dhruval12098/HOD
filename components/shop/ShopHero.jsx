@@ -240,7 +240,7 @@ export default function ShopHero({
         >
         <Link
           href={bannerHref}
-          className="group relative aspect-square h-[70vw] max-h-[320px] w-[70vw] max-w-[324px] shrink-0 snap-start overflow-hidden bg-[#F2F1EE] text-white no-underline sm:h-[320px] sm:w-[324px]"
+          className="group relative aspect-square h-[70vw] max-h-[320px] w-[70vw] max-w-[320px] shrink-0 snap-start overflow-hidden bg-[#F2F1EE] text-white no-underline sm:h-[320px] sm:w-[320px]"
         >
           {bannerImage ? (
             <picture>
