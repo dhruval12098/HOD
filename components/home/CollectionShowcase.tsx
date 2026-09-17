@@ -7,7 +7,7 @@ export default function CollectionShowcase({ config }: { config: CollectionPageC
   const imageUrl = config.showcaseImageUrl || config.showcaseMobileImageUrl || '';
 
   return (
-    <section className="w-full bg-[var(--color-brand-accent,#fff)] py-[var(--space-12)] md:py-[var(--space-16)] lg:py-[var(--space-24)]">
+    <section className="w-full bg-[var(--color-brand-accent,#fff)] py-[var(--space-6)] md:py-[var(--space-8)] lg:py-[var(--space-12)]">
       <div className="grid w-full overflow-hidden bg-[var(--color-brand-accent,#fff)] lg:h-[clamp(26.25rem,31vw,32.5rem)] lg:grid-cols-2">
         <div className="relative h-[20rem] overflow-hidden bg-[var(--color-brand-accent,#fff)] md:h-[22.5rem] lg:h-full">
           {imageUrl ? (
@@ -23,7 +23,7 @@ export default function CollectionShowcase({ config }: { config: CollectionPageC
           ) : null}
         </div>
 
-        <div className="flex items-center px-[var(--space-6)] py-[var(--space-12)] md:px-[var(--space-12)] md:py-[var(--space-16)] lg:px-[clamp(3rem,5vw,5rem)] lg:py-[var(--space-12)]">
+        <div className="flex items-center px-[var(--space-6)] py-[var(--space-6)] md:px-[var(--space-12)] md:py-[var(--space-8)] lg:px-[clamp(3rem,5vw,5rem)] lg:py-[var(--space-6)]">
           <div className="w-full max-w-[30rem]">
             <h2
               className="collection-showcase-heading leading-[1.08] tracking-[0.01em] text-[var(--color-brand-primary)]"

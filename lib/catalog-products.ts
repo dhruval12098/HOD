@@ -410,6 +410,7 @@ export type StorefrontProductCard = Pick<
   | 'gemColor'
   | 'gemStyle'
   | 'imageUrl'
+  | 'galleryUrls'
   | 'productLane'
   | 'mainCategoryName'
   | 'mainCategorySlug'
@@ -424,7 +425,7 @@ export type StorefrontProductCard = Pick<
   | 'shapeOptions'
 > & {
   metalsFull: Pick<StorefrontProduct['metalsFull'][number], 'id' | 'name' | 'slug' | 'colorHex' | 'displayLabel'>[]
-  metalMediaRows: Array<Pick<ProductMetalMediaRow, 'product_id' | 'metal_id' | 'image_1_path'>>
+  metalMediaRows: Array<Pick<ProductMetalMediaRow, 'product_id' | 'metal_id' | 'image_1_path' | 'image_2_path' | 'image_3_path' | 'image_4_path'>>
   metalPurityVariants: Array<
     Pick<StorefrontProduct['metalPurityVariants'][number], 'id' | 'metalId' | 'metalSlug' | 'label' | 'price' | 'isDefault'> & {
       mediaItems: StorefrontProduct['metalPurityVariants'][number]['mediaItems']
@@ -452,6 +453,7 @@ export function toStorefrontProductCard(product: StorefrontProduct): StorefrontP
     gemColor: product.gemColor,
     gemStyle: product.gemStyle,
     imageUrl: product.imageUrl,
+    galleryUrls: product.galleryUrls,
     productLane: product.productLane,
     mainCategoryName: product.mainCategoryName,
     mainCategorySlug: product.mainCategorySlug,
@@ -465,7 +467,7 @@ export function toStorefrontProductCard(product: StorefrontProduct): StorefrontP
     ringSizeNames: product.ringSizeNames,
     shapeOptions: product.shapeOptions,
     metalsFull: product.metalsFull.map(({ id, name, slug, colorHex, displayLabel }) => ({ id, name, slug, colorHex, displayLabel })),
-    metalMediaRows: product.metalMediaRows.map(({ product_id, metal_id, image_1_path }) => ({ product_id, metal_id, image_1_path })),
+    metalMediaRows: product.metalMediaRows.map(({ product_id, metal_id, image_1_path, image_2_path, image_3_path, image_4_path }) => ({ product_id, metal_id, image_1_path, image_2_path, image_3_path, image_4_path })),
     metalPurityVariants: product.metalPurityVariants.map(({ id, metalId, metalSlug, label, price, isDefault, mediaItems }) => ({
       id,
       metalId,
@@ -473,7 +475,7 @@ export function toStorefrontProductCard(product: StorefrontProduct): StorefrontP
       label,
       price,
       isDefault,
-      mediaItems: mediaItems.filter((item) => item.type === 'image' && item.url).slice(0, 1),
+      mediaItems: mediaItems.filter((item) => item.type === 'image' && item.url).slice(0, 2),
     })),
   }
 }

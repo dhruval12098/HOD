@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { useState } from 'react';
-import AppleIcon from '@mui/icons-material/Apple';
 import CheckoutSectionCard from '@/components/checkout/CheckoutSectionCard';
 import { useCurrency } from '@/context/CurrencyContext';
 import { getCollectionHref } from '@/lib/browse-context';
@@ -122,7 +121,7 @@ export default function CheckoutReviewStep({
                 </span>
               ) : (
                 <>
-                  <AppleIcon aria-hidden="true" sx={{ fontSize: 24 }} />
+                  <span aria-hidden="true" className="text-[22px] leading-none"></span>
                   Pay with Apple Pay
                 </>
               )}

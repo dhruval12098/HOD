@@ -1,334 +1,108 @@
-'use client';
+'use client'
+import { useState } from 'react'
+import type { CSSProperties } from 'react'
+import type { HomeInstagramReelsData } from '@/lib/home-data'
 
-import { useEffect, useRef, useState } from 'react';
-
-
-
-const REEL_ITEMS = [
-  { label: 'New Arrival', video: 'https://videos.pexels.com/video-files/8844339/8844339-sd_360_640_30fps.mp4' },
-  { label: 'Bespoke Order', video: 'https://videos.pexels.com/video-files/31757664/13529798_360_450_30fps.mp4' },
-  { label: 'Studio Visit', video: 'https://videos.pexels.com/video-files/8844354/8844354-hd_1080_1920_30fps.mp4' },
-  { label: 'Behind the Craft', video: 'https://videos.pexels.com/video-files/8715506/8715506-sd_506_960_25fps.mp4' },
-  { label: 'Client Story', video: 'https://videos.pexels.com/video-files/8855209/8855209-sd_360_640_30fps.mp4' },
-  { label: 'Collection Launch', video: 'https://videos.pexels.com/video-files/31992241/13633876_360_450_30fps.mp4' },
-  { label: 'Fancy Yellow', video: 'https://videos.pexels.com/video-files/7308235/7308235-sd_360_640_24fps.mp4' },
-  { label: 'Hip Hop Drop', video: 'https://videos.pexels.com/video-files/8844353/8844353-sd_240_426_30fps.mp4' },
-];
-
-const STATS = [
-  { count: 12, suffix: 'K+', label: 'Followers' },
-  { count: 80, suffix: '+', label: 'Posts & Reels' },
-  { count: 5, suffix: 'M+', label: 'Reel Views' },
-];
-
-function useCountUp(target: number, suffix: string, active: boolean) {
-  const [display, setDisplay] = useState('0' + suffix);
-  useEffect(() => {
-    if (!active) return;
-    const duration = 1800;
-    const start = performance.now();
-    const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
-    const tick = (now: number) => {
-      const progress = Math.min((now - start) / duration, 1);
-      setDisplay(Math.floor(target * easeOut(progress)) + suffix);
-      if (progress < 1) requestAnimationFrame(tick);
-      else setDisplay(target + suffix);
-    };
-    requestAnimationFrame(tick);
-  }, [active, target, suffix]);
-  return display;
+function toEmbedUrl(url: string) {
+  const normalized = url.endsWith('/') ? url : `${url}/`
+  return `${normalized}embed/`
 }
 
-function StatItem({ count, suffix, label, active }: { count: number; suffix: string; label: string; active: boolean }) {
-  const display = useCountUp(count, suffix, active);
-  return (
-    <div style={{ textAlign: 'center' }}>
-      <div
-        style={{
-          fontFamily: 'var(--numeric)',
-          fontSize: '40px',
-          fontWeight: 400,
-          color: 'var(--theme-ink)',
-          lineHeight: 1,
-        }}
-      >
-        {display}
-      </div>
-      <div
-        style={{
-          fontSize: '9px',
-          fontWeight: 400,
-          letterSpacing: '0.28em',
-          color: 'var(--ink3)',
-          textTransform: 'uppercase',
-          marginTop: '8px',
-        }}
-      >
-        {label}
-      </div>
-    </div>
-  );
-}
-
-export default function InstagramReels() {
-  const footerRef = useRef<HTMLDivElement>(null);
-  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
-  const [statsVisible, setStatsVisible] = useState(false);
-
-  useEffect(() => {
-    const obs = new IntersectionObserver(
-      (entries) => entries.forEach((e) => { if (e.isIntersecting) setStatsVisible(true); }),
-      { threshold: 0.3 }
-    );
-    if (footerRef.current) obs.observe(footerRef.current);
-    return () => obs.disconnect();
-  }, []);
-
-  const allReels = [...REEL_ITEMS, ...REEL_ITEMS];
+function ReelCard({ item, duplicate = false }: { item: HomeInstagramReelsData['items'][number]; duplicate?: boolean }) {
+  const [active, setActive] = useState(false)
+  const embedUrl = toEmbedUrl(item.instagramUrl)
+  const title = item.title || 'House of Diams reel'
 
   return (
-    <section
-      className="py-[110px] max-w-[1400px] mx-auto"
-      style={{ fontFamily: 'var(--sans)' }}
+    <article
+      className="group relative h-[400px] w-[255px] shrink-0 overflow-hidden bg-black shadow-[0_18px_44px_rgba(10,22,40,0.10)] sm:h-[440px] sm:w-[280px]"
+      aria-hidden={duplicate || undefined}
+      onMouseEnter={() => setActive(true)}
+      onMouseLeave={() => setActive(false)}
+      onFocus={() => setActive(true)}
+      onBlur={() => setActive(false)}
     >
-      {/* Header */}
-      <div
-        className="reveal px-[52px] flex justify-between items-end mb-[48px] flex-wrap gap-5"
+      <button
+        type="button"
+        tabIndex={duplicate ? -1 : 0}
+        onClick={() => setActive(true)}
+        className={`absolute inset-0 z-10 h-full w-full overflow-hidden bg-black transition-opacity duration-300 focus-visible:outline-2 focus-visible:outline-offset-[-5px] focus-visible:outline-[#9b7548] ${active ? 'pointer-events-none opacity-0' : 'opacity-100'}`}
+        aria-label={`Play ${title}`}
       >
-        <div>
-          <div
-            style={{
-              fontSize: '10px',
-              fontWeight: 400,
-              letterSpacing: '0.32em',
-              color: 'var(--theme-ink)',
-              textTransform: 'uppercase',
-              marginBottom: '18px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '12px',
-            }}
-          >
-            <span style={{ width: '24px', height: '1px', background: 'var(--theme-ink)', display: 'inline-block' }} />
-            @houseofdiams
-          </div>
-          <h2 className="section-title"
-            style={{
-              fontFamily: 'var(--serif)',
-              fontSize: 'clamp(40px, 5.5vw, 72px)',
-              fontWeight: 300,
-              letterSpacing: '0.02em',
-              color: 'var(--ink)',
-              lineHeight: 1.05,
-              marginBottom: 0,
-            }}
-          >
-            Follow the <em style={{ fontStyle: 'normal', color: 'var(--theme-ink)', fontWeight: 400 }}>Craft</em>
-          </h2>
-          <p
-            style={{
-              fontSize: '11px',
-              fontWeight: 300,
-              letterSpacing: '0.1em',
-              color: 'var(--ink3)',
-              marginTop: '10px',
-            }}
-          >
-            New drops, behind-the-scenes and custom reveals
-          </p>
-        </div>
+        {item.coverImageUrl ? (
+          <img
+            src={item.coverImageUrl}
+            alt=""
+            loading="lazy"
+            className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
+            aria-hidden="true"
+          />
+        ) : (
+          <span className="absolute inset-0 bg-[radial-gradient(circle_at_70%_15%,rgba(193,140,104,.26),transparent_35%),linear-gradient(150deg,#f8f3e9,#e5d9c9)]" aria-hidden="true" />
+        )}
+        <span className="absolute inset-0 bg-black/10" aria-hidden="true" />
+        <span className="absolute left-1/2 top-1/2 grid h-16 w-16 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white/80 text-[#111b2b] shadow-[0_10px_26px_rgba(0,0,0,0.22)]" aria-hidden="true">
+          <span className="ml-1 h-0 w-0 border-y-[13px] border-l-[20px] border-y-transparent border-l-current" />
+        </span>
+      </button>
 
-        <a
-          href="https://instagram.com/houseofdiams"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-[family-name:var(--font-family-button)]"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '10px',
-            padding: '13px 26px',
-            border: '1px solid var(--ink)',
-            fontSize: '10px',
-            fontWeight: 400,
-            letterSpacing: '0.28em',
-            textTransform: 'uppercase',
-            color: 'var(--ink)',
-            textDecoration: 'none',
-            transition: 'all 0.4s',
-          }}
-          onMouseEnter={(e) => {
-            const el = e.currentTarget as HTMLElement;
-            el.style.background = 'var(--ink)';
-            el.style.color = 'var(--bg)';
-            el.style.gap = '14px';
-          }}
-          onMouseLeave={(e) => {
-            const el = e.currentTarget as HTMLElement;
-            el.style.background = 'transparent';
-            el.style.color = 'var(--ink)';
-            el.style.gap = '10px';
-          }}
-        >
-          Follow on Instagram
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M2 6H10M7 3L10 6L7 9" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </a>
-      </div>
+      {active ? (
+        <iframe
+          title={`Instagram: ${title}`}
+          src={embedUrl}
+          loading="lazy"
+          allow="autoplay; encrypted-media; picture-in-picture"
+          scrolling="no"
+          tabIndex={duplicate ? -1 : 0}
+          className="instagram-reel-frame absolute left-1/2 top-0 border-0 bg-black"
+        />
+      ) : null}
+    </article>
+  )
+}
 
-      {/* Reel marquee */}
-      <div
-        style={{
-          padding: '20px 0',
-          overflow: 'hidden',
-          position: 'relative',
-          WebkitMaskImage: 'linear-gradient(90deg, transparent, black 5%, black 95%, transparent)',
-          maskImage: 'linear-gradient(90deg, transparent, black 5%, black 95%, transparent)',
-        }}
+export default function InstagramReels({ data }: { data: HomeInstagramReelsData }) {
+  if (!data.isEnabled || data.items.length === 0) return null
+
+  const animated = data.items.length > 1
+  const items = animated ? [...data.items, ...data.items] : data.items
+
+  return (
+    <section aria-labelledby="instagram-reels-heading" className="overflow-hidden bg-white px-[var(--space-2)] py-[var(--space-6)] text-[#111b2b] sm:px-[var(--space-3)] lg:px-[var(--space-4)] lg:py-[var(--space-6)]">
+      <h2
+        id="instagram-reels-heading"
+        className="section-title mb-[var(--space-6)] font-primary-display font-light leading-[1.08] tracking-[0.01em] text-[#0A1628] max-md:text-[28px]"
+        style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}
       >
+        {data.heading || 'Instagram'}
+      </h2>
+
+      <div className="instagram-reels-mask -mx-[var(--space-2)] overflow-hidden py-2 sm:-mx-[var(--space-3)] lg:-mx-[var(--space-4)]" data-pause={data.pauseOnHover}>
         <div
-          style={{
-            display: 'flex',
-            gap: '18px',
-            animation: 'marquee 40s linear infinite',
-            width: 'max-content',
-          }}
+          className={animated ? 'instagram-reels-track flex w-max gap-4 px-[var(--space-2)] sm:gap-5 sm:px-[var(--space-3)] lg:px-[var(--space-4)]' : 'flex justify-start px-[var(--space-2)] sm:px-[var(--space-3)] lg:px-[var(--space-4)]'}
+          style={animated ? { '--reels-duration': `${data.marqueeDurationSeconds}s` } as CSSProperties : undefined}
         >
-          {allReels.map((r, i) => (
-            <div
-              key={`reel-${i}-${r.label}`}
-              onClick={() => window.open('https://instagram.com/houseofdiams', '_blank')}
-              style={{
-                width: '220px',
-                height: '340px',
-                flexShrink: 0,
-                background: 'linear-gradient(135deg, var(--bg2), var(--bg3))',
-                border: '1px solid var(--border)',
-                position: 'relative',
-                overflow: 'hidden',
-                cursor: 'pointer',
-                transition: 'all 0.4s',
-              }}
-              onMouseEnter={(e) => {
-                const el = e.currentTarget as HTMLElement;
-                el.style.transform = 'translateY(-6px)';
-                el.style.boxShadow = 'var(--shadow-lg)';
-                el.style.borderColor = 'var(--theme-border-strong)';
-                const v = videoRefs.current[i];
-                if (v) v.play().catch(() => {});
-              }}
-              onMouseLeave={(e) => {
-                const el = e.currentTarget as HTMLElement;
-                el.style.transform = 'translateY(0)';
-                el.style.boxShadow = 'none';
-                el.style.borderColor = 'var(--border)';
-                const v = videoRefs.current[i];
-                if (v) {
-                  v.pause();
-                  v.currentTime = 0;
-                }
-              }}
-            >
-              {/* Video Background */}
-              <video
-                ref={(el) => {
-                  videoRefs.current[i] = el;
-                }}
-                src={r.video}
-                muted
-                loop
-                playsInline
-                preload="none"
-                aria-hidden="true"
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  opacity: 0.85,
-                }}
-              />
-              {/* Overlay Gradient */}
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  background: 'linear-gradient(to bottom, transparent 40%, rgba(10,22,40,0.7) 100%)',
-                }}
-              />
-              {/* Play Icon */}
-              <div
-                style={{
-                  position: 'absolute',
-                  top: '18px',
-                  right: '18px',
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '50%',
-                  background: 'var(--theme-ink)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  zIndex: 2,
-                }}
-              >
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <polygon points="3,2 10,6 3,10" fill="#fff" />
-                </svg>
-              </div>
-              {/* Label */}
-              <div
-                style={{
-                  position: 'absolute',
-                  bottom: '18px',
-                  left: '18px',
-                  fontSize: '10px',
-                  fontWeight: 400,
-                  letterSpacing: '0.14em',
-                  color: 'var(--ink)',
-                  textTransform: 'uppercase',
-                  lineHeight: 1.5,
-                }}
-              >
-                @houseofdiams<br />{r.label}
-              </div>
-            </div>
+          {items.map((item, index) => (
+            <ReelCard key={`${item.id}-${index}`} item={item} duplicate={animated && index >= data.items.length} />
           ))}
         </div>
       </div>
 
-      {/* Footer stats */}
-      <div
-        ref={footerRef}
-        className="reveal"
-        style={{
-          marginTop: '52px',
-          padding: '40px 52px',
-          display: 'flex',
-          gap: '60px',
-          justifyContent: 'center',
-          alignItems: 'center',
-          borderTop: '1px solid var(--border)',
-        }}
-      >
-        {STATS.map((s, i) => (
-          <div key={`stat-${i}`}>
-            <StatItem count={s.count} suffix={s.suffix} label={s.label} active={statsVisible} />
-            {i < STATS.length - 1 && (
-              <div style={{ width: '1px', height: '40px', background: 'var(--border)' }} />
-            )}
-          </div>
-        ))}
-      </div>
-
       <style>{`
-        @keyframes marquee {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
+        @keyframes instagramReelsMarquee { from { transform: translateX(100vw); } to { transform: translateX(-50%); } }
+        .instagram-reels-track { animation: instagramReelsMarquee var(--reels-duration) linear infinite; }
+        .instagram-reels-mask[data-pause="true"]:hover .instagram-reels-track,
+        .instagram-reels-mask[data-pause="true"]:focus-within .instagram-reels-track { animation-play-state: paused; }
+        .instagram-reel-frame {
+          width: calc(100% + 96px);
+          height: calc(100% + 180px);
+          transform: translate(-50%, -104px);
+          overflow: hidden;
         }
+        .instagram-reel-frame::-webkit-scrollbar { display: none; }
+        @media (prefers-reduced-motion: reduce) { .instagram-reels-track { animation: none; overflow-x: auto; max-width: 100%; } }
+        @media (min-width: 640px) { .instagram-reels-mask { mask-image: linear-gradient(90deg,transparent,black 5%,black 95%,transparent); } }
       `}</style>
     </section>
-  );
+  )
 }

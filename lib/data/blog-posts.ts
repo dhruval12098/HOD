@@ -9,10 +9,12 @@ export interface BlogPost {
   bgColor: string;
   title: string;
   titleRaw: string;
+  cardTitle?: string;
   subtitle: string;
   tags: string[];
   body: string;
   heroImagePath?: string;
+  cardImagePath?: string;
   heroImageAlt?: string;
   contentBlocks?: BlogPostContentBlock[];
   featuredProducts?: import('@/lib/catalog-products').StorefrontProduct[];
@@ -159,6 +161,8 @@ export function mapBlogPostRecord(record: {
   subtitle: string
   body_html: string
   hero_image_path?: string
+  card_title?: string | null
+  card_image_path?: string | null
   hero_image_alt?: string
   content_blocks?: Array<{
     id: number | string
@@ -184,10 +188,12 @@ export function mapBlogPostRecord(record: {
     bgColor: record.bg_color?.toLowerCase() === '#f5f0ea' ? '#EDF2FA' : record.bg_color,
     title: record.title_html || record.title,
     titleRaw: record.title,
+    cardTitle: record.card_title?.trim() || record.title,
     subtitle: record.subtitle,
     tags: record.tags ?? [],
     body: record.body_html,
     heroImagePath: record.hero_image_path ?? '',
+    cardImagePath: record.card_image_path?.trim() || record.hero_image_path || '',
     heroImageAlt: record.hero_image_alt?.trim() || record.title,
     contentBlocks: (record.content_blocks ?? []).map((block) => ({
       id: String(block.id),

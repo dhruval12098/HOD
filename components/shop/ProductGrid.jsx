@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import ProductCard from "./ProductCard";
@@ -15,91 +14,6 @@ import { getProductKey } from "@/lib/product-keys";
  */
 
 /**
- * @typedef {{ id: string; title?: string | null; imageUrl: string; imageAlt?: string | null; linkUrl?: string | null; insertAfter: number; displayOrder: number }} CategoryGridPoster
- */
-function CategoryGridPosterCard({ poster }) {
-  const image = (
-    <Image
-      src={poster.imageUrl}
-      alt={poster.imageAlt || poster.title || "Category poster"}
-      fill
-      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 50vw"
-      style={{
-        objectFit: "cover",
-        objectPosition: "center center",
-        transition: "transform .75s cubic-bezier(.16,1,.3,1)",
-      }}
-    />
-  );
-
-  const content = (
-    <div
-      className="shop-product-card shop-grid-poster-card"
-      style={{
-        cursor: poster.linkUrl ? "pointer" : "default",
-        position: "relative",
-        overflow: "hidden",
-        height: "100%",
-        background: "#FFFFFF",
-        border: "1px solid rgba(10,22,40,0.06)",
-        textDecoration: "none",
-        color: "inherit",
-      }}
-    >
-      <div
-        className="shop-product-card-visual"
-        style={{
-          height: "100%",
-          minHeight: "418px",
-          position: "relative",
-          overflow: "hidden",
-          background: "linear-gradient(135deg, #FFFFFF 0%, #F8F8FA 100%)",
-        }}
-      >
-        {image}
-      </div>
-    </div>
-  );
-
-  if (!poster.linkUrl) return content;
-
-  return (
-    <a href={poster.linkUrl} style={{ textDecoration: "none", color: "inherit" }} aria-label={poster.title || "Open category poster"}>
-      {content}
-    </a>
-  );
-}
-
-function buildGridItems(products, posters) {
-  const activePosters = (posters || [])
-    .filter((poster) => poster?.imageUrl)
-    .sort((left, right) => (left.insertAfter - right.insertAfter) || (left.displayOrder - right.displayOrder));
-
-  if (!activePosters.length) return products.map((product) => ({ type: "product", product }));
-
-  const posterBuckets = new Map();
-  activePosters.forEach((poster) => {
-    const key = Math.max(0, Number(poster.insertAfter) || 0);
-    const bucket = posterBuckets.get(key) || [];
-    bucket.push(poster);
-    posterBuckets.set(key, bucket);
-  });
-
-  const items = [];
-  const addPosters = (position) => {
-    (posterBuckets.get(position) || []).forEach((poster) => items.push({ type: "poster", poster }));
-  };
-
-  addPosters(0);
-  products.forEach((product, index) => {
-    items.push({ type: "product", product });
-    addPosters(index + 1);
-  });
-
-  return items;
-}
-
-/**
  * @param {{
  *   products: any[]
  *   sourceProducts?: any[]
@@ -107,17 +21,16 @@ function buildGridItems(products, posters) {
  *   initialPage?: number
  *   filterGroups?: ProductGridFilterGroup[]
  *   masterShapeOptions?: { value: string; label: string; iconUrl?: string | null; displayOrder: number }[]
- *   gridPosters?: CategoryGridPoster[]
  *   onEnquire: (name?: string) => void
  * }} props
  */
-export default function ProductGrid({ products, sourceProducts = products, initialFilters = {}, initialPage = 1, filterGroups: externalFilterGroups = [], masterShapeOptions = [], gridPosters = [], onEnquire }) {
+export default function ProductGrid({ products, sourceProducts = products, initialFilters = {}, initialPage = 1, filterGroups: externalFilterGroups = [], masterShapeOptions = [], onEnquire }) {
   const { wishlist, toggle } = useWishlistStore();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [filters, setFilters] = useState(initialFilters);
   const [page, setPage] = useState(initialPage);
-  const [sort, setSort] = useState("featured");
+  const [sort, setSort] = useState("best-matches");
 
   const pageSize = 24;
 
@@ -165,7 +78,7 @@ export default function ProductGrid({ products, sourceProducts = products, initi
     delete nextFilters.metal;
     delete nextFilters.shape;
     handleFiltersChange(nextFilters);
-    setSort("featured");
+    setSort("best-matches");
   };
 
   const handleSortChange = (value) => {
@@ -264,16 +177,10 @@ export default function ProductGrid({ products, sourceProducts = products, initi
           return a.priceFrom - b.priceFrom;
         case "price-high":
           return b.priceFrom - a.priceFrom;
-        case "carat-high":
-          return parseFloat(b.carat) - parseFloat(a.carat);
-        case "carat-low":
-          return parseFloat(a.carat) - parseFloat(b.carat);
-        case "name":
-          return a.name.localeCompare(b.name);
-        case "newest":
-          return (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0);
-        default:
+        case "best-sellers":
           return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
+        default:
+          return 0;
       }
     });
 
@@ -299,44 +206,92 @@ export default function ProductGrid({ products, sourceProducts = products, initi
     <>
       <style>{`
         .shop-grid-layout {
-          max-width: 1400px;
-          margin: 0 auto;
-          padding: 60px 52px 100px;
+          width: 100%;
+          padding: 60px 24px 100px;
           display: block;
+          background: var(--theme-surface);
         }
-        @media (max-width: 1024px) {
-          .shop-grid-layout {
-            padding: 40px 28px 70px !important;
-          }
-        }
-        @media (max-width: 768px) {
-          .shop-grid-layout { padding: 28px 10px 56px !important; }
+        .shop-grid-toolbar {
+          padding: 0 44px;
         }
         .product-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-          gap: 24px;
-          align-items: start;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 13px;
+          align-items: stretch;
           overflow: visible;
           padding-bottom: 96px;
         }
-        @media (max-width: 768px) {
+        .shop-product-card-primary-image,
+        .shop-product-card-hover-image {
+          transition: opacity 420ms ease;
+        }
+        .shop-product-card-primary-image {
+          opacity: 1;
+        }
+        .shop-product-card-hover-image {
+          opacity: 0;
+        }
+        @media (hover: hover) and (pointer: fine) {
+          .shop-product-card:hover .shop-product-card-primary-image {
+            opacity: 0;
+          }
+          .shop-product-card:hover .shop-product-card-hover-image {
+            opacity: 1;
+          }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .shop-product-card-primary-image,
+          .shop-product-card-hover-image {
+            transition: none;
+          }
+        }
+        @media (max-width: 1024px) {
+          .shop-grid-layout {
+            padding: 40px 20px 70px;
+          }
+          .shop-grid-toolbar {
+            padding: 0 20px;
+          }
           .product-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-            gap: 12px !important;
-            padding-bottom: 24px !important;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+          }
+        }
+        @media (max-width: 768px) {
+          .shop-grid-layout {
+            padding: 28px 10px 56px;
+          }
+          .shop-grid-toolbar {
+            padding: 0 7px;
+          }
+          .product-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 13px;
+            padding-bottom: 24px;
+          }
+          .shop-product-card-info {
+            padding: 9px 7px 15px !important;
+          }
+          .shop-product-card-title,
+          .shop-product-card-price {
+            font-size: 12px !important;
+          }
+          .shop-product-card-material {
+            font-size: 10px !important;
           }
         }
       `}</style>
 
       <div className="shop-grid-layout">
         <div>
-          <ShopToolbar
-            count={filtered.length}
-            sort={sort}
-            onSortChange={handleSortChange}
-            quickFilters={<CategoryQuickFilters metalOptions={metalOptions} shapeOptions={shapeOptions} selectedMetal={filters.metal?.[0] || ""} selectedShape={filters.shape?.[0] || ""} onChange={handleQuickFilterChange} />}
-          />
+          <div className="shop-grid-toolbar">
+            <ShopToolbar
+              count={filtered.length}
+              sort={sort}
+              onSortChange={handleSortChange}
+              quickFilters={<CategoryQuickFilters metalOptions={metalOptions} shapeOptions={shapeOptions} selectedMetal={filters.metal?.[0] || ""} selectedShape={filters.shape?.[0] || ""} onChange={handleQuickFilterChange} />}
+            />
+          </div>
 
           {filtered.length === 0 ? (
             <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "80px 20px" }}>
@@ -377,13 +332,11 @@ export default function ProductGrid({ products, sourceProducts = products, initi
             </div>
           ) : (
             <div className="product-grid">
-              {buildGridItems(paginatedProducts, resolvedPage === 1 ? gridPosters : []).map((item) => item.type === "poster" ? (
-                <CategoryGridPosterCard key={`poster-${item.poster.id}`} poster={item.poster} />
-              ) : (
+              {paginatedProducts.map((product) => (
                 <ProductCard
-                  key={item.product.id}
-                  product={item.product}
-                  wishlisted={wishlist.includes(getProductKey(item.product))}
+                  key={product.id}
+                  product={product}
+                  wishlisted={wishlist.includes(getProductKey(product))}
                   onWishlist={handleWishlist}
                   onEnquire={onEnquire}
                   selectedMetalSlug={filters.metal?.[0] || ""}

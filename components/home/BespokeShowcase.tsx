@@ -57,9 +57,9 @@ export default function BespokeShowcase({
           <div className="absolute inset-0 bg-gradient-to-r from-black/72 via-black/36 to-transparent" aria-hidden="true" />
 
           <div className="absolute inset-0 z-10 flex items-center px-[var(--space-4)] sm:px-[var(--space-8)] lg:px-[var(--space-12)] xl:px-[var(--space-16)]">
-            <div className="max-w-[32rem] text-[var(--color-brand-accent,#fff)]">
+            <div className="max-w-[44rem] text-[var(--color-brand-accent,#fff)]">
               <h2
-                className={`${cinzelFont.variable} text-[clamp(2rem,4.3vw,3.75rem)] !font-medium leading-[1.08] tracking-[0.01em]`}
+                className={`${cinzelFont.variable} max-w-[40rem] text-wrap-balance text-[clamp(2rem,4.3vw,3.75rem)] !font-medium leading-[1.08] tracking-[0.01em]`}
               >
                 {section.heading || 'Create Something One of One'}
               </h2>

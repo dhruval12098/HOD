@@ -8,11 +8,14 @@ const STORAGE_KEY = 'hod_cart'
 type CartContextValue = {
   items: StoredCartItem[]
   count: number
+  isOpen: boolean
   addItem: (product: { dbId?: string | null; id?: string | number | null; slug?: string | null; name?: string | null; shortMeta?: string | null; imageUrl?: string | null; priceFrom?: number | null }, selection: CartItemSelection) => void
   isHydrated: boolean
   removeItem: (key: string) => void
   clearCart: () => void
   updateQuantity: (key: string, quantity: number) => void
+  openCart: () => void
+  closeCart: () => void
 }
 
 const CartContext = createContext<CartContextValue | null>(null)
@@ -20,6 +23,7 @@ const CartContext = createContext<CartContextValue | null>(null)
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<StoredCartItem[]>([])
   const [isHydrated, setIsHydrated] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
   const hasLoadedStoredCart = useRef(false)
 
   useEffect(() => {
@@ -82,10 +86,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<CartContextValue>(() => ({
     items,
     isHydrated,
+    isOpen,
     count: items.reduce((sum, item) => sum + item.quantity, 0),
     addItem: (product, selection) => {
       const key = buildCartItemKey(product, selection)
       const productKey = getProductKey(product)
+      setIsOpen(true)
       setItems((currentItems) => {
         const existing = currentItems.find((item) => item.key === key)
         const snapshot = {
@@ -116,6 +122,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     },
     removeItem: (key) => setItems((currentItems) => currentItems.filter((item) => item.key !== key)),
     clearCart: () => setItems([]),
+    openCart: () => setIsOpen(true),
+    closeCart: () => setIsOpen(false),
     updateQuantity: (key, quantity) => {
       setItems((currentItems) => {
         if (quantity <= 0) {
@@ -124,7 +132,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         return currentItems.map((item) => (item.key === key ? { ...item, quantity } : item))
       })
     },
-  }), [isHydrated, items])
+  }), [isHydrated, isOpen, items])
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>
 }

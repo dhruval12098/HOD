@@ -18,9 +18,13 @@ type AppSelectProps = {
   disabled?: boolean;
   triggerClassName?: string;
   contentClassName?: string;
+  itemClassName?: string;
+  triggerLabel?: string;
+  showItemIndicator?: boolean;
   required?: boolean;
   validationLabel?: string;
   contentSide?: "top" | "bottom";
+  contentAlign?: "start" | "center" | "end";
   avoidCollisions?: boolean;
 };
 
@@ -33,9 +37,13 @@ export function Select({
   disabled = false,
   triggerClassName = "",
   contentClassName = "",
+  itemClassName = "",
+  triggerLabel,
+  showItemIndicator = true,
   required = false,
   validationLabel = "selection",
   contentSide = "bottom",
+  contentAlign = "start",
   avoidCollisions = true,
 }: AppSelectProps) {
   return (
@@ -55,7 +63,7 @@ export function Select({
         <SelectPrimitive.Trigger
           id={id}
           className={[
-            "flex w-full items-center justify-between gap-3",
+            "group flex w-full items-center justify-between gap-3",
             "rounded-[18px] border border-[rgba(10,22,40,0.12)] bg-[#FCFCFA]",
             "px-4 py-3.5 text-left shadow-[0_8px_24px_rgba(10,22,40,0.04)]",
             "transition-all duration-300 outline-none",
@@ -65,10 +73,10 @@ export function Select({
           ].join(" ")}
           aria-label={validationLabel}
         >
-          <SelectPrimitive.Value placeholder={placeholder} />
+          {triggerLabel ? <span>{triggerLabel}</span> : <SelectPrimitive.Value placeholder={placeholder} />}
           <SelectPrimitive.Icon asChild>
             <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-[rgba(10,22,40,0.08)] bg-white text-[#B8922A]">
-              <ChevronDown className="h-4 w-4" strokeWidth={1.6} />
+              <ChevronDown className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-180" strokeWidth={1.6} />
             </span>
           </SelectPrimitive.Icon>
         </SelectPrimitive.Trigger>
@@ -77,6 +85,7 @@ export function Select({
           <SelectPrimitive.Content
             position="popper"
             side={contentSide}
+            align={contentAlign}
             avoidCollisions={avoidCollisions}
             sideOffset={10}
             className={[
@@ -90,12 +99,14 @@ export function Select({
                 <SelectPrimitive.Item
                   key={option.value}
                   value={option.value}
-                  className="relative flex w-full cursor-pointer items-center justify-between rounded-[12px] px-4 py-3 text-[13px] font-light tracking-[0.02em] text-[#0A1628] outline-none transition-colors duration-200 focus:bg-[#F5F6F8] data-[state=checked]:bg-[#0A1628] data-[state=checked]:text-white"
+                  className={["relative flex w-full cursor-pointer items-center justify-between rounded-[12px] px-4 py-3 text-[13px] font-light tracking-[0.02em] text-[#0A1628] outline-none transition-colors duration-200 focus:bg-[#F5F6F8] data-[state=checked]:bg-[#0A1628] data-[state=checked]:text-white", itemClassName].join(" ")}
                 >
                   <SelectPrimitive.ItemText>{option.label}</SelectPrimitive.ItemText>
-                  <SelectPrimitive.ItemIndicator>
-                    <Check className="h-4 w-4" strokeWidth={1.8} />
-                  </SelectPrimitive.ItemIndicator>
+                  {showItemIndicator ? (
+                    <SelectPrimitive.ItemIndicator>
+                      <Check className="h-4 w-4" strokeWidth={1.8} />
+                    </SelectPrimitive.ItemIndicator>
+                  ) : null}
                 </SelectPrimitive.Item>
               ))}
             </SelectPrimitive.Viewport>

@@ -28,6 +28,8 @@ type BlogPostRow = {
   subtitle: string
   body_html: string
   hero_image_path: string | null
+  card_title?: string | null
+  card_image_path?: string | null
   hero_image_alt?: string | null
   is_published: boolean
   sort_order: number | null
@@ -37,7 +39,7 @@ type BlogPostRow = {
 }
 
 const blogPostSelect =
-  'id, slug, category, author, date_label, read_time, bg_key, bg_color, title, title_html, subtitle, body_html, hero_image_path, hero_image_alt, is_published, sort_order, blog_post_tags(tag, sort_order), blog_post_content_blocks(id, block_type, sort_order, heading, body_html, image_path, image_alt, image_caption, is_enabled), blog_post_products(product_id, sort_order)'
+  'id, slug, category, author, date_label, read_time, bg_key, bg_color, title, title_html, subtitle, body_html, hero_image_path, card_title, card_image_path, hero_image_alt, is_published, sort_order, blog_post_tags(tag, sort_order), blog_post_content_blocks(id, block_type, sort_order, heading, body_html, image_path, image_alt, image_caption, is_enabled), blog_post_products(product_id, sort_order)'
 
 const legacyBlogPostSelect =
   'id, slug, category, author, date_label, read_time, bg_key, bg_color, title, title_html, subtitle, body_html, hero_image_path, is_published, sort_order, blog_post_tags(tag, sort_order), blog_post_content_blocks(id, block_type, sort_order, heading, body_html, image_path, image_alt, image_caption, is_enabled), blog_post_products(product_id, sort_order)'
@@ -45,7 +47,7 @@ const legacyBlogPostSelect =
 function isMissingHeroAltColumn(error: { code?: string; message?: string } | null) {
   if (!error) return false
   const message = String(error.message ?? '')
-  return error.code === 'PGRST204' || error.code === '42703' || message.includes('blog_posts.hero_image_alt') || message.includes('hero_image_alt')
+  return error.code === 'PGRST204' || error.code === '42703' || message.includes('blog_posts.hero_image_alt') || message.includes('hero_image_alt') || message.includes('card_title') || message.includes('card_image_path')
 }
 
 async function loadPublishedBlogRows() {

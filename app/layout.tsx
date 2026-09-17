@@ -2,9 +2,6 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Geist, Geist_Mono, Manrope, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
-import { config } from '@fortawesome/fontawesome-svg-core';
-import '@fortawesome/fontawesome-svg-core/styles.css';
-import LenisProvider from "@/app/LenisProvider";
 import SiteChrome from "@/components/layout/SiteChrome";
 import {
   cinzelFont,
@@ -27,8 +24,7 @@ import { getMaintenanceMode } from "@/lib/maintenance";
 import { ToastProvider } from "@/components/home/Toast";
 import { cookies, headers } from "next/headers";
 import { currencyForCountry, normalizeCountryCode } from "@/lib/country-currency";
-
-config.autoAddCss = false;
+import { getNavbarRenderItems } from "@/lib/navbar-server";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -73,9 +69,12 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const maintenanceMode = await getMaintenanceMode()
-  const requestHeaders = await headers()
-  const requestCookies = await cookies()
+  const [maintenanceMode, navItems, requestHeaders, requestCookies] = await Promise.all([
+    getMaintenanceMode(),
+    getNavbarRenderItems().catch(() => []),
+    headers(),
+    cookies(),
+  ])
   const detectedCountry = normalizeCountryCode(
     requestHeaders.get('x-vercel-ip-country') || requestCookies.get('detected_country')?.value
   )
@@ -98,17 +97,15 @@ export default async function RootLayout({
         {maintenanceMode.enabled ? (
           <MaintenanceScreen message={maintenanceMode.message} />
         ) : (
-          <LenisProvider>
-            <WishlistProvider>
-              <CurrencyProvider initialDetectedCurrency={initialDetectedCurrency}>
-                <CartProvider>
-                  <ToastProvider>
-                    <SiteChrome>{children}</SiteChrome>
-                  </ToastProvider>
-                </CartProvider>
-              </CurrencyProvider>
-            </WishlistProvider>
-          </LenisProvider>
+          <WishlistProvider>
+            <CurrencyProvider initialDetectedCurrency={initialDetectedCurrency}>
+              <CartProvider>
+                <ToastProvider>
+                  <SiteChrome initialNavItems={navItems}>{children}</SiteChrome>
+                </ToastProvider>
+              </CartProvider>
+            </CurrencyProvider>
+          </WishlistProvider>
         )}
       </body>
     </html>

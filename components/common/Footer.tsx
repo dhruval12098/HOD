@@ -3,31 +3,28 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import * as SelectPrimitive from '@radix-ui/react-select';
-import { Check, ChevronDown, ChevronUp, Mail, MapPin, Phone } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp } from 'lucide-react';
 import ReactCountryFlag from 'react-country-flag';
 import { useCurrency } from '@/context/CurrencyContext';
 import { supabase } from '@/lib/supabase';
 import type { NavbarRenderItem } from '@/lib/navbar';
-import { PaymentIcons } from '@/components/common/PaymentIcons';
 
+const PAYMENT_METHODS = [
+  { name: 'Visa', src: '/payment svgs/visa 1.svg' },
+  { name: 'Mastercard', src: '/payment svgs/mastercard-mono 1.svg' },
+  { name: 'Apple Pay', src: '/payment svgs/apple-pay 1.svg' },
+  { name: 'American Express', src: '/payment svgs/american-express 1.svg' },
+];
 const SOCIAL = [
   {
     name: 'Instagram',
     href: 'https://www.instagram.com/houseofdiams_?igsh=MXg0cDhqMTcxaWxycA%3D%3D&utm_source=qr',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
-        <path d="M12 2.2c3.2 0 3.6 0 4.85.07 1.17.05 1.8.25 2.23.42.56.22.96.48 1.38.9.42.42.68.82.9 1.38.17.42.37 1.06.42 2.23C21.85 8.4 21.85 8.8 21.85 12s0 3.6-.07 4.85c-.05 1.17-.25 1.8-.42 2.23-.22.56-.48.96-.9 1.38a3.73 3.73 0 0 1-1.38.9c-.42.17-1.06.37-2.23.42-1.25.06-1.65.07-4.85.07s-3.6 0-4.85-.07c-1.17-.05-1.8-.25-2.23-.42a3.73 3.73 0 0 1-1.38-.9 3.73 3.73 0 0 1-.9-1.38c-.17-.42-.37-1.06-.42-2.23C2.2 15.6 2.15 15.2 2.15 12s0-3.6.07-4.85c.05-1.17.25-1.8.42-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.42-.17 1.06-.37 2.23-.42C8.4 2.2 8.8 2.2 12 2.2zm0 1.8c-3.14 0-3.51 0-4.74.07-1.06.05-1.64.22-2.02.37-.51.2-.87.44-1.25.82s-.62.74-.82 1.25c-.15.38-.32.96-.37 2.02C2.73 9.77 2.72 10.14 2.72 13.28s0 3.51.07 4.74c.05 1.06.22 1.64.37 2.02.2.51.44.87.82 1.25.38.38.74.62 1.25.82.38.15.96.32 2.02.37 1.23.06 1.6.07 4.74.07s3.51 0 4.74-.07c1.06-.05 1.64-.22 2.02-.37.51-.2.87-.44 1.25-.82.38-.38.62-.74.82-1.25.15-.38.32-.96.37-2.02.06-1.23.07-1.6.07-4.74s0-3.51-.07-4.74c-.05-1.06-.22-1.64-.37-2.02a3.35 3.35 0 0 0-.82-1.25 3.35 3.35 0 0 0-1.25-.82c-.38-.15-.96-.32-2.02-.37C15.51 4 15.14 4 12 4zM12 6.86a5.14 5.14 0 1 1 0 10.28 5.14 5.14 0 0 1 0-10.28zm0 8.48a3.34 3.34 0 1 0 0-6.68 3.34 3.34 0 0 0 0 6.68zm6.54-8.68a1.2 1.2 0 1 1-2.4 0 1.2 1.2 0 0 1 2.4 0z" />
-      </svg>
-    ),
+    src: '/HOD specs/instagram-logo 1.svg',
   },
   {
     name: 'Pinterest',
     href: 'https://pin.it/3G2ogNJNq',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
-        <path d="M12 2C6.48 2 2 6.48 2 12c0 4.23 2.64 7.85 6.35 9.3-.09-.79-.17-2 .04-2.86.19-.78 1.21-4.97 1.21-4.97s-.31-.62-.31-1.53c0-1.43.83-2.5 1.87-2.5.88 0 1.31.66 1.31 1.45 0 .88-.56 2.2-.85 3.42-.24 1.02.51 1.86 1.52 1.86 1.83 0 3.23-1.93 3.23-4.71 0-2.46-1.77-4.18-4.29-4.18-2.93 0-4.64 2.19-4.64 4.46 0 .88.34 1.83.76 2.35.08.1.1.19.07.29-.08.34-.26 1.04-.3 1.19-.05.19-.15.23-.35.14-1.3-.61-2.11-2.5-2.11-4.02 0-3.27 2.38-6.28 6.86-6.28 3.6 0 6.4 2.57 6.4 6 0 3.58-2.25 6.46-5.39 6.46-1.05 0-2.04-.55-2.38-1.2 0 0-.52 1.99-.65 2.48-.24.91-.87 2.05-1.29 2.75.97.3 2 .46 3.07.46 5.52 0 10-4.48 10-10S17.52 2 12 2z" />
-      </svg>
-    ),
+    src: '/HOD specs/pinterest 1.svg',
   },
   
 ];
@@ -64,7 +61,7 @@ function ColLink({ href, children }: { href: string; children: React.ReactNode }
   return (
     <a
       href={href}
-      className="group block py-[7px] text-[12px] font-normal leading-relaxed text-white/75 no-underline transition-colors duration-200 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+      className="group block py-[8px] text-[14px] font-normal leading-relaxed text-white/80 no-underline transition-colors duration-200 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
       style={{ fontFamily: 'var(--font-family-secondary)' }}
     >
       {children}
@@ -81,7 +78,7 @@ function isLinkHref(value?: string | null) {
 function ColTitle({ children }: { children: React.ReactNode }) {
   return (
     <p
-      className="m-0 mb-[var(--space-4)] text-[12px] font-semibold uppercase tracking-[0.12em] text-white"
+      className="m-0 mb-[var(--space-4)] text-[13px] font-semibold uppercase tracking-[0.14em] text-white"
       style={{ fontFamily: 'var(--font-family-tertiary)' }}
     >
       {children}
@@ -243,34 +240,47 @@ export default function Footer({ navItems = [] }: { navItems?: NavbarRenderItem[
       className="w-full border-t border-white/15 px-[var(--space-4)] pt-[var(--space-10)] text-white sm:px-[var(--space-6)] lg:px-[var(--space-8)]"
       style={{ backgroundColor: 'var(--color-brand-primary)', fontFamily: 'var(--font-family-secondary)' }}
     >
-      <div className="mx-auto grid max-w-[1600px] grid-cols-1 gap-y-[var(--space-8)] pb-[var(--space-8)] sm:grid-cols-2 sm:gap-x-[var(--space-8)] lg:grid-cols-[minmax(290px,1.5fr)_repeat(3,minmax(145px,1fr))] lg:gap-x-[var(--space-8)]">
-        <div className="sm:col-span-2 lg:col-span-1">
-          <Link href="/" className="inline-block text-[22px] font-medium uppercase tracking-[0.08em] text-white no-underline transition-opacity hover:opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white sm:text-[26px] lg:text-[clamp(22px,2.1vw,32px)]" style={{ fontFamily: 'var(--font-family-primary)' }}>
-            House of Diams
-          </Link>
-
-          <p className="m-0 mt-[var(--space-4)] max-w-[390px] text-[12px] leading-[1.8] text-white/70">
-            House of Diams is a fine jewellery house specialising in lab-grown diamonds. Every piece is IGI or GIA certified. Engagement rings, wedding bands, T-bar jewellery, and bespoke commissions, shipped worldwide with free insured delivery.
-          </p>
-
-          <div className="mt-[var(--space-6)] flex flex-col gap-1.5" aria-label="Contact information">
-            {footerContactRows.map((row, index) => {
-              const value = row.value?.trim();
-              if (!value) return null;
-              const href = row.href?.trim();
-              const label = row.label?.toLowerCase() || '';
-              const Icon = label.includes('mail') ? Mail : label.includes('phone') || label.includes('whatsapp') ? Phone : MapPin;
-              const key = row.id ?? `${row.label}-${index}`;
-              const content = <><Icon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-white/60" strokeWidth={1.6} /><span>{value}{row.note?.trim() ? <span className="block text-white/55">{row.note.trim()}</span> : null}{href && !isLinkHref(href) ? <span className="block text-white/55">{href}</span> : null}</span></>;
-              return href && isLinkHref(href) ? (
-                <a key={key} href={href} className="flex max-w-[390px] items-start gap-2.5 py-1.5 text-[11px] leading-relaxed text-white/70 no-underline transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white">{content}</a>
-              ) : (
-                <p key={key} className="m-0 flex max-w-[390px] items-start gap-2.5 py-1.5 text-[11px] leading-relaxed text-white/70">{content}</p>
-              );
-            })}
+      <div className="mx-auto grid max-w-[1600px] grid-cols-1 gap-y-[var(--space-10)] pb-[var(--space-10)] lg:grid-cols-[minmax(0,3fr)_minmax(170px,0.8fr)_minmax(260px,1.2fr)] lg:gap-x-[var(--space-10)]">
+        <div className="grid grid-cols-1 gap-y-[var(--space-8)] sm:grid-cols-3 sm:gap-x-[var(--space-8)] lg:max-w-[860px]">
+          <div>
+            <ColTitle>NAVIGATE</ColTitle>
+            <ColLink href="/">Home</ColLink>
+            {showCollectionLink ? <ColLink href={collectionHref}>{collectionLabel}</ColLink> : null}
+            <ColLink href="/about">About Us</ColLink>
+            {showBespokeLink ? <ColLink href="/bespoke">Bespoke</ColLink> : null}
+            <ColLink href="/blog">Blog</ColLink>
+            <ColLink href="/education">Education</ColLink>
+            <ColLink href="/contact">Contact</ColLink>
           </div>
 
-          <div className="mt-[var(--space-6)] flex gap-[var(--space-3)]">
+          <div>
+            <ColTitle>JEWELLERY</ColTitle>
+            {visibleServiceCategories.map((category) => (
+              <ColLink key={category.id} href={`/${encodeURIComponent(category.slug)}`}>
+                {category.name}
+              </ColLink>
+            ))}
+          </div>
+
+          <div>
+            <ColTitle>SUPPORT</ColTitle>
+            <ColLink href="/faq">FAQ</ColLink>
+            <ColLink href="/shipping">Shipping</ColLink>
+            <ColLink href="/returns">Returns</ColLink>
+            <ColLink href="/terms">Terms &amp; Conditions</ColLink>
+            <ColLink href="/privacy-policy">Privacy Policy</ColLink>
+          </div>
+
+          <div className="sm:col-span-3 mt-[var(--space-8)] lg:mt-[var(--space-16)]">
+            <Link href="/" className="inline-block text-[clamp(22px,7.5vw,64px)] font-bold  leading-none tracking-[0.06em] text-white no-underline transition-opacity hover:opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white" style={{ fontFamily: 'var(--font-family-logo1, Cinzel, serif)', fontWeight: 500, fontVariationSettings: '"wght" 500', fontSynthesis: 'none' }}>
+              House of Diams
+            </Link>
+          </div>
+        </div>
+
+        <div className="flex flex-col items-start lg:pl-[var(--space-4)]">
+          <ColTitle>FOLLOW US</ColTitle>
+          <div className="flex gap-[var(--space-3)]">
             {SOCIAL.map((item) => (
               <a
                 key={item.name}
@@ -278,52 +288,43 @@ export default function Footer({ navItems = [] }: { navItems?: NavbarRenderItem[
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={item.name}
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/25 text-white transition-colors duration-200 hover:border-white hover:bg-white hover:text-[var(--color-brand-primary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                className="flex h-12 w-12 items-center justify-center text-white transition-opacity duration-200 hover:opacity-70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
               >
-                {item.icon}
+                <img src={item.src} alt="" className="h-7 w-7 object-contain" loading="lazy" />
               </a>
             ))}
           </div>
         </div>
 
-        <div>
-          <ColTitle>NAVIGATE</ColTitle>
-          <ColLink href="/">Home</ColLink>
-          {showCollectionLink ? <ColLink href={collectionHref}>{collectionLabel}</ColLink> : null}
-          <ColLink href="/about">About Us</ColLink>
-          {showBespokeLink ? <ColLink href="/bespoke">Bespoke</ColLink> : null}
-          <ColLink href="/blog">Blog</ColLink>
-          <ColLink href="/education">Education</ColLink>
-          <ColLink href="/contact">Contact</ColLink>
-        </div>
-
-        <div>
-          <ColTitle>JEWELLERY</ColTitle>
-          {visibleServiceCategories.map((category) => (
-            <ColLink key={category.id} href={`/${encodeURIComponent(category.slug)}`}>
-              {category.name}
-            </ColLink>
-          ))}
-        </div>
-
-        <div>
-          <ColTitle>SUPPORT</ColTitle>
-          <ColLink href="/faq">FAQ</ColLink>
-          <ColLink href="/shipping">Shipping</ColLink>
-          <ColLink href="/returns">Returns</ColLink>
-          <ColLink href="/terms">Terms &amp; Conditions</ColLink>
-          <ColLink href="/privacy-policy">Privacy Policy</ColLink>
-        </div>
-
+        <div className="w-full text-left sm:col-span-2 lg:col-span-1 lg:max-w-[420px]" aria-label="Contact information">
+          <ColTitle>CONTACT US</ColTitle>
+            <div className="flex flex-col gap-2">
+              {footerContactRows.map((row, index) => {
+                const value = row.value?.trim();
+                if (!value) return null;
+                const href = row.href?.trim();
+                const key = row.id ?? `${row.label}-${index}`;
+                const content = <span>{value}{row.note?.trim() ? <span className="block text-white/55">{row.note.trim()}</span> : null}{href && !isLinkHref(href) ? <span className="block text-white/55">{href}</span> : null}</span>;
+                return href && isLinkHref(href) ? (
+                  <a key={key} href={href} className="block py-1.5 text-[13px] leading-relaxed text-white/75 no-underline transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white">{content}</a>
+                ) : (
+                  <p key={key} className="m-0 py-1.5 text-[13px] leading-relaxed text-white/75">{content}</p>
+                );
+              })}
+            </div>
+          </div>
       </div>
-
       <div className="mx-auto grid max-w-[1600px] grid-cols-1 items-center gap-[var(--space-4)] border-t border-white/25 py-[var(--space-4)] text-[11px] text-white/60 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:gap-[var(--space-6)]">
         <div className="flex items-center justify-center lg:justify-start">
           <CurrencySelector />
         </div>
         <span className="w-full text-center">© {new Date().getFullYear()} House of Diams. All rights reserved.</span>
-        <div className="flex min-w-0 items-center justify-center lg:justify-end">
-          <PaymentIcons />
+        <div className="flex flex-wrap items-center justify-center gap-6 lg:justify-end lg:pr-24" aria-label="Accepted payment methods">
+          {PAYMENT_METHODS.map((method) => (
+            <span key={method.name} className="flex items-center justify-center">
+              <img src={method.src} alt={method.name} className="h-9 w-9 object-contain" loading="lazy" />
+            </span>
+          ))}
         </div>
       </div>
     </footer>

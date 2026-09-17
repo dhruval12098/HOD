@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import CategoryCollectionPage, { generateCatalogMetadata } from '../page'
+import { CategoryCollectionPageContent } from '../CategoryCollectionPageContent'
+import { generateCatalogMetadata } from '@/lib/catalog-metadata'
 import { resolveCatalogTaxonomy } from '@/lib/catalog-taxonomy'
 
 export const dynamic = 'force-dynamic'
@@ -20,7 +21,7 @@ export default async function SubcategoryCollectionPage(props: RouteProps) {
   const route = await resolveCatalogTaxonomy(await props.params)
   if (!route) notFound()
 
-  return CategoryCollectionPage({
+  return CategoryCollectionPageContent({
     params: Promise.resolve({ categorySlug: route.category.slug }),
     searchParams: props.searchParams,
     taxonomy: route,

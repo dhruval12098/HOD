@@ -53,8 +53,9 @@
   --color-brand-primary: var(--color-black);
   --color-brand-secondary: var(--color-off-white);
   --color-brand-accent: var(--color-white);
-  --font-family-primary: var(--font-family-cinzel);
+  --font-family-primary: var(--font-family-montserrat);
   --font-weight-primary: 500;
+  --font-family-logo1: var(--font-family-cinzel);
   --font-family-secondary: var(--font-family-inter);
   --font-family-tertiary: var(--font-family-montserrat);
   --font-family-button: var(--font-family-montserrat);
@@ -170,7 +171,7 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-family-primary), Arial, Helvetica, sans-serif;
 }
 
 /* Global safety: avoid tiny horizontal overflows from transforms/w-max marquees. */
@@ -251,9 +252,9 @@ button, [role="button"], input[type="button"], input[type="submit"], input[type=
   font-weight: var(--font-weight-primary) !important;
 }
 
-/* Blog editorial titles intentionally use the more compact sans display face. */
+/* Blog card titles use the storefront Montserrat face. */
 .blog-title-font {
-  font-family: var(--font-plus-jakarta), Arial, Helvetica, sans-serif !important;
+  font-family: var(--font-family-montserrat) !important;
 }
 
 /* Scoped override for promotion banner titles only. */

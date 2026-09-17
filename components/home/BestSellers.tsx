@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { cinzelFont } from '@/app/fonts'
 import type { HomeBestSellerProduct, HomeBestSellerSection } from '@/lib/home-data'
+import { useMobileSnapCarousel } from './useMobileSnapCarousel'
 
 type SectionData = {
   eyebrow: string
@@ -66,7 +67,7 @@ function BestSellerTile({ product }: { product: HomeBestSellerProduct }) {
           src={imageUrl}
           alt={product.name}
           fill
-          sizes="(max-width: 639px) 50vw, (max-width: 1023px) 50vw, 25vw"
+          sizes="(max-width: 639px) 50vw, (max-width: 1023px) 50vw, 33vw"
           className="object-cover transition-transform duration-700 ease-[cubic-bezier(.16,1,.3,1)] motion-safe:group-hover:scale-[1.035]"
           onError={() => setImageFailed(true)}
         />
@@ -110,6 +111,7 @@ export default function BestSellers({
       cta_href: '/shop',
     }
   const products = initialProducts
+  const { scrollerRef, pauseAutoplay, dragHandlers } = useMobileSnapCarousel()
 
   const headingParts = (() => {
     const parts = section.heading.trim().split(/\s+/)
@@ -125,14 +127,12 @@ export default function BestSellers({
       ? 'lg:grid-cols-1'
       : products.length === 2
         ? 'lg:grid-cols-2'
-        : products.length === 3
-          ? 'lg:grid-cols-3'
-          : 'lg:grid-cols-4'
+        : 'lg:grid-cols-3'
 
   if (!products.length) return null
 
   return (
-    <section className="w-full px-[var(--space-2)] py-[var(--space-12)] sm:px-[var(--space-3)] sm:py-[var(--space-16)] lg:px-[var(--space-4)] lg:py-[var(--space-24)]">
+    <section className="w-full px-[var(--space-2)] py-[var(--space-6)] sm:px-[var(--space-3)] sm:py-[var(--space-8)] lg:px-[var(--space-4)] lg:py-[var(--space-12)]">
       <RevealDiv className="mb-[var(--space-6)] flex flex-wrap items-end justify-between gap-[var(--space-4)] px-[var(--space-1)] sm:mb-[var(--space-8)] lg:mb-[var(--space-12)]">
         <div>
           <h2
@@ -141,7 +141,7 @@ export default function BestSellers({
           >
             {headingParts.start}{' '}
             {headingParts.emphasis ? (
-              <em className="not-italic italic font-normal text-[var(--theme-ink)]">
+              <em className="not-italic">
                 {headingParts.emphasis}
               </em>
             ) : null}
@@ -150,14 +150,30 @@ export default function BestSellers({
 
         <Link
           href={section.cta_href}
-          className="flex items-center gap-2 border-b border-[var(--theme-border-strong)] pb-1 font-[family-name:var(--font-family-button)] text-[8px] uppercase tracking-[0.22em] text-[var(--theme-ink)] no-underline transition-[gap] duration-300 hover:gap-[14px]"
+          className="flex items-center gap-3 border-b border-[var(--theme-ink)] pb-1 font-[family-name:var(--font-family-primary)] text-[clamp(0.7rem,0.85vw,0.9rem)] font-semibold uppercase tracking-[0.08em] text-[var(--theme-ink)] no-underline transition-[gap] duration-300 hover:gap-5"
         >
           {section.cta_label} →
         </Link>
       </RevealDiv>
 
       <RevealDiv delay={150}>
-        <div className={`grid grid-cols-2 gap-[var(--space-1)] sm:gap-[var(--space-2)] lg:gap-[var(--space-3)] ${desktopGridColumns}`}>
+        <div
+          ref={scrollerRef}
+          {...dragHandlers}
+          onTouchStart={pauseAutoplay}
+          onTouchEnd={pauseAutoplay}
+          onWheel={pauseAutoplay}
+          onKeyDown={pauseAutoplay}
+          className="-mx-[var(--space-2)] flex snap-x snap-mandatory gap-[var(--space-2)] overflow-x-auto px-[var(--space-2)] pb-2 [scrollbar-width:none] sm:hidden [&::-webkit-scrollbar]:hidden"
+          aria-label={section.heading + ' carousel'}
+        >
+          {products.map((product) => (
+            <div key={product.id} className="w-[76vw] max-w-[320px] shrink-0 snap-start">
+              <BestSellerTile product={product} />
+            </div>
+          ))}
+        </div>
+        <div className={`hidden grid-cols-2 gap-[var(--space-1)] sm:grid sm:gap-[var(--space-2)] lg:gap-[var(--space-3)] ${desktopGridColumns}`}>
           {products.map((product) => (
             <BestSellerTile key={product.id} product={product} />
           ))}
@@ -166,3 +182,4 @@ export default function BestSellers({
     </section>
   )
 }
+

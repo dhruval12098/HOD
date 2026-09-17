@@ -17,13 +17,13 @@ export default function BlogGrid({ posts, onPostClick, maxPosts = 5, basePath = 
   if (compactGrid) {
     return <div className="grid grid-cols-2 gap-[var(--space-1,4px)] lg:grid-cols-4">
       {displayPosts.map((post) => {
-        const imageUrl = getStorageImageUrl(post.heroImagePath);
+        const imageUrl = getStorageImageUrl(post.cardImagePath || post.heroImagePath);
         const href = post.slug ? `${basePath}/${post.slug}` : basePath;
         return <Link key={post.id} href={href} prefetch className="group relative block h-[clamp(220px,32vw,500px)] min-w-0 overflow-hidden bg-[var(--color-brand-primary,#000)] text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-brand-primary,#000)]">
           {imageUrl ? <Image src={imageUrl} alt={post.heroImageAlt || post.titleRaw} fill sizes="(max-width: 1023px) 50vw, 25vw" className="object-cover transition-transform duration-500 group-hover:scale-[1.04]" /> : <div className="absolute inset-0 flex items-center justify-center" style={{ background: post.bgColor }}><GemPlaceholder size={78} variant="diamond" /></div>}
           <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 p-[var(--space-3,12px)] sm:p-[var(--space-4,16px)]">
-            <h3 className="line-clamp-2 !font-[family-name:var(--font-family-secondary)] text-[clamp(0.8rem,1.1vw,1rem)] font-semibold leading-[1.2] tracking-[0.02em] !text-white">{post.titleRaw}</h3>
+          <div className="absolute inset-x-0 bottom-0 p-[var(--space-3,12px)] text-center sm:p-[var(--space-4,16px)]">
+            <h3 className="blog-title-font line-clamp-2 text-[clamp(1.15rem,1.65vw,1.5rem)] font-semibold leading-[1.2] tracking-[0.02em] !text-white">{post.cardTitle || post.titleRaw}</h3>
             <span className="mt-[var(--space-2,8px)] inline-block border-b border-white/80 pb-0.5 font-[family-name:var(--font-family-button)] text-[10px] font-semibold uppercase tracking-[0.12em] text-white transition-colors group-hover:border-white sm:text-xs">Read article</span>
           </div>
         </Link>;

@@ -3,7 +3,6 @@ import { useState } from "react";
 import Image from "next/image";
 import { useCurrency } from "@/context/CurrencyContext";
 import { METAL_META } from "@/lib/data/product-config";
-import { useCart } from "@/lib/hooks/useCart";
 
 // ── Gem SVG renderer ──────────────────────────────────────────────────────────
 export function GemSVG({ style, size = 110, color = "#20304A" }) {
@@ -141,6 +140,7 @@ function getMetalSwatches(product) {
       metalId: metal.id || null,
       slug: metal.slug || "",
       name: metal.name || metal.slug || "Metal",
+      displayLabel: metal.displayLabel || metal.display_label || metal.name || metal.slug || "Metal",
       color:
         metal.colorHex ||
         METAL_META[metal.slug]?.color ||
@@ -191,473 +191,145 @@ function getMetalImages(product, metalSwatch) {
   ].filter(Boolean);
 }
 
-function getMetalSwatchStyle(metal) {
-  const color = metal?.color || "#D9D9D9";
-  return {
-    background: `radial-gradient(circle at 30% 24%, #FFFFFF 0%, color-mix(in srgb, ${color} 42%, #FFFFFF) 24%, ${color} 58%, color-mix(in srgb, ${color} 72%, #000000) 100%)`,
-  };
-}
-
-export default function ProductCard({ product, wishlisted, onWishlist, onEnquire, forceLight = false, selectedMetalSlug = "" }) {
+export default function ProductCard({ product, wishlisted, onWishlist, forceLight = false, selectedMetalSlug = "" }) {
   const { format } = useCurrency();
-  const { addItem } = useCart();
   const isDark = !forceLight && product.category === "hiphop";
   const gemSize = LARGE_GEM_STYLES.includes(product.gemStyle) ? 140 : 110;
   const metalSwatches = getMetalSwatches(product);
-  const [activeMetalId, setActiveMetalId] = useState("");
   const [failedImageUrl, setFailedImageUrl] = useState("");
-  const [addedToCart, setAddedToCart] = useState(false);
+  const [failedHoverImageUrl, setFailedHoverImageUrl] = useState("");
 
-  const globalMetalSwatch = selectedMetalSlug ? metalSwatches.find((metal) => metal.slug === selectedMetalSlug) : null;
-  const firstThreeMetalSwatches = metalSwatches.slice(0, 3);
-  const visibleMetalSwatches = globalMetalSwatch && !firstThreeMetalSwatches.some((metal) => metal.id === globalMetalSwatch.id)
-    ? [globalMetalSwatch, ...metalSwatches.filter((metal) => metal.id !== globalMetalSwatch.id)].slice(0, 3)
-    : firstThreeMetalSwatches;
-  const activeMetalSwatch = globalMetalSwatch || metalSwatches.find((metal) => metal.id === activeMetalId) || metalSwatches[0] || null;
-  const metalImageUrl = getMetalImages(product, activeMetalSwatch)[0] || "";
-  const activeImageUrl = selectedMetalSlug ? metalImageUrl : (metalImageUrl || product.imageUrl);
+  const selectedMetal = selectedMetalSlug ? metalSwatches.find((metal) => metal.slug === selectedMetalSlug) : null;
+  const activeMetal = selectedMetal || metalSwatches[0] || null;
+  const metalImages = getMetalImages(product, activeMetal);
+  const productImages = [product.imageUrl, ...(product.galleryUrls || [])].filter(Boolean);
+  const resolvedImages = Array.from(new Set(selectedMetalSlug ? metalImages : [...metalImages, ...productImages]));
+  const activeImageUrl = resolvedImages[0] || "";
+  const hoverImageUrl = resolvedImages.find((url) => url !== activeImageUrl) || "";
   const visibleImageUrl = activeImageUrl && activeImageUrl !== failedImageUrl ? activeImageUrl : "";
-  const activeVariant = (product.metalPurityVariants || []).find((variant) => (
-    variant.metalId === activeMetalSwatch?.metalId || variant.metalSlug === activeMetalSwatch?.slug
-  )) || (product.metalPurityVariants || []).find((variant) => variant.isDefault) || product.metalPurityVariants?.[0] || null;
-
-  const handleQuickAdd = (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    addItem(product, {
-      metalVariantId: activeVariant?.id || undefined,
-      metal: activeVariant?.label || activeMetalSwatch?.name || undefined,
-      metalSlug: activeVariant?.metalSlug || activeMetalSwatch?.slug || undefined,
-      resolvedPrice: Number(activeVariant?.price ?? product.priceFrom ?? 0),
-      resolvedImageUrl: visibleImageUrl || product.imageUrl || undefined,
-      loveLetter: null,
-    });
-    setAddedToCart(true);
-    window.setTimeout(() => setAddedToCart(false), 1800);
-  };
-
-  const visualBorder = isDark ? "rgba(255,255,255,0.12)" : "rgba(10,22,40,0.06)";
-  const namColor = isDark ? "#FFFFFF" : "#0A1628";
+  const visibleHoverImageUrl = hoverImageUrl && hoverImageUrl !== failedHoverImageUrl ? hoverImageUrl : "";
+  const materialLabel = activeMetal?.displayLabel || activeMetal?.name || product.shortMeta || "";
+  const ink = isDark ? "#FFFFFF" : "#111111";
+  const muted = isDark ? "rgba(255,255,255,.68)" : "#707070";
 
   return (
-    <>
-    <style>{`
-      @media (max-width: 768px) {
-        .shop-product-card-visual {
-          height: 208px !important;
-        }
-        .shop-product-card-info {
-          display: grid !important;
-          grid-template-columns: minmax(0, 1fr) !important;
-          padding: 12px 12px 16px !important;
-          gap: 4px !important;
-        }
-        .shop-product-card-heading-row {
-          display: contents !important;
-        }
-        .shop-product-card-title {
-          font-size: 14px !important;
-          line-height: 1.12 !important;
-          letter-spacing: .01em !important;
-        }
-        .shop-product-card-title-wrap {
-          order: 1;
-          min-height: 36px !important;
-        }
-        .shop-product-card-swatches {
-          order: 3;
-          justify-content: flex-start !important;
-          padding-top: 4px !important;
-          gap: 8px !important;
-        }
-        .shop-product-card-bottom {
-          order: 2;
-          padding-top: 4px !important;
-        }
-        .shop-product-card-price {
-          font-size: 14px !important;
-        }
-        .shop-product-card-actions {
-          display: none !important;
-        }
-      }
-    `}</style>
     <a
       className="shop-product-card"
       href={`/shop/${product.slug}`}
       style={{
-        cursor: "pointer",
         position: "relative",
-        zIndex: 1,
-        overflow: "hidden",
-        transition: "transform .55s cubic-bezier(.16,1,.3,1), box-shadow .55s cubic-bezier(.16,1,.3,1), filter .55s cubic-bezier(.16,1,.3,1), border-radius .55s cubic-bezier(.16,1,.3,1), background-color .55s cubic-bezier(.16,1,.3,1)",
-        textDecoration: "none",
-        color: "inherit",
         display: "flex",
+        minWidth: 0,
         flexDirection: "column",
-        borderRadius: "0",
         background: isDark ? "#0A1628" : "#FFFFFF",
-        boxShadow: "0 0 0 rgba(10,22,40,0)",
-        filter: "brightness(1)",
-        border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(10,22,40,0.06)",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "translateY(-10px) scale(1.01)";
-        e.currentTarget.style.zIndex = "20";
-        e.currentTarget.style.borderRadius = "30px";
-        e.currentTarget.style.boxShadow = isDark
-          ? "0 30px 70px rgba(0,0,0,0.34)"
-          : "0 26px 70px rgba(10,22,40,0.14), 0 6px 18px rgba(10,22,40,0.06)";
-        e.currentTarget.style.filter = "brightness(1.01)";
-        const glow = e.currentTarget.querySelector(".card-glow");
-        if (glow) glow.style.opacity = "1";
-        const actions = e.currentTarget.querySelector(".shop-product-card-actions");
-        if (actions) {
-          actions.style.opacity = "1";
-          actions.style.transform = "translateY(0)";
-          actions.style.pointerEvents = "auto";
-          actions.style.maxHeight = "76px";
-          actions.style.marginTop = "0";
-        }
-        const shell = e.currentTarget.querySelector(".shop-product-card-visual");
-        if (shell) {
-          shell.style.borderColor = isDark ? "rgba(255,255,255,0.18)" : "rgba(10,22,40,0.10)";
-          shell.style.boxShadow = isDark
-            ? "inset 0 0 0 1px rgba(255,255,255,0.04)"
-            : "inset 0 0 0 1px rgba(255,255,255,0.82)";
-          shell.style.borderRadius = "26px 26px 18px 18px";
-        }
-        const info = e.currentTarget.querySelector(".shop-product-card-info");
-        if (info) {
-          info.style.borderRadius = "0 0 26px 26px";
-          info.style.background = isDark ? "#0A1628" : "#FFFFFF";
-        }
-        const gem = e.currentTarget.querySelector(".card-gem");
-        if (gem) gem.style.transform = "scale(1.08)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.zIndex = "1";
-        e.currentTarget.style.borderRadius = "0";
-        e.currentTarget.style.boxShadow = "0 0 0 rgba(10,22,40,0)";
-        e.currentTarget.style.filter = "brightness(1)";
-        const glow = e.currentTarget.querySelector(".card-glow");
-        if (glow) glow.style.opacity = "0";
-        const actions = e.currentTarget.querySelector(".shop-product-card-actions");
-        if (actions) {
-          actions.style.opacity = "0";
-          actions.style.transform = "translateY(10px)";
-          actions.style.pointerEvents = "none";
-          actions.style.maxHeight = "0";
-          actions.style.marginTop = "0";
-        }
-        const shell = e.currentTarget.querySelector(".shop-product-card-visual");
-        if (shell) {
-          shell.style.borderColor = visualBorder;
-          shell.style.boxShadow = isDark ? "none" : "inset 0 0 0 1px rgba(255,255,255,0.65)";
-          shell.style.borderRadius = "0";
-        }
-        const info = e.currentTarget.querySelector(".shop-product-card-info");
-        if (info) {
-          info.style.borderRadius = "0";
-          info.style.background = isDark ? "#0A1628" : "#FFFFFF";
-        }
-        const gem = e.currentTarget.querySelector(".card-gem");
-        if (gem) gem.style.transform = "scale(1)";
+        color: ink,
+        fontFamily: "var(--font-family-inter)",
+        textDecoration: "none",
       }}
     >
-      {/* Visual */}
       <div
         className="shop-product-card-visual"
         style={{
-          height: "300px",
-          background: isDark
-            ? "linear-gradient(135deg, #0A1628 0%, #111F34 100%)"
-            : "linear-gradient(135deg, #FFFFFF 0%, #F8F8FA 100%)",
+          position: "relative",
           display: "flex",
+          aspectRatio: "4 / 5",
           alignItems: "center",
           justifyContent: "center",
-          position: "relative",
           overflow: "hidden",
-          borderRadius: "0",
-          border: `1px solid ${visualBorder}`,
-          boxShadow: isDark ? "none" : "inset 0 0 0 1px rgba(255,255,255,0.65)",
-          transition: "border-color .55s cubic-bezier(.16,1,.3,1), box-shadow .55s cubic-bezier(.16,1,.3,1), border-radius .55s cubic-bezier(.16,1,.3,1)",
+          background: isDark ? "linear-gradient(135deg, #0A1628 0%, #111F34 100%)" : "#F7F7F7",
         }}
       >
-        {/* Glow overlay */}
-        <div
-          className="card-glow"
-          style={{
-            position: "absolute",
-            inset: 0,
-            background: "radial-gradient(circle at 50% 50%, rgba(10,22,40,0.08), transparent 70%)",
-            opacity: 0,
-            transition: "opacity .55s cubic-bezier(.16,1,.3,1)",
-          }}
-        />
-
-        {/* Wishlist button */}
         <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
+          type="button"
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
             onWishlist(product);
           }}
-          aria-label="Add to wishlist"
+          aria-label={wishlisted ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
+          aria-pressed={wishlisted}
           style={{
             position: "absolute",
-            top: "14px",
-            right: "14px",
-            width: "32px",
-            height: "32px",
-            borderRadius: "50%",
-            background: isDark ? "rgba(10,22,40,0.7)" : "rgba(255,255,255,0.92)",
-            backdropFilter: "blur(10px)",
-            border: isDark ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(10,22,40,0.10)",
+            top: "10px",
+            right: "10px",
+            zIndex: 2,
             display: "flex",
+            width: "36px",
+            height: "36px",
             alignItems: "center",
             justifyContent: "center",
+            padding: 0,
+            border: 0,
+            background: "transparent",
+            color: isDark ? "#FFFFFF" : "#555555",
             cursor: "pointer",
-            transition: "all .3s",
-            zIndex: 2,
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = isDark ? "#FFFFFF" : "#0A1628";
-            e.currentTarget.style.borderColor = isDark ? "#FFFFFF" : "#0A1628";
-          }}
-          onMouseLeave={(e) => {
-            if (!wishlisted) {
-              e.currentTarget.style.background = isDark ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.92)";
-              e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.2)" : "rgba(10,22,40,0.10)";
-            }
           }}
         >
-          <svg viewBox="0 0 16 16" fill={wishlisted ? "currentColor" : "none"} width="14" height="14"
-            style={{ stroke: wishlisted ? (isDark ? "#0A1628" : "#fff") : isDark ? "#fff" : "#253246", color: isDark ? "#0A1628" : "#fff" }}>
-            <path d="M8 14L2.5 8.5C1 7 1 4.5 2.5 3C4 1.5 6.5 1.5 8 3C9.5 1.5 12 1.5 13.5 3C15 4.5 15 7 13.5 8.5L8 14Z"
-              strokeWidth="1.3" strokeLinejoin="round" />
+          <svg viewBox="0 0 16 16" fill={wishlisted ? "currentColor" : "none"} width="21" height="21" aria-hidden="true">
+            <path d="M8 14L2.5 8.5C1 7 1 4.5 2.5 3C4 1.5 6.5 1.5 8 3C9.5 1.5 12 1.5 13.5 3C15 4.5 15 7 13.5 8.5L8 14Z" stroke="currentColor" strokeWidth="1.35" strokeLinejoin="round" />
           </svg>
         </button>
 
         {visibleImageUrl ? (
-          <Image
-            key={visibleImageUrl}
-            src={visibleImageUrl}
-            alt={`${product.name} jewellery`}
-            fill
-            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-            className="card-gem"
-            onError={() => setFailedImageUrl(visibleImageUrl)}
-            style={{
-              objectFit: "cover",
-              objectPosition: "center center",
-              padding: "0",
-              transform: "scale(1.04)",
-              transition: "transform .75s cubic-bezier(.16,1,.3,1)",
-            }}
-          />
+          <>
+            <Image
+              key={visibleImageUrl}
+              src={visibleImageUrl}
+              alt={`${product.name} jewellery`}
+              fill
+              sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              onError={() => setFailedImageUrl(visibleImageUrl)}
+              className={visibleHoverImageUrl ? "shop-product-card-primary-image" : undefined}
+              style={{ objectFit: "cover", objectPosition: "center center" }}
+            />
+            {visibleHoverImageUrl ? (
+              <Image
+                key={visibleHoverImageUrl}
+                src={visibleHoverImageUrl}
+                alt=""
+                aria-hidden="true"
+                fill
+                sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                onError={() => setFailedHoverImageUrl(visibleHoverImageUrl)}
+                className="shop-product-card-hover-image"
+                style={{ objectFit: "cover", objectPosition: "center center" }}
+              />
+            ) : null}
+          </>
         ) : selectedMetalSlug ? (
-          <div role="img" aria-label={`${product.name} image unavailable in selected metal`} style={{ color: isDark ? "#D7DCE5" : "#697386", fontSize: "12px", letterSpacing: ".08em", textAlign: "center", padding: "24px" }}>
+          <div role="img" aria-label={`${product.name} image unavailable in selected metal`} style={{ padding: "24px", color: muted, fontFamily: "var(--font-family-inter)", fontSize: "12px", textAlign: "center" }}>
             Image unavailable<br />in this metal
           </div>
         ) : (
-          <div
-            className="card-gem"
-            role="img"
-            aria-label={`${product.name} image unavailable`}
-            style={{
-              transition: "transform .75s cubic-bezier(.16,1,.3,1)",
-              filter: "drop-shadow(0 8px 20px rgba(10,22,40,0.2))",
-            }}
-          >
+          <div role="img" aria-label={`${product.name} image unavailable`} style={{ filter: "drop-shadow(0 8px 20px rgba(10,22,40,0.2))" }}>
             <GemSVG style={product.gemStyle} size={gemSize} color={product.gemColor} />
           </div>
         )}
       </div>
 
-      {/* Info */}
       <div
         className="shop-product-card-info"
         style={{
-          padding: "14px 12px 12px",
           display: "flex",
           flexDirection: "column",
-          gap: "6px",
+          gap: "3px",
+          padding: "10px 10px 18px",
           background: isDark ? "#0A1628" : "#FFFFFF",
-          minHeight: "118px",
-          position: "relative",
-          zIndex: 2,
-          overflow: "visible",
-          borderRadius: "0",
-          transition: "border-radius .55s cubic-bezier(.16,1,.3,1), background-color .55s cubic-bezier(.16,1,.3,1)",
+          fontFamily: "var(--font-family-inter)",
         }}
       >
-        <div
-          className="shop-product-card-heading-row"
-          style={{
-            display: "grid",
-            gridTemplateColumns: metalSwatches.length > 0 ? "minmax(0,1fr) auto" : "minmax(0,1fr)",
-            alignItems: "start",
-            gap: "12px",
-          }}
-        >
-          <div
-            className="shop-product-card-title-wrap"
-          style={{
-              minHeight: "40px",
-          }}
-        >
-          <div
-            className="shop-product-card-title"
-            style={{
-              fontFamily: "var(--display-title)",
-              fontSize: "18px",
-              fontWeight: 400,
-              color: namColor,
-              letterSpacing: ".01em",
-              lineHeight: 1.05,
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-            }}
-          >
-            {product.name}
-          </div>
-          </div>
-        {metalSwatches.length > 0 ? (
-          <div
-            className="shop-product-card-swatches"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              paddingTop: "2px",
-            }}
-          >
-            {visibleMetalSwatches.map((metal) => {
-              const isActive = metal.id === activeMetalSwatch?.id;
-              const swatchStyle = getMetalSwatchStyle(metal);
-
-              return (
-                <button
-                  type="button"
-                  key={metal.id}
-                  title={metal.name}
-                  aria-label={metal.name}
-                  aria-pressed={isActive}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setActiveMetalId(metal.id);
-                  }}
-                  style={{
-                    width: "24px",
-                    height: "24px",
-                    borderRadius: "999px",
-                    border: isActive ? `2px solid ${isDark ? "#FFFFFF" : "#0A1628"}` : "1px solid rgba(10,22,40,0.16)",
-                    background: "transparent",
-                    boxShadow: "none",
-                    flex: "0 0 auto",
-                    cursor: "pointer",
-                    padding: "2px",
-                    transition: "transform .25s ease, border-color .25s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-1px) scale(1.06)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "translateY(0) scale(1)";
-                  }}
-                >
-                  <span
-                    style={{
-                      display: "block",
-                      width: "100%",
-                      height: "100%",
-                      borderRadius: "999px",
-                      background: swatchStyle.background,
-                      boxShadow: "inset 3px 3px 5px rgba(255,255,255,0.65), inset -4px -4px 6px rgba(10,22,40,0.16)",
-                    }}
-                  />
-                </button>
-              );
-            })}
+        <div className="shop-product-card-title" style={{ color: ink, fontSize: "13px", fontWeight: 600, lineHeight: 1.35 }}>
+          {product.name}
+        </div>
+        <div className="shop-product-card-price" style={{ color: ink, fontSize: "13px", fontWeight: 700, lineHeight: 1.35 }}>
+          {format(product.priceFrom)}
+        </div>
+        {materialLabel ? (
+          <div className="shop-product-card-material" style={{ color: muted, fontSize: "11px", fontWeight: 400, lineHeight: 1.4 }}>
+            {materialLabel}
           </div>
         ) : null}
-        </div>
-        <div
-          className="shop-product-card-bottom"
-          style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", marginTop: "auto", paddingTop: "4px" }}
-        >
-          <div>
-            <span className="shop-product-card-price" style={{ fontFamily: "var(--font-plus-jakarta)", fontSize: "14px", fontWeight: 700, color: isDark ? "#FFFFFF" : "#0A1628", letterSpacing: ".02em" }}>
-              {format(product.priceFrom)}
-            </span>
-          </div>
-        </div>
-        <div
-          className="shop-product-card-actions"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(0,1fr) minmax(0,1.2fr)",
-            gap: "8px",
-            opacity: 0,
-            maxHeight: "0",
-            overflow: "hidden",
-            marginTop: "0",
-            padding: "10px 2px 4px",
-            transform: "translateY(10px)",
-            pointerEvents: "none",
-            background: "inherit",
-            borderRadius: "0",
-            transition: "opacity .45s cubic-bezier(.16,1,.3,1), transform .45s cubic-bezier(.16,1,.3,1), max-height .45s cubic-bezier(.16,1,.3,1), margin-top .45s cubic-bezier(.16,1,.3,1)",
-          }}
-        >
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onEnquire?.(product.name);
-            }}
-            style={{
-              height: "40px",
-              borderRadius: "999px",
-              border: isDark ? "1px solid rgba(255,255,255,0.65)" : "1.5px solid rgba(10,22,40,0.9)",
-              background: isDark ? "rgba(255,255,255,0.08)" : "#FFFFFF",
-              color: isDark ? "#FFFFFF" : "#0A1628",
-              fontSize: "12px",
-              fontWeight: 600,
-              letterSpacing: ".02em",
-              cursor: "pointer",
-              boxShadow: isDark ? "0 8px 18px rgba(0,0,0,0.18)" : "0 8px 18px rgba(10,22,40,0.08)",
-            }}
-          >
-            More Info
-          </button>
-          <button
-            type="button"
-            onClick={handleQuickAdd}
-            style={{
-              height: "40px",
-              borderRadius: "999px",
-              border: isDark ? "1px solid rgba(255,255,255,0.14)" : "1px solid #0A1628",
-              background: isDark ? "#FFFFFF" : "#0A1628",
-              color: isDark ? "#0A1628" : "#FFFFFF",
-              fontSize: "12px",
-              fontWeight: 700,
-              letterSpacing: ".02em",
-              cursor: "pointer",
-              boxShadow: isDark ? "0 8px 18px rgba(0,0,0,0.18)" : "0 8px 18px rgba(10,22,40,0.10)",
-            }}
-          >
-            {addedToCart ? "Added" : "Add to Cart"}
-          </button>
-        </div>
       </div>
     </a>
-    </>
   );
 }

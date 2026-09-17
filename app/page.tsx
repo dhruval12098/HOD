@@ -45,6 +45,7 @@ export default async function Home() {
     hiphopSection,
     collectionPageConfig,
     bespokeShowcaseSection,
+    instagramReels,
     diamondInfoItems,
     diamondInfoConfig,
     marqueeData,
@@ -75,6 +76,7 @@ export default async function Home() {
       hiphopSection={hiphopSection}
       collectionPageConfig={collectionPageConfig}
       bespokeShowcaseSection={bespokeShowcaseSection}
+      instagramReels={instagramReels}
       diamondInfoItems={diamondInfoItems}
       diamondInfoConfig={diamondInfoConfig}
       marqueeData={marqueeData}

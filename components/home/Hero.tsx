@@ -197,7 +197,7 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
       {content.slider_enabled && currentSlide ? (
         <div className="relative z-[2] w-full">
           <div className="relative overflow-hidden rounded-none border-0 bg-transparent shadow-none backdrop-blur-0">
-            <div className="relative h-[360px] sm:hidden">
+            <div className="relative h-[520px] sm:hidden">
               {slides.map((slide, index) => {
                 const mobileImageUrl = getPublicImageUrl(slide.mobile_image_path || slide.image_path);
                 return (
@@ -253,35 +253,38 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
             {(currentSlide.headline.trim() ||
               currentSlide.subtitle.trim() ||
               (currentSlide.button_text.trim() && currentSlide.button_link.trim())) ? (
-              <div className="pointer-events-none absolute inset-0 z-20 flex items-center px-[var(--space-4)] sm:px-[var(--space-8)] lg:px-[var(--space-12)] xl:px-[var(--space-16)]">
-                <div className="relative w-[min(78%,22rem)] py-[var(--space-6)] pr-[var(--space-5)] sm:w-full sm:max-w-[25rem] sm:py-[var(--space-10)] sm:pr-0">
-                  {currentSlide.headline.trim() ? (
-                    <h1
-                      className="hero-slide-heading text-[clamp(1.75rem,7vw,2.25rem)] font-medium leading-[1.12] tracking-[-0.02em] text-[var(--color-brand-primary,#000)] sm:text-[clamp(2.25rem,3.4vw,3.25rem)]"
-                    >
-                      {currentSlide.headline}
-                    </h1>
-                  ) : null}
+              <>
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-2/3 bg-gradient-to-t from-black/70 via-black/28 to-transparent sm:hidden" />
+                <div className="pointer-events-none absolute inset-0 z-20 flex items-end justify-center px-[var(--space-4)] pb-[var(--space-10)] text-center sm:items-center sm:justify-start sm:px-[var(--space-8)] sm:pb-0 sm:text-left lg:px-[var(--space-12)] xl:px-[var(--space-16)]">
+                  <div className="relative mx-auto w-full max-w-[22rem] py-[var(--space-6)] sm:mx-0 sm:w-full sm:max-w-[25rem] sm:py-[var(--space-10)]">
+                    {currentSlide.headline.trim() ? (
+                      <h1
+                        className="hero-slide-heading text-[clamp(1.75rem,7vw,2.25rem)] font-medium leading-[1.12] tracking-[-0.02em] text-white sm:text-[clamp(2.25rem,3.4vw,3.25rem)] sm:text-[var(--color-brand-primary,#000)]"
+                      >
+                        {currentSlide.headline}
+                      </h1>
+                    ) : null}
 
-                  {currentSlide.subtitle.trim() ? (
-                    <p
-                      className="mt-[var(--space-3)] max-w-[22rem] text-[clamp(0.75rem,2.8vw,0.95rem)] leading-[1.55] text-[var(--color-brand-primary,#000)] sm:mt-[var(--space-5)] sm:max-w-[25rem] sm:text-[clamp(0.9rem,1.15vw,1.1rem)]"
-                      style={{ fontFamily: 'var(--font-family-secondary)' }}
-                    >
-                      {currentSlide.subtitle}
-                    </p>
-                  ) : null}
+                    {currentSlide.subtitle.trim() ? (
+                      <p
+                        className="mx-auto mt-[var(--space-2)] max-w-[20rem] text-[clamp(0.75rem,2.8vw,0.95rem)] leading-[1.55] text-white/90 sm:mx-0 sm:mt-[var(--space-4)] sm:max-w-[25rem] sm:text-[clamp(0.9rem,1.15vw,1.1rem)] sm:text-[var(--color-brand-primary,#000)]"
+                        style={{ fontFamily: 'var(--font-family-secondary)' }}
+                      >
+                        {currentSlide.subtitle}
+                      </p>
+                    ) : null}
 
-                  {currentSlide.button_text.trim() && currentSlide.button_link.trim() ? (
-                    <BrandButton
-                      href={currentSlide.button_link}
-                      className="pointer-events-auto mt-[var(--space-5)] sm:mt-[var(--space-8)]"
-                    >
-                      {currentSlide.button_text}
-                    </BrandButton>
-                  ) : null}
+                    {currentSlide.button_text.trim() && currentSlide.button_link.trim() ? (
+                      <BrandButton
+                        href={currentSlide.button_link}
+                        className="pointer-events-auto mx-auto mt-[var(--space-4)] sm:mx-0 sm:mt-[var(--space-6)]"
+                      >
+                        {currentSlide.button_text}
+                      </BrandButton>
+                    ) : null}
+                  </div>
                 </div>
-              </div>
+              </>
             ) : null}
 
             {slides.length > 1 ? (
@@ -366,3 +369,4 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
     </section>
   );
 }
+

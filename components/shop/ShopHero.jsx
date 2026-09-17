@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { startTransition, useMemo, useOptimistic, useState } from 'react';
+import { startTransition, useEffect, useMemo, useOptimistic, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 /**
  * @typedef {{ id: string; title: string; iconUrl?: string | null; href?: string | null; options: { label: string; href: string; type?: 'default' | 'swatch' | 'icon', iconUrl?: string | null, colorHex?: string | null }[], emphasis?: 'section' | 'group' }} ShopHeroBrowseSection
@@ -25,13 +26,10 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
  */
 export default function ShopHero({
   title = 'Our Collection',
-  subtitle = 'Browse our curated selection of fine jewellery with certified lab-grown diamonds. Every piece certified, every stone responsibly sourced.',
   desktopImageUrl = '',
   mobileImageUrl = '',
   imageAlt = '',
-  ctaLabel = '',
   ctaHref = '',
-  bannerEnabled = false,
   browseSections = [],
   activeFilters = {},
   onBrowseNavigate,
@@ -41,7 +39,7 @@ export default function ShopHero({
   const searchParams = useSearchParams();
   const collectionRootPath = useMemo(() => {
     const rootSegment = pathname.split('/').filter(Boolean)[0];
-    return rootSegment ? `/${rootSegment}` : pathname;
+    return rootSegment ? '/' + rootSegment : pathname;
   }, [pathname]);
 
   const matchedSectionId = useMemo(() => {
@@ -55,10 +53,8 @@ export default function ShopHero({
             target.pathname === pathname &&
             target.searchParams.get('subcategory') === currentSubcategory;
           const nestedMatch = target.search === '' &&
-            (target.pathname === pathname || pathname.startsWith(`${target.pathname}/`));
-          if (legacyMatch || nestedMatch) {
-            return section.id;
-          }
+            (target.pathname === pathname || pathname.startsWith(target.pathname + '/'));
+          if (legacyMatch || nestedMatch) return section.id;
         } catch {}
       }
 
@@ -68,9 +64,7 @@ export default function ShopHero({
           const legacyMatch = currentSubcategory &&
             target.pathname === pathname &&
             target.searchParams.get('subcategory') === currentSubcategory;
-          if (legacyMatch || target.pathname === pathname) {
-            return section.id;
-          }
+          if (legacyMatch || target.pathname === pathname) return section.id;
         } catch {
           continue;
         }
@@ -84,12 +78,16 @@ export default function ShopHero({
   const resolvedActiveSectionId = matchedSectionId || allSectionId;
   const [activeSectionId, setOptimisticActiveSectionId] = useOptimistic(resolvedActiveSectionId);
   const [pendingHref, setPendingHref] = useState('');
+  const railRef = useRef(null);
+  const [canScrollBackward, setCanScrollBackward] = useState(false);
+  const [canScrollForward, setCanScrollForward] = useState(false);
+
   const hasPendingNavigation = useMemo(() => {
     if (!pendingHref) return false;
     try {
       const target = new URL(pendingHref, 'https://houseofdiams.local');
       const currentSearch = searchParams?.toString();
-      return target.pathname !== pathname || target.search !== (currentSearch ? `?${currentSearch}` : '');
+      return target.pathname !== pathname || target.search !== (currentSearch ? '?' + currentSearch : '');
     } catch {
       return false;
     }
@@ -117,7 +115,6 @@ export default function ShopHero({
       setPendingHref('');
       return;
     }
-
     setPendingHref(href);
     router.push(href);
   };
@@ -127,444 +124,193 @@ export default function ShopHero({
     [browseSections, collectionRootPath]
   );
 
-  const tabsWrapWidth = useMemo(() => {
-    if (tabSections.length <= 1) return 'fit-content';
-    if (tabSections.length === 2) return '420px';
-    if (tabSections.length === 3) return '620px';
-    return '760px';
-  }, [tabSections.length]);
-
   const activeSection = browseSections.find((section) => section.id === activeSectionId) ?? null;
-  const activeSectionIndex = Math.max(
-    0,
-    tabSections.findIndex((section) => section.id === activeSectionId)
-  );
-  const hasBannerImage = bannerEnabled && Boolean(desktopImageUrl || mobileImageUrl);
+  const visualOptions = useMemo(() => {
+    const sourceOptions = activeSection
+      ? activeSection.options.map((option) => ({ ...option, sectionId: activeSection.id }))
+      : browseSections.flatMap((section) =>
+          (section.options ?? []).map((option) => ({ ...option, sectionId: section.id }))
+        );
+    const seen = new Set();
+
+    return sourceOptions.reduce((options, option) => {
+      const key = option.href || `${option.sectionId}:${option.label}`;
+      if (seen.has(key)) return options;
+      seen.add(key);
+      options.push({ ...option, id: `${option.sectionId}-${option.label}-${key}` });
+      return options;
+    }, []);
+  }, [activeSection, browseSections]);
+  const bannerImage = desktopImageUrl || mobileImageUrl;
+  const bannerHref = ctaHref || collectionRootPath;
+
+  useEffect(() => {
+    const rail = railRef.current;
+    if (!rail) return undefined;
+
+    rail.scrollLeft = 0;
+
+    const updateScrollState = () => {
+      const remainingScroll = rail.scrollWidth - rail.clientWidth - rail.scrollLeft;
+      setCanScrollBackward(rail.scrollLeft > 2);
+      setCanScrollForward(remainingScroll > 2);
+    };
+
+    const handleRailScroll = () => {
+      updateScrollState();
+    };
+
+    updateScrollState();
+    rail.addEventListener('scroll', handleRailScroll, { passive: true });
+    const resizeObserver = new ResizeObserver(updateScrollState);
+    resizeObserver.observe(rail);
+
+    return () => {
+      rail.removeEventListener('scroll', handleRailScroll);
+      resizeObserver.disconnect();
+    };
+  }, [visualOptions]);
+
+  const scrollRailForward = () => {
+    const rail = railRef.current;
+    if (!rail) return;
+    rail.scrollBy({ left: Math.max(260, rail.clientWidth * 0.75), behavior: 'smooth' });
+  };
+
+  const scrollRailBackward = () => {
+    const rail = railRef.current;
+    if (!rail) return;
+    rail.scrollBy({ left: -Math.max(260, rail.clientWidth * 0.75), behavior: 'smooth' });
+  };
+
+  const handleBrowseClick = (event, sectionId, href) => {
+    if (
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) return;
+
+    event.preventDefault();
+    startTransition(() => {
+      if (sectionId) setOptimisticActiveSectionId(sectionId);
+      navigateBrowseHref(href);
+    });
+  };
 
   return (
-    <section
-      className="shop-hero-section"
-      style={{
-        position: "relative",
-        textAlign: "center",
-        background: "#FFFFFF",
-        borderBottom: "1px solid rgba(10,22,40,0.10)",
-      }}
-    >
-      <style>{`
-        @media (max-width: 640px) {
-          .shop-hero-top { padding: ${hasBannerImage ? '0' : '118px 16px 42px'} !important; }
-          .shop-hero-banner-content { padding: ${hasBannerImage ? '88px 16px 28px' : '0'} !important; }
-          .shop-hero-browse { display: none !important; }
-          .shop-hero-tabs-wrap { padding: 6px !important; }
-          .shop-hero-tabs { gap: 6px !important; }
-          .shop-hero-tab { min-width: 112px !important; padding: 10px 12px !important; }
-          .shop-hero-tabs.single { display: flex !important; justify-content: center !important; }
-          .shop-hero-tabs.single .shop-hero-tab { width: auto !important; min-width: 152px !important; }
-          .shop-hero-options { gap: 12px !important; }
-          .shop-hero-option { width: 102px !important; min-height: 110px !important; padding: 14px 10px !important; }
-        }
-      `}</style>
-
-      <div
-        className="shop-hero-top"
-        style={{
-          position: "relative",
-          overflow: "hidden",
-          minHeight: hasBannerImage ? undefined : "auto",
-          padding: hasBannerImage ? "0" : "170px 52px 64px",
-          background: hasBannerImage ? "#0A1628" : "linear-gradient(180deg, #FAFBFD 0%, #F5F7FC 100%)",
-        }}
-      >
-        {hasBannerImage ? (
-          <>
-            <div className="relative h-[360px] sm:hidden">
-              <picture>
-                {mobileImageUrl ? <source media="(max-width: 960px)" srcSet={mobileImageUrl} /> : null}
-                <img
-                  src={desktopImageUrl || mobileImageUrl}
-                  alt={imageAlt || title}
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    objectPosition: "center",
-                  }}
-                />
-              </picture>
-              <div
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  background: "linear-gradient(90deg, rgba(10,22,40,0.82) 0%, rgba(10,22,40,0.58) 34%, rgba(10,22,40,0.18) 66%, rgba(10,22,40,0) 100%)",
-                }}
-              />
-            </div>
-            <div className="relative hidden sm:block aspect-[1920/620]">
-              <picture>
-                <img
-                  src={desktopImageUrl || mobileImageUrl}
-                  alt={imageAlt || title}
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    objectPosition: "center",
-                  }}
-                />
-              </picture>
-              <div
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  background: "linear-gradient(90deg, rgba(10,22,40,0.82) 0%, rgba(10,22,40,0.58) 34%, rgba(10,22,40,0.18) 66%, rgba(10,22,40,0) 100%)",
-                }}
-              />
-            </div>
-          </>
-        ) : null}
-
-        <div
-          className="shop-hero-banner-content"
-          style={{
-            position: "relative",
-            zIndex: 1,
-            padding: hasBannerImage ? "140px 52px 46px" : undefined,
-            inset: hasBannerImage ? 0 : undefined,
-            display: hasBannerImage ? "flex" : undefined,
-            flexDirection: hasBannerImage ? "column" : undefined,
-            justifyContent: hasBannerImage ? "flex-end" : undefined,
-            position: hasBannerImage ? "absolute" : "relative",
-          }}
+    <section className="border-b border-black/10 bg-white pb-7 pt-[calc(118px+var(--space-7))] sm:pb-9 sm:pt-[calc(118px+var(--space-8))] lg:pt-[calc(146px+var(--space-8))]" aria-labelledby="shop-collection-heading">
+      <div className="flex flex-col gap-5 px-4 sm:px-7 lg:flex-row lg:items-end lg:justify-between lg:px-[52px]">
+        <h1
+          id="shop-collection-heading"
+          className="section-title text-left text-[clamp(1.35rem,2.2vw,2rem)] font-medium uppercase leading-none tracking-[0.025em] text-[var(--color-brand-primary,#000)]"
         >
-          <div
-            style={{
-              fontSize: "9px",
-              letterSpacing: ".3em",
-              textTransform: "uppercase",
-              color: hasBannerImage ? "rgba(255,255,255,0.72)" : "#6A6A6A",
-              marginBottom: "20px",
-            }}
-          >
-            <Link
-              href="/"
-              style={{ color: hasBannerImage ? "rgba(255,255,255,0.72)" : "#6A6A6A", textDecoration: "none", transition: "color .3s" }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = hasBannerImage ? "#FFFFFF" : "#0A1628")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = hasBannerImage ? "rgba(255,255,255,0.72)" : "#6A6A6A")}
-            >
-              Home
-            </Link>
-            <span style={{ margin: "0 10px", color: hasBannerImage ? "rgba(255,255,255,0.42)" : "#7F8898" }}>/</span>
-            <span style={{ color: hasBannerImage ? "#FFFFFF" : "#0A1628" }}>Shop</span>
-          </div>
+          Explore {title} Collection
+        </h1>
 
-          <h1
-            style={{
-              fontFamily: "var(--serif)",
-              fontSize: "clamp(46px, 6vw, 76px)",
-              fontWeight: 300,
-              color: hasBannerImage ? "#FFFFFF" : "#0A1628",
-              letterSpacing: ".02em",
-              lineHeight: 1.1,
-              marginBottom: "14px",
-            }}
-          >
-            {title.includes(' ') ? (
-              <>
-                {title.split(' ').slice(0, -1).join(' ')}{' '}
-                <em style={{ fontStyle: "normal", color: hasBannerImage ? "#FFFFFF" : "#0A1628" }}>{title.split(' ').slice(-1)}</em>
-              </>
-            ) : (
-              <em style={{ fontStyle: "normal", color: hasBannerImage ? "#FFFFFF" : "#0A1628" }}>{title}</em>
-            )}
-          </h1>
-
-          <p
-            style={{
-              fontSize: "12px",
-              letterSpacing: ".12em",
-              color: hasBannerImage ? "rgba(255,255,255,0.82)" : "#6A6A6A",
-              maxWidth: "540px",
-              margin: "0 auto",
-              lineHeight: 1.8,
-            }}
-          >
-            {subtitle}
-          </p>
-
-          {hasBannerImage && ctaLabel && ctaHref ? (
-            <div style={{ marginTop: "26px" }}>
-              <Link
-                href={ctaHref}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "10px",
-                  padding: "14px 28px",
-                  borderRadius: "999px",
-                  background: "#FFFFFF",
-                  color: "#0A1628",
-                  textDecoration: "none",
-                  textTransform: "uppercase",
-                  letterSpacing: ".24em",
-                  fontSize: "10px",
-                  fontWeight: 600,
-                  border: "1px solid rgba(255,255,255,0.18)",
-                }}
-              >
-                <span>{ctaLabel}</span>
-                <span style={{ fontSize: "14px" }}>&rarr;</span>
-              </Link>
-            </div>
-          ) : null}
-        </div>
-      </div>
-
-      {browseSections.length > 0 ? (
-        <div
-          className="shop-hero-browse"
-          style={{
-            maxWidth: "1120px",
-            margin: "0 auto",
-            padding: "28px 52px 34px",
-          }}
-        >
-          <div
-            className="shop-hero-tabs-wrap"
-            style={{
-              width: tabsWrapWidth,
-              maxWidth: "100%",
-              margin: "0 auto 22px",
-              padding: "5px",
-              border: "1px solid rgba(10,22,40,0.12)",
-              borderRadius: "24px",
-              background: "#FFFFFF",
-            }}
-          >
-            <div
-              className={`shop-hero-tabs${tabSections.length === 1 ? ' single' : ''}`}
-              style={{
-                position: "relative",
-                isolation: "isolate",
-                display: tabSections.length === 1 ? "flex" : "grid",
-                justifyContent: tabSections.length === 1 ? "center" : undefined,
-                gridTemplateColumns: tabSections.length === 1 ? undefined : `repeat(${Math.max(1, tabSections.length)}, minmax(0, 1fr))`,
-                gap: "5px",
-              }}
-            >
-              {tabSections.length > 1 ? (
-                <span
-                  aria-hidden="true"
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    bottom: 0,
-                    width: `calc((100% - ${(tabSections.length - 1) * 5}px) / ${tabSections.length})`,
-                    borderRadius: "14px",
-                    background: "#0A1628",
-                    transform: `translateX(calc(${activeSectionIndex} * (100% + 5px)))`,
-                    transition: "transform .38s cubic-bezier(0.22, 1, 0.36, 1)",
-                    pointerEvents: "none",
-                    zIndex: 0,
-                  }}
-                />
-              ) : null}
+        {browseSections.length > 0 ? (
+          <nav aria-label="Browse collection sections" className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] sm:-mx-7 sm:px-7 lg:mx-0 lg:max-w-[62%] lg:px-0 [&::-webkit-scrollbar]:hidden">
+            <div className="flex min-w-max items-center gap-7 border-b border-black/10">
               {tabSections.map((section) => {
                 const isActive = section.id === activeSectionId;
-                const tabContent = (
-                  <span
-                    style={{
-                      position: "relative",
-                      zIndex: 1,
-                      display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "8px",
-                      minWidth: 0,
-                    }}
-                  >
-                    {section.iconUrl ? (
-                      <img
-                        src={section.iconUrl}
-                        alt={section.title}
-                        style={{
-                          width: "16px",
-                          height: "16px",
-                          objectFit: "contain",
-                          flexShrink: 0,
-                          filter: isActive ? "brightness(0) invert(1)" : "none",
-                        }}
-                      />
-                    ) : null}
-                    <span
-                      style={{
-                        fontSize: "12px",
-                        letterSpacing: ".01em",
-                        fontWeight: 500,
-                      }}
-                    >
-                      {section.title}
-                    </span>
-                  </span>
-                );
-
-                const commonTabStyle = {
-                  minWidth: "0",
-                  width: tabSections.length === 1 ? "auto" : "100%",
-                  padding: "10px 14px",
-                  position: "relative",
-                  zIndex: 1,
-                  borderRadius: "14px",
-                  border: tabSections.length === 1 && isActive ? "1px solid #0A1628" : "1px solid transparent",
-                  background: tabSections.length === 1 && isActive ? "#0A1628" : "transparent",
-                  color: isActive ? "#FFFFFF" : "#0A1628",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "8px",
-                  transition: "color .25s ease, border-color .25s ease",
-                  textDecoration: "none",
-                };
-
+                const href = section.href || pathname;
                 return (
                   <Link
                     key={section.id}
-                    href={section.href || pathname}
-                    className="shop-hero-tab"
-                    style={commonTabStyle}
-                    onClick={(event) => {
-                      if (
-                        event.button === 0 &&
-                        !event.metaKey &&
-                        !event.ctrlKey &&
-                        !event.shiftKey &&
-                        !event.altKey
-                      ) {
-                        event.preventDefault();
-                        startTransition(() => {
-                          setOptimisticActiveSectionId(section.id);
-                          const href = section.href || pathname;
-                          navigateBrowseHref(href);
-                        });
-                      }
-                    }}
+                    href={href}
+                    aria-current={isActive ? 'page' : undefined}
+                    className={'relative pb-3 font-[family-name:var(--font-family-primary)] text-[12px] font-medium uppercase tracking-[0.08em] text-[#0A1628] no-underline transition-opacity hover:opacity-60 ' + (isActive ? 'after:absolute after:inset-x-0 after:bottom-[-1px] after:h-[2px] after:bg-[#0A1628]' : '')}
+                    onClick={(event) => handleBrowseClick(event, section.id, href)}
                   >
-                    {tabContent}
+                    {section.title}
                   </Link>
                 );
               })}
             </div>
-          </div>
+          </nav>
+        ) : null}
+      </div>
 
-          {activeSection?.options.length > 0 ? (
-            <div
-              className="shop-hero-options"
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                flexWrap: "wrap",
-                gap: "10px 12px",
-                width: "100%",
-                maxWidth: "720px",
-                margin: "0 auto",
-              }}
+      <div className="relative mt-6">
+        <div
+          ref={railRef}
+          className="flex snap-x snap-mandatory gap-[3px] overflow-x-auto px-[var(--space-2)] pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          aria-label={(activeSection?.title || title) + ' visual options'}
+        >
+        <Link
+          href={bannerHref}
+          className="group relative aspect-square h-[70vw] max-h-[320px] w-[70vw] max-w-[324px] shrink-0 snap-start overflow-hidden bg-[#F2F1EE] text-white no-underline sm:h-[320px] sm:w-[324px]"
+        >
+          {bannerImage ? (
+            <picture>
+              {mobileImageUrl ? <source media="(max-width: 640px)" srcSet={mobileImageUrl} /> : null}
+              <img src={bannerImage} alt={imageAlt || title} className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.025]" />
+            </picture>
+          ) : (
+            <div className="h-full w-full bg-[linear-gradient(145deg,#172238,#0A1628)]" aria-hidden="true" />
+          )}
+          <span className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/5 to-transparent" aria-hidden="true" />
+          <span className="absolute inset-x-0 bottom-0 p-5 text-left font-[family-name:var(--font-family-primary)] text-[15px] font-semibold uppercase tracking-[0.08em] [text-shadow:0_1px_4px_rgba(0,0,0,0.8)]">
+            {title}
+          </span>
+        </Link>
+
+        {visualOptions.map((option) => {
+          const isActive = isOptionActive(option.href);
+          const isPending = hasPendingNavigation && pendingHref === option.href;
+          const hasIcon = option.type === 'icon' && option.iconUrl;
+          const isSwatch = option.type === 'swatch';
+
+          return (
+            <Link
+              key={option.id}
+              href={option.href}
+              aria-current={isActive ? 'page' : undefined}
+              className={'group relative aspect-[4/5] h-[70vw] max-h-[320px] w-[56vw] max-w-[256px] shrink-0 snap-start overflow-hidden border bg-[#F6F6F4] no-underline transition-[border-color,opacity] sm:h-[320px] sm:w-[256px] ' + (isActive || isPending ? 'border-[#0A1628]' : 'border-transparent')}
+              style={{ opacity: hasPendingNavigation && !isPending ? 0.58 : 1 }}
+              onClick={(event) => handleBrowseClick(event, null, option.href)}
             >
-              {activeSection.options.map((option) => {
-                const isTextOnly = option.type !== "swatch" && !(option.type === "icon" && option.iconUrl);
-                const isActive = isOptionActive(option.href);
-                const isPending = hasPendingNavigation && pendingHref === option.href;
-
-                return (
-                <Link
-                  key={`${activeSection.id}-${option.label}`}
-                  href={option.href}
-                  className="shop-hero-option"
-                  style={{
-                    width: isTextOnly ? "auto" : "118px",
-                    minWidth: isTextOnly ? "148px" : undefined,
-                    minHeight: isTextOnly ? "46px" : "116px",
-                    padding: isTextOnly ? "12px 20px" : "14px 10px",
-                    border: `1px solid ${isActive || isPending ? "#0A1628" : "transparent"}`,
-                    borderRadius: isTextOnly ? "14px" : "16px",
-                    background: isActive || isPending ? "rgba(10,22,40,0.06)" : "transparent",
-                    color: "#0A1628",
-                    textDecoration: "none",
-                    display: "inline-flex",
-                    flexDirection: isTextOnly ? "row" : "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: isTextOnly ? "8px" : "10px",
-                    transition: "all .25s ease",
-                    boxShadow: isActive ? "0 0 0 1px rgba(10,22,40,0.04)" : "none",
-                    opacity: hasPendingNavigation && !isPending ? 0.58 : 1,
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "rgba(10,22,40,0.24)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = isActive || isPending ? "#0A1628" : "transparent";
-                  }}
-                  onClick={(event) => {
-                    if (
-                      event.button === 0 &&
-                      !event.metaKey &&
-                      !event.ctrlKey &&
-                      !event.shiftKey &&
-                      !event.altKey
-                    ) {
-                      event.preventDefault();
-                      startTransition(() => {
-                        navigateBrowseHref(option.href);
-                      });
-                    }
-                  }}
-                >
-                  {option.type === "swatch" ? (
-                    <span
-                      style={{
-                        width: "31px",
-                        height: "31px",
-                        borderRadius: "999px",
-                        background: option.colorHex || "#D9D9D9",
-                        border: "1px solid rgba(10,22,40,0.12)",
-                        flexShrink: 0,
-                      }}
-                    />
-                  ) : option.type === "icon" && option.iconUrl ? (
-                    <img
-                      src={option.iconUrl}
-                      alt={option.label}
-                      style={{
-                        width: "52px",
-                        height: "52px",
-                        objectFit: "contain",
-                        flexShrink: 0,
-                      }}
-                    />
-                  ) : null}
-                  <span
-                    style={{
-                      fontSize: "12px",
-                      letterSpacing: ".01em",
-                      textTransform: "none",
-                      fontWeight: 500,
-                      lineHeight: 1.2,
-                      whiteSpace: isTextOnly ? "nowrap" : "normal",
-                    }}
-                  >
-                    {option.label}{isPending ? '…' : ''}
-                  </span>
-                </Link>
-              )})}
-            </div>
-          ) : null}
+              <span className="absolute inset-0 flex items-center justify-center">
+                {hasIcon ? (
+                  <img src={option.iconUrl} alt="" className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.025]" />
+                ) : isSwatch ? (
+                  <span className="absolute inset-0" style={{ background: option.colorHex || '#D9D9D9' }} aria-hidden="true" />
+                ) : (
+                  <span className="font-[family-name:var(--font-family-primary)] text-[32px] font-light text-black/15" aria-hidden="true">◇</span>
+                )}
+              </span>
+              <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-black/5 to-transparent" aria-hidden="true" />
+              <span className="absolute inset-x-0 bottom-0 px-4 py-4 text-left font-[family-name:var(--font-family-primary)] text-[12px] font-medium uppercase leading-[1.3] tracking-[0.07em] text-white [text-shadow:0_1px_4px_rgba(0,0,0,0.8)]">
+                {option.label}{isPending ? '…' : ''}
+              </span>
+            </Link>
+          );
+        })}
         </div>
-      ) : null}
+
+        {canScrollBackward ? (
+          <button
+            type="button"
+            aria-label="Scroll collection options backward"
+            onClick={scrollRailBackward}
+            className="absolute left-4 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center border border-black/15 bg-white text-[#0A1628] shadow-[0_8px_24px_rgba(10,22,40,0.14)] transition-colors hover:bg-[#0A1628] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A1628]"
+          >
+            <ChevronLeft size={20} strokeWidth={1.75} aria-hidden="true" />
+          </button>
+        ) : null}
+
+        {canScrollForward ? (
+          <button
+            type="button"
+            aria-label="Scroll collection options forward"
+            onClick={scrollRailForward}
+            className="absolute right-4 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center border border-black/15 bg-white text-[#0A1628] shadow-[0_8px_24px_rgba(10,22,40,0.14)] transition-colors hover:bg-[#0A1628] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A1628]"
+          >
+            <ChevronRight size={20} strokeWidth={1.75} aria-hidden="true" />
+          </button>
+        ) : null}
+      </div>
     </section>
   );
 }

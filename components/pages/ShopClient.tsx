@@ -6,16 +6,6 @@ import ProductGrid from '@/components/shop/ProductGrid';
 import EnquireModal from '@/components/home/EnquireModal';
 import type { StorefrontProductCard } from '@/lib/catalog-products';
 
-export type CategoryGridPoster = {
-  id: string
-  title?: string | null
-  imageUrl: string
-  imageAlt?: string | null
-  linkUrl?: string | null
-  insertAfter: number
-  displayOrder: number
-}
-
 const clientFilterKeys = ['category', 'subcategory', 'option', 'shape', 'style', 'metal', 'certificate'] as const
 
 function filtersFromHref(href: string, products: StorefrontProductCard[]) {
@@ -65,7 +55,6 @@ export default function ShopClient({
   filterGroups,
   masterShapeOptions,
   headerBrowseSections,
-  gridPosters,
 }: {
   products: StorefrontProductCard[]
   sourceProducts?: StorefrontProductCard[]
@@ -81,7 +70,6 @@ export default function ShopClient({
   initialPage?: number
   filterGroups?: { id: string; title: string; options: { value: string; label: string }[] }[]
   masterShapeOptions?: { value: string; label: string; iconUrl?: string | null; displayOrder: number }[]
-  gridPosters?: CategoryGridPoster[]
   headerBrowseSections?: {
     id: string
     title: string
@@ -148,7 +136,6 @@ export default function ShopClient({
         initialPage={activePage}
         filterGroups={filterGroups}
         masterShapeOptions={masterShapeOptions}
-        gridPosters={gridPosters}
         onEnquire={handleEnquire}
       />
       <EnquireModal open={isEnquireOpen} piece={enquirePiece} onClose={() => setIsEnquireOpen(false)} />

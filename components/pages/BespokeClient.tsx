@@ -3,8 +3,6 @@
 import { useState } from 'react';
 import EnquireModal from '@/components/home/EnquireModal';
 import { useToast } from '@/components/home/Toast';
-import Loader from '@/components/home/Loader';
-import { usePageLoaderCache } from '@/lib/hooks/usePageLoaderCache';
 
 import BespokeHero from '@/components/bespoke/BespokeHero';
 import ProcessSteps from '@/components/bespoke/ProcessSteps';
@@ -28,23 +26,10 @@ function BespokeInner({
 }) {
   const { showToast } = useToast();
   const [enquireOpen, setEnquireOpen] = useState(false);
-  const { pageLoading, handleLoaderComplete } = usePageLoaderCache({
-    cacheKey: 'hod_bespoke_loader_v2',
-    ttlMs: 1000 * 60 * 60 * 12,
-    fallbackDelayMs: 260,
-  });
 
   return (
     <div className="min-h-screen bg-(--bg) text-(--ink)">
-      {pageLoading ? <Loader ready onComplete={handleLoaderComplete} /> : null}
-      <div
-        aria-hidden={pageLoading}
-        style={{
-          opacity: pageLoading ? 0 : 1,
-          transition: 'opacity .2s ease',
-          pointerEvents: pageLoading ? 'none' : 'auto',
-        }}
-      >
+      <div>
         <BespokeHero onEnquireClick={() => setEnquireOpen(true)} initialHero={hero} initialSlides={slides} />
         <ProcessSteps initialItems={processItems} />
         <BespokePortfolio initialCategories={portfolioCategories} initialItems={portfolioItems} />

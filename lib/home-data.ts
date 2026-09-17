@@ -43,6 +43,14 @@ export type HomeMarqueeData = {
   items: Array<{ quote: string; author: string }>;
 };
 
+export type HomeInstagramReelsData = {
+  heading: string;
+  subtitle: string;
+  isEnabled: boolean;
+  marqueeDurationSeconds: number;
+  pauseOnHover: boolean;
+  items: Array<{ id: string; instagramUrl: string; title: string; coverImageUrl: string | null }>;
+};
 export type HomeTrustedPartnersData = {
   heading: string;
   isEnabled: boolean;
@@ -187,6 +195,7 @@ export type HomeBestSellerProduct = {
   badgeVariant: 'navy' | 'outline';
   detailTemplate?: 'standard' | 'hiphop';
   image?: string;
+  displayTitle?: string;
   metalsFull?: Array<{ id: string; name: string; slug: string; colorHex?: string | null }>;
   metalMediaRows?: Array<{ product_id: string; metal_id: string; image_1_path?: string | null; is_default_fallback?: boolean | null }>;
   metalPurityVariants?: Array<{
@@ -212,6 +221,14 @@ type BestSellerProductRow = {
   subcategory?: { name?: string | null } | { name?: string | null }[] | null;
   option?: { name?: string | null } | { name?: string | null }[] | null;
   category?: { name?: string | null } | { name?: string | null }[] | null;
+};
+
+type BestSellerProductSelectionRow = {
+  section_id: string;
+  product_id: string;
+  display_order?: number | null;
+  display_title?: string | null;
+  display_image_path?: string | null;
 };
 
 type BestSellerMetalSelectionRow = {
@@ -585,7 +602,7 @@ const loadHomePageData = unstable_cache(
         .maybeSingle(),
       supabase
         .from('blog_posts')
-        .select('id, slug, category, author, date_label, read_time, bg_key, bg_color, title, title_html, subtitle, body_html, hero_image_path, is_published, sort_order, blog_post_tags(tag, sort_order)')
+        .select('id, slug, category, author, date_label, read_time, bg_key, bg_color, title, title_html, card_title, subtitle, body_html, hero_image_path, card_image_path, is_published, sort_order, blog_post_tags(tag, sort_order)')
         .eq('is_published', true)
         .order('sort_order', { ascending: true }),
       supabase
@@ -654,7 +671,7 @@ const loadHomePageData = unstable_cache(
         .maybeSingle(),
       supabase
         .from('cms_home_bestseller_products')
-        .select('section_id, product_id, display_order')
+        .select('section_id, product_id, display_order, display_title, display_image_path')
         .order('display_order', { ascending: true }),
     ]);
 
@@ -711,9 +728,10 @@ const loadHomePageData = unstable_cache(
     const discoverStoneShapes = (discoverStoneShapesResult.data ?? []) as DiscoverStoneShapeRow[];
 
     if (bestSellerSectionResult.data?.id) {
-      const productIds = (bestSellerProductSelectionsResult.data ?? [])
-        .filter((item) => item.section_id === bestSellerSectionResult.data?.id)
-        .map((item) => item.product_id);
+      const selectedProductRows = (bestSellerProductSelectionsResult.data ?? [])
+        .filter((item) => item.section_id === bestSellerSectionResult.data?.id) as BestSellerProductSelectionRow[];
+      const productIds = selectedProductRows.map((item) => item.product_id);
+      const selectionByProduct = new Map(selectedProductRows.map((item) => [item.product_id, item]));
 
       if (productIds.length) {
         const [
@@ -814,6 +832,7 @@ const loadHomePageData = unstable_cache(
           .map((id) => productMap.get(id) ?? null)
           .filter((product): product is BestSellerProductRow => Boolean(product))
           .map((product, index) => {
+            const cardSelection = selectionByProduct.get(product.id);
             const selectedMetals = (selectionsByProduct.get(product.id) ?? [])
               .map((selection) => metalsById.get(selection.metal_id))
               .filter((metal): metal is BestSellerMetalRow => Boolean(metal))
@@ -861,13 +880,14 @@ const loadHomePageData = unstable_cache(
             return {
               id: product.id,
               slug: product.slug,
-              name: product.name,
+              name: cardSelection?.display_title?.trim() || product.name,
+              displayTitle: cardSelection?.display_title?.trim() || undefined,
               meta: buildBestSellerMetaFromMaterialValue(product, primaryMaterialValueName),
               price: buildBestSellerPrice(product.base_price),
               badge: index === 0 ? 'Bestseller' : product.featured ? 'Featured' : 'Selected',
               badgeVariant: index === 0 || product.featured ? 'navy' : 'outline',
               detailTemplate: product.detail_template === 'hiphop' ? 'hiphop' : 'standard',
-              image: defaultVariantImage || toPublicUrl(defaultFallbackImage || fallbackMedia?.image_1_path || product.image_1_path),
+              image: toPublicUrl(cardSelection?.display_image_path) || defaultVariantImage || toPublicUrl(defaultFallbackImage || fallbackMedia?.image_1_path || product.image_1_path),
               metalsFull: selectedMetals,
               metalMediaRows: (mediaByProduct.get(product.id) ?? []).map((entry) => ({
                 ...entry,
@@ -1001,8 +1021,37 @@ const loadHomePageData = unstable_cache(
   { revalidate: 300 }
 );
 
+async function getFreshInstagramReelsData(): Promise<HomeInstagramReelsData> {
+  const supabase = createHomeSupabaseClient();
+  const sectionPromise = supabase.from('home_instagram_reels_section').select('heading, subtitle, is_enabled, marquee_duration_seconds, pause_on_hover').eq('section_key', 'home_instagram_reels').maybeSingle();
+  const itemsWithCoverPromise = supabase.from('home_instagram_reels').select('id, instagram_url, title, cover_image_url, display_order').eq('section_key', 'home_instagram_reels').eq('is_enabled', true).order('display_order', { ascending: true }).limit(30);
+  const [sectionResult, initialItemsResult] = await Promise.all([sectionPromise, itemsWithCoverPromise]);
+  const itemsResult = initialItemsResult.error?.message?.includes('cover_image_url')
+    ? await supabase.from('home_instagram_reels').select('id, instagram_url, title, display_order').eq('section_key', 'home_instagram_reels').eq('is_enabled', true).order('display_order', { ascending: true }).limit(30)
+    : initialItemsResult;
+  const missingTable = [sectionResult.error, itemsResult.error].some((error) => error?.code === 'PGRST205' || error?.message?.includes('home_instagram_reels'));
+  if (missingTable) return { heading: '', subtitle: '', isEnabled: false, marqueeDurationSeconds: 40, pauseOnHover: true, items: [] };
+  if (sectionResult.error) throw sectionResult.error;
+  if (itemsResult.error) throw itemsResult.error;
+  return {
+    heading: sectionResult.data?.heading ?? 'Follow Us on Instagram',
+    subtitle: sectionResult.data?.subtitle ?? '',
+    isEnabled: sectionResult.data?.is_enabled ?? false,
+    marqueeDurationSeconds: Math.min(180, Math.max(10, sectionResult.data?.marquee_duration_seconds ?? 40)),
+    pauseOnHover: sectionResult.data?.pause_on_hover ?? true,
+    items: (itemsResult.data ?? []).map((item) => {
+      const reel = item as { id: string; instagram_url: string; title?: string | null; cover_image_url?: string | null };
+      return { id: reel.id, instagramUrl: reel.instagram_url, title: reel.title ?? '', coverImageUrl: reel.cover_image_url ?? null };
+    }),
+  };
+}
+
 export async function getHomePageData() {
-  return loadHomePageData();
+  const [data, instagramReels] = await Promise.all([
+    loadHomePageData(),
+    getFreshInstagramReelsData().catch(() => ({ heading: '', subtitle: '', isEnabled: false, marqueeDurationSeconds: 40, pauseOnHover: true, items: [] })),
+  ]);
+  return { ...data, instagramReels };
 }
 
 /**

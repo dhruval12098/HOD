@@ -1,7 +1,7 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useEffect, useLayoutEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Hero from '@/components/home/Hero';
@@ -15,8 +15,6 @@ import type { BlogPost } from '@/lib/data/blog-posts';
 import EnquireModal from '@/components/home/EnquireModal';
 import BespokeEnquiryModal from '@/components/home/BespokeEnquiryModal';
 import Toast from '@/components/home/Toast';
-import { useHomeLoader } from '@/components/layout/HomeLoaderContext';
-import { persistHomeLoaderCache, shouldSkipHomeLoader } from '@/lib/home-loader-cache';
 import type {
   HomeBestSellerProduct,
   HomeBestSellerSection,
@@ -25,6 +23,7 @@ import type {
   HomeDiamondInfoConfig,
   HomeDiamondInfoItem,
   HomeHipHopSection,
+  HomeInstagramReelsData,
   HomeMarqueeData,
   HomeTrustedPartnersData,
 } from '@/lib/home-data';
@@ -35,10 +34,10 @@ const DiscoverShapes = dynamic(() => import('@/components/home/DiscoverShapes'),
 const BestSellers = dynamic(() => import('@/components/home/BestSellers'), { loading: () => null });
 const CollectionShowcase = dynamic(() => import('@/components/home/CollectionShowcase'), { loading: () => null });
 const BespokeShowcase = dynamic(() => import('@/components/home/BespokeShowcase'), { loading: () => null });
+const InstagramReels = dynamic(() => import('@/components/home/InstagramReels'), { loading: () => null });
 const DiamondInfoSequence = dynamic(() => import('@/components/home/DiamondInfoSequence'), { loading: () => null });
 const Newsletter = dynamic(() => import('@/components/home/Newsletter'), { loading: () => null });
 const DeferredBlogGrid = dynamic(() => import('@/components/blog/BlogGrid'), { loading: () => null });
-const SelectedCouponOffer = dynamic(() => import('@/components/home/SelectedCouponOffer'), { loading: () => null });
 
 type CollectionPageConfig = {
   pageEnabled: boolean
@@ -76,6 +75,7 @@ export default function HomeClient({
   hiphopSection,
   collectionPageConfig,
   bespokeShowcaseSection,
+  instagramReels,
   diamondInfoItems = [],
   diamondInfoConfig,
   marqueeData,
@@ -90,6 +90,7 @@ export default function HomeClient({
   hiphopSection: HomeHipHopSection
   collectionPageConfig: CollectionPageConfig
   bespokeShowcaseSection: HomeBespokeShowcaseSection
+  instagramReels: HomeInstagramReelsData
   diamondInfoItems?: HomeDiamondInfoItem[]
   diamondInfoConfig?: HomeDiamondInfoConfig
   marqueeData: HomeMarqueeData
@@ -98,122 +99,14 @@ export default function HomeClient({
   bestSellerProducts?: HomeBestSellerProduct[]
 }) {
   const router = useRouter();
-  const { isHomeReady, setIsHomeLoading, setIsHomeReady } = useHomeLoader();
   const [isEnquireOpen, setIsEnquireOpen] = useState(false);
   const [isBespokeEnquireOpen, setIsBespokeEnquireOpen] = useState(false);
   const [enquireGemName, setEnquireGemName] = useState('');
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
-  const [heroReady, setHeroReady] = useState(false);
-  const [fontsReady, setFontsReady] = useState(false);
-  const [skipHomeLoader, setSkipHomeLoader] = useState(false);
   const [showDeferredSections, setShowDeferredSections] = useState(false);
-  const showPrimarySections = skipHomeLoader || isHomeReady;
-
-  useLayoutEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const shouldSkipLoader = shouldSkipHomeLoader();
-
-    setSkipHomeLoader(shouldSkipLoader);
-    if (shouldSkipLoader) {
-      setIsHomeReady(true);
-      setIsHomeLoading(false);
-    } else {
-      setIsHomeReady(false);
-      setIsHomeLoading(true);
-    }
-
-    return () => {
-      setIsHomeLoading(false);
-      setIsHomeReady(false);
-    };
-  }, [setIsHomeLoading, setIsHomeReady]);
 
   useEffect(() => {
-    if (skipHomeLoader) {
-      setFontsReady(true);
-      return;
-    }
-
-    let cancelled = false;
-    const fallbackTimer = window.setTimeout(() => {
-      if (!cancelled) {
-        setFontsReady(true);
-      }
-    }, 2500);
-
-    if (typeof document !== 'undefined' && 'fonts' in document && document.fonts?.ready) {
-      document.fonts.ready
-        .then(() => {
-          if (!cancelled) {
-            setFontsReady(true);
-          }
-        })
-        .catch(() => {
-          if (!cancelled) {
-            setFontsReady(true);
-          }
-        });
-    } else {
-      setFontsReady(true);
-    }
-
-    return () => {
-      cancelled = true;
-      window.clearTimeout(fallbackTimer);
-    };
-  }, [skipHomeLoader]);
-
-  useEffect(() => {
-    if (skipHomeLoader || heroReady) return;
-
-    const fallbackTimer = window.setTimeout(() => {
-      setHeroReady(true);
-    }, 4500);
-
-    return () => {
-      window.clearTimeout(fallbackTimer);
-    };
-  }, [heroReady, skipHomeLoader]);
-
-  useEffect(() => {
-    if (!skipHomeLoader && (!heroReady || !fontsReady)) return;
-
-    if (skipHomeLoader) {
-      setIsHomeReady(true);
-      persistHomeLoaderCache();
-      return;
-    }
-
-    let frameOne = 0;
-    let frameTwo = 0;
-
-    frameOne = window.requestAnimationFrame(() => {
-      frameTwo = window.requestAnimationFrame(() => {
-        setIsHomeReady(true);
-        persistHomeLoaderCache();
-      });
-    });
-
-    return () => {
-      window.cancelAnimationFrame(frameOne);
-      window.cancelAnimationFrame(frameTwo);
-    };
-  }, [fontsReady, heroReady, setIsHomeReady, skipHomeLoader]);
-
-  useEffect(() => {
-    if (showPrimarySections) {
-      setShowDeferredSections((current) => current || skipHomeLoader);
-    }
-  }, [showPrimarySections, skipHomeLoader]);
-
-  useEffect(() => {
-    if (!skipHomeLoader && !isHomeReady) {
-      setShowDeferredSections(false);
-      return;
-    }
-
     let cancelled = false;
     let timeoutId: ReturnType<typeof globalThis.setTimeout> | null = null;
     let idleId: number | null = null;
@@ -248,7 +141,7 @@ export default function HomeClient({
         }).cancelIdleCallback(idleId);
       }
     };
-  }, [isHomeReady, skipHomeLoader]);
+  }, []);
 
   const handleEnquireClose = () => {
     setIsEnquireOpen(false);
@@ -263,15 +156,9 @@ export default function HomeClient({
 
   return (
     <div className="min-h-screen bg-(--bg) text-(--ink)">
-      <Hero
-        initialContent={heroContent}
-        onPrimaryVisualReady={() => {
-          setHeroReady(true);
-        }}
-      />
+      <Hero initialContent={heroContent} />
       <ShopByCategory data={shopByCategory} />
-      {showPrimarySections ? (
-        <>
+      <>
           {collectionPageConfig.pageEnabled && collectionPageConfig.showHomeShowcase ? <CollectionShowcase config={collectionPageConfig} /> : null}
           <ViewportDeferred minHeight={620}>
             <BestSellers initialSection={bestSellerSection} initialProducts={bestSellerProducts} />
@@ -282,26 +169,25 @@ export default function HomeClient({
           {bespokeShowcaseSection.isEnabled ? (
             <BespokeShowcase section={bespokeShowcaseSection} onEnquireClick={() => setIsBespokeEnquireOpen(true)} />
           ) : null}
+          <InstagramReels data={instagramReels} />
           {/* <TrustedPartnersMarquee data={trustedPartnersData} /> */}
           {/* <TestimonialMarquee initialData={marqueeData} /> */}
           {/* <Certifications /> */}
           {showDeferredSections ? (
-            <section aria-labelledby="home-blogs-heading" className="bg-[var(--color-brand-accent,#fff)] px-[var(--space-2)] py-[var(--space-12)] sm:px-[var(--space-3)] lg:px-[var(--space-4)] lg:py-[var(--space-12)]">
+            <section aria-labelledby="home-blogs-heading" className="bg-[var(--color-brand-accent,#fff)] px-[var(--space-2)] py-[var(--space-6)] sm:px-[var(--space-3)] lg:px-[var(--space-4)] lg:py-[var(--space-6)]">
               <div className="w-full">
-                <h2 id="home-blogs-heading" className="section-title mb-[var(--space-6)] text-[clamp(1.7rem,2.4vw,2.4rem)] leading-[1.12] text-[var(--theme-heading)]">Blogs</h2>
+                <div className="mb-[var(--space-6)] flex flex-wrap items-end justify-between gap-[var(--space-4)]">
+                  <h2 id="home-blogs-heading" className="section-title text-[clamp(1.7rem,2.4vw,2.4rem)] leading-[1.12] text-[var(--theme-heading)]">Blogs</h2>
+                  <Link href="/blog" className="flex items-center gap-3 border-b border-[var(--theme-ink)] pb-1 font-[family-name:var(--font-family-primary)] text-[clamp(0.7rem,0.85vw,0.9rem)] font-semibold uppercase tracking-[0.08em] text-[var(--theme-ink)] no-underline transition-[gap] duration-300 hover:gap-5">View All Blogs →</Link>
+                </div>
                 <DeferredBlogGrid posts={blogPosts} maxPosts={4} compactGrid simplifiedCards onPostClick={(id) => {
                   const target = blogPosts.find((post) => post.id === id)
                   router.push(target?.slug ? `/blog/${target.slug}` : `/blog?post=${id}`)
                 }} />
-                <div className="mt-[var(--space-6)] flex justify-center">
-                  <Link href="/blog" className="inline-flex min-h-12 items-center justify-center bg-[var(--color-brand-primary,#000)] px-[var(--space-6)] font-[family-name:var(--font-family-button)] text-xs font-semibold uppercase tracking-[0.12em] text-white transition-opacity hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-brand-primary,#000)]">View All Blogs</Link>
-                </div>
               </div>
             </section>
           ) : null}
-          <SelectedCouponOffer />
-        </>
-      ) : null}
+      </>
       {/* {hiphopSection.is_enabled ? <HipHopShowcase initialSection={hiphopSection} /> : null} */}
       {/* About Us video-led section; uncomment to restore:
           <ViewportDeferred minHeight={520}>

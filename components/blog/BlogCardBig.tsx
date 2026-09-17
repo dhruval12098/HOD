@@ -12,7 +12,7 @@ interface BlogCardBigProps {
 }
 
 export default function BlogCardBig({ post, basePath = "/blog", simplifiedDetails = false }: BlogCardBigProps) {
-  const imageUrl = getStorageImageUrl(post.heroImagePath);
+  const imageUrl = getStorageImageUrl(post.cardImagePath || post.heroImagePath);
   const href = post.slug ? `${basePath}/${post.slug}` : basePath;
 
   return (

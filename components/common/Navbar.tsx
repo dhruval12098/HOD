@@ -1,15 +1,14 @@
 'use client';
 import { useEffect, useMemo, useRef, useState, type AnchorHTMLAttributes, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import Link from 'next/link';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
-import ReactCountryFlag from 'react-country-flag';
 import { supabase } from '@/lib/supabase';
 import {
   type NavbarRenderItem,
   type NavbarRenderSection,
 } from '@/lib/navbar';
 import type { User } from '@supabase/supabase-js';
-import { useCurrency } from '@/context/CurrencyContext';
 import { useWishlistStore } from '@/lib/hooks/useWishlistStore';
 import { useCart } from '@/lib/hooks/useCart';
 
@@ -20,66 +19,6 @@ const METAL_COLORS: Record<string, string> = {
   platinum: 'linear-gradient(135deg,#E8E8E8,#C0C0C0)',
   default: 'linear-gradient(135deg,#E5E7EB,#9CA3AF)',
 };
-
-const DETECTED_COUNTRY_COOKIE = 'detected_country';
-
-function readDetectedCountryCookie() {
-  const cookie = document.cookie
-    .split('; ')
-    .find((entry) => entry.startsWith(`${DETECTED_COUNTRY_COOKIE}=`));
-  if (!cookie) return '';
-
-  try {
-    const countryCode = decodeURIComponent(cookie.slice(DETECTED_COUNTRY_COOKIE.length + 1)).toUpperCase();
-    return /^[A-Z]{2}$/.test(countryCode) ? countryCode : '';
-  } catch {
-    return '';
-  }
-}
-
-function getCountryName(countryCode: string) {
-  if (!countryCode) return 'Location unavailable';
-  try {
-    return new Intl.DisplayNames(['en'], { type: 'region' }).of(countryCode) || countryCode;
-  } catch {
-    return countryCode;
-  }
-}
-
-function DetectedCountryIndicator({
-  countryCode,
-  borderColor = 'rgba(0,0,0,0.1)',
-  background = 'transparent',
-}: {
-  countryCode: string;
-  borderColor?: string;
-  background?: string;
-}) {
-  const normalizedCountryCode = countryCode.toUpperCase();
-  const countryName = getCountryName(normalizedCountryCode);
-  const hasCountryFlag = /^[A-Z]{2}$/.test(normalizedCountryCode);
-
-  return (
-    <span
-      role="img"
-      aria-label={`Currency region: ${countryName}`}
-      title={`Currency region: ${countryName}`}
-      className="inline-flex h-[34px] w-[34px] flex-shrink-0 items-center justify-center rounded-full text-[16px] leading-none transition-all duration-300"
-      style={{ border: `1px solid ${borderColor}`, background }}
-    >
-      {hasCountryFlag ? (
-        <ReactCountryFlag
-          countryCode={normalizedCountryCode}
-          svg
-          aria-label={countryName}
-          style={{ width: '18px', height: '18px', borderRadius: '999px' }}
-        />
-      ) : (
-        <span aria-hidden="true">🌐</span>
-      )}
-    </span>
-  );
-}
 
 function SmartNavLink({ href, ...props }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) {
   const isInternalRoute = href.startsWith('/') && !href.startsWith('//');
@@ -110,31 +49,23 @@ function MegaSection({ section, onNavigate }: { section: NavbarRenderSection; on
       href: link.href, iconUrl: link.iconUrl,
     })) ?? []),
   ];
-  const rowCount = Math.min(5, entries.length);
+  const rowCount = Math.min(9, entries.length);
 
   return (
     <div className="flex flex-col">
       <div
-        className="mb-[22px] flex items-center gap-2 border-b border-black/[0.06] pb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#0A1628]"
-        style={{ fontFamily: 'var(--font-family-secondary)' }}
+        className="mb-[22px] border-0 pb-0 text-[19px] font-semibold leading-[1.2] tracking-[-0.01em] text-[#050505]"
+        style={{ fontFamily: 'var(--font-family-primary, Montserrat, sans-serif)' }}
       >
-        {section.iconUrl ? (
-          <img
-            src={section.iconUrl}
-            alt=""
-            aria-hidden="true"
-            className="h-5 w-5 flex-shrink-0 object-contain"
-          />
-        ) : null}
         <span>{section.title}</span>
       </div>
 
       {entries.length > 0 ? (
         <div
-          className="grid grid-flow-col gap-x-7 gap-y-1"
+          className="grid grid-flow-col gap-x-6 gap-y-1"
           style={{
             gridTemplateRows: `repeat(${rowCount}, minmax(0, auto))`,
-            gridAutoColumns: 'minmax(0, 1fr)',
+            gridAutoColumns: 'minmax(150px, max-content)',
           }}
         >
           {entries.map((entry) => (
@@ -142,14 +73,9 @@ function MegaSection({ section, onNavigate }: { section: NavbarRenderSection; on
               key={entry.key}
               href={entry.href}
               onClick={onNavigate}
-              className="flex items-center gap-[14px] py-[10px] text-[13.5px] font-light tracking-[0.02em] text-[#555] no-underline transition-all duration-250 hover:text-[#0A1628] hover:pl-1.5 group"
-              style={{ fontFamily: 'var(--font-family-secondary)' }}
+              className="block min-h-[34px] py-[5px] text-[16px] font-normal leading-[1.45] tracking-[-0.01em] text-[#050505] no-underline transition-colors duration-200 hover:text-[#8b6a3d]"
+              style={{ fontFamily: 'Inter, var(--font-family-secondary, sans-serif)' }}
             >
-              {entry.kind === 'metal' ? (
-                <MetalDot type={entry.type as keyof typeof METAL_COLORS} colorHex={entry.colorHex} />
-              ) : entry.iconUrl ? (
-                <img src={entry.iconUrl} alt={entry.label} className="h-7 w-7 flex-shrink-0 object-contain" />
-              ) : null}
               {entry.label}
             </SmartNavLink>
           ))}
@@ -183,31 +109,24 @@ function getMobileSectionEntries(section: NavbarRenderSection) {
   return [...metalEntries, ...linkEntries];
 }
 
-function getMegaMenuColumnCount(item: NavbarRenderItem) {
-  return item.mega?.sections.reduce((total, section) => total + getSectionColumnCount(section), 0) ?? 1;
-}
 
-function getSectionColumnCount(section: NavbarRenderSection) {
-  const optionCount = (section.metals?.length ?? 0) + (section.links?.length ?? 0);
-  return Math.max(1, Math.ceil(optionCount / 5));
-}
 
 export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[] }) {
   const router = useRouter();
   const { count: wishlistCount } = useWishlistStore();
-  const { count: cartCount } = useCart();
-  const { format, selected } = useCurrency();
+  const { count: cartCount, openCart } = useCart();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileOpenItem, setMobileOpenItem] = useState<string | null>(null);
+  const [mobileOpenSection, setMobileOpenSection] = useState<string | null>(null);
+  const mobileActiveItem = navItems.find((item) => item.label === mobileOpenItem) ?? null;
   const [activeMegaItem, setActiveMegaItem] = useState<string | null>(null);
   const [navHidden, setNavHidden] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSearchIndex, setActiveSearchIndex] = useState(-1);
   const [searchItems, setSearchItems] = useState<Array<{ dbId?: string; slug: string; name: string; shortMeta: string; imageUrl?: string; priceFrom: number }>>([]);
-  const [detectedCountry, setDetectedCountry] = useState('');
-  const displayedCountry = detectedCountry || selected.countryCode;
+  const [searchLoadState, setSearchLoadState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [announcementItem, setAnnouncementItem] = useState<{
     message: string;
     linkUrl: string;
@@ -226,18 +145,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
   const searchOptionRefs = useRef<Array<HTMLAnchorElement | null>>([]);
   const megaCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prefetchedNavRoutesRef = useRef(new Set<string>());
-  const searchLoadStartedRef = useRef(false);
 
-  useEffect(() => {
-    let ignore = false;
-    const countryCode = readDetectedCountryCookie();
-    window.queueMicrotask(() => {
-      if (!ignore) setDetectedCountry(countryCode);
-    });
-    return () => {
-      ignore = true;
-    };
-  }, []);
 
   useEffect(() => {
     let frameId: number | null = null;
@@ -288,25 +196,27 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
   }, [menuOpen, searchOpen]);
 
   useEffect(() => {
-    if (!searchOpen || searchItems.length > 0 || searchLoadStartedRef.current) return;
+    if (!searchOpen || searchLoadState !== 'loading') return;
     let ignore = false;
-    searchLoadStartedRef.current = true;
     const loadProducts = async () => {
       try {
         const response = await fetch('/api/public/products/search');
         const payload = await response.json().catch(() => null);
         if (!ignore && response.ok && Array.isArray(payload?.items)) {
           setSearchItems(payload.items);
+          setSearchLoadState('ready');
+        } else if (!ignore) {
+          setSearchLoadState('error');
         }
-      } finally {
-        if (!ignore) searchLoadStartedRef.current = false;
+      } catch {
+        if (!ignore) setSearchLoadState('error');
       }
     };
     void loadProducts();
     return () => {
       ignore = true;
     };
-  }, [searchItems.length, searchOpen]);
+  }, [searchLoadState, searchOpen]);
 
   useEffect(() => {
     if (!searchOpen) return;
@@ -455,22 +365,26 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
     router.refresh();
   };
 
-  const username = (() => {
-    const metadata = authUser?.user_metadata;
-    const preferredKeys = ['username', 'full_name', 'name', 'given_name'];
-
-    for (const key of preferredKeys) {
-      const value = metadata?.[key];
-      if (typeof value === 'string' && value.trim().length > 0) {
-        return value.trim();
-      }
-    }
-
-    return authUser?.email?.split('@')[0] ?? 'Profile';
-  })();
   const filteredSearchItems = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    if (!query) return [];
+    if (!query) {
+      // Spread the initial selection across product families when the catalog permits it.
+      const groups = new Map<string, typeof searchItems>();
+      for (const item of searchItems) {
+        const family = item.shortMeta?.split(/[·|,]/)[0]?.trim().toLowerCase() || 'jewellery';
+        groups.set(family, [...(groups.get(family) || []), item]);
+      }
+      const suggestions: typeof searchItems = [];
+      const families = [...groups.values()];
+      while (suggestions.length < 8 && families.some((group) => group.length)) {
+        for (const group of families) {
+          const next = group.shift();
+          if (next) suggestions.push(next);
+          if (suggestions.length === 8) break;
+        }
+      }
+      return suggestions;
+    }
     const queryTokens = query.split(/\s+/).filter(Boolean);
     return searchItems
       .filter((item) => {
@@ -484,7 +398,8 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
           .toLowerCase();
 
         return queryTokens.every((token) => haystack.includes(token));
-      });
+      })
+      .slice(0, 12);
   }, [searchItems, searchQuery]);
 
   useEffect(() => {
@@ -496,6 +411,11 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
     setSearchOpen(false);
     setSearchQuery('');
     setActiveSearchIndex(-1);
+  };
+
+  const openSearch = () => {
+    setSearchOpen(true);
+    if (searchLoadState === 'idle') setSearchLoadState('loading');
   };
 
   const handleSearchKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
@@ -653,28 +573,22 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
             <Link
               href="/wishlist"
               aria-label="Wishlist"
-              className="relative flex h-[34px] w-[34px] items-center justify-center rounded-full border border-black/10 bg-transparent transition-all duration-300 hover:border-[#0A1628] hover:bg-[#0A1628]/[0.06] group"
+              className="group relative flex h-[34px] w-[34px] items-center justify-center transition-opacity duration-300 hover:opacity-75"
             >
-              <svg width="14" height="14" viewBox="0 0 18 18" fill="none" stroke="#333" strokeWidth="1.4" strokeLinejoin="round" className="group-hover:stroke-[#0A1628] transition-colors">
-                <path d="M9 16L3 10C1.5 8.5 1.5 5.5 3 4C4.5 2.5 7 2.5 9 4C11 2.5 13.5 2.5 15 4C16.5 5.5 16.5 8.5 15 10L9 16Z" />
-              </svg>
+              <img src="/Navbar svgs/heart.svg" alt="" aria-hidden="true" className="h-[20px] w-[20px] object-contain opacity-75 transition-opacity group-hover:opacity-100" />
               {wishlistCount ? <span className="absolute -right-1 -top-1 inline-flex min-w-[18px] items-center justify-center rounded-full bg-[#0A1628] px-1 text-[10px] text-white">{wishlistCount}</span> : null}
             </Link>
-            <Link
-              href="/cart"
+            <button
+              type="button"
+              onClick={openCart}
               aria-label="Cart"
-              className="relative flex h-[34px] w-[34px] items-center justify-center rounded-full border border-black/10 bg-transparent transition-all duration-300 hover:border-[#0A1628] hover:bg-[#0A1628]/[0.06] group"
+              className="group relative flex h-[34px] w-[34px] items-center justify-center border-0 bg-transparent transition-opacity duration-300 hover:opacity-75"
             >
-              <svg width="14" height="14" viewBox="0 0 18 18" fill="none" stroke="#333" strokeWidth="1.4" className="group-hover:stroke-[#0A1628] transition-colors">
-                <path d="M2.5 3.5H4.2L5.5 11.2H13.2L15.2 6H6.2" strokeLinecap="round" strokeLinejoin="round" />
-                <circle cx="7" cy="14" r="1.1" />
-                <circle cx="12.5" cy="14" r="1.1" />
-              </svg>
+              <img src="/Navbar svgs/handbag-simple.svg" alt="" aria-hidden="true" className="h-[20px] w-[20px] object-contain opacity-75 transition-opacity group-hover:opacity-100" />
               {cartCount ? <span className="absolute -right-1 -top-1 inline-flex min-w-[18px] items-center justify-center rounded-full bg-[#0A1628] px-1 text-[10px] text-white">{cartCount}</span> : null}
-            </Link>
+            </button>
           </div>
           <div className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1.5 min-[375px]:right-4 min-[375px]:gap-2.5">
-            <DetectedCountryIndicator countryCode={displayedCountry} />
             <button
               onClick={() => {
                 if (menuOpen) closeMenu();
@@ -703,8 +617,8 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
             className="flex items-center no-underline cursor-pointer transition-opacity duration-300 hover:opacity-60"
           >
             <span
-              className="text-[11px] min-[360px]:text-[13px] min-[390px]:text-[15px] sm:text-[20px] font-medium tracking-[0.1em] min-[360px]:tracking-[0.15em] min-[390px]:tracking-[0.2em] sm:tracking-[0.26em] uppercase"
-              style={{ color: 'var(--color-brand-primary, #000000)', fontFamily: 'var(--font-family-primary, Cinzel, serif)' }}
+              className="text-[11px] min-[360px]:text-[13px] min-[390px]:text-[15px] sm:text-[20px] font-bold tracking-[0.1em] min-[360px]:tracking-[0.12em] min-[390px]:tracking-[0.14em] uppercase"
+              style={{ color: 'var(--color-brand-primary, #000000)', fontFamily: 'var(--font-family-logo1, Cinzel, serif)', fontWeight: 500, fontVariationSettings: '"wght" 500', fontSynthesis: 'none' }}
             >
               House of Diams
             </span>
@@ -712,8 +626,8 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
           </div>
 
           <div className="relative hidden min-h-[62px] lg:flex lg:items-center lg:justify-between" style={{ color: desktopHeaderText, fontFamily: 'var(--font-family-secondary, Inter, sans-serif)' }}>
-          <button type="button" onClick={() => setSearchOpen((prev) => !prev)} className="relative z-[2] flex min-w-[184px] items-center gap-2 border-b pb-2 text-[10px] font-medium uppercase tracking-[0.1em]" style={{ color: desktopHeaderText, borderColor: desktopHeaderBorder }} aria-label="Search">
-            <svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.4"><circle cx="7.5" cy="7.5" r="5.5" /><path d="M12 12L16 16" strokeLinecap="round" /></svg>
+          <button type="button" data-navbar-search-root onClick={() => searchOpen ? closeSearch() : openSearch()} className="relative z-[2] flex min-w-[184px] items-center gap-2 border-b pb-2 text-[10px] font-medium uppercase tracking-[0.1em]" style={{ color: desktopHeaderText, borderColor: desktopHeaderBorder }} aria-label="Search" aria-expanded={searchOpen} aria-controls="navbar-search-panel">
+            <img src="/Navbar svgs/search-01-stroke-rounded (1).svg" alt="" aria-hidden="true" className="h-[20px] w-[20px] object-contain opacity-80" />
             <span>Search</span>
           </button>
           <Link
@@ -721,8 +635,8 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
             className="absolute left-1/2 top-1/2 z-[2] flex -translate-x-1/2 -translate-y-1/2 items-center whitespace-nowrap no-underline transition-opacity duration-300 hover:opacity-70"
           >
             <span
-              className="text-[clamp(22px,2.1vw,32px)] font-medium uppercase tracking-[0.08em]"
-              style={{ color: desktopHeaderText, fontFamily: 'var(--font-family-primary, Cinzel, serif)' }}
+              className="text-[clamp(22px,2.1vw,32px)] font-bold  tracking-[0.06em]"
+              style={{ color: desktopHeaderText, fontFamily: 'var(--font-family-logo1, Cinzel, serif)', fontWeight: 500, fontVariationSettings: '"wght" 500', fontSynthesis: 'none' }}
             >
               House of Diams
             </span>
@@ -759,7 +673,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
 
                   {item.mega ? (
                     <div
-                      className="mega-drop absolute top-full overflow-hidden rounded-b-[30px] bg-white border-t-2 border-[#0A1628] shadow-[0_24px_64px_rgba(0,0,0,0.08)]"
+                      className="mega-drop absolute top-full min-h-[calc(100dvh-var(--hod-site-header-height,131px))] overflow-hidden bg-white border-t border-black/10 shadow-[0_24px_64px_rgba(0,0,0,0.08)]"
                       style={{
                         left: '50%',
                         width: '100vw',
@@ -774,31 +688,28 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
                       onMouseEnter={() => openMegaMenu(item.label)}
                       onMouseLeave={() => queueCloseMegaMenu(item.label)}
                     >
-                      <div className="w-full px-[56px] py-[56px]">
+                      <div className="flex min-h-[calc(100dvh-var(--hod-site-header-height,131px))] w-full px-[56px] py-[56px]">
                         <div
-                          className="grid gap-y-10"
+                          className="grid w-full items-start gap-x-10"
                           style={{
                             gridTemplateColumns: item.mega.featuredImage?.imageUrl
-                              ? `repeat(${getMegaMenuColumnCount(item)}, minmax(0, 1fr)) minmax(360px, 1.5fr)`
-                              : `repeat(${getMegaMenuColumnCount(item)}, minmax(0, 1fr))`,
+                              ? `minmax(0, 1fr) minmax(360px, 472px)`
+                              : `minmax(0, 1fr)`,
                           }}
                         >
-                          {item.mega.sections.map((section, idx) => (
-                            <div
-                              key={`${item.label}-${section.title}-${idx}`}
-                              className={[
-                                getMegaMenuColumnCount(item) >= 5 ? 'px-[18px]' : getMegaMenuColumnCount(item) === 4 ? 'px-[34px]' : 'px-[52px]',
-                                idx === 0 ? 'pl-0' : '',
-                                idx === item.mega!.sections.length - 1 ? 'pr-0' : 'border-r border-black/[0.05]',
-                              ].join(' ')}
-                              style={{ gridColumn: `span ${getSectionColumnCount(section)} / span ${getSectionColumnCount(section)}` }}
-                            >
-                              <MegaSection section={section} onNavigate={closeMegaMenu} />
-                            </div>
-                          ))}
+                          <div className="grid max-w-[900px] grid-cols-[repeat(4,minmax(150px,max-content))] justify-start gap-x-10 gap-y-10">
+                            {item.mega.sections.map((section, idx) => (
+                              <div
+                                key={`${item.label}-${section.title}-${idx}`}
+                                className={`min-w-[150px] ${idx === 3 ? 'lg:border-l lg:border-black/15 lg:pl-10' : ''}`}
+                              >
+                                <MegaSection section={section} onNavigate={closeMegaMenu} />
+                              </div>
+                            ))}
+                          </div>
                           {item.mega.featuredImage?.imageUrl ? (
-                            <div className="pl-[34px]">
-                              <div className="h-[300px] w-full overflow-hidden border border-black/[0.06] bg-[#F7F8FA]">
+                            <div className="justify-self-end">
+                              <div className="h-[520px] w-[472px] max-w-[32vw] overflow-hidden bg-[#F7F8FA]">
                                 <img
                                   src={item.mega.featuredImage.imageUrl}
                                   alt={item.mega.featuredImage.imageAlt || item.label}
@@ -827,173 +738,109 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
             >
               <button
                 type="button"
-                onClick={() => setSearchOpen((prev) => !prev)}
+                onClick={() => searchOpen ? closeSearch() : openSearch()}
                 aria-label="Search"
                 className="flex h-[34px] w-[34px] flex-shrink-0 items-center justify-center"
               >
-                <svg width="13" height="13" viewBox="0 0 18 18" fill="none" stroke={searchOpen ? '#333333' : desktopHeaderText} strokeWidth="1.4">
-                  <circle cx="7.5" cy="7.5" r="5.5" />
-                  <path d="M12 12L16 16" strokeLinecap="round" />
-                </svg>
+                <img src="/Navbar svgs/search-01-stroke-rounded (1).svg" alt="" aria-hidden="true" className="h-[22px] w-[22px] object-contain opacity-75 transition-opacity group-hover:opacity-100" />
               </button>
             </div>
 
-            {searchOpen && searchQuery.trim() ? (
-              <div
-                id="navbar-search-results"
-                role="listbox"
-                aria-label="Product search results"
-                className="absolute right-0 top-[calc(100%+24px)] w-[min(760px,calc(100vw-32px))] overflow-hidden rounded-[22px] border border-black/8 bg-white shadow-[0_24px_56px_rgba(10,22,40,0.14)]"
-              >
-                {filteredSearchItems.length ? (
-                  <div
-                    className="max-h-[min(420px,calc(100dvh-190px))] touch-pan-y overflow-y-auto overscroll-contain py-2"
-                    style={{ WebkitOverflowScrolling: 'touch' }}
-                    onWheel={(event) => event.stopPropagation()}
-                    onTouchMove={(event) => event.stopPropagation()}
-                  >
-                    {filteredSearchItems.map((item, index) => (
-                      <Link
-                        key={item.dbId || item.slug}
-                        ref={(node) => { searchOptionRefs.current[index] = node; }}
-                        id={`navbar-search-option-${index}`}
-                        role="option"
-                        aria-selected={activeSearchIndex === index}
-                        href={`/shop/${item.slug}`}
-                        onMouseEnter={() => setActiveSearchIndex(index)}
-                        onClick={closeSearch}
-                        className={`flex items-center gap-3 px-4 py-3 transition-colors hover:bg-[#F7F8FA] ${activeSearchIndex === index ? 'bg-[#F7F8FA]' : ''}`}
-                      >
-                        <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded-[14px] bg-[#F5F1E8]">
-                          {item.imageUrl ? <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" /> : null}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-[13px] font-medium text-[#0A1628]">{item.name}</div>
-                          <div className="mt-1 truncate text-[10px] uppercase tracking-[0.18em] text-[#8B94A5]">{item.shortMeta}</div>
-                          <div className="mt-1 text-[12px] text-[#253246]">{format(item.priceFrom)}</div>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="px-4 py-5 text-[12px] text-[#6A6A6A]">No products found.</div>
-                )}
-              </div>
-            ) : null}
           </div>
-            <DetectedCountryIndicator
-              countryCode={displayedCountry}
-              borderColor={desktopHeaderBorder}
-              background={desktopUtilityBg}
-            />
             <Link
               href="/wishlist"
               aria-label="Wishlist"
-              className="group relative flex h-[34px] w-[34px] items-center justify-center rounded-full transition-all duration-300"
-              style={{
-                border: `1px solid ${desktopHeaderBorder}`,
-                background: desktopUtilityBg,
-              }}
+              className="group relative flex h-[34px] w-[34px] items-center justify-center text-current transition-opacity duration-300 hover:opacity-70"
             >
-              <svg width="12" height="12" viewBox="0 0 18 18" fill="none" stroke={desktopHeaderText} strokeWidth="1.4" strokeLinejoin="round">
-                <path d="M9 16L3 10C1.5 8.5 1.5 5.5 3 4C4.5 2.5 7 2.5 9 4C11 2.5 13.5 2.5 15 4C16.5 5.5 16.5 8.5 15 10L9 16Z" />
-              </svg>
+              <img src="/Navbar svgs/heart.svg" alt="" aria-hidden="true" className="h-[22px] w-[22px] object-contain opacity-75 transition-opacity group-hover:opacity-100" />
               {wishlistCount ? <span className="absolute -right-1 -top-1 inline-flex min-w-[18px] items-center justify-center rounded-full bg-[#0A1628] px-1 text-[10px] text-white">{wishlistCount}</span> : null}
             </Link>
-            <Link
-              href="/cart"
+            <button
+              type="button"
+              onClick={openCart}
               aria-label="Cart"
-              className="group relative flex h-[34px] w-[34px] items-center justify-center rounded-full transition-all duration-300"
-              style={{
-                border: `1px solid ${desktopHeaderBorder}`,
-                background: desktopUtilityBg,
-              }}
+              className="group relative flex h-[34px] w-[34px] items-center justify-center border-0 bg-transparent text-current transition-opacity duration-300 hover:opacity-70"
             >
-              <svg width="12" height="12" viewBox="0 0 18 18" fill="none" stroke={desktopHeaderText} strokeWidth="1.4">
-                <path d="M2.5 3.5H4.2L5.5 11.2H13.2L15.2 6H6.2" strokeLinecap="round" strokeLinejoin="round" />
-                <circle cx="7" cy="14" r="1.1" />
-                <circle cx="12.5" cy="14" r="1.1" />
-              </svg>
+              <img src="/Navbar svgs/handbag-simple.svg" alt="" aria-hidden="true" className="h-[22px] w-[22px] object-contain opacity-75 transition-opacity group-hover:opacity-100" />
               {cartCount ? <span className="absolute -right-1 -top-1 inline-flex min-w-[18px] items-center justify-center rounded-full bg-[#0A1628] px-1 text-[10px] text-white">{cartCount}</span> : null}
-            </Link>
+            </button>
 
             {authReady && authUser ? (
               <Link
                 href="/profile"
-                className="inline-flex h-[34px] items-center justify-center rounded-full px-3.5 text-[8px] font-medium uppercase tracking-[0.19em] transition-all duration-300 hover:bg-white hover:text-[#0A1628]"
-                style={{
-                  border: `1px solid ${desktopHeaderBorder}`,
-                  background: desktopUtilityBg,
-                  color: desktopHeaderText,
-                }}
+                aria-label="Profile"
+                title="Profile"
+                className="inline-flex h-[34px] w-[34px] items-center justify-center text-current transition-opacity duration-300 hover:opacity-70"
+                style={{ color: desktopHeaderText }}
               >
-                {username}
+                <img src="/Navbar svgs/user-round-stroke-rounded.svg" alt="" aria-hidden="true" className="h-[22px] w-[22px] object-contain opacity-75 transition-opacity group-hover:opacity-100" />
               </Link>
             ) : (
               <Link
                 href="/signup"
-                className="inline-flex h-[34px] items-center justify-center rounded-full px-3.5 text-[8px] font-medium uppercase tracking-[0.19em] transition-all duration-300 hover:bg-white hover:text-[#0A1628]"
-                style={{
-                  border: `1px solid ${desktopHeaderBorder}`,
-                  background: desktopUtilityBg,
-                  color: desktopHeaderText,
-                }}
+                aria-label="Sign up"
+                title="Sign up"
+                className="inline-flex h-[34px] w-[34px] items-center justify-center text-current transition-opacity duration-300 hover:opacity-70"
+                style={{ color: desktopHeaderText }}
               >
-                Sign Up
+                <img src="/Navbar svgs/user-round-stroke-rounded.svg" alt="" aria-hidden="true" className="h-[22px] w-[22px] object-contain opacity-75 transition-opacity group-hover:opacity-100" />
               </Link>
             )}
           </div>
         </div>
-        {searchOpen ? (
-          <div data-navbar-search-root className="relative z-[20] border-t border-black/[0.06]" style={{ backgroundColor: desktopHeaderBg, fontFamily: 'var(--font-family-secondary, Inter, sans-serif)' }}>
-            <div className="mx-auto flex max-w-[1180px] items-center gap-4 px-[var(--space-4)] py-[var(--space-3)] lg:px-[var(--space-8)] lg:py-[var(--space-4)]">
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="#0A1628" strokeWidth="1.4">
-                <circle cx="7.5" cy="7.5" r="5.5" />
-                <path d="M12 12L16 16" strokeLinecap="round" />
-              </svg>
-              <input
-                ref={searchInputRef}
-                autoFocus
-                value={searchQuery}
-                onChange={(event) => {
-                  setSearchQuery(event.target.value);
-                  setActiveSearchIndex(0);
-                }}
-                onKeyDown={handleSearchKeyDown}
-                role="combobox"
-                aria-label="Search products"
-                aria-autocomplete="list"
-                aria-expanded={Boolean(searchQuery.trim())}
-                aria-controls="navbar-search-results"
-                aria-activedescendant={filteredSearchItems[activeSearchIndex] ? `navbar-search-option-${activeSearchIndex}` : undefined}
-                placeholder="What can we help you with?"
-                className="h-[46px] flex-1 border-0 border-b border-[rgba(10,22,40,0.18)] bg-transparent text-[15px] text-[#0A1628] outline-none placeholder:text-[#6E7685]"
-              />
-              <span className="sr-only" aria-live="polite">
-                {searchQuery.trim()
-                  ? filteredSearchItems.length
-                    ? `${filteredSearchItems.length} products found.`
-                    : 'No products found.'
-                  : ''}
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  if (searchQuery) {
-                    setSearchQuery('');
-                    setActiveSearchIndex(-1);
-                    searchInputRef.current?.focus();
-                  } else {
-                    closeSearch();
-                  }
-                }}
-                className="text-[12px] text-[#0A1628] underline underline-offset-4"
-              >
-                {searchQuery ? 'clear' : 'close'}
-              </button>
+        {searchOpen ? createPortal((
+          <section
+            id="navbar-search-panel"
+            data-navbar-search-root
+            aria-label="Product search"
+            className="fixed inset-0 z-[1400] overflow-y-auto bg-white shadow-[0_24px_80px_rgba(0,0,0,0.18)]"
+            style={{ backgroundColor: 'var(--color-brand-accent, #ffffff)', fontFamily: 'var(--font-family-secondary, Inter, sans-serif)' }}
+          >
+            <div className="mx-auto min-h-screen max-w-[1800px] px-5 pb-10 pt-8 sm:px-8 lg:px-14 lg:pt-10">
+              <div className="flex items-center gap-3 sm:gap-5">
+                <div className="flex min-w-0 flex-1 items-center gap-3 rounded-none border border-black/35 bg-white px-5 focus-within:ring-1 focus-within:ring-black/45 sm:px-6" style={{ backgroundColor: 'var(--color-brand-secondary, #F9F9F9)' }}>
+                  <img src="/Navbar svgs/search-01-stroke-rounded (1).svg" alt="" aria-hidden="true" className="h-[22px] w-[22px] shrink-0 object-contain opacity-80" />
+                  <input
+                    ref={searchInputRef}
+                    autoFocus
+                    value={searchQuery}
+                    onChange={(event) => { setSearchQuery(event.target.value); setActiveSearchIndex(-1); }}
+                    onKeyDown={handleSearchKeyDown}
+                    role="combobox"
+                    aria-label="Search products"
+                    aria-autocomplete="list"
+                    aria-expanded={searchLoadState === 'ready' && filteredSearchItems.length > 0}
+                    aria-controls={searchLoadState === 'ready' ? 'navbar-search-results' : undefined}
+                    aria-activedescendant={filteredSearchItems[activeSearchIndex] ? `navbar-search-option-${activeSearchIndex}` : undefined}
+                    placeholder="Search jewellery, settings, diamonds..."
+                    className="h-12 min-w-0 flex-1 border-0 bg-transparent text-[13px] text-[var(--color-brand-primary)] outline-none placeholder:text-black/55 sm:h-14 sm:text-[15px]"
+                  />
+                  {searchQuery ? <button type="button" onClick={() => { setSearchQuery(''); setActiveSearchIndex(-1); searchInputRef.current?.focus(); }} aria-label="Clear search" className="shrink-0 text-xl text-black/55 hover:text-black">×</button> : null}
+                </div>
+                <button type="button" onClick={closeSearch} className="shrink-0 text-[12px] text-[var(--color-brand-primary)] underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 sm:text-[13px]">Cancel</button>
+              </div>
+              <div className="mt-[var(--space-4)] flex items-center justify-between border-b border-black/10 pb-[var(--space-3)] text-[10px] font-semibold uppercase tracking-[0.18em] text-black/70 sm:text-[11px]">
+                <span>{searchQuery.trim() ? 'Products' : 'Explore jewellery'}</span>
+                {searchLoadState === 'ready' && filteredSearchItems.length ? <span>{filteredSearchItems.length} {searchQuery.trim() ? 'results' : 'suggestions'}</span> : null}
+              </div>
+              <span className="sr-only" aria-live="polite">{searchLoadState === 'loading' ? 'Loading products.' : searchLoadState === 'error' ? 'Unable to load products.' : `${filteredSearchItems.length} products shown.`}</span>
+              {searchLoadState === 'loading' ? null : searchLoadState === 'error' ? (
+                <div className="py-[var(--space-6)] text-sm text-black/70">Product suggestions are unavailable. <button type="button" onClick={() => setSearchLoadState('loading')} className="underline underline-offset-4">Try again</button></div>
+              ) : filteredSearchItems.length ? (
+                <div id="navbar-search-results" role="listbox" aria-label="Product search results" className="grid grid-cols-3 gap-x-3 gap-y-[var(--space-5)] py-[var(--space-5)] sm:grid-cols-4 sm:gap-x-5 lg:grid-cols-8">
+                  {filteredSearchItems.map((item, index) => (
+                    <Link key={item.dbId || item.slug} ref={(node) => { searchOptionRefs.current[index] = node; }} id={`navbar-search-option-${index}`} role="option" aria-selected={activeSearchIndex === index} href={`/shop/${item.slug}`} onMouseEnter={() => setActiveSearchIndex(index)} onClick={closeSearch} className="group min-w-0 rounded-sm text-center outline-none focus-visible:ring-2 focus-visible:ring-black/70">
+                      <span className="relative mx-auto flex aspect-square w-full max-w-[112px] items-center justify-center overflow-hidden rounded-full border border-black/5 bg-[var(--color-brand-secondary,#F9F9F9)] text-[32px] text-black/15 transition-transform duration-200 group-hover:scale-[1.04]">◇{item.imageUrl ? <img src={item.imageUrl} alt="" loading="lazy" onError={(event) => { event.currentTarget.style.display = 'none'; }} className="absolute inset-0 h-full w-full object-cover" /> : null}</span>
+                      <span className="mt-3 block truncate text-[11px] font-medium text-[var(--color-brand-primary)] sm:text-[12px]" title={item.name}>{item.name}</span>
+                    </Link>
+                  ))}
+                </div>
+              ) : searchLoadState === 'ready' ? (
+                <div id="navbar-search-results" role="listbox" aria-label="Product search results" className="py-[var(--space-6)] text-sm text-black/70">{searchQuery.trim() ? 'No products match your search. Try another term.' : 'No products are available yet.'}</div>
+              ) : null}
             </div>
-          </div>
-        ) : null}
+          </section>
+        ), document.body) : null}
         </div>
       </header>
 
@@ -1010,189 +857,169 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
       />
 
       <div
-        className="fixed top-0 right-0 w-full max-w-[420px] h-screen z-[999] bg-white border-l border-black/[0.06] pt-[100px] px-10 pb-10 flex flex-col overflow-y-auto"
+        className="fixed left-0 right-0 top-0 z-[999] h-screen w-full overflow-hidden border-b border-black/[0.06] bg-white"
         style={{
-          transform: menuOpen ? 'translateX(0)' : 'translateX(100%)',
-          transition: 'transform 0.5s cubic-bezier(0.77,0,0.18,1)',
+          transform: menuOpen ? 'translateY(0)' : 'translateY(-100%)',
+          transition: 'transform 0.7s cubic-bezier(0.77,0,0.18,1)',
           fontFamily: 'var(--font-family-secondary, Arial, sans-serif)',
         }}
+        aria-hidden={!menuOpen}
       >
-        <button
-          type="button"
-          onClick={() => {
-            closeMenu();
-            setSearchOpen(true);
-          }}
-          className="mb-[var(--space-4)] flex items-center gap-3 border-b border-black/10 py-3 text-left text-[12px] font-medium uppercase tracking-[0.18em] text-[var(--color-brand-primary)]"
-          style={{ fontFamily: 'var(--font-family-secondary)' }}
+        <div
+          className="flex h-full w-[200%] transition-transform duration-[600ms] ease-[cubic-bezier(0.77,0,0.18,1)] motion-reduce:transition-none"
+          style={{ transform: mobileOpenItem ? 'translateX(-50%)' : 'translateX(0)' }}
         >
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.4"><circle cx="7.5" cy="7.5" r="5.5" /><path d="M12 12L16 16" strokeLinecap="round" /></svg>
-          Search
-        </button>
-        <SmartNavLink
-          href="/"
-          onClick={closeMenu}
-          className="block py-3.5 text-[20px] font-normal tracking-[0.04em] border-b border-black/[0.06] no-underline text-[#0A1628] transition-all duration-300 hover:text-[#0A1628] hover:pl-2"
-          style={{ fontFamily: 'var(--font-family-secondary)' }}
-        >
-          Home
-        </SmartNavLink>
+          <div className="h-full w-1/2 shrink-0 overflow-y-auto px-6 pb-10 pt-[110px] sm:px-8">
+            <button
+              type="button"
+              onClick={() => {
+                closeMenu();
+                openSearch();
+              }}
+              className="mb-2 flex w-full items-center gap-3 border-b border-black/10 py-4 text-left text-[12px] font-medium uppercase tracking-[0.18em] text-[var(--color-brand-primary)]"
+            >
+              <img src="/Navbar svgs/search-01-stroke-rounded (1).svg" alt="" aria-hidden="true" className="h-[22px] w-[22px] object-contain opacity-80" />
+              Search
+            </button>
 
-        {navItems.map((item) => {
-          const hasMega = Boolean(item.mega?.sections?.length);
-          const isOpen = mobileOpenItem === item.label;
+            <SmartNavLink href="/" onClick={closeMenu} className="flex min-h-[58px] items-center justify-between border-b border-black/[0.06] py-4 text-[13px] font-semibold uppercase tracking-[0.16em] text-[#0A1628] no-underline">
+              Home
+            </SmartNavLink>
 
-          if (!hasMega) {
-            return (
-              <SmartNavLink
-                key={item.label}
-                href={item.href ?? '#'}
-                onClick={closeMenu}
-                className="block py-3.5 text-[20px] font-normal tracking-[0.04em] border-b border-black/[0.06] no-underline text-[#0A1628] transition-all duration-300 hover:text-[#0A1628] hover:pl-2"
-                style={{ fontFamily: 'var(--font-family-secondary)' }}
-              >
+            {navItems.map((item) => {
+              const hasMega = Boolean(item.mega?.sections?.length);
+              if (!hasMega) {
+                return (
+                  <SmartNavLink key={item.label} href={item.href ?? '#'} onClick={closeMenu} className="flex min-h-[58px] items-center justify-between border-b border-black/[0.06] py-4 text-[13px] font-semibold uppercase tracking-[0.16em] text-[#0A1628] no-underline">
+                    {item.label}
+                  </SmartNavLink>
+                );
+              }
+
+              return (
+                <button
+                  key={item.label}
+                  type="button"
+                  onClick={() => {
+                    setMobileOpenItem(item.label);
+                    setMobileOpenSection(item.mega?.sections?.[0]?.id ?? null);
+                  }}
+                  className="flex min-h-[58px] w-full items-center justify-between border-b border-black/[0.06] py-4 text-left text-[13px] font-semibold uppercase tracking-[0.16em] text-[#0A1628]"
+                  aria-label={'Open ' + item.label}
+                >
+                  <span>{item.label}</span>
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                    <path d="M7 4L13 10L7 16" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              );
+            })}
+
+            {[
+              { label: 'Wishlist', href: '/wishlist' },
+              { label: 'About Us', href: '/about' },
+              { label: 'Contact Us', href: '/contact' },
+            ].map((item) => (
+              <SmartNavLink key={item.label} href={item.href} onClick={closeMenu} className="flex min-h-[58px] items-center justify-between border-b border-black/[0.06] py-4 text-[13px] font-semibold uppercase tracking-[0.16em] text-[#0A1628] no-underline">
                 {item.label}
               </SmartNavLink>
-            );
-          }
+            ))}
+            <button
+              type="button"
+              onClick={() => {
+                closeMenu();
+                openCart();
+              }}
+              className="flex min-h-[58px] w-full items-center justify-between border-0 border-b border-black/[0.06] bg-transparent py-4 text-left text-[13px] font-semibold uppercase tracking-[0.16em] text-[#0A1628]"
+            >
+              Cart
+            </button>
 
-          return (
-            <div key={item.label} className="border-b border-black/[0.06]">
+            <Link
+              href={authReady && authUser ? '/profile' : '/login'}
+              onClick={closeMenu}
+              className="flex min-h-[58px] items-center gap-3 border-b border-black/[0.06] py-4 text-[13px] font-semibold uppercase tracking-[0.16em] text-[#0A1628] no-underline"
+            >
+              <img src="/Navbar svgs/user-round-stroke-rounded.svg" alt="" aria-hidden="true" className="h-6 w-6 object-contain opacity-80" />
+              <span>Profile</span>
+            </Link>
+
+            {authReady && authUser ? (
+              <button type="button" onClick={handleSignOut} className="flex min-h-[58px] w-full items-center border-b border-black/[0.06] py-4 text-left text-[12px] font-medium uppercase tracking-[0.16em] text-[#0A1628]">
+                Sign Out
+              </button>
+            ) : null}
+          </div>
+
+          <div className="h-full w-1/2 shrink-0 overflow-y-auto px-6 pb-10 pt-[102px] sm:px-8">
+            <div className="relative flex min-h-[58px] items-center justify-center border-b border-black/10">
               <button
                 type="button"
                 onClick={() => {
-                  if (isOpen && item.href) {
-                    closeMenu();
-                    router.push(item.href);
-                    return;
-                  }
-                  setMobileOpenItem(item.label);
+                  setMobileOpenItem(null);
+                  setMobileOpenSection(null);
                 }}
-                className="flex w-full items-center justify-between py-3.5 text-left text-[20px] font-normal tracking-[0.04em] text-[#0A1628]"
-                style={{ fontFamily: 'var(--font-family-secondary)' }}
+                className="absolute left-0 grid h-11 w-11 place-items-center text-[#0A1628]"
+                aria-label="Back to main menu"
               >
-                <span>{item.label}</span>
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 18 18"
-                  fill="none"
-                  aria-hidden="true"
-                  className="flex-shrink-0 transition-transform duration-300"
-                  style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
-                >
-                  <path d="M4 7L9 12L14 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M15 4L7 12L15 20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </button>
-
-              {isOpen ? (
-                <div className="pb-4">
-                  {item.mega?.sections.map((section) => {
-                    const entries = getMobileSectionEntries(section);
-                    if (!entries.length) return null;
-
-                    return (
-                      <div key={`${item.label}-${section.id}`} className="pb-3 last:pb-0">
-                        <div
-                          className="flex items-center gap-2 pb-2 text-[10px] font-semibold uppercase tracking-[0.24em] text-[#6A6A6A]"
-                          style={{ fontFamily: 'var(--font-family-secondary)' }}
-                        >
-                          {section.iconUrl ? (
-                            <img
-                              src={section.iconUrl}
-                              alt=""
-                              aria-hidden="true"
-                              className="h-4 w-4 flex-shrink-0 object-contain"
-                            />
-                          ) : null}
-                          <span>{section.title}</span>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          {entries.map((entry) => (
-                            <SmartNavLink
-                              key={`${section.id}-${entry.label}-${entry.href}`}
-                              href={entry.href}
-                              onClick={closeMenu}
-                            className="flex items-center gap-3 rounded-xl px-2 py-2 text-[13px] font-light tracking-[0.02em] text-[#253246] no-underline transition-colors duration-200 hover:bg-black/[0.03] hover:text-[#0A1628]"
-                              style={{ fontFamily: 'var(--font-family-secondary)' }}
-                            >
-                              {entry.icon}
-                              <span>{entry.label}</span>
-                            </SmartNavLink>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : null}
+              <h2 className="px-12 text-center text-[15px] font-semibold uppercase tracking-[0.14em] text-[#0A1628]">
+                {mobileActiveItem?.label}
+              </h2>
             </div>
-          );
-        })}
 
-        {[
-          { label: 'Wishlist', href: '/wishlist' },
-          { label: 'Cart', href: '/cart' },
-          { label: 'About Us', href: '/about' },
-          { label: 'Contact Us', href: '/contact' },
-        ].map((item) => (
-          <SmartNavLink
-            key={item.label}
-            href={item.href}
-            onClick={closeMenu}
-            className="block py-3.5 text-[20px] font-normal tracking-[0.04em] border-b border-black/[0.06] no-underline text-[#0A1628] transition-all duration-300 hover:text-[#0A1628] hover:pl-2"
-            style={{ fontFamily: 'var(--font-family-secondary)' }}
-          >
-            {item.label}
-          </SmartNavLink>
-        ))}
+            {mobileActiveItem?.href ? (
+              <SmartNavLink href={mobileActiveItem.href} onClick={closeMenu} className="flex min-h-[56px] items-center border-b border-black/[0.06] py-4 text-[12px] font-semibold uppercase tracking-[0.15em] text-[#0A1628] no-underline">
+                Shop All
+              </SmartNavLink>
+            ) : null}
 
-        <div className="mt-6 grid gap-3">
-          {authReady && authUser ? (
-            <>
-              <Link
-                href="/profile"
-                onClick={closeMenu}
-                className="inline-flex min-h-[52px] items-center justify-center rounded-full bg-[#0A1628] px-6 text-[11px] uppercase tracking-[0.28em] text-white transition hover:bg-[#13233b]"
-              >
-                {username}
-              </Link>
-              <button
-                type="button"
-                onClick={handleSignOut}
-                className="inline-flex min-h-[52px] items-center justify-center rounded-full border border-black/12 px-6 text-[11px] uppercase tracking-[0.28em] text-[#0A1628] transition hover:border-[#0A1628]"
-              >
-                Sign Out
-              </button>
-            </>
-          ) : (
-            <>
-              <Link
-                href="/signup"
-                onClick={closeMenu}
-                className="inline-flex min-h-[52px] items-center justify-center rounded-full bg-[#0A1628] px-6 text-[11px] uppercase tracking-[0.28em] text-white transition hover:bg-[#13233b]"
-              >
-                Sign Up
-              </Link>
-              <Link
-                href="/login"
-                onClick={closeMenu}
-                className="inline-flex min-h-[52px] items-center justify-center rounded-full border border-black/12 px-6 text-[11px] uppercase tracking-[0.28em] text-[#0A1628] transition hover:border-[#0A1628]"
-              >
-                Login
-              </Link>
-            </>
-          )}
-        </div>
+            {mobileActiveItem?.mega?.sections.map((section) => {
+              const entries = getMobileSectionEntries(section);
+              if (!entries.length) return null;
+              const isExpanded = mobileOpenSection === section.id;
 
-        <div className="mt-auto pt-10">
-          <Link
-            href="/contact"
-            className="text-[10px] tracking-[0.25em] uppercase text-[#0A1628] no-underline py-1.5 font-normal transition-opacity duration-300 hover:opacity-70"
-            style={{ fontFamily: 'var(--font-family-secondary)' }}
-          >
-            Enquire →
-          </Link>
+              return (
+                <section key={section.id} className="border-b border-black/[0.08]">
+                  <button
+                    type="button"
+                    onClick={() => setMobileOpenSection(isExpanded ? null : section.id)}
+                    className="flex min-h-[62px] w-full items-center justify-between py-4 text-left text-[13px] font-semibold uppercase tracking-[0.14em] text-[#0A1628]"
+                    aria-expanded={isExpanded}
+                  >
+                    <span>{section.title}</span>
+                    <svg width="19" height="19" viewBox="0 0 19 19" fill="none" aria-hidden="true" className="transition-transform duration-300" style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                      <path d="M4 7L9.5 12L15 7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                  <div className="grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none" style={{ gridTemplateRows: isExpanded ? '1fr' : '0fr' }}>
+                    <div className="overflow-hidden">
+                      <div className="pb-5">
+                        {entries.map((entry) => (
+                          <SmartNavLink key={section.id + '-' + entry.label + '-' + entry.href} href={entry.href} onClick={closeMenu} className="block py-3 pl-6 text-[15px] font-normal leading-[1.4] text-[#253246] no-underline transition-colors hover:text-[#8b6a3d]">
+                            {entry.label}
+                          </SmartNavLink>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              );
+            })}
+
+            {mobileActiveItem?.mega?.featuredImage?.imageUrl ? (
+              <div className="mt-7 aspect-[4/5] w-full overflow-hidden bg-[#F7F8FA]">
+                <img
+                  src={mobileActiveItem.mega.featuredImage.imageUrl}
+                  alt={mobileActiveItem.mega.featuredImage.imageAlt || mobileActiveItem.label}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
     </>
