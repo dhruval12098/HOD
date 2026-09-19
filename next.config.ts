@@ -63,6 +63,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   productionBrowserSourceMaps: false,
+  turbopack: {},
   webpack(config, { dev }) {
     if (dev) {
       config.watchOptions = {
