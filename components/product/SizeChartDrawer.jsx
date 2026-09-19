@@ -79,7 +79,7 @@ export default function SizeChartDrawer({ open, onClose }) {
         aria-label="Close size chart"
         tabIndex={open ? 0 : -1}
         onClick={onClose}
-        className={`absolute inset-0 bg-[#0A1628]/35 transition-opacity duration-300 ${open ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute inset-0 bg-[var(--color-brand-primary,#000000)]/35 transition-opacity duration-300 ${open ? 'opacity-100' : 'opacity-0'}`}
       />
       <aside
         role="dialog"
@@ -88,8 +88,8 @@ export default function SizeChartDrawer({ open, onClose }) {
         className={`absolute right-0 top-0 flex h-[100dvh] w-full max-w-[430px] flex-col bg-white shadow-[-24px_0_70px_rgba(10,22,40,0.18)] transition-transform duration-500 ease-[cubic-bezier(.77,0,.18,1)] ${open ? 'translate-x-0' : 'translate-x-full'}`}
       >
         <div className="flex h-[72px] shrink-0 items-center justify-between border-b border-[#D7DADF] px-6">
-          <h2 id={titleId} className="font-sans text-[13px] font-semibold uppercase tracking-[0.02em] text-[#0A1628]">Size Guide</h2>
-          <button ref={closeRef} type="button" onClick={onClose} className="flex size-9 items-center justify-center text-[#0A1628] transition-opacity hover:opacity-55" aria-label="Close size guide">
+          <h2 id={titleId} className="font-sans text-[13px] font-semibold uppercase tracking-[0.02em] text-[var(--color-brand-primary,#000000)]">Size Guide</h2>
+          <button ref={closeRef} type="button" onClick={onClose} className="flex size-9 items-center justify-center text-[var(--color-brand-primary,#000000)] transition-opacity hover:opacity-55" aria-label="Close size guide">
             <X size={17} strokeWidth={1.5} />
           </button>
         </div>
@@ -99,15 +99,15 @@ export default function SizeChartDrawer({ open, onClose }) {
           onWheel={(event) => event.stopPropagation()}
           className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain px-6 pb-8 [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#AEB4BC]"
         >
-          <p className="py-6 font-sans text-[12px] font-semibold leading-[1.45] text-[#0A1628]">Doubts about your ring size? We’re here to help<br />you find the right fit.</p>
+          <p className="py-6 font-sans text-[12px] font-semibold leading-[1.45] text-[var(--color-brand-primary,#000000)]">Doubts about your ring size? We’re here to help<br />you find the right fit.</p>
 
           <div className="grid grid-cols-2 border-b border-[#B8BDC5]" role="tablist" aria-label="Size guide information">
-            <button type="button" role="tab" aria-selected={activeTab === 'guide'} onClick={() => setActiveTab('guide')} className={`relative pb-4 text-left font-sans text-[12px] font-semibold uppercase text-[#0A1628] ${activeTab === 'guide' ? 'after:absolute after:bottom-[-1px] after:left-0 after:h-px after:w-[74px] after:bg-[#0A1628]' : ''}`}>Size Guide</button>
-            <button type="button" role="tab" aria-selected={activeTab === 'measure'} onClick={() => setActiveTab('measure')} className={`relative pb-4 text-left font-sans text-[12px] font-semibold uppercase text-[#0A1628] ${activeTab === 'measure' ? 'after:absolute after:bottom-[-1px] after:left-0 after:h-px after:w-[108px] after:bg-[#0A1628]' : ''}`}>How to Measure</button>
+            <button type="button" role="tab" aria-selected={activeTab === 'guide'} onClick={() => setActiveTab('guide')} className={`relative pb-4 text-left font-sans text-[12px] font-semibold uppercase text-[var(--color-brand-primary,#000000)] ${activeTab === 'guide' ? 'after:absolute after:bottom-[-1px] after:left-0 after:h-px after:w-[74px] after:bg-[var(--color-brand-primary,#000000)]' : ''}`}>Size Guide</button>
+            <button type="button" role="tab" aria-selected={activeTab === 'measure'} onClick={() => setActiveTab('measure')} className={`relative pb-4 text-left font-sans text-[12px] font-semibold uppercase text-[var(--color-brand-primary,#000000)] ${activeTab === 'measure' ? 'after:absolute after:bottom-[-1px] after:left-0 after:h-px after:w-[108px] after:bg-[var(--color-brand-primary,#000000)]' : ''}`}>How to Measure</button>
           </div>
 
           {activeTab === 'guide' ? (
-            <table className="mt-4 w-full table-fixed border-collapse font-sans text-[#0A1628]">
+            <table className="mt-4 w-full table-fixed border-collapse font-sans text-[var(--color-brand-primary,#000000)]">
               <thead>
                 <tr className="border-b border-[#C9CDD3] text-[9px] font-semibold">
                   <th className="w-[38%] px-1 pb-3 text-left">Internal Diameter</th>
@@ -130,7 +130,7 @@ export default function SizeChartDrawer({ open, onClose }) {
               </tbody>
             </table>
           ) : (
-            <div className="py-7 font-sans text-[12px] leading-6 text-[#0A1628]">
+            <div className="py-7 font-sans text-[12px] leading-6 text-[var(--color-brand-primary,#000000)]">
               <p className="font-semibold">Measure the inside diameter of a ring that already fits you.</p>
               <p className="mt-3">Place the ring on a ruler and measure straight across the widest inside point in millimetres. Match that measurement with the Internal Diameter column in the size guide.</p>
             </div>
@@ -142,3 +142,4 @@ export default function SizeChartDrawer({ open, onClose }) {
 
   return canUseDOM ? createPortal(drawer, document.body) : null;
 }
+

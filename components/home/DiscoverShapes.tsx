@@ -50,7 +50,7 @@ export default function DiscoverShapes({ initialItems = [] }: { initialItems?: I
 
   return (
     <section
-      className="overflow-hidden bg-[var(--color-brand-accent,#fff)] px-[var(--space-4)] py-[var(--space-6)] sm:px-[var(--space-6)] md:py-[var(--space-8)] lg:px-[var(--space-12)] lg:py-[var(--space-12)]"
+      className="overflow-hidden bg-[var(--color-brand-accent,#fff)] px-[var(--space-4)] py-[var(--space-4)] sm:px-[var(--space-6)] md:py-[var(--space-6)] lg:px-[var(--space-12)] lg:py-[var(--space-8)]"
       aria-labelledby="discover-shapes-heading"
     >
       <div className="mx-auto w-full max-w-[1440px]">

@@ -63,6 +63,16 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   productionBrowserSourceMaps: false,
+  webpack(config, { dev }) {
+    if (dev) {
+      config.watchOptions = {
+        ...config.watchOptions,
+        ignored: /(^|[\\/])(node_modules|\.git|\.next|System Volume Information|\$RECYCLE\.BIN)([\\/]|$)/,
+      }
+    }
+
+    return config
+  },
   env: {
     NEXT_PUBLIC_CLOUDFLARE_R2_PUBLIC_BASE_URL: r2PublicBaseUrl,
   },
@@ -113,3 +123,5 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
+

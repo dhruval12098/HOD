@@ -164,9 +164,9 @@ export default function ProductConfigurator({
     };
   }, [showRingModal]);
   return (
-    <div className="mb-8 mt-6 rounded-[24px] border border-[rgba(10,22,40,0.10)] bg-white p-7 shadow-[0_18px_50px_rgba(10,22,40,0.04)]">
-      <div className="mb-[6px] flex items-center gap-[10px] text-[22px] font-bold tracking-[-0.01em] text-[#0A1628]" style={{ fontFamily: 'var(--font-plus-jakarta), Arial, Helvetica, sans-serif' }}>
-        <span className="h-[6px] w-[6px] flex-shrink-0 rounded-full bg-[#0A1628]" />
+    <div className="mb-5 mt-5 border-y border-[rgba(10,22,40,0.14)] bg-white py-5">
+      <div className="mb-4 flex items-center gap-[10px] text-[18px] font-semibold tracking-normal text-[var(--color-brand-primary,#000000)]" style={{ fontFamily: 'var(--font-plus-jakarta), Arial, Helvetica, sans-serif' }}>
+        <span className="h-[6px] w-[6px] flex-shrink-0 rounded-full bg-[var(--color-brand-primary,#000000)]" />
         Configure Your Piece
       </div>
 
@@ -197,10 +197,10 @@ export default function ProductConfigurator({
         />
       ) : product.gemstoneValue ? (
         <div className="mb-5 px-1 py-2">
-          <div className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-[#0A1628]">
+          <div className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--color-brand-primary,#000000)]">
             {product.gemstoneLabel || 'Stone Type'}
           </div>
-          <div className="mt-2 font-sans text-[15px] font-medium text-[#0A1628]">{gemstoneValue || product.gemstoneValue}</div>
+          <div className="mt-2 font-sans text-[15px] font-medium text-[var(--color-brand-primary,#000000)]">{gemstoneValue || product.gemstoneValue}</div>
         </div>
       ) : null}
 
@@ -243,32 +243,36 @@ export default function ProductConfigurator({
         <>
           <div className="mb-5">
             <div className="mb-[10px] flex items-baseline justify-between">
-              <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-[#0A1628]">
+              <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--color-brand-primary,#000000)]">
                 {activeRingCategory?.name || 'Ring Size'}
               </span>
-              <button type="button" onClick={() => setShowSizeChart(true)} className="font-sans text-[13px] font-medium tracking-[0.01em] text-[#0A1628] underline-offset-4 hover:underline">
+              <button type="button" onClick={() => setShowSizeChart(true)} className="font-sans text-[13px] font-medium tracking-[0.01em] text-[var(--color-brand-primary,#000000)] underline-offset-4 hover:underline">
                 Size Chart
               </button>
             </div>
-            <ShadcnSelect value={ringSize} onValueChange={onRingSizeChange || onSizeOrFitChange}>
-              <ShadcnSelectTrigger aria-label={activeRingCategory?.name || 'Ring Size'}>
-                <ShadcnSelectValue placeholder="Select ring size" />
-              </ShadcnSelectTrigger>
-              <ShadcnSelectContent nativeScroll>
-                {ringCategorySizes.map((size) => (
-                  <ShadcnSelectItem key={size} value={size}>
+            <div className="grid grid-cols-5 gap-2 sm:grid-cols-6">
+              {ringCategorySizes.map((size) => {
+                const isActive = size === ringSize;
+                return (
+                  <button
+                    key={size}
+                    type="button"
+                    aria-pressed={isActive}
+                    onClick={() => (onRingSizeChange || onSizeOrFitChange)(size)}
+                    className={`min-h-11 border px-2 font-[family-name:var(--font-family-button)] text-[10px] font-medium uppercase tracking-[0.12em] transition-colors ${isActive ? 'border-[var(--color-brand-primary,#000000)] bg-[var(--color-brand-primary,#000000)] text-white' : 'border-black/20 bg-white text-[var(--color-brand-primary,#000000)] hover:border-[var(--color-brand-primary,#000000)]'}`}
+                  >
                     {size}
-                  </ShadcnSelectItem>
-                ))}
-              </ShadcnSelectContent>
-            </ShadcnSelect>
+                  </button>
+                );
+              })}
+            </div>
           </div>
           {product.ringCategoryOptions?.length > 1 ? (
             <button
               ref={ringModalTriggerRef}
               type="button"
               onClick={() => setShowRingModal(true)}
-              className="mb-5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#0A1628] underline underline-offset-4"
+              className="mb-5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-brand-primary,#000000)] underline underline-offset-4"
             >
               Show Ring Sizes
             </button>
@@ -277,9 +281,9 @@ export default function ProductConfigurator({
       ) : null}
 
       {(product.customDropdowns || []).map((group) => <div key={group.id} className="mb-5">
-        <div className="mb-[10px] flex items-baseline justify-between"><span className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-[#0A1628]">{group.label}{group.isRequired ? ' *' : ''}</span></div>
+        <div className="mb-[10px] flex items-baseline justify-between"><span className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--color-brand-primary,#000000)]">{group.label}{group.isRequired ? ' *' : ''}</span></div>
         <ShadcnSelect value={customSelections[group.id] || undefined} onValueChange={(value) => onCustomSelectionChange?.(group.id, value)}>
-          <ShadcnSelectTrigger aria-label={group.label}><ShadcnSelectValue placeholder={`Select ${group.label}`} /></ShadcnSelectTrigger>
+          <ShadcnSelectTrigger aria-label={group.label} className="h-12 rounded-none border-[var(--color-brand-primary,#000000)] bg-white font-[family-name:var(--font-family-secondary)] text-[var(--color-brand-primary,#000000)] shadow-none focus:border-[var(--color-brand-primary,#000000)]"><ShadcnSelectValue placeholder={`Select ${group.label}`} /></ShadcnSelectTrigger>
           <ShadcnSelectContent>{group.options.map((option) => <ShadcnSelectItem key={option.id} value={option.id}>{option.label}</ShadcnSelectItem>)}</ShadcnSelectContent>
         </ShadcnSelect>
       </div>)}
@@ -287,10 +291,10 @@ export default function ProductConfigurator({
       {typeof priceFrom === 'number' ? (
         <div className="mb-6 mt-1 text-center">
           <div className="font-sans text-[17px] font-light tracking-[0.01em] text-[#8B94A5]">Total Price</div>
-          <div className="mt-1 text-[30px] font-bold leading-none tracking-[-0.03em] text-[#0A1628]" style={{ fontFamily: 'var(--font-plus-jakarta), Arial, Helvetica, sans-serif' }}>
+          <div className="mt-1 text-[30px] font-bold leading-none tracking-[-0.03em] text-[var(--color-brand-primary,#000000)]" style={{ fontFamily: 'var(--font-plus-jakarta), Arial, Helvetica, sans-serif' }}>
             {format(priceFrom)}
           </div>
-          <div className="mx-auto mt-4 inline-flex items-center rounded-full bg-[#F7F7F4] px-4 py-2 font-sans text-[12px] font-medium text-[#253246]">
+          <div className="mx-auto mt-4 inline-flex items-center rounded-none border border-black/10 bg-white px-4 py-2 font-sans text-[12px] font-medium text-[var(--color-brand-primary,#000000)]">
             Ships in 3-4 weeks
           </div>
         </div>
@@ -318,20 +322,20 @@ export default function ProductConfigurator({
             role="dialog"
             aria-modal="true"
             aria-labelledby={ringModalTitleId}
-            className="w-full max-w-[680px] rounded-[28px] bg-white p-6 shadow-[0_30px_80px_rgba(10,22,40,0.2)]"
+            className="w-full max-w-[680px] rounded-none bg-white p-6 shadow-[0_30px_80px_rgba(10,22,40,0.2)]"
           >
             <div className="mb-5 flex items-center justify-between gap-4">
               <div>
-                <h3 id={ringModalTitleId} className="text-[22px] font-medium text-[#0A1628]">Ring Categories</h3>
+                <h3 id={ringModalTitleId} className="text-[22px] font-medium text-[var(--color-brand-primary,#000000)]">Ring Categories</h3>
                 <p className="mt-1 text-[12px] tracking-[0.08em] text-[#6A6A6A]">Switch category and pick the size you want.</p>
               </div>
-              <button ref={ringModalCloseRef} type="button" onClick={() => setShowRingModal(false)} className="rounded-full border border-[rgba(10,22,40,0.1)] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#0A1628]">
+              <button ref={ringModalCloseRef} type="button" onClick={() => setShowRingModal(false)} className="rounded-none border border-black/20 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-brand-primary,#000000)]">
                 Close
               </button>
             </div>
 
             <div className="mb-5">
-              <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.22em] text-[#0A1628]">Ring Category</label>
+              <label className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--color-brand-primary,#000000)]">Ring Category</label>
               <div className="relative">
                 <Select
                   value={activeRingCategoryId}
@@ -344,38 +348,36 @@ export default function ProductConfigurator({
                     label: entry.name,
                   }))}
                   validationLabel="Ring category"
-                  triggerClassName="bg-[#FCFCFA] text-[14px] font-medium text-[#0A1628] shadow-[0_8px_28px_rgba(10,22,40,0.06)] focus:shadow-[0_14px_36px_rgba(10,22,40,0.1)]"
+                  triggerClassName="bg-[#FCFCFA] text-[14px] font-medium text-[var(--color-brand-primary,#000000)] shadow-[0_8px_28px_rgba(10,22,40,0.06)] focus:shadow-[0_14px_36px_rgba(10,22,40,0.1)]"
                 />
               </div>
             </div>
 
             <div className="mb-5">
               <div className="mb-[10px] flex items-baseline justify-between">
-                <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-[#0A1628]">
+                <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--color-brand-primary,#000000)]">
                   {activeRingCategory?.name || 'Ring Size'}
                 </span>
-                <button type="button" onClick={() => setShowSizeChart(true)} className="font-sans text-[13px] font-medium tracking-[0.01em] text-[#0A1628] underline-offset-4 hover:underline">
+                <button type="button" onClick={() => setShowSizeChart(true)} className="font-sans text-[13px] font-medium tracking-[0.01em] text-[var(--color-brand-primary,#000000)] underline-offset-4 hover:underline">
                   Size Chart
                 </button>
               </div>
-              <ShadcnSelect
-                value={ringSize}
-                onValueChange={(value) => {
-                  (onRingSizeChange || onSizeOrFitChange)(value);
-                  setShowRingModal(false);
-                }}
-              >
-                <ShadcnSelectTrigger aria-label={activeRingCategory?.name || 'Ring Size'}>
-                  <ShadcnSelectValue placeholder="Select ring size" />
-                </ShadcnSelectTrigger>
-                <ShadcnSelectContent nativeScroll>
-                  {ringCategorySizes.map((size) => (
-                    <ShadcnSelectItem key={size} value={size}>
-                      {size}
-                    </ShadcnSelectItem>
-                  ))}
-                </ShadcnSelectContent>
-              </ShadcnSelect>
+              <div className="grid grid-cols-5 gap-2 sm:grid-cols-7">
+                {ringCategorySizes.map((size) => (
+                  <button
+                    key={size}
+                    type="button"
+                    aria-pressed={size === ringSize}
+                    onClick={() => {
+                      (onRingSizeChange || onSizeOrFitChange)(size);
+                      setShowRingModal(false);
+                    }}
+                    className={`min-h-11 border px-2 font-[family-name:var(--font-family-button)] text-[10px] font-medium uppercase tracking-[0.12em] transition-colors ${size === ringSize ? 'border-[var(--color-brand-primary,#000000)] bg-[var(--color-brand-primary,#000000)] text-white' : 'border-black/20 bg-white text-[var(--color-brand-primary,#000000)] hover:border-[var(--color-brand-primary,#000000)]'}`}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -384,3 +386,9 @@ export default function ProductConfigurator({
     </div>
   );
 }
+
+
+
+
+
+

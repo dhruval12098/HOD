@@ -67,7 +67,7 @@ export function MaterialIcon({ label, color, id }) {
 export default function ConfiguratorMaterialButtons({ label = 'Material', selectedLabel, options, active, onChange }) {
   return (
     <div className="mb-5">
-      <div className="mb-3 text-[14px] text-[#0A1628]">
+      <div className="mb-3 text-[14px] text-[var(--color-brand-primary,#000000)]">
         <b className="font-semibold">{label}:</b>{' '}
         <span className="text-[#777]">{selectedLabel}</span>
       </div>
@@ -86,7 +86,7 @@ export default function ConfiguratorMaterialButtons({ label = 'Material', select
                 if (!isActive) onChange(option.value);
               }}
               className={[
-                'flex h-20 w-full cursor-pointer flex-col items-center justify-center gap-1 rounded-lg bg-white p-1.5 text-[#000] transition-colors sm:h-24 sm:w-24 sm:p-2',
+                'flex h-14 w-full cursor-pointer flex-row items-center justify-center gap-2 rounded-none bg-white px-3 py-2 text-[#000] transition-colors sm:h-14 sm:min-w-[150px] sm:flex-1',
                 isActive
                   ? 'border-2 border-[#000]'
                   : 'border border-[#D1D1D1] hover:bg-[#F5F5F5]',
@@ -94,10 +94,10 @@ export default function ConfiguratorMaterialButtons({ label = 'Material', select
               aria-pressed={isActive}
               aria-label={optionLabel}
             >
-              <span className="block h-9 w-9 sm:h-11 sm:w-11">
+              <span className="block h-7 w-7 shrink-0">
                 <MaterialIcon label={optionLabel} color={option.color} id={`${index}-${option.value}`.replace(/[^a-zA-Z0-9_-]/g, '')} />
               </span>
-              <span className="text-center text-[11px] font-medium leading-[1.15] sm:text-[13px] sm:leading-[1.2]">
+              <span className="text-left text-[11px] font-medium leading-[1.2] sm:text-[12px]">
                 {baseName}
               </span>
             </button>
@@ -118,3 +118,6 @@ export function buildMetalButtonOptions(metals, metalOptions = []) {
     };
   });
 }
+
+
+

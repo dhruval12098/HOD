@@ -4,12 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
-import CheckoutCustomerStep from '@/components/checkout/CheckoutCustomerStep';
-import CheckoutDeliveryStep from '@/components/checkout/CheckoutDeliveryStep';
-import CheckoutPaymentStep from '@/components/checkout/CheckoutPaymentStep';
-import CheckoutReviewStep from '@/components/checkout/CheckoutReviewStep';
-import CheckoutShippingStep from '@/components/checkout/CheckoutShippingStep';
-import CheckoutStepper from '@/components/checkout/CheckoutStepper';
+import CheckoutInformationStep from '@/components/checkout/CheckoutInformationStep';
+import CheckoutConfirmationStep from '@/components/checkout/CheckoutConfirmationStep';
 import CheckoutSummary from '@/components/checkout/CheckoutSummary';
 import type { CheckoutChargeQuote, CheckoutDisplayItem, CheckoutPostalAreaOption, CheckoutPostalLookupState, CheckoutProfileForm } from '@/components/checkout/types';
 import { useCurrency } from '@/context/CurrencyContext';
@@ -19,9 +15,9 @@ import { useCart } from '@/lib/hooks/useCart';
 import { getProductKey, type CartProductSnapshot } from '@/lib/product-keys';
 import type { StorefrontProduct } from '@/lib/catalog-products';
 import { clearLoveLetterDraft, readLoveLetterDraft, type LoveLetterDraft } from '@/lib/love-letter';
-import { PromotionBanner, type StorefrontPromotion } from '@/components/commerce/PromotionBanner';
 
 const APPLIED_COUPON_KEY = 'hod_applied_coupon'
+const GUEST_CHECKOUT_TOKEN_KEY = 'hod_guest_checkout_token'
 
 type RazorpayCheckoutSuccess = {
   razorpay_payment_id: string
@@ -150,17 +146,23 @@ function loadRazorpayCheckoutScript() {
   })
 }
 
+function getOrCreateGuestCheckoutToken() {
+  const existing = window.sessionStorage.getItem(GUEST_CHECKOUT_TOKEN_KEY)
+  if (existing && /^[0-9a-f]{64}$/.test(existing)) return existing
+  const bytes = new Uint8Array(32)
+  window.crypto.getRandomValues(bytes)
+  const token = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')
+  window.sessionStorage.setItem(GUEST_CHECKOUT_TOKEN_KEY, token)
+  return token
+}
 function parseCurrency(value: string | null) {
   const parsed = Number(value ?? '0');
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
 const CHECKOUT_STEPS = [
-  { id: 'customer', label: 'Customer', component: CheckoutCustomerStep },
-  { id: 'shipping', label: 'Shipping', component: CheckoutShippingStep },
-  { id: 'delivery', label: 'Delivery', component: CheckoutDeliveryStep },
-  { id: 'payment', label: 'Payment', component: CheckoutPaymentStep },
-  { id: 'review', label: 'Review', component: CheckoutReviewStep },
+  { id: 'shipping', label: 'Shipping' },
+  { id: 'payment', label: 'Payment' },
 ] as const;
 
 const EMPTY_PROFILE_FORM: CheckoutProfileForm = {
@@ -185,6 +187,7 @@ export default function CheckoutPageClient() {
   const [currentStep, setCurrentStep] = useState(0);
   const [sessionLoading, setSessionLoading] = useState(true);
   const [sessionReady, setSessionReady] = useState(false);
+  const [guestCheckout, setGuestCheckout] = useState(false);
   const [customerForm, setCustomerForm] = useState<CheckoutProfileForm>(EMPTY_PROFILE_FORM);
   const [processingPayment, setProcessingPayment] = useState(false);
   const [paymentUiStage, setPaymentUiStage] = useState<PaymentUiStage>('idle')
@@ -208,7 +211,6 @@ export default function CheckoutPageClient() {
     bannerImageUrl?: string
   } | null>(null);
   const [couponLoading, setCouponLoading] = useState(false);
-  const [promotions, setPromotions] = useState<StorefrontPromotion[]>([])
   const [pendingPaymentSession, setPendingPaymentSession] = useState<PendingPaymentSession | null>(null)
   const [chargeQuote, setChargeQuote] = useState<CheckoutChargeQuote | null>(null)
   const [quoteStatus, setQuoteStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle')
@@ -236,11 +238,11 @@ export default function CheckoutPageClient() {
   const checkoutAttemptKeyRef = useRef<string | null>(null)
   const paymentSessionPromiseRef = useRef<Promise<PendingPaymentSession | null> | null>(null)
   const paymentAccessTokenRef = useRef<string | null>(null)
+  const paymentGuestTokenRef = useRef<string | null>(null)
   const lastPostalLookupKeyRef = useRef<string>('')
   const cartMode = searchParams.get('mode') === 'cart';
 
   useEffect(() => {
-    void fetch('/api/public/promotions').then((response) => response.json()).then((payload) => setPromotions(Array.isArray(payload?.items) ? payload.items : [])).catch(() => {})
     if (!cartMode) {
       setAppliedCoupon(null)
       setCouponCodeInput('')
@@ -858,10 +860,8 @@ export default function CheckoutPageClient() {
     const allErrors = validateCheckoutForm()
     const keysForStep: Array<keyof CheckoutProfileForm> =
       stepIndex === 0
-        ? ['first_name', 'last_name', 'email', 'phone']
-        : stepIndex === 1
-          ? ['country', 'state', 'city', 'postal_code', 'address_line_1']
-          : []
+        ? ['first_name', 'last_name', 'email', 'phone', 'country', 'state', 'city', 'postal_code', 'address_line_1']
+        : []
 
     const stepErrors = keysForStep.reduce<Partial<Record<keyof CheckoutProfileForm, string>>>((acc, key) => {
       if (allErrors[key]) acc[key] = allErrors[key]
@@ -892,12 +892,14 @@ export default function CheckoutPageClient() {
 
     const request = (async () => {
       const { data } = await supabase.auth.getSession()
-      const accessToken = data.session?.access_token
-      if (!accessToken) {
-        if (showErrors) setErrorMessage('Please sign in to continue checkout.')
+      const accessToken = data.session?.access_token || null
+      const guestToken = accessToken ? null : (guestCheckout ? getOrCreateGuestCheckoutToken() : null)
+      if (!accessToken && !guestToken) {
+        if (showErrors) setErrorMessage('Choose Express Checkout or sign in to continue.')
         return null
       }
       paymentAccessTokenRef.current = accessToken
+      paymentGuestTokenRef.current = guestToken
 
       const idempotencyKey = checkoutAttemptKeyRef.current || window.crypto.randomUUID()
       checkoutAttemptKeyRef.current = idempotencyKey
@@ -905,7 +907,7 @@ export default function CheckoutPageClient() {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
-          authorization: `Bearer ${accessToken}`,
+          ...(accessToken ? { authorization: `Bearer ${accessToken}` } : { 'x-guest-checkout-token': guestToken! }),
         },
         body: JSON.stringify({
           idempotencyKey,
@@ -973,8 +975,9 @@ export default function CheckoutPageClient() {
     try {
       const paymentSession = await preparePaymentSession(true)
       const accessToken = paymentAccessTokenRef.current
+      const guestToken = paymentGuestTokenRef.current
 
-      if (!accessToken || !paymentSession) {
+      if ((!accessToken && !guestToken) || !paymentSession) {
         setPaymentUiStage('idle')
         setProcessingPayment(false)
         return
@@ -1002,7 +1005,7 @@ export default function CheckoutPageClient() {
                 method: 'POST',
                 headers: {
                   'content-type': 'application/json',
-                  authorization: `Bearer ${accessToken}`,
+                  ...(accessToken ? { authorization: `Bearer ${accessToken}` } : { 'x-guest-checkout-token': guestToken! }),
                 },
                 body: JSON.stringify({ orderId: paymentSession.orderId }),
                 keepalive: true,
@@ -1038,7 +1041,7 @@ export default function CheckoutPageClient() {
               method: 'POST',
               headers: {
               'content-type': 'application/json',
-              authorization: `Bearer ${accessToken}`,
+              ...(accessToken ? { authorization: `Bearer ${accessToken}` } : { 'x-guest-checkout-token': guestToken! }),
             },
             body: JSON.stringify({
               orderId: paymentSession.orderId,
@@ -1136,7 +1139,7 @@ export default function CheckoutPageClient() {
 
   if (sessionLoading) {
     return (
-      <section className="min-h-[calc(100vh-111px)] bg-[#f7f8fa] px-4 py-8 sm:px-6 lg:px-10">
+      <section className="min-h-[calc(100vh-111px)] bg-white px-4 py-8 sm:px-6 lg:px-10">
         <div className="mx-auto max-w-[1240px] rounded-[24px] border border-[#e7ebf0] bg-white p-6 text-sm text-[#667085] shadow-[0_18px_50px_rgba(15,23,42,0.04)]">
           Loading checkout...
         </div>
@@ -1146,20 +1149,17 @@ export default function CheckoutPageClient() {
 
   if (!sessionReady) {
     return (
-      <section className="min-h-[calc(100vh-111px)] bg-[#f7f8fa] px-4 py-8 sm:px-6 lg:px-10">
+      <section className="min-h-[calc(100vh-111px)] bg-white px-4 py-8 sm:px-6 lg:px-10">
         <div className="mx-auto max-w-[720px] rounded-[24px] border border-[#e7ebf0] bg-white p-8 text-center shadow-[0_18px_50px_rgba(15,23,42,0.04)]">
-          <h1 className="text-[32px] font-semibold tracking-[-0.04em] text-[#101828]">Sign in to continue checkout</h1>
+          <h1 className="font-[family-name:var(--font-family-primary)] text-[32px] font-medium text-black">Checkout</h1>
           <p className="mt-3 text-sm leading-7 text-[#667085]">
-            Checkout is available only for logged-in customers so we can prefill your profile and create your order properly.
+            Continue without an account or sign in to use your saved details.
           </p>
           {errorMessage ? <p className="mt-3 text-sm text-red-600">{errorMessage}</p> : null}
-          <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-            <Link href="/login" className="inline-flex h-11 items-center justify-center rounded-full bg-[#101828] px-6 text-sm font-medium text-white transition hover:bg-[#1d2939]">
-              Sign In
-            </Link>
-            <Link href="/signup" className="inline-flex h-11 items-center justify-center rounded-full border border-[#d0d5dd] px-6 text-sm font-medium text-[#344054] transition hover:border-[#101828] hover:text-[#101828]">
-              Create Account
-            </Link>
+          <div className="mt-6 grid gap-3">
+            <button type="button" onClick={() => { getOrCreateGuestCheckoutToken(); setGuestCheckout(true); setSessionReady(true) }} className="flex min-h-12 w-full items-center justify-center border border-black bg-black px-6 font-[family-name:var(--font-family-button)] text-[11px] font-semibold uppercase tracking-[0.1em] text-white transition hover:bg-white hover:text-black">Express Checkout</button>
+            <div className="flex items-center gap-3 font-[family-name:var(--font-family-secondary)] text-[10px] uppercase text-black/40"><span className="h-px flex-1 bg-black/10"/><span>or</span><span className="h-px flex-1 bg-black/10"/></div>
+            <Link href={`/login?next=${encodeURIComponent(`/checkout?${searchParams.toString()}`)}`} className="flex min-h-12 w-full items-center justify-center border border-black bg-white px-6 font-[family-name:var(--font-family-button)] text-[11px] font-semibold uppercase tracking-[0.1em] text-black no-underline transition hover:bg-black hover:text-white">Sign In</Link>
           </div>
         </div>
       </section>
@@ -1168,7 +1168,7 @@ export default function CheckoutPageClient() {
 
   if (cartMode && cartItems.length > 0 && resolvedCartItems.length === 0) {
     return (
-      <section className="min-h-[calc(100vh-111px)] bg-[#f7f8fa] px-4 py-8 sm:px-6 lg:px-10">
+      <section className="min-h-[calc(100vh-111px)] bg-white px-4 py-8 sm:px-6 lg:px-10">
         <div className="mx-auto max-w-[1240px] rounded-[24px] border border-[#e7ebf0] bg-white p-6 text-sm text-[#667085] shadow-[0_18px_50px_rgba(15,23,42,0.04)]">
           Loading checkout...
         </div>
@@ -1178,7 +1178,7 @@ export default function CheckoutPageClient() {
 
   if (!checkoutItems.length) {
     return (
-      <section className="min-h-[calc(100vh-111px)] bg-[#f7f8fa] px-4 py-8 sm:px-6 lg:px-10">
+      <section className="min-h-[calc(100vh-111px)] bg-white px-4 py-8 sm:px-6 lg:px-10">
         <div className="mx-auto max-w-[720px] rounded-[24px] border border-[#e7ebf0] bg-white p-8 text-center shadow-[0_18px_50px_rgba(15,23,42,0.04)]">
           <h1 className="text-[32px] font-semibold tracking-[-0.04em] text-[#101828]">Nothing ready for checkout</h1>
           <p className="mt-3 text-sm leading-7 text-[#667085]">Add a product to cart or start checkout from a product page first.</p>
@@ -1193,7 +1193,7 @@ export default function CheckoutPageClient() {
   }
 
   return (
-    <section className="min-h-[calc(100vh-111px)] bg-[#f7f8fa] px-4 py-8 sm:px-6 lg:px-10">
+    <section className="min-h-[calc(100vh-111px)] bg-white px-4 py-8 sm:px-6 lg:px-10">
       {paymentUiStage === 'confirming' ? (
         <div className="fixed inset-0 z-[140] flex items-center justify-center bg-[rgba(247,248,250,0.82)] px-4 backdrop-blur-sm">
           <div className="w-full max-w-[420px] rounded-[28px] border border-[#e7ebf0] bg-white px-6 py-8 text-center shadow-[0_24px_80px_rgba(15,23,42,0.12)] sm:px-8">
@@ -1210,34 +1210,12 @@ export default function CheckoutPageClient() {
       <div className="mx-auto max-w-[1240px]">
         <div className="mb-6">
           <div className="text-[11px] font-medium uppercase tracking-[0.24em] text-[#98a2b3]">Checkout</div>
-          <h1 className="mt-2 text-[32px] font-semibold tracking-[-0.04em] text-[#101828]">Secure your piece</h1>
+          <div className="flex items-end justify-between gap-5"><h1 className="font-[family-name:var(--font-family-primary)] text-[28px] font-semibold uppercase text-black">Checkout</h1><div className="font-[family-name:var(--font-family-secondary)] text-[12px] text-black/45"><span className={currentStep === 0 ? 'font-semibold text-black' : ''}>Shipping</span><span className="px-2">›</span><span className={currentStep === 1 ? 'font-semibold text-black' : ''}>Payment</span></div></div>
           <p className="mt-2 text-sm text-[#667085]">{cartMode ? 'Checkout synced to the products currently saved in your cart.' : 'Checkout preview for your selected product.'}</p>
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_390px] lg:gap-10">
           <div className="space-y-5">
-            <CheckoutStepper currentStep={currentStep} />
-
-            <div className="rounded-[24px] border border-[#e7ebf0] bg-white px-5 py-4 shadow-[0_18px_50px_rgba(15,23,42,0.04)] sm:px-6">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <div className="text-[11px] font-medium uppercase tracking-[0.24em] text-[#98a2b3]">
-                    Step {currentStep + 1} of {CHECKOUT_STEPS.length}
-                  </div>
-                  <div className="mt-1 text-base font-semibold text-[#101828]">{CHECKOUT_STEPS[currentStep].label}</div>
-                </div>
-                <div className="text-sm text-[#667085]">
-                  {Math.round(((currentStep + 1) / CHECKOUT_STEPS.length) * 100)}% complete
-                </div>
-              </div>
-              <div className="mt-4 h-2 overflow-hidden rounded-full bg-[#eef2f6]">
-                <div
-                  className="h-full rounded-full bg-[#101828] transition-[width] duration-300 ease-out"
-                  style={{ width: `${((currentStep + 1) / CHECKOUT_STEPS.length) * 100}%` }}
-                />
-              </div>
-            </div>
-
             {errorMessage ? (
               <div className="rounded-[24px] border border-[rgba(220,38,38,0.18)] bg-[rgba(254,242,242,0.9)] px-5 py-4 text-sm text-red-700">
                 {errorMessage}
@@ -1269,61 +1247,15 @@ export default function CheckoutPageClient() {
               </div>
             ) : null}
 
-              <div className="animate-[fadeUp_0.35s_ease]">
-                {currentStep === 0 ? <CheckoutCustomerStep form={customerForm} onChange={updateCustomerForm} errors={fieldErrors} /> : null}
-               {currentStep === 1 ? (
-                 <CheckoutShippingStep
-                   form={customerForm}
-                   onChange={updateCustomerForm}
-                   errors={fieldErrors}
-                   postalLookup={postalLookup}
-                   onPostalBlur={handlePostalCodeBlur}
-                   postalAreaOptions={postalAreaOptions}
-                   onPostalAreaSelect={handlePostalAreaSelect}
-                 />
-               ) : null}
-                {currentStep === 2 ? <CheckoutDeliveryStep /> : null}
-                {currentStep === 3 ? <CheckoutPaymentStep totalAmount={totalPayable} chargeQuote={chargeQuote} /> : null}
-                {currentStep === 4 ? <CheckoutReviewStep onPayNow={handlePayNow} isProcessingPayment={processingPayment} continueHref={continueHref} loveLetter={loveLetterDraft} totalAmount={totalPayable} chargeQuote={chargeQuote} isPaymentDisabled={quoteStatus !== 'ready' || unavailableCartItemCount > 0} paymentAvailabilityMessage={unavailableCartItemCount > 0 ? 'Resolve unavailable cart items before payment.' : quoteStatus === 'loading' ? 'Confirming the latest price and availability…' : quoteStatus === 'error' ? quoteError : undefined} /> : null}
+            <div className="animate-[fadeUp_0.35s_ease]">
+              {currentStep === 0 ? <CheckoutInformationStep form={customerForm} onChange={updateCustomerForm} errors={fieldErrors} postalLookup={postalLookup} onPostalBlur={handlePostalCodeBlur} postalAreaOptions={postalAreaOptions} onPostalAreaSelect={handlePostalAreaSelect} isGuest={guestCheckout} /> : null}
+              {currentStep === 1 ? <CheckoutConfirmationStep form={customerForm} itemCount={checkoutItems.reduce((sum, item) => sum + item.quantity, 0)} onEdit={() => setCurrentStep(0)} onPay={handlePayNow} processing={processingPayment} disabled={quoteStatus !== 'ready' || unavailableCartItemCount > 0} message={unavailableCartItemCount > 0 ? 'Resolve unavailable cart items before payment.' : quoteStatus === 'loading' ? 'Confirming the latest price and availability...' : quoteStatus === 'error' ? quoteError : undefined} /> : null}
             </div>
-
             {!isLastStep ? (
-              <div className="rounded-[24px] border border-[#e7ebf0] bg-white p-5 shadow-[0_18px_50px_rgba(15,23,42,0.04)] sm:p-6">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <button
-                    type="button"
-                    onClick={() => setCurrentStep((step) => Math.max(0, step - 1))}
-                    disabled={isFirstStep}
-                    className={`inline-flex h-11 items-center justify-center rounded-full border px-6 text-sm font-medium transition ${
-                      isFirstStep
-                        ? 'cursor-not-allowed border-[#e4e7ec] text-[#98a2b3]'
-                        : 'border-[#d0d5dd] text-[#344054] hover:border-[#101828] hover:text-[#101828]'
-                    }`}
-                  >
-                    Back
-                  </button>
-
-                    <button
-                      type="button"
-                      onClick={handleNextStep}
-                      className="inline-flex h-11 items-center justify-center rounded-full bg-[#101828] px-6 text-sm font-medium text-white transition hover:bg-[#1d2939]"
-                    >
-                    Next Step
-                  </button>
-                </div>
+              <div className="flex justify-end">
+                <button type="button" onClick={handleNextStep} className="flex min-h-12 items-center justify-center border border-black bg-black px-8 font-[family-name:var(--font-family-button)] text-[11px] font-semibold uppercase tracking-[0.1em] text-white transition hover:bg-white hover:text-black">Continue</button>
               </div>
-            ) : (
-              <div className="-mt-2 flex justify-start px-1">
-                <button
-                  type="button"
-                  onClick={() => setCurrentStep((step) => Math.max(0, step - 1))}
-                  className="inline-flex min-h-10 items-center text-sm font-medium text-[#667085] underline decoration-[#c7cbd1] underline-offset-4 transition hover:text-[#101828] focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b8964e]"
-                >
-                  Back to payment details
-                </button>
-              </div>
-            )}
-
+            ) : null}
             {!isLastStep ? (
               <div className="flex justify-start">
                 <Link
@@ -1338,41 +1270,6 @@ export default function CheckoutPageClient() {
 
           <div className="lg:sticky lg:top-[140px] lg:self-start">
             <div className="space-y-4">
-              {(promotions[0] || (appliedCoupon ? { id: appliedCoupon.id, code: appliedCoupon.code, title: appliedCoupon.title, rewardType: appliedCoupon.rewardType || appliedCoupon.discountType, discountValue: appliedCoupon.discountValue, minimumOrderAmount: appliedCoupon.minimumOrderAmount || 0, bannerTitle: appliedCoupon.bannerTitle, bannerDescription: appliedCoupon.bannerDescription, bannerImageUrl: appliedCoupon.bannerImageUrl, gift: appliedCoupon.gift ? { name: appliedCoupon.gift.name, slug: appliedCoupon.gift.slug, sku: appliedCoupon.gift.sku, imageUrl: appliedCoupon.gift.imageUrl, variantLabel: String(appliedCoupon.gift.variantData?.label || '') } : null } : null)) ? <PromotionBanner promotion={(promotions.find((item) => item.id === appliedCoupon?.id) || promotions[0] || { id: appliedCoupon!.id, code: appliedCoupon!.code, title: appliedCoupon!.title, rewardType: appliedCoupon!.rewardType || appliedCoupon!.discountType, discountValue: appliedCoupon!.discountValue, minimumOrderAmount: appliedCoupon!.minimumOrderAmount || 0, bannerTitle: appliedCoupon!.bannerTitle, bannerDescription: appliedCoupon!.bannerDescription, bannerImageUrl: appliedCoupon!.bannerImageUrl, gift: appliedCoupon!.gift ? { name: appliedCoupon!.gift.name, slug: appliedCoupon!.gift.slug, sku: appliedCoupon!.gift.sku, imageUrl: appliedCoupon!.gift.imageUrl, variantLabel: String(appliedCoupon!.gift.variantData?.label || '') } : null }) as StorefrontPromotion} subtotal={subtotal} applied={Boolean(appliedCoupon)} /> : null}
-              <div className="rounded-[24px] border border-[#e7ebf0] bg-white p-5 shadow-[0_18px_50px_rgba(15,23,42,0.04)] sm:p-6">
-                <div className="text-[18px] font-semibold tracking-[-0.02em] text-[#101828]">Coupon</div>
-                <div className="mt-4 flex gap-2">
-                  <input
-                    value={couponCodeInput}
-                    onChange={(event) => setCouponCodeInput(event.target.value.toUpperCase())}
-                    placeholder="Enter coupon code"
-                    className="checkout-input h-11 flex-1 rounded-full border border-[#d0d5dd] px-4 text-sm text-[#101828] outline-none transition-colors focus:border-[#101828]"
-                  />
-                  {appliedCoupon ? (
-                    <button
-                      type="button"
-                      onClick={handleRemoveCoupon}
-                      className="inline-flex h-11 items-center justify-center rounded-full border border-[#d0d5dd] px-4 text-sm font-medium text-[#344054] transition hover:border-[#101828] hover:text-[#101828]"
-                    >
-                      Remove
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => void handleApplyCoupon()}
-                      disabled={couponLoading}
-                      className="inline-flex h-11 items-center justify-center rounded-full bg-[#101828] px-5 text-sm font-medium text-white transition hover:bg-[#1d2939] disabled:opacity-60"
-                    >
-                      {couponLoading ? 'Applying...' : 'Apply'}
-                    </button>
-                  )}
-                </div>
-                {appliedCoupon ? (
-                  <div className="mt-3 text-sm text-[#12b76a]">
-                    {appliedCoupon.rewardType === 'free_gift' ? `${appliedCoupon.gift?.name || 'Complimentary gift'} added free.` : `${appliedCoupon.code} applied. You saved ${format(appliedCoupon.discountAmount)}.`}
-                  </div>
-                ) : null}
-              </div>
               <CheckoutSummary
                 summary={{
                   items: authoritativeCheckoutItems,
@@ -1382,6 +1279,11 @@ export default function CheckoutPageClient() {
                   chargeQuote,
                   gift: authoritativePricing?.gift || appliedCoupon?.gift || null,
                 }}
+                couponValue={couponCodeInput}
+                onCouponChange={setCouponCodeInput}
+                onCouponAction={() => { if (appliedCoupon) handleRemoveCoupon(); else void handleApplyCoupon() }}
+                couponApplied={Boolean(appliedCoupon)}
+                couponLoading={couponLoading}
               />
             </div>
           </div>

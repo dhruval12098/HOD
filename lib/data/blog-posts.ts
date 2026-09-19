@@ -20,6 +20,9 @@ export interface BlogPost {
   featuredProducts?: import('@/lib/catalog-products').StorefrontProduct[];
   isPublished?: boolean;
   sortOrder?: number;
+  createdAt?: string;
+  catalogCategoryId?: string;
+  catalogCategory?: { id: string; name: string; slug: string };
 }
 
 export type BlogPostContentBlock = {
@@ -176,7 +179,11 @@ export function mapBlogPostRecord(record: {
   is_published?: boolean
   sort_order?: number
   tags?: string[]
+  created_at?: string
+  catalog_category_id?: string | null
+  catalog_category?: { id: string; name: string; slug: string } | Array<{ id: string; name: string; slug: string }> | null
 }): BlogPost {
+  const catalogCategory = Array.isArray(record.catalog_category) ? record.catalog_category[0] : record.catalog_category
   return {
     id: record.id,
     slug: record.slug,
@@ -206,5 +213,8 @@ export function mapBlogPostRecord(record: {
     })),
     isPublished: record.is_published ?? true,
     sortOrder: record.sort_order ?? 0,
+    createdAt: record.created_at,
+    catalogCategoryId: record.catalog_category_id ?? undefined,
+    catalogCategory: catalogCategory ? { id: catalogCategory.id, name: catalogCategory.name, slug: catalogCategory.slug } : undefined,
   }
 }

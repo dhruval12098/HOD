@@ -674,7 +674,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
           >
             <span
               className="text-[11px] min-[360px]:text-[13px] min-[390px]:text-[15px] sm:text-[20px] font-bold tracking-[0.1em] min-[360px]:tracking-[0.12em] min-[390px]:tracking-[0.14em] uppercase"
-              style={{ color: 'var(--color-brand-primary, #000000)', fontFamily: 'var(--font-family-logo1, Cinzel, serif)', fontWeight: 500, fontVariationSettings: '"wght" 500', fontSynthesis: 'none' }}
+              style={{ color: 'var(--color-brand-primary, #000000)', fontFamily: 'var(--font-family-logo1, Cinzel, serif)', fontWeight: 600, fontVariationSettings: '"wght" 600', fontSynthesis: 'none' }}
             >
               House of Diams
             </span>
@@ -692,7 +692,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
           >
             <span
               className="text-[clamp(22px,2.1vw,32px)] font-bold  tracking-[0.06em]"
-              style={{ color: desktopHeaderText, fontFamily: 'var(--font-family-logo1, Cinzel, serif)', fontWeight: 500, fontVariationSettings: '"wght" 500', fontSynthesis: 'none' }}
+              style={{ color: desktopHeaderText, fontFamily: 'var(--font-family-logo1, Cinzel, serif)', fontWeight: 600, fontVariationSettings: '"wght" 600', fontSynthesis: 'none' }}
             >
               House of Diams
             </span>
@@ -729,7 +729,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
 
                   {item.mega ? (
                     <div
-                      className="mega-drop absolute top-full min-h-[calc(100dvh-var(--hod-site-header-height,131px))] overflow-hidden bg-white border-t border-black/10 shadow-[0_24px_64px_rgba(0,0,0,0.08)]"
+                      className="mega-drop absolute top-full min-h-[calc((100dvh-var(--hod-site-header-height,131px))*0.8)] overflow-hidden bg-white border-t border-black/10 shadow-[0_24px_64px_rgba(0,0,0,0.08)]"
                       style={{
                         left: '50%',
                         width: '100vw',
@@ -743,8 +743,16 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
                       }}
                       onMouseEnter={() => openMegaMenu(item.label)}
                       onMouseLeave={() => queueCloseMegaMenu(item.label)}
+                      onMouseMove={(event) => {
+                        const overContent = (event.target as HTMLElement).closest('[data-mega-content], a, button');
+                        if (overContent) {
+                          openMegaMenu(item.label);
+                        } else if (!megaCloseTimeoutRef.current) {
+                          queueCloseMegaMenu(item.label);
+                        }
+                      }}
                     >
-                      <div className="flex min-h-[calc(100dvh-var(--hod-site-header-height,131px))] w-full px-[56px] py-[56px]">
+                      <div className="flex min-h-[calc((100dvh-var(--hod-site-header-height,131px))*0.8)] w-full px-[56px] py-[44px]">
                         <div
                           className="grid w-full items-start gap-x-10"
                           style={{
@@ -753,7 +761,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
                               : `minmax(0, 1fr)`,
                           }}
                         >
-                          <div className="grid max-w-[900px] grid-cols-[repeat(4,minmax(150px,max-content))] justify-start gap-x-10 gap-y-10">
+                          <div data-mega-content className="grid max-w-[900px] grid-cols-[repeat(4,minmax(150px,max-content))] justify-start gap-x-10 gap-y-10">
                             {item.mega.sections.map((section, idx) => (
                               <div
                                 key={`${item.label}-${section.title}-${idx}`}
@@ -764,8 +772,8 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
                             ))}
                           </div>
                           {item.mega.featuredImage?.imageUrl ? (
-                            <div className="justify-self-end">
-                              <div className="h-[520px] w-[472px] max-w-[32vw] overflow-hidden bg-[#F7F8FA]">
+                            <div data-mega-content className="justify-self-end">
+                              <div className="h-[416px] w-[472px] max-w-[32vw] overflow-hidden bg-[#F7F8FA]">
                                 <img
                                   src={item.mega.featuredImage.imageUrl}
                                   alt={item.mega.featuredImage.imageAlt || item.label}
@@ -1081,6 +1089,8 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
     </>
   );
 }
+
+
 
 
 

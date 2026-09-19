@@ -15,6 +15,7 @@ export type CheckoutPayload = {
     phone?: string
     country?: string
     state?: string
+    district?: string
     city?: string
     postal_code?: string
     address_line_1?: string
@@ -118,6 +119,7 @@ type CustomDropdownOptionRow = {
   dropdown_id: string
   label: string
   value: string
+  display_order?: number | null
 }
 
 type OrderEmailItemRow = {
@@ -175,6 +177,7 @@ type PreparedCheckout = {
     phone: string
     country: string
     state: string
+    district: string
     city: string
     postal_code: string
     address_line_1: string
@@ -279,7 +282,7 @@ export async function prepareCheckoutPayload({
 }: {
   adminClient: SupabaseClient
   payload: CheckoutPayload | null
-  user: User
+  user: User | null
 }) {
   const checkoutItems = (payload?.items?.length ? payload.items : payload?.item ? [payload.item] : []).filter(Boolean) as CheckoutPayloadItem[]
 
@@ -287,14 +290,17 @@ export async function prepareCheckoutPayload({
     return { error: 'Invalid checkout payload.', status: 400 as const }
   }
 
-  const { data: profile, error: profileError } = await adminClient
-    .from('profiles')
-    .select('email, first_name, last_name, phone, country, state, city, postal_code, address_line_1, address_line_2')
-    .eq('id', user.id)
-    .maybeSingle()
+  const profileResult = user
+    ? await adminClient
+        .from('profiles')
+        .select('email, first_name, last_name, phone, country, state, city, postal_code, address_line_1, address_line_2')
+        .eq('id', user.id)
+        .maybeSingle()
+    : { data: null, error: null }
+  const profile = profileResult.data
 
-  if (profileError) {
-    return { error: profileError.message, status: 500 as const }
+  if (profileResult.error) {
+    return { error: profileResult.error.message, status: 500 as const }
   }
 
   const pricingResult = await resolveAuthoritativeCheckoutPricing({
@@ -312,7 +318,7 @@ export async function prepareCheckoutPayload({
   if (groupsResult.error) return { error: groupsResult.error.message, status: 500 as const }
   const dropdownGroups = (groupsResult.data || []) as CustomDropdownGroupRow[]
   const groupIds = dropdownGroups.map((group) => group.id)
-  const optionsResult = groupIds.length ? await adminClient.from('product_custom_dropdown_options').select('id, dropdown_id, label, value').in('dropdown_id', groupIds).eq('is_enabled', true) : { data: [], error: null }
+  const optionsResult = groupIds.length ? await adminClient.from('product_custom_dropdown_options').select('id, dropdown_id, label, value, display_order').in('dropdown_id', groupIds).eq('is_enabled', true).order('display_order', { ascending: true }) : { data: [], error: null }
   if (optionsResult.error) return { error: optionsResult.error.message, status: 500 as const }
   const dropdownOptions = (optionsResult.data || []) as CustomDropdownOptionRow[]
   let selectionError = ''
@@ -324,10 +330,20 @@ export async function prepareCheckoutPayload({
       selectionError = 'One or more custom product selections are invalid.'
     }
     const selectedCustomDropdowns = groups.flatMap((group) => {
-      const optionId = requested.get(group.id)
-      if (!optionId) { if (group.is_required) selectionError = `Please select ${group.label}.`; return [] }
-      const option = dropdownOptions.find((candidate) => candidate.dropdown_id === group.id && candidate.id === optionId)
-      if (!option) { selectionError = `Invalid selection for ${group.label}.`; return [] }
+      const requestedOptionId = requested.get(group.id)
+      const option = requestedOptionId
+        ? dropdownOptions.find((candidate) => candidate.dropdown_id === group.id && candidate.id === requestedOptionId)
+        : group.is_required
+          ? dropdownOptions.find((candidate) => candidate.dropdown_id === group.id)
+          : null
+      if (requestedOptionId && !option) {
+        selectionError = `Invalid selection for ${group.label}.`
+        return []
+      }
+      if (!option) {
+        if (group.is_required) selectionError = `${group.label} is unavailable for this product.`
+        return []
+      }
       return [{ dropdown_id: group.id, name: group.name, label: group.label, option_id: option.id, option_label: option.label, option_value: option.value }]
     })
 
@@ -350,12 +366,13 @@ export async function prepareCheckoutPayload({
   const loveLetter = payload?.loveLetter ?? null
   const customer = payload?.customer ?? {}
   const resolvedCustomer = {
-    first_name: (customer.first_name || profile?.first_name || user.user_metadata?.first_name || '').trim(),
-    last_name: (customer.last_name || profile?.last_name || user.user_metadata?.last_name || '').trim(),
-    email: (customer.email || profile?.email || user.email || '').trim(),
-    phone: (customer.phone || profile?.phone || user.user_metadata?.phone || '').trim(),
+    first_name: (customer.first_name || profile?.first_name || user?.user_metadata?.first_name || '').trim(),
+    last_name: (customer.last_name || profile?.last_name || user?.user_metadata?.last_name || '').trim(),
+    email: (customer.email || profile?.email || user?.email || '').trim(),
+    phone: (customer.phone || profile?.phone || user?.user_metadata?.phone || '').trim(),
     country: (customer.country || profile?.country || '').trim(),
     state: (customer.state || profile?.state || '').trim(),
+    district: (customer.district || '').trim(),
     city: (customer.city || profile?.city || '').trim(),
     postal_code: (customer.postal_code || profile?.postal_code || '').trim(),
     address_line_1: (customer.address_line_1 || profile?.address_line_1 || '').trim(),
@@ -413,12 +430,14 @@ export async function prepareCheckoutPayload({
 export async function createPendingOrder({
   adminClient,
   userId,
+  guestTokenHash,
   payload,
   prepared,
   razorpayOrderId,
 }: {
   adminClient: SupabaseClient
-  userId: string
+  userId: string | null
+  guestTokenHash: string | null
   payload: CheckoutPayload
   prepared: PreparedCheckout
   razorpayOrderId: string
@@ -433,12 +452,14 @@ export async function createPendingOrder({
 
   const orderInput = {
       user_id: userId,
+      guest_token_hash: guestTokenHash,
       customer_email: prepared.resolvedCustomer.email,
       customer_first_name: prepared.resolvedCustomer.first_name || 'Customer',
       customer_last_name: prepared.resolvedCustomer.last_name,
       customer_phone: prepared.resolvedCustomer.phone,
       shipping_country: prepared.resolvedCustomer.country,
       shipping_state: prepared.resolvedCustomer.state,
+      shipping_district: prepared.resolvedCustomer.district,
       shipping_city: prepared.resolvedCustomer.city,
       shipping_postal_code: prepared.resolvedCustomer.postal_code,
       shipping_address_line_1: prepared.resolvedCustomer.address_line_1,

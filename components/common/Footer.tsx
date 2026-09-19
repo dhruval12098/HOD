@@ -270,12 +270,6 @@ export default function Footer({ navItems = [] }: { navItems?: NavbarRenderItem[
             <ColLink href="/terms">Terms &amp; Conditions</ColLink>
             <ColLink href="/privacy-policy">Privacy Policy</ColLink>
           </div>
-
-          <div className="sm:col-span-3 mt-[var(--space-8)] lg:mt-[var(--space-16)]">
-            <Link href="/" className="inline-block text-[clamp(22px,7.5vw,64px)] font-bold  leading-none tracking-[0.06em] text-white no-underline transition-opacity hover:opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white" style={{ fontFamily: 'var(--font-family-logo1, Cinzel, serif)', fontWeight: 500, fontVariationSettings: '"wght" 500', fontSynthesis: 'none' }}>
-              House of Diams
-            </Link>
-          </div>
         </div>
 
         <div className="flex flex-col items-start lg:pl-[var(--space-4)]">
@@ -314,19 +308,29 @@ export default function Footer({ navItems = [] }: { navItems?: NavbarRenderItem[
             </div>
           </div>
       </div>
-      <div className="mx-auto grid max-w-[1600px] grid-cols-1 items-center gap-[var(--space-4)] border-t border-white/25 py-[var(--space-4)] text-[11px] text-white/60 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:gap-[var(--space-6)]">
-        <div className="flex items-center justify-center lg:justify-start">
-          <CurrencySelector />
+      <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-[var(--space-10)] gap-y-[var(--space-6)] border-t border-white/25 py-[var(--space-6)] text-[11px] text-white/60">
+        <div className="flex min-w-0 flex-col">
+          <Link
+            href="/"
+            className="inline-block text-[clamp(28px,9vw,88px)] font-bold leading-none tracking-[0.06em] text-white no-underline transition-opacity hover:opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+            style={{ fontFamily: 'var(--font-family-logo1, Cinzel, serif)', fontWeight: 600, fontVariationSettings: '"wght" 600', fontSynthesis: 'none' }}
+          >
+            House of Diams
+          </Link>
+          <span className="mt-2">© {new Date().getFullYear()} House of Diams. All rights reserved.</span>
         </div>
-        <span className="w-full text-center">© {new Date().getFullYear()} House of Diams. All rights reserved.</span>
-        <div className="flex flex-wrap items-center justify-center gap-6 lg:justify-end lg:pr-24" aria-label="Accepted payment methods">
-          {PAYMENT_METHODS.map((method) => (
-            <span key={method.name} className="flex items-center justify-center">
-              <img src={method.src} alt={method.name} className="h-9 w-9 object-contain" loading="lazy" />
-            </span>
-          ))}
+        <div className="ml-auto flex flex-wrap items-center gap-x-[var(--space-8)] gap-y-[var(--space-4)]">
+          <CurrencySelector />
+          <div className="flex flex-wrap items-center gap-6" aria-label="Accepted payment methods">
+            {PAYMENT_METHODS.map((method) => (
+              <span key={method.name} className="flex items-center justify-center">
+                <img src={method.src} alt={method.name} className="h-11 w-11 object-contain" loading="lazy" />
+              </span>
+            ))}
+          </div>
         </div>
       </div>
     </footer>
   );
 }
+

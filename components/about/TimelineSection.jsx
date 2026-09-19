@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { cinzelFont } from "@/app/fonts";
 
 /**
  * @typedef {Object} TimelineItem
@@ -117,39 +116,11 @@ export default function TimelineSection({ initialItems = [] }) {
         }
       `}</style>
 
-      {/* Heading */}
-      <div style={{ textAlign: "center", marginBottom: "60px" }}>
-        <div
-          style={{
-            fontSize: "10px",
-            fontWeight: 400,
-            letterSpacing: ".32em",
-            color: "#0A1628",
-            textTransform: "uppercase",
-            marginBottom: "18px",
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "12px",
-          }}
-        >
-          <span style={{ width: "24px", height: "1px", background: "#0A1628", display: "inline-block" }} />
-          Our Journey
-        </div>
-        <h2
-          className={`${cinzelFont.variable} font-primary-display`}
-          style={{
-            fontSize: "clamp(40px, 5.5vw, 72px)",
-            fontWeight: 300,
-            letterSpacing: ".02em",
-            color: "#0A1628",
-            lineHeight: 1.05,
-          }}
-        >
-          <em style={{ fontStyle: "normal", color: "#0A1628", fontWeight: 400 }}>Milestones</em>
+      <div className="mb-8 text-left sm:mb-10">
+        <h2 className="section-title font-[family-name:var(--font-family-primary)] text-[clamp(1.35rem,2.2vw,2rem)] font-medium uppercase leading-none tracking-[0.025em] text-black">
+          Milestones
         </h2>
       </div>
-
       {/* Timeline row */}
       <div
         className="timeline-row"
@@ -201,7 +172,7 @@ export default function TimelineSection({ initialItems = [] }) {
               <div
                 className="timeline-year"
                 style={{
-                  fontFamily: "var(--numeric)",
+                  fontFamily: "var(--font-family-primary)",
                   fontSize: "26px",
                   fontWeight: 400,
                   color: "#0A1628",
@@ -230,3 +201,5 @@ export default function TimelineSection({ initialItems = [] }) {
     </section>
   );
 }
+
+

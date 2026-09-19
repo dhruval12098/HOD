@@ -56,7 +56,7 @@ export default function CheckoutShippingStep({
         <CheckoutField label="Address Line 2" value={form.address_line_2} onChange={(value) => onChange('address_line_2', value)} placeholder="Apartment, suite, company, landmark (optional)" />
       </div>
       {postalAreaOptions.length > 1 ? (
-        <label className="mt-4 block rounded-[16px] border border-[#eaecf0] bg-[#fcfcfd] px-4 py-3">
+        <label className="mt-4 block border border-[#eaecf0] bg-white px-4 py-3">
           <span className="block text-[11px] font-medium uppercase tracking-[0.18em] text-[#98a2b3]">
             Select Post Office / Area
           </span>
@@ -75,12 +75,12 @@ export default function CheckoutShippingStep({
       ) : null}
       {postalLookup?.message ? (
         <div
-          className={`mt-4 rounded-[16px] border px-4 py-3 text-sm ${
+          className={`mt-4 border px-4 py-3 text-sm ${
             postalLookup.status === 'error'
               ? 'border-[rgba(220,38,38,0.18)] bg-[rgba(254,242,242,0.9)] text-red-700'
               : postalLookup.status === 'success'
                 ? 'border-[rgba(18,183,106,0.18)] bg-[rgba(236,253,243,0.9)] text-[#027a48]'
-                : 'border-[#e4e7ec] bg-[#f8fafc] text-[#475467]'
+                : 'border-[#e4e7ec] bg-[#faf9f7] text-[#475467]'
           }`}
         >
           {postalLookup.message}

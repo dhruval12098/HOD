@@ -22,6 +22,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
  *   browseSections?: ShopHeroBrowseSection[]
  *   activeFilters?: Record<string, string[]>
  *   onBrowseNavigate?: (href: string) => boolean
+ *   wideGutter?: boolean
  * }} props
  */
 export default function ShopHero({
@@ -33,6 +34,7 @@ export default function ShopHero({
   browseSections = [],
   activeFilters = {},
   onBrowseNavigate,
+  wideGutter = false,
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -141,8 +143,10 @@ export default function ShopHero({
       return options;
     }, []);
   }, [activeSection, browseSections]);
-  const bannerImage = desktopImageUrl || mobileImageUrl;
-  const bannerHref = ctaHref || collectionRootPath;
+  const categoryBannerImage = desktopImageUrl || mobileImageUrl;
+  const bannerImage = activeSection?.iconUrl || categoryBannerImage;
+  const bannerHref = activeSection?.href || ctaHref || collectionRootPath;
+  const bannerLabel = activeSection?.title || title;
 
   useEffect(() => {
     const rail = railRef.current;
@@ -201,7 +205,7 @@ export default function ShopHero({
 
   return (
     <section className="border-b border-black/10 bg-white pb-7 pt-[calc(118px+var(--space-7))] sm:pb-9 sm:pt-[calc(118px+var(--space-8))] lg:pt-[calc(146px+var(--space-8))]" aria-labelledby="shop-collection-heading">
-      <div className="flex flex-col gap-5 px-4 sm:px-7 lg:flex-row lg:items-end lg:justify-between lg:px-[52px]">
+      <div className={`flex flex-col gap-5 px-4 sm:px-7 lg:flex-row lg:items-end lg:justify-between ${wideGutter ? 'lg:px-[56px]' : 'lg:px-[52px]'}`}>
         <h1
           id="shop-collection-heading"
           className="section-title text-left text-[clamp(1.35rem,2.2vw,2rem)] font-medium uppercase leading-none tracking-[0.025em] text-[var(--color-brand-primary,#000)]"
@@ -235,24 +239,24 @@ export default function ShopHero({
       <div className="relative mt-6">
         <div
           ref={railRef}
-          className="flex snap-x snap-mandatory gap-[3px] overflow-x-auto px-[var(--space-2)] pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className={`flex snap-x snap-mandatory gap-[3px] overflow-x-auto px-[var(--space-2)] pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${wideGutter ? 'lg:px-[56px]' : ''}`}
           aria-label={(activeSection?.title || title) + ' visual options'}
         >
         <Link
           href={bannerHref}
-          className="group relative aspect-square h-[70vw] max-h-[320px] w-[70vw] max-w-[320px] shrink-0 snap-start overflow-hidden bg-[#F2F1EE] text-white no-underline sm:h-[320px] sm:w-[320px]"
+          className="group relative h-[70vw] max-h-[320px] w-[92vw] max-w-[540px] shrink-0 snap-start overflow-hidden bg-[#F2F1EE] text-white no-underline sm:h-[320px] sm:w-[540px]"
         >
           {bannerImage ? (
             <picture>
-              {mobileImageUrl ? <source media="(max-width: 640px)" srcSet={mobileImageUrl} /> : null}
-              <img src={bannerImage} alt={imageAlt || title} className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.025]" />
+              {!activeSection && mobileImageUrl ? <source media="(max-width: 640px)" srcSet={mobileImageUrl} /> : null}
+              <img src={bannerImage} alt={activeSection ? bannerLabel : imageAlt || title} className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-[1.025]" />
             </picture>
           ) : (
             <div className="h-full w-full bg-[linear-gradient(145deg,#172238,#0A1628)]" aria-hidden="true" />
           )}
           <span className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/5 to-transparent" aria-hidden="true" />
           <span className="absolute inset-x-0 bottom-0 p-5 text-left font-[family-name:var(--font-family-primary)] text-[15px] font-semibold uppercase tracking-[0.08em] [text-shadow:0_1px_4px_rgba(0,0,0,0.8)]">
-            {title}
+            {bannerLabel}
           </span>
         </Link>
 
@@ -294,7 +298,7 @@ export default function ShopHero({
             type="button"
             aria-label="Scroll collection options backward"
             onClick={scrollRailBackward}
-            className="absolute left-4 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center border border-black/15 bg-white text-[#0A1628] shadow-[0_8px_24px_rgba(10,22,40,0.14)] transition-colors hover:bg-[#0A1628] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A1628]"
+            className={`absolute left-4 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center border border-black/15 bg-white text-[#0A1628] shadow-[0_8px_24px_rgba(10,22,40,0.14)] transition-colors hover:bg-[#0A1628] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A1628] ${wideGutter ? 'lg:left-[56px]' : ''}`}
           >
             <ChevronLeft size={20} strokeWidth={1.75} aria-hidden="true" />
           </button>
@@ -305,7 +309,7 @@ export default function ShopHero({
             type="button"
             aria-label="Scroll collection options forward"
             onClick={scrollRailForward}
-            className="absolute right-4 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center border border-black/15 bg-white text-[#0A1628] shadow-[0_8px_24px_rgba(10,22,40,0.14)] transition-colors hover:bg-[#0A1628] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A1628]"
+            className={`absolute right-4 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center border border-black/15 bg-white text-[#0A1628] shadow-[0_8px_24px_rgba(10,22,40,0.14)] transition-colors hover:bg-[#0A1628] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A1628] ${wideGutter ? 'lg:right-[56px]' : ''}`}
           >
             <ChevronRight size={20} strokeWidth={1.75} aria-hidden="true" />
           </button>
@@ -314,3 +318,5 @@ export default function ShopHero({
     </section>
   );
 }
+
+

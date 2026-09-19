@@ -1,22 +1,12 @@
-import type { Metadata } from 'next';
-import { Plus_Jakarta_Sans } from 'next/font/google';
-import CheckoutSuccessClient from '@/components/checkout/CheckoutSuccessClient';
-
-const plusJakartaSans = Plus_Jakarta_Sans({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-});
+import type { Metadata } from 'next'
+import CheckoutSuccessClient from '@/components/checkout/CheckoutSuccessClient'
 
 export const metadata: Metadata = {
-  title: 'Order Success',
-  description: 'Order confirmation preview for House of Diams.',
+  title: 'Order Status | House of Diams',
+  description: 'View your House of Diams order confirmation and details.',
   robots: { index: false, follow: false },
-};
+}
 
 export default function CheckoutSuccessPage() {
-  return (
-    <div className={plusJakartaSans.className}>
-      <CheckoutSuccessClient />
-    </div>
-  );
+  return <CheckoutSuccessClient />
 }

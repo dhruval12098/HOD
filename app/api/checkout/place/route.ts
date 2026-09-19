@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { createPendingOrder, type CheckoutPayload, prepareCheckoutPayload } from '@/lib/checkout-order'
 import { getRazorpayClient, getRazorpayKeyId, isRazorpayConfigured } from '@/lib/razorpay'
 import { enforceRateLimit } from '@/lib/rate-limit'
+import { getGuestCheckoutTokenHash } from '@/lib/guest-checkout'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -21,21 +22,20 @@ export async function POST(request: Request) {
   if (!rateLimit.ok && rateLimit.response) return rateLimit.response
 
   const authHeader = request.headers.get('authorization')
-  if (!authHeader?.startsWith('Bearer ')) {
-    return NextResponse.json({ error: 'Missing authorization token.' }, { status: 401 })
+  const guestTokenHash = getGuestCheckoutTokenHash(request)
+  let user = null
+  if (authHeader?.startsWith('Bearer ')) {
+    const accessToken = authHeader.slice('Bearer '.length)
+    const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: `Bearer ${accessToken}` } },
+    })
+    const { data: userData, error: userError } = await authClient.auth.getUser()
+    if (userError || !userData.user) return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 })
+    user = userData.user
+  } else if (!guestTokenHash) {
+    return NextResponse.json({ error: 'A valid checkout owner is required.' }, { status: 401 })
   }
-
-  const accessToken = authHeader.slice('Bearer '.length)
-  const authClient = createClient(supabaseUrl, supabaseAnonKey, {
-    global: { headers: { Authorization: `Bearer ${accessToken}` } },
-  })
   const adminClient = createClient(supabaseUrl, supabaseServiceRoleKey)
-
-  const { data: userData, error: userError } = await authClient.auth.getUser()
-  if (userError || !userData.user) {
-    return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 })
-  }
-
   const payload = (await request.json().catch(() => null)) as CheckoutPayload | null
   const idempotencyKey = payload?.idempotencyKey?.trim() || ''
   if (!/^[A-Za-z0-9_-]{16,128}$/.test(idempotencyKey)) {
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
   const preparedResult = await prepareCheckoutPayload({
     adminClient,
     payload,
-    user: userData.user,
+    user,
   })
 
   if ('error' in preparedResult) {
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
   const prepared = preparedResult.data
   const { data: attempt, error: attemptError } = await adminClient
     .from('checkout_attempts')
-    .insert({ user_id: userData.user.id, idempotency_key: idempotencyKey, status: 'processing' })
+    .insert({ user_id: user?.id || null, guest_token_hash: guestTokenHash, idempotency_key: idempotencyKey, status: 'processing' })
     .select('id')
     .single()
 
@@ -63,20 +63,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unable to reserve this checkout attempt.' }, { status: 500 })
     }
 
-    const { data: existingAttempt } = await adminClient
+    let existingAttemptQuery = adminClient
       .from('checkout_attempts')
       .select('status, order_id, razorpay_order_id')
-      .eq('user_id', userData.user.id)
       .eq('idempotency_key', idempotencyKey)
-      .maybeSingle()
+    existingAttemptQuery = user
+      ? existingAttemptQuery.eq('user_id', user.id)
+      : existingAttemptQuery.eq('guest_token_hash', guestTokenHash!)
+    const { data: existingAttempt } = await existingAttemptQuery.maybeSingle()
 
     if (existingAttempt?.status === 'completed' && existingAttempt.order_id && existingAttempt.razorpay_order_id) {
-      const { data: existingOrder } = await adminClient
+      let existingOrderQuery = adminClient
         .from('orders')
         .select('id, order_number, payment_amount, payment_currency, customer_first_name, customer_last_name, customer_email, customer_phone, gateway_payload')
         .eq('id', existingAttempt.order_id)
-        .eq('user_id', userData.user.id)
-        .maybeSingle()
+      existingOrderQuery = user
+        ? existingOrderQuery.eq('user_id', user.id)
+        : existingOrderQuery.eq('guest_token_hash', guestTokenHash!)
+      const { data: existingOrder } = await existingOrderQuery.maybeSingle()
 
       if (existingOrder) {
         const totals = (existingOrder.gateway_payload as { totals?: Record<string, unknown> } | null)?.totals || {}
@@ -131,7 +135,8 @@ export async function POST(request: Request) {
 
     const orderResult = await createPendingOrder({
       adminClient,
-      userId: userData.user.id,
+      userId: user?.id || null,
+      guestTokenHash,
       payload: payload || {},
       prepared,
       razorpayOrderId: razorpayOrder.id,

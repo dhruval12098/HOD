@@ -15,9 +15,10 @@ export async function GET() {
   const supabase = createClient(supabaseUrl, supabaseAnonKey)
   const { data, error } = await supabase
     .from('about_values')
-    .select('id, sort_order, icon_path, title, description')
+    .select('id, sort_order, icon_path, image_path, image_alt, title, description')
     .order('sort_order', { ascending: true })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ items: data ?? [] })
 }
+

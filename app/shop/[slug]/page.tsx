@@ -3,6 +3,8 @@ import type { Metadata } from 'next';
 export const dynamic = 'force-dynamic'
 import { notFound, redirect } from 'next/navigation';
 import ProductClient from '@/components/pages/ProductClient';
+import type { ServiceBannerData } from '@/components/common/ServiceBannerSection';
+import { createSupabaseServerClient } from '@/lib/server-supabase';
 import { getStorefrontProductBySlug, getStorefrontProducts } from '@/lib/catalog-products';
 import { createPageMetadata } from '@/lib/seo';
 import JsonLd from '@/components/seo/JsonLd';
@@ -12,6 +14,22 @@ export const revalidate = 60;
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
+}
+
+async function getServiceBanner(): Promise<ServiceBannerData | null> {
+  const supabase = createSupabaseServerClient();
+  const [{ data: section, error: sectionError }, { data: blocks, error: blocksError }] = await Promise.all([
+    supabase.from('service_banner_section').select('image_path, image_alt').eq('id', 1).eq('is_enabled', true).maybeSingle(),
+    supabase.from('service_banner_blocks').select('id, title, paragraph, sort_order').eq('is_active', true).order('sort_order', { ascending: true }).order('created_at', { ascending: true }),
+  ]);
+
+  if (sectionError || blocksError || !section?.image_path || !blocks?.length) return null;
+
+  const imageUrl = supabase.storage
+    .from(process.env.NEXT_PUBLIC_SUPABASE_COLLECTION_BUCKET || 'hod')
+    .getPublicUrl(section.image_path).data.publicUrl;
+
+  return { imageUrl, imageAlt: section.image_alt ?? '', blocks };
 }
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
@@ -45,9 +63,14 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
     redirect(`/shop/${product.slug}`);
   }
 
-  const relatedProducts = (await getStorefrontProducts(product.productLane))
+  const [productsInLane, serviceBanner] = await Promise.all([
+    getStorefrontProducts(product.productLane),
+    getServiceBanner(),
+  ]);
+
+  const relatedProducts = productsInLane
     .filter((item) => item.slug !== slug && item.mainCategorySlug === product.mainCategorySlug && item.productLane === product.productLane)
-    .slice(0, 4);
+    .slice(0, 7);
 
   return (
     <>
@@ -61,7 +84,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
           ]),
         ]}
       />
-      <ProductClient product={product} relatedProducts={relatedProducts} />
+      <ProductClient product={product} relatedProducts={relatedProducts} serviceBanner={serviceBanner} />
     </>
   );
 }

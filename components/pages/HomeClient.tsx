@@ -174,7 +174,7 @@ export default function HomeClient({
           {/* <TestimonialMarquee initialData={marqueeData} /> */}
           {/* <Certifications /> */}
           {showDeferredSections ? (
-            <section aria-labelledby="home-blogs-heading" className="bg-[var(--color-brand-accent,#fff)] px-[var(--space-2)] py-[var(--space-6)] sm:px-[var(--space-3)] lg:px-[var(--space-4)] lg:py-[var(--space-6)]">
+            <section aria-labelledby="home-blogs-heading" className="bg-[var(--color-brand-accent,#fff)] px-[var(--space-2)] py-[var(--space-4)] sm:px-[var(--space-3)] lg:px-[var(--space-4)] lg:py-[var(--space-4)]">
               <div className="w-full">
                 <div className="mb-[var(--space-6)] flex flex-wrap items-end justify-between gap-[var(--space-4)]">
                   <h2 id="home-blogs-heading" className="section-title text-[clamp(1.7rem,2.4vw,2.4rem)] leading-[1.12] text-[var(--theme-heading)]">Blogs</h2>

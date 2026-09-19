@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import ShopHero from '@/components/shop/ShopHero';
 import ProductGrid from '@/components/shop/ProductGrid';
+import CategoryFaqSection, { type CategoryFaqItem } from '@/components/shop/CategoryFaqSection';
+import MoreToExplore, { type MoreToExploreCategory } from '@/components/shop/MoreToExplore';
 import EnquireModal from '@/components/home/EnquireModal';
 import type { StorefrontProductCard } from '@/lib/catalog-products';
 
@@ -55,6 +57,9 @@ export default function ShopClient({
   filterGroups,
   masterShapeOptions,
   headerBrowseSections,
+  categoryName,
+  categoryFaqItems = [],
+  moreToExploreCategories = [],
 }: {
   products: StorefrontProductCard[]
   sourceProducts?: StorefrontProductCard[]
@@ -70,6 +75,9 @@ export default function ShopClient({
   initialPage?: number
   filterGroups?: { id: string; title: string; options: { value: string; label: string }[] }[]
   masterShapeOptions?: { value: string; label: string; iconUrl?: string | null; displayOrder: number }[]
+  categoryName?: string
+  categoryFaqItems?: CategoryFaqItem[]
+  moreToExploreCategories?: MoreToExploreCategory[]
   headerBrowseSections?: {
     id: string
     title: string
@@ -127,6 +135,7 @@ export default function ShopClient({
         browseSections={headerBrowseSections}
         activeFilters={activeFilters}
         onBrowseNavigate={applyClientBrowseHref}
+        wideGutter={Boolean(categoryName)}
       />
       <ProductGrid
         key={`${JSON.stringify(activeFilters)}:${activePage}`}
@@ -137,8 +146,12 @@ export default function ShopClient({
         filterGroups={filterGroups}
         masterShapeOptions={masterShapeOptions}
         onEnquire={handleEnquire}
+        wideGutter={Boolean(categoryName)}
       />
+      {categoryName && categoryFaqItems.length ? <CategoryFaqSection categoryName={categoryName} items={categoryFaqItems} /> : null}
+      <MoreToExplore categories={moreToExploreCategories} />
       <EnquireModal open={isEnquireOpen} piece={enquirePiece} onClose={() => setIsEnquireOpen(false)} />
     </div>
   );
 }
+

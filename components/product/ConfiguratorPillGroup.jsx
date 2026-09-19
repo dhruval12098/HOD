@@ -22,10 +22,10 @@ export default function ConfiguratorPillGroup({
     <div className="mb-5">
       {/* Row heading */}
       <div className="flex justify-between items-baseline mb-[10px]">
-        <span className="font-sans text-[10px] font-semibold tracking-[0.22em] uppercase text-[#0A1628]">
+        <span className="font-sans text-[10px] font-semibold tracking-[0.22em] uppercase text-[var(--color-brand-primary,#000000)]">
           {label}
         </span>
-        <span className="font-sans text-[13px] font-medium text-[#0A1628] tracking-[0.01em]">
+        <span className="font-sans text-[13px] font-medium text-[var(--color-brand-primary,#000000)] tracking-[0.01em]">
           {selectedLabel}
         </span>
       </div>
@@ -35,20 +35,20 @@ export default function ConfiguratorPillGroup({
         {options.map(opt => {
           const isActive = opt === active;
           const activeClass = goldActive
-            ? 'bg-[#0A1628] text-white border-[#0A1628]'
-            : 'bg-[#0A1628] text-[#FAFBFD] border-[#0A1628]';
+            ? 'bg-[var(--color-brand-primary,#000000)] text-white border-[var(--color-brand-primary,#000000)]'
+            : 'bg-[var(--color-brand-primary,#000000)] text-[#FAFBFD] border-[var(--color-brand-primary,#000000)]';
 
           return (
             <button
               key={opt}
               onClick={() => onChange(opt)}
               className={`
-                rounded-full px-[18px] py-[10px]
+                rounded-none px-[18px] py-[10px]
                 font-sans text-[10px] font-light tracking-[0.16em] uppercase
                 border transition-all duration-300 whitespace-nowrap
                 ${isActive
                   ? activeClass
-                  : 'bg-transparent text-[#253246] border-[rgba(10,22,40,0.10)] hover:border-[#0A1628] hover:text-[#0A1628]'
+                  : 'bg-transparent text-[#253246] border-[rgba(10,22,40,0.10)] hover:border-[var(--color-brand-primary,#000000)] hover:text-[var(--color-brand-primary,#000000)]'
                 }
               `}
             >
@@ -60,3 +60,5 @@ export default function ConfiguratorPillGroup({
     </div>
   );
 }
+
+

@@ -5,7 +5,7 @@ import { useCurrency } from '@/context/CurrencyContext';
 import { getCollectionHref } from '@/lib/browse-context';
 import { getLoveLetterOccasionLabel, type LoveLetterDraft } from '@/lib/love-letter';
 import { formatMoney } from '@/lib/currency';
-import type { CheckoutChargeQuote } from '@/components/checkout/types';
+import type { CheckoutChargeQuote, CheckoutProfileForm } from '@/components/checkout/types';
 
 export default function CheckoutReviewStep({
   onPayNow,
@@ -16,6 +16,8 @@ export default function CheckoutReviewStep({
   chargeQuote,
   isPaymentDisabled,
   paymentAvailabilityMessage,
+  customer,
+  onEditShipping,
 }: {
   onPayNow: () => void
   isProcessingPayment: boolean
@@ -25,6 +27,8 @@ export default function CheckoutReviewStep({
   chargeQuote?: CheckoutChargeQuote | null
   isPaymentDisabled?: boolean
   paymentAvailabilityMessage?: string
+  customer: CheckoutProfileForm
+  onEditShipping: () => void
 }) {
   const { format } = useCurrency();
   const [selectedPaymentButton, setSelectedPaymentButton] = useState<'razorpay' | 'apple-pay' | null>(null);
@@ -42,8 +46,22 @@ export default function CheckoutReviewStep({
       title="Review"
       description="Review your order, then continue into secure Razorpay payment."
     >
+      <div className="mb-4 border border-black/10 bg-[#faf9f7] p-4 font-[family-name:var(--font-family-secondary)]">
+        <div className="flex items-start justify-between gap-4">
+          <div><div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-black/45">Shipping Information</div><div className="mt-2 text-[12px] font-medium text-black">{customer.email}</div></div>
+          <button type="button" onClick={onEditShipping} className="border-0 bg-transparent p-0 text-[11px] text-black/55 underline underline-offset-4 hover:text-black">Edit</button>
+        </div>
+        <div className="mt-4 border-t border-black/10 pt-4 text-[12px] leading-5 text-black/60">
+          <div className="font-medium text-black">{customer.first_name} {customer.last_name}</div>
+          <div>{customer.address_line_1}</div>
+          {customer.address_line_2 ? <div>{customer.address_line_2}</div> : null}
+          <div>{[customer.city, customer.district, customer.state, customer.postal_code].filter(Boolean).join(', ')}</div>
+          <div>{customer.country}</div>
+          <div className="mt-1">{customer.phone}</div>
+        </div>
+      </div>
       {loveLetter ? (
-        <div className="mb-4 rounded-[18px] border border-[#d8dde5] bg-[#f7f9fb] p-4">
+        <div className="mb-4 border border-[#d8dde5] bg-[#faf9f7] p-4">
           <div className="text-sm font-medium text-[#344054]">Love letter</div>
           {loveLetter.wantsLetter ? (
             <div className="mt-2 space-y-1 text-sm leading-6 text-[#667085]">
@@ -58,7 +76,7 @@ export default function CheckoutReviewStep({
           )}
         </div>
       ) : null}
-      <div className="rounded-[18px] border border-[#eaecf0] bg-[#fcfcfd] p-4">
+      <div className="border border-[#eaecf0] bg-white p-4">
         <div className="text-sm font-medium text-[#344054]">Ready to place your order</div>
         <p className="mt-2 text-sm leading-6 text-[#667085]">
           We will create your pending order first, then open Razorpay so the payment can be completed securely.
@@ -95,7 +113,7 @@ export default function CheckoutReviewStep({
                 onPayNow();
               }}
               disabled={paymentBlocked}
-              className="inline-flex min-h-[58px] items-center justify-center rounded-[14px] bg-[linear-gradient(135deg,#2f74d0_0%,#123b78_55%,#091c3d_100%)] px-6 py-3 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(18,59,120,0.24)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#397ed8] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-55 disabled:shadow-none disabled:hover:brightness-100"
+              className="inline-flex min-h-[58px] items-center justify-center bg-black px-6 py-3 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(0,0,0,0.12)] transition hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-55 disabled:shadow-none disabled:hover:brightness-100"
             >
               {isProcessingPayment && selectedPaymentButton === 'razorpay' ? (
                 <span className="inline-flex items-center gap-2" role="status">
@@ -112,7 +130,7 @@ export default function CheckoutReviewStep({
               }}
               disabled={paymentBlocked}
               aria-describedby="apple-pay-availability"
-              className="inline-flex min-h-[58px] items-center justify-center gap-2.5 rounded-[14px] bg-[#050505] px-6 py-3 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(5,5,5,0.2)] transition hover:bg-[#1a1a1a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#667085] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-55 disabled:shadow-none"
+              className="inline-flex min-h-[58px] items-center justify-center gap-2.5 bg-[#050505] px-6 py-3 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(5,5,5,0.2)] transition hover:bg-[#1a1a1a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#667085] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-55 disabled:shadow-none"
             >
               {isProcessingPayment && selectedPaymentButton === 'apple-pay' ? (
                 <span className="inline-flex items-center gap-2" role="status">

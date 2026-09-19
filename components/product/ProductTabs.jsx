@@ -121,7 +121,7 @@ export default function ProductTabs({
     ? 'flex w-full items-center justify-between bg-transparent px-1 py-4 text-left transition-colors duration-200'
     : 'flex w-full items-center justify-between bg-white px-6 py-5 text-left transition-colors duration-200 hover:bg-[#FAFBFD]';
   const policyTitleClass = detailsAccordion
-    ? 'font-sans text-[16px] font-medium normal-case tracking-normal text-[#0A1628]'
+    ? 'font-display-title text-[18px] font-normal normal-case tracking-normal text-[var(--color-brand-primary,#000000)]'
     : 'font-sans text-[12px] font-medium uppercase tracking-[0.12em] text-[#253246]';
   const chevronClass = detailsAccordion ? 'h-5 w-5' : 'h-4 w-4';
 
@@ -140,7 +140,7 @@ export default function ProductTabs({
                       onClick={() => togglePanel('description')}
                       className="flex w-full items-center justify-between border-b border-[rgba(10,22,40,0.08)] px-1 py-4 text-left"
                     >
-                      <div className="flex items-center font-sans text-[16px] font-medium text-[#0A1628]">
+                      <div className="flex items-center font-display-title text-[18px] font-normal text-[var(--color-brand-primary,#000000)]">
                         Description
                       </div>
                       <ChevronDown className={`h-5 w-5 text-[#8B94A5] transition-transform duration-300 ${openPanels.description ? 'rotate-180' : ''}`} />
@@ -163,7 +163,7 @@ export default function ProductTabs({
                       onClick={() => togglePanel('details')}
                       className="flex w-full items-center justify-between border-b border-[rgba(10,22,40,0.08)] px-1 py-4 text-left"
                     >
-                      <div className="flex items-center font-sans text-[16px] font-medium text-[#0A1628]">
+                      <div className="flex items-center font-display-title text-[18px] font-normal text-[var(--color-brand-primary,#000000)]">
                         Details
                       </div>
                       <ChevronDown className={`h-5 w-5 text-[#8B94A5] transition-transform duration-300 ${openPanels.details ? 'rotate-180' : ''}`} />

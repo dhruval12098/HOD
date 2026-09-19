@@ -235,7 +235,7 @@ export default function ProductGallery({
     : 'bg-gradient-to-br from-[#FAFBFD] to-[#FAF7F2]';
   const activeKey = activeAsset ? `${activeAsset.type}-${activeAsset.url}` : 'fallback';
   const mainMediaClass =
-    'absolute left-1/2 top-1/2 h-full w-full min-h-full min-w-full -translate-x-1/2 -translate-y-1/2 object-cover object-center transition-transform duration-700 ease-[cubic-bezier(.2,.7,.3,1)] group-hover:scale-[1.035]';
+    'absolute left-1/2 top-1/2 h-full w-full min-h-full min-w-full -translate-x-1/2 -translate-y-1/2 object-cover object-center';
   const thumbMediaClass =
     'absolute left-1/2 top-1/2 h-full w-full max-h-[88%] max-w-[88%] -translate-x-1/2 -translate-y-1/2 object-contain object-center';
 
@@ -356,7 +356,7 @@ export default function ProductGallery({
   return (
     <div>
       <div className="hidden lg:block">
-        <div className="grid grid-cols-2 gap-2.5 xl:gap-3">
+        <div className="grid grid-cols-2 gap-1.5">
           {desktopGridAssets.map((asset, index) => {
             const tileKey = `${asset.type}-${asset.url}-${index}`;
             const tileShape = 'aspect-square';
@@ -365,7 +365,7 @@ export default function ProductGallery({
               : bgMain;
 
             return (
-              <div key={tileKey} className={`${tileSurface} group relative overflow-hidden rounded-[30px] border ${tileShape}`}>
+              <div key={tileKey} className={`${tileSurface} group relative overflow-hidden rounded-none border ${tileShape}`}>
                 <div className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(circle_at_50%_42%,rgba(255,255,255,0.18),transparent_54%)]" />
                 {asset.type === 'model' ? (
                   <ModelViewer src={asset.url} />
@@ -390,7 +390,7 @@ export default function ProductGallery({
             );
           })}
           {desktopGridAssets.length === 0 ? (
-            <div className={`${bgMain} col-span-2 flex aspect-[4/3] items-center justify-center overflow-hidden rounded-[30px] border`}>
+            <div className={`${bgMain} col-span-2 flex aspect-[4/3] items-center justify-center overflow-hidden rounded-none border`}>
               <GemSVG style={gemStyle} size={300} color={gemColor} />
             </div>
           ) : null}
@@ -398,7 +398,7 @@ export default function ProductGallery({
       </div>
 
       <div className="lg:hidden">
-        <div className={`relative mb-3 flex aspect-square w-full items-center justify-center overflow-hidden rounded-[28px] border ${bgMain} group`}>
+        <div className={`relative mb-3 flex aspect-square w-full items-center justify-center overflow-hidden rounded-none border ${bgMain} group`}>
           <div className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(circle_at_50%_50%,rgba(10,22,40,0.1),transparent_70%)]" />
           <div key={activeKey} className="absolute inset-0 animate-[fadeUp_0.45s_ease]">
             {activeAsset?.type === 'model' ? (
@@ -474,3 +474,4 @@ export default function ProductGallery({
     </div>
   );
 }
+

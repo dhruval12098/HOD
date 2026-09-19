@@ -22,9 +22,10 @@ import { getProductKey } from "@/lib/product-keys";
  *   filterGroups?: ProductGridFilterGroup[]
  *   masterShapeOptions?: { value: string; label: string; iconUrl?: string | null; displayOrder: number }[]
  *   onEnquire: (name?: string) => void
+ *   wideGutter?: boolean
  * }} props
  */
-export default function ProductGrid({ products, sourceProducts = products, initialFilters = {}, initialPage = 1, filterGroups: externalFilterGroups = [], masterShapeOptions = [], onEnquire }) {
+export default function ProductGrid({ products, sourceProducts = products, initialFilters = {}, initialPage = 1, filterGroups: externalFilterGroups = [], masterShapeOptions = [], onEnquire, wideGutter = false }) {
   const { wishlist, toggle } = useWishlistStore();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -214,6 +215,16 @@ export default function ProductGrid({ products, sourceProducts = products, initi
         .shop-grid-toolbar {
           padding: 0 44px;
         }
+        @media (min-width: 1025px) {
+          .shop-grid-layout.shop-grid-wide {
+            padding-left: 56px;
+            padding-right: 56px;
+          }
+          .shop-grid-layout.shop-grid-wide .shop-grid-toolbar {
+            padding-left: 56px;
+            padding-right: 56px;
+          }
+        }
         .product-grid {
           display: grid;
           grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -282,7 +293,7 @@ export default function ProductGrid({ products, sourceProducts = products, initi
         }
       `}</style>
 
-      <div className="shop-grid-layout">
+      <div className={`shop-grid-layout${wideGutter ? ' shop-grid-wide' : ''}`}>
         <div>
           <div className="shop-grid-toolbar">
             <ShopToolbar
@@ -351,7 +362,7 @@ export default function ProductGrid({ products, sourceProducts = products, initi
                 <Link
                   href={pageHref(resolvedPage - 1)}
                   onClick={(event) => { event.preventDefault(); changePage(resolvedPage - 1); }}
-                  style={{ border: "1px solid rgba(10,22,40,.2)", borderRadius: "999px", padding: "11px 20px", color: "#0A1628", textDecoration: "none", fontSize: "12px" }}
+                  style={{ border: "1px solid rgba(10,22,40,.2)", borderRadius: 0, padding: "11px 20px", color: "#0A1628", textDecoration: "none", fontSize: "12px" }}
                 >
                   Previous
                 </Link>
@@ -361,7 +372,7 @@ export default function ProductGrid({ products, sourceProducts = products, initi
                 <Link
                   href={pageHref(resolvedPage + 1)}
                   onClick={(event) => { event.preventDefault(); changePage(resolvedPage + 1); }}
-                  style={{ border: "1px solid rgba(10,22,40,.2)", borderRadius: "999px", padding: "11px 20px", color: "#0A1628", textDecoration: "none", fontSize: "12px" }}
+                  style={{ border: "1px solid rgba(10,22,40,.2)", borderRadius: 0, padding: "11px 20px", color: "#0A1628", textDecoration: "none", fontSize: "12px" }}
                 >
                   Next
                 </Link>

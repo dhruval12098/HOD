@@ -4,6 +4,7 @@ import { finalizePaidOrder, markOrderPaymentFailed } from '@/lib/checkout-order'
 import { getRazorpayClient, verifyRazorpayPaymentSignature } from '@/lib/razorpay'
 import { enforceRateLimit } from '@/lib/rate-limit'
 import { REFUNDABLE_FINALIZATION_ERRORS, recoverCapturedPayment } from '@/lib/payment-recovery'
+import { getGuestCheckoutTokenHash } from '@/lib/guest-checkout'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -25,21 +26,20 @@ export async function POST(request: Request) {
   if (!rateLimit.ok && rateLimit.response) return rateLimit.response
 
   const authHeader = request.headers.get('authorization')
-  if (!authHeader?.startsWith('Bearer ')) {
-    return NextResponse.json({ error: 'Missing authorization token.' }, { status: 401 })
+  const guestTokenHash = getGuestCheckoutTokenHash(request)
+  let userId: string | null = null
+  if (authHeader?.startsWith('Bearer ')) {
+    const accessToken = authHeader.slice('Bearer '.length)
+    const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: `Bearer ${accessToken}` } },
+    })
+    const { data: userData, error: userError } = await authClient.auth.getUser()
+    if (userError || !userData.user) return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 })
+    userId = userData.user.id
+  } else if (!guestTokenHash) {
+    return NextResponse.json({ error: 'A valid checkout owner is required.' }, { status: 401 })
   }
-
-  const accessToken = authHeader.slice('Bearer '.length)
-  const authClient = createClient(supabaseUrl, supabaseAnonKey, {
-    global: { headers: { Authorization: `Bearer ${accessToken}` } },
-  })
   const adminClient = createClient(supabaseUrl, supabaseServiceRoleKey)
-
-  const { data: userData, error: userError } = await authClient.auth.getUser()
-  if (userError || !userData.user) {
-    return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 })
-  }
-
   const payload = (await request.json().catch(() => null)) as VerifyPayload | null
   if (!payload?.orderId || !payload.razorpay_order_id || !payload.razorpay_payment_id || !payload.razorpay_signature) {
     return NextResponse.json({ error: 'Incomplete payment verification payload.' }, { status: 400 })
@@ -47,11 +47,12 @@ export async function POST(request: Request) {
 
   const { data: ownedOrder } = await adminClient
     .from('orders')
-    .select('id, user_id, razorpay_order_id, payment_amount, payment_currency')
+    .select('id, user_id, guest_token_hash, razorpay_order_id, payment_amount, payment_currency')
     .eq('id', payload.orderId)
     .maybeSingle()
 
-  if (!ownedOrder || ownedOrder.user_id !== userData.user.id) {
+  const ownerMatches = ownedOrder && (userId ? ownedOrder.user_id === userId : ownedOrder.guest_token_hash === guestTokenHash)
+  if (!ownerMatches) {
     return NextResponse.json({ error: 'Order not found.' }, { status: 404 })
   }
 

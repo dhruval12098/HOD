@@ -7,7 +7,7 @@ import { buildNavbarRenderItems } from '@/lib/navbar'
 import { createSupabaseServerClient } from '@/lib/server-supabase'
 import { filterStorefrontProducts, getStorefrontProductCards } from '@/lib/catalog-products'
 import JsonLd from '@/components/seo/JsonLd'
-import { createBreadcrumbSchema } from '@/lib/structured-data'
+import { createBreadcrumbSchema, createFaqSchema } from '@/lib/structured-data'
 import { buildCategoryPath, buildOptionPath, buildSubcategoryPath } from '@/lib/catalog-paths'
 import type { ResolvedCatalogTaxonomy } from '@/lib/catalog-taxonomy'
 
@@ -68,7 +68,7 @@ const getCategoryReferenceData = unstable_cache(
       client.from('navbar_section_links').select('*').eq('status', 'active').order('display_order', { ascending: true }),
       client.from('navbar_section_source_items').select('*').eq('is_active', true).order('sort_order', { ascending: true }),
       client.from('navbar_featured_cards').select('*'),
-      client.from('catalog_categories').select('id, name, slug, display_order, status').eq('status', 'active').order('display_order', { ascending: true }),
+      client.from('catalog_categories').select('id, name, slug, display_order, status, banner_desktop_image_path, banner_mobile_image_path, banner_desktop_image_alt, banner_mobile_image_alt').eq('status', 'active').order('display_order', { ascending: true }),
       client.from('catalog_subcategories').select('id, category_id, name, slug, icon_svg_path, image_path, image_alt, display_order, status').eq('status', 'active').order('display_order', { ascending: true }),
       client.from('catalog_options').select('id, subcategory_id, name, slug, icon_svg_path, image_path, image_alt, display_order, status').eq('status', 'active').order('display_order', { ascending: true }),
       client.from('catalog_certificates').select('*').order('display_order', { ascending: true }),
@@ -189,10 +189,17 @@ export async function CategoryCollectionPageContent({
 
   const query = await searchParams
   const resolvedProductLane = category.category_lane ?? 'standard'
-  const [products, referenceData] = await Promise.all([
+  const [products, referenceData, categoryFaqResult] = await Promise.all([
     getStorefrontProductCards(resolvedProductLane),
     getCategoryReferenceData(),
+    createSupabaseServerClient()
+      .from('support_faq_items')
+      .select('id, question, answer, sort_order')
+      .eq('catalog_category_id', category.id)
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true }),
   ])
+  const categoryFaqItems = categoryFaqResult.error ? [] : categoryFaqResult.data ?? []
   const categoryProducts = filterStorefrontProducts(products, {
     productLane: resolvedProductLane,
     categorySlug,
@@ -318,6 +325,15 @@ export async function CategoryCollectionPageContent({
       ? (certificatesResult.error ? [] : certificatesResult.data ?? []).find((entry) => slugifyValue(entry.name) === query.certificate)?.name ?? query.certificate
       : null
 
+  const moreToExploreCategories = (categoriesResult.error ? [] : categoriesResult.data ?? [])
+    .filter((entry) => entry.slug !== category.slug && (entry.banner_desktop_image_path || entry.banner_mobile_image_path))
+    .map((entry) => ({
+      name: entry.name,
+      href: buildCategoryPath(entry),
+      imageUrl: toPublicUrl(entry.banner_desktop_image_path ?? entry.banner_mobile_image_path),
+      imageAlt: entry.banner_desktop_image_alt || entry.banner_mobile_image_alt || entry.name,
+    }))
+
   return (
     <>
       <JsonLd
@@ -332,8 +348,12 @@ export async function CategoryCollectionPageContent({
             : []),
         ])}
       />
+      {categoryFaqItems.length ? <JsonLd data={createFaqSchema(categoryFaqItems.map(({ question, answer }) => ({ question, answer })))} /> : null}
       <ShopClient
         products={categoryProducts}
+        categoryName={category.name}
+        categoryFaqItems={categoryFaqItems}
+        moreToExploreCategories={moreToExploreCategories}
         heroTitle={taxonomy?.option?.name ?? taxonomy?.subcategory.name ?? category.banner_title ?? category.name}
         heroSubtitle={category.banner_subtitle || `Browse ${category.name} from the live catalog.`}
         heroDesktopImageUrl={toPublicUrl(category.banner_desktop_image_path) || undefined}
@@ -366,3 +386,4 @@ export async function CategoryCollectionPageContent({
     </>
   )
 }
+

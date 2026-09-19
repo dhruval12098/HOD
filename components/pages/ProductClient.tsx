@@ -16,8 +16,9 @@ import ProductCTAs from '@/components/product/ProductCTAs';
 import ProductTrustRow from '@/components/product/ProductTrustRow';
 import ProductTabs from '@/components/product/ProductTabs';
 import ProductFaqSection from '@/components/product/ProductFaqSection';
+import ServiceBannerSection, { type ServiceBannerData } from '@/components/common/ServiceBannerSection';
 import ProductLayout from '@/components/product/ProductLayout';
-import RelatedProducts from '@/components/product/RelatedProducts';
+import YouMayAlsoLike from '@/components/product/YouMayAlsoLike';
 import LoveLetterModal from '@/components/product/LoveLetterModal';
 import { useWishlistStore } from '@/lib/hooks/useWishlistStore';
 import { useCart } from '@/lib/hooks/useCart';
@@ -28,9 +29,10 @@ import { useCurrency } from '@/context/CurrencyContext';
 interface ProductClientProps {
   product: StorefrontProduct;
   relatedProducts: StorefrontProduct[];
+  serviceBanner: ServiceBannerData | null;
 }
 
-export default function ProductClient({ product, relatedProducts }: ProductClientProps) {
+export default function ProductClient({ product, relatedProducts, serviceBanner }: ProductClientProps) {
   const router = useRouter();
   const storefrontProduct = product as StorefrontProduct & {
     hiphopCaratLabel: string;
@@ -334,20 +336,20 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
   };
 
     return (
-      <div className="hod-product-detail min-h-screen bg-(--bg) text-(--ink)">
+      <div className="hod-product-detail min-h-screen bg-white text-[var(--color-brand-primary,#000000)]">
       <style>{`
         .hod-product-detail,
         .hod-product-detail .font-sans,
         .hod-product-detail .font-numeric {
-          font-family: var(--font-plus-jakarta), Arial, Helvetica, sans-serif !important;
+          font-family: var(--font-family-secondary), Inter, Arial, Helvetica, sans-serif !important;
         }
 
         .hod-product-detail .font-display-title {
-          font-family: var(--display-title) !important;
+          font-family: var(--font-family-primary), Montserrat, Arial, Helvetica, sans-serif !important;
         }
       `}</style>
       <div
-        className={`fixed left-0 right-0 top-[35px] z-[45] border-b border-[rgba(10,22,40,0.10)] bg-white/95 backdrop-blur-md transition-transform duration-300 ${
+        className={`fixed left-0 right-0 top-[35px] z-[45] border-b border-[color:var(--theme-border,rgba(0,0,0,0.09))] bg-white/95 backdrop-blur-md transition-transform duration-300 ${
           showStickyCartBar
             ? 'translate-y-0'
             : '-translate-y-[120%] max-[700px]:translate-y-[120%]'
@@ -355,25 +357,25 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
       >
         <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-[52px] py-3 max-[1100px]:px-7 max-[700px]:flex-col max-[700px]:items-stretch max-[700px]:gap-3 max-[700px]:px-5">
           <div className="min-w-0">
-            <div className="truncate font-display-title text-[24px] leading-[1.05] text-[#0A1628] max-[700px]:text-[18px]">
+            <div className="truncate font-display-title text-[24px] leading-[1.05] text-[var(--color-brand-primary,#000000)] max-[700px]:text-[18px]">
               {product.name}
             </div>
-            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] uppercase tracking-[0.14em] text-[#7A8496]">
+            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] uppercase tracking-[0.14em] text-[var(--theme-muted,#6a6a6a)]">
               {stickySummary ? <span>{stickySummary}</span> : null}
-              <span className="font-medium text-[#0A1628]">{format(activePrice)}</span>
+              <span className="font-medium text-[var(--color-brand-primary,#000000)]">{format(activePrice)}</span>
             </div>
           </div>
           <button
             type="button"
             onClick={handleAddToCart}
-            className="inline-flex min-h-[48px] items-center justify-center rounded-[999px] bg-[#0A1628] px-7 text-[11px] font-semibold uppercase tracking-[0.22em] text-white transition hover:bg-[#20304A] max-[700px]:w-full"
+            className="brand-button max-[700px]:w-full"
           >
             Add To Cart
           </button>
         </div>
       </div>
 
-        <section ref={pageTopRef} className="mx-auto -mt-14 max-w-[1400px] px-[52px] pb-[100px] pt-4 max-[1100px]:-mt-10 max-[1100px]:px-7 max-[700px]:-mt-6 max-[700px]:px-5 max-[700px]:pb-[130px] max-[700px]:pt-3">
+        <section ref={pageTopRef} className="mx-auto -mt-14 w-full px-3 pb-[100px] pt-4 max-[1100px]:-mt-10 max-[1100px]:px-3 max-[700px]:-mt-6 max-[700px]:px-2 max-[700px]:pb-[130px] max-[700px]:pt-3">
         <ProductBreadcrumb
           productName={product.name}
           collectionHref={collectionHref}
@@ -397,7 +399,7 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
           )}
           info={(
             <div>
-              <h1 className="font-display-title mb-[10px] text-[clamp(25px,2.8vw,34px)] font-normal leading-[1.12] tracking-[0.01em] text-[#0A1628]">
+              <h1 className="font-display-title mb-[10px] text-[clamp(25px,2.8vw,34px)] font-normal leading-[1.12] tracking-[0.01em] text-[var(--color-brand-primary,#000000)]">
                 {storefrontProduct.h1Title || product.name}
               </h1>
 
@@ -433,6 +435,12 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
                 onCustomSelectionChange={(groupId: string, optionId: string) => setCustomSelections((current) => ({ ...current, [groupId]: optionId }))}
               />
 
+              <p className="mb-3 px-4 py-3 text-center font-sans text-[15px] leading-6 text-[var(--color-brand-primary,#000000)]">
+                Crafted to order with complimentary insured shipping
+                <br />
+                and lifetime care.
+              </p>
+
               <div ref={ctaAnchorRef}>
                 <ProductCTAs
                   product={activeProduct}
@@ -460,7 +468,7 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
               />
 
               <div className="mb-8">
-                <h2 className="mb-5 font-display-title text-[28px] font-normal leading-[1.1] tracking-[0.01em] text-[#0A1628]">
+                <h2 className="mb-5 font-display-title text-[28px] font-normal leading-[1.1] tracking-[0.01em] text-[var(--color-brand-primary,#000000)]">
                   Know Your Setting
                 </h2>
                 <ProductTabs
@@ -478,9 +486,11 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
         />
       </section>
 
+      <ServiceBannerSection data={serviceBanner} />
+
       <ProductFaqSection items={product.faqItems} />
 
-      <RelatedProducts
+      <YouMayAlsoLike
         products={relatedProducts}
         wishlist={wishlist}
         onWishlist={(relatedProduct: StorefrontProduct) => handleWishlistToggle(relatedProduct)}
@@ -503,3 +513,4 @@ export default function ProductClient({ product, relatedProducts }: ProductClien
     </div>
   );
 }
+

@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { cinzelFont } from '@/app/fonts';
 
 interface Step {
   num: string;
@@ -211,6 +210,7 @@ function LazyManufacturingVideo({ src, poster, title }: { src: string; poster?: 
 
 export default function Manufacturing({ initialItems = [] }: { initialItems?: CmsManufacturingItem[] }) {
   const [items, setItems] = useState<CmsManufacturingItem[]>(initialItems);
+  const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
     if (initialItems.length) return;
@@ -242,113 +242,126 @@ export default function Manufacturing({ initialItems = [] }: { initialItems?: Cm
         key: `fallback-${step.num}`,
       }));
 
+  const activeEntry = entries[activeIndex] ?? entries[0];
+  const goToPrevStep = () => setActiveIndex((current) => (current - 1 + entries.length) % entries.length);
+  const goToNextStep = () => setActiveIndex((current) => (current + 1) % entries.length);
+
+  useEffect(() => {
+    if (entries.length <= 1) return;
+    const intervalId = window.setInterval(() => {
+      setActiveIndex((current) => (current + 1) % entries.length);
+    }, 5000);
+    return () => window.clearInterval(intervalId);
+  }, [entries.length]);
+
   return (
-    <section
-      className="pt-8 pb-[120px] max-lg:pt-6 max-lg:pb-[80px] relative overflow-hidden"
-      style={{
-        background: 'linear-gradient(180deg, #FAFBFD 0%, #F5F7FC 50%, #FAFBFD 100%)',
-      }}
-    >
-      {/* Glow blobs */}
-      <div className="absolute w-[360px] h-[360px] rounded-full top-[10%] -left-[120px] pointer-events-none" style={{ background: '#0A1628', filter: 'blur(80px)', opacity: 0.15 }} />
-      <div className="absolute w-[360px] h-[360px] rounded-full bottom-[5%] -right-[120px] pointer-events-none" style={{ background: '#20304A', filter: 'blur(80px)', opacity: 0.15 }} />
-
-      <div className="max-w-[1280px] mx-auto px-[52px] max-lg:px-7 max-md:px-5 relative z-10">
-        {/* Intro */}
-        <div className="text-center mb-20 flex flex-col items-center">
-          <RevealDiv>
-            <div className="w-[60px] h-px bg-[#0A1628] mx-auto mb-6" />
-          </RevealDiv>
-          <RevealDiv delay={100}>
-            <div className="text-[10px] font-normal tracking-[0.32em] text-[#0A1628] uppercase mb-[18px] inline-flex items-center gap-3 justify-center before:content-[''] before:w-6 before:h-px before:bg-[#0A1628]">
-              From Surat · With Craft
-            </div>
-          </RevealDiv>
-          <RevealDiv delay={200}>
-            <h2 className={`${cinzelFont.variable} font-primary-display section-title font-light tracking-[0.01em] text-[#0A1628] leading-[1.08] mb-[18px] max-md:text-[28px]`} style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}>
-              Inside the <em className="not-italic text-[#0A1628] font-normal">Workshop</em>
-            </h2>
-          </RevealDiv>
-          <RevealDiv delay={300}>
-            <p className="text-[12px] font-light tracking-[0.12em] text-[#6A6A6A] leading-[1.9] max-w-[620px] mt-[18px]">
-              From rough stone to finished heirloom — every piece passes through five hands in our Surat atelier. Here's how we make what you wear.
-            </p>
-          </RevealDiv>
-        </div>
-
-        {/* Steps */}
-        <div className="flex flex-col gap-16 relative">
-          {entries.map((step, idx) => (
-            <RevealDiv key={step.key} delay={idx * 100} className="w-full">
+    <section className="relative overflow-hidden bg-white pb-[120px] max-lg:pb-[80px]">
+      {/* Workshop carousel - full-bleed banners with hero-style overlaid text */}
+      {entries.length ? (
+        <div className="relative w-full">
+          <div className="relative h-[520px] sm:aspect-[5/2] sm:h-auto">
+            {entries.map((entry, index) => (
               <div
-                className={[
-                  'group grid grid-cols-2 gap-[60px] items-center',
-                  'max-lg:grid-cols-1 max-lg:gap-6',
-                ].join(' ')}
+                key={entry.key}
+                aria-hidden={index !== activeIndex}
+                className={`absolute inset-0 transition-opacity duration-700 ${index === activeIndex ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
               >
-                {/* Visual — swap order on alt rows for desktop only */}
-                <div className={step.kind === 'cms' && step.alt ? 'lg:order-2' : ''}>
-                  <div
-                    className="relative isolate aspect-video bg-white flex items-center justify-center overflow-hidden transition-all duration-[600ms] ease-[cubic-bezier(0.2,0.7,0.3,1)] group-hover:-translate-y-1 group-hover:shadow-[0_24px_60px_rgba(10,22,40,0.12)]"
-                  >
-                    {/* BG */}
-                    <div
-                      className="absolute inset-0"
-                      style={{
-                        background: 'radial-gradient(circle at 30% 40%, rgba(10,22,40,0.08), transparent 60%), radial-gradient(circle at 70% 70%, rgba(32,48,74,0.05), transparent 50%), linear-gradient(135deg, #FAFBFD 0%, #F5F7FC 100%)',
-                      }}
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background: 'radial-gradient(circle at 30% 40%, rgba(10,22,40,0.08), transparent 60%), radial-gradient(circle at 70% 70%, rgba(32,48,74,0.05), transparent 50%), linear-gradient(135deg, #FAFBFD 0%, #F5F7FC 100%)',
+                  }}
+                />
+                {entry.kind === 'cms' ? (
+                  entry.media_type === 'video' && (entry.media_path || entry.image_path) ? (
+                    <LazyManufacturingVideo
+                      src={entry.media_url || resolvePublicMediaUrl(entry.media_path || entry.image_path)}
+                      poster={entry.image_url || resolvePublicMediaUrl(entry.image_path)}
+                      title={entry.title}
                     />
-                    {step.kind === 'cms' ? (
-                      <div className="absolute inset-0">
-                        {step.media_type === 'video' && (step.media_path || step.image_path) ? (
-                          <LazyManufacturingVideo
-                            src={step.media_url || resolvePublicMediaUrl(step.media_path || step.image_path)}
-                            poster={step.image_url || resolvePublicMediaUrl(step.image_path)}
-                            title={step.title}
-                          />
-                        ) : (
-                          <img
-                            src={step.image_url || step.media_url || resolvePublicMediaUrl(step.media_path || step.image_path)}
-                            alt={step.title}
-                            className="absolute inset-0 h-full w-full object-cover"
-                          />
-                        )}
-                      </div>
-                    ) : (
-                      step.icon
-                    )}
-                    {/* Spark dots */}
-                    {step.kind === 'fallback' &&
-                      step.sparks?.map((spark: { top: string; left?: string; right?: string; delay?: string }, si: number) => (
+                  ) : (
+                    <img
+                      src={entry.image_url || entry.media_url || resolvePublicMediaUrl(entry.media_path || entry.image_path)}
+                      alt={entry.title}
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
+                  )
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    {entry.icon}
+                    {entry.sparks?.map((spark, si) => (
                       <div
                         key={si}
                         className="absolute w-1 h-1 bg-[#0A1628] rounded-full shadow-[0_0_8px_#20304A] z-[2] animate-[sparkDot_3s_ease-in-out_infinite]"
-                        style={{
-                          top: spark.top,
-                          left: spark.left,
-                          right: spark.right,
-                          animationDelay: spark.delay || '0s',
-                        }}
+                        style={{ top: spark.top, left: spark.left, right: spark.right, animationDelay: spark.delay || '0s' }}
                       />
                     ))}
                   </div>
-                </div>
+                )}
+              </div>
+            ))}
 
-                {/* Content */}
-                <div className={`py-5 ${step.kind === 'cms' && step.alt ? 'lg:order-1' : ''}`}>
-                  <h3 className={`${cinzelFont.variable} font-primary-display font-light text-[#0A1628] tracking-[0.02em] leading-[1.1] mb-[18px] text-[clamp(30px,3.4vw,44px)]`}>
-                    {step.title}
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-2/3 bg-gradient-to-t from-black/70 via-black/28 to-transparent" />
+
+            {activeEntry ? (
+              <div className="pointer-events-none absolute inset-0 z-20 flex items-end px-[var(--space-4)] pb-[var(--space-10)] text-left sm:px-[var(--space-8)] lg:px-[var(--space-12)]">
+                <div className="w-full max-w-[42rem]">
+                  <h3 className="hero-slide-heading text-[clamp(1.75rem,7vw,2.25rem)] font-medium leading-[1.12] tracking-[-0.02em] text-white sm:text-[clamp(2.25rem,3.4vw,3.25rem)]">
+                    {activeEntry.title}
                   </h3>
-                  <p className="text-[13px] font-light leading-[2] text-[#6A6A6A] tracking-[0.04em] max-w-[460px]">
-                    {step.kind === 'cms' ? step.description : step.body}
+                  <p
+                    className="mt-[var(--space-2)] max-w-[38rem] text-[clamp(0.75rem,2.8vw,0.95rem)] leading-[1.55] text-white/90 sm:text-[clamp(0.9rem,1.15vw,1.1rem)]"
+                    style={{ fontFamily: 'var(--font-family-secondary)' }}
+                  >
+                    {activeEntry.kind === 'cms' ? activeEntry.description : activeEntry.body}
                   </p>
                 </div>
               </div>
-            </RevealDiv>
-          ))}
-        </div>
+            ) : null}
 
-      </div>
+            {entries.length > 1 ? (
+              <>
+                <div className="absolute inset-x-0 bottom-4 z-30 flex items-center justify-end gap-2 px-4 sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2 sm:justify-between sm:px-6 lg:px-8">
+                  <button
+                    type="button"
+                    onClick={goToPrevStep}
+                    aria-label="Previous step"
+                    className="flex h-11 w-11 items-center justify-center rounded-full border border-white/22 bg-white/12 text-white backdrop-blur-xl transition hover:bg-white/18 hover:border-white/34"
+                    style={{ boxShadow: '0 14px 38px rgba(10,22,40,0.18)' }}
+                  >
+                    <span className="text-lg leading-none">&#8592;</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={goToNextStep}
+                    aria-label="Next step"
+                    className="flex h-11 w-11 items-center justify-center rounded-full border border-white/22 bg-white/12 text-white backdrop-blur-xl transition hover:bg-white/18 hover:border-white/34"
+                    style={{ boxShadow: '0 14px 38px rgba(10,22,40,0.18)' }}
+                  >
+                    <span className="text-lg leading-none">&#8594;</span>
+                  </button>
+                </div>
+                <div className="absolute inset-x-0 bottom-0 z-30 flex items-end px-4 pb-4 sm:px-6 sm:pb-6 lg:px-8 lg:pb-8">
+                  <div className="flex min-h-[48px] items-end">
+                    <div className="flex items-center gap-2">
+                      {entries.map((entry, index) => (
+                        <button
+                          key={`${entry.key}-dot`}
+                          type="button"
+                          onClick={() => setActiveIndex(index)}
+                          className={`h-2.5 rounded-full transition-all ${index === activeIndex ? 'w-10 bg-white' : 'w-2.5 bg-white/45'}`}
+                          aria-label={`Go to step ${index + 1}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
+

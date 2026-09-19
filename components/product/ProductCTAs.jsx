@@ -26,17 +26,17 @@ export default function ProductCTAs({ product, ctaMode = 'both', ctaLabel = null
   const checkoutLabel = ctaLabel || 'Buy Now';
 
   return (
-    <div className="flex gap-3 mb-8 max-[1100px]:flex-col">
+    <div className="mb-8 flex flex-col gap-3">
       <button
         onClick={onAddToCart}
         className="
-          flex-1 flex items-center justify-center gap-[10px]
-          font-sans text-[10px] font-light tracking-[0.28em] uppercase
+          flex w-full items-center justify-center gap-[10px]
+          font-[family-name:var(--font-family-button)] text-[14px] font-medium normal-case tracking-normal
           py-[18px] px-8
-          text-[#0A1628] bg-transparent
-          border border-[#0A1628] cursor-pointer
-          transition-all duration-300
-          hover:bg-[#0A1628] hover:text-[#FAFBFD]
+          text-[var(--color-brand-primary,#000000)] bg-transparent
+          border border-[var(--color-brand-primary,#000000)] cursor-pointer
+          transition-all duration-400
+          hover:bg-[var(--color-brand-primary,#000000)] hover:text-[#FAFBFD]
         "
       >
         Add To Cart
@@ -48,14 +48,14 @@ export default function ProductCTAs({ product, ctaMode = 'both', ctaLabel = null
             type="button"
             onClick={onCheckout}
             className="
-              flex-1 flex items-center justify-center gap-[10px]
-              font-sans text-[10px] font-medium tracking-[0.28em] uppercase
+              flex w-full items-center justify-center gap-[10px]
+              font-[family-name:var(--font-family-button)] text-[14px] font-medium normal-case tracking-normal
               py-[18px] px-5
-              bg-gradient-to-br from-[#0A1628] to-[#20304A] text-white
+              bg-[var(--color-brand-primary,#000000)] text-white
               border-0 cursor-pointer no-underline
-              transition-all duration-300 ease-out
-              shadow-[0_8px_30px_rgba(10,22,40,0.08)]
-              hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(10,22,40,0.18)]
+              transition-all duration-400 ease-out
+              
+              hover:opacity-80
             "
           >
             <span>{checkoutLabel}</span>
@@ -64,14 +64,14 @@ export default function ProductCTAs({ product, ctaMode = 'both', ctaLabel = null
           <Link
             href={checkoutHref}
             className="
-              flex-1 flex items-center justify-center gap-[10px]
-              font-sans text-[10px] font-medium tracking-[0.28em] uppercase
+              flex w-full items-center justify-center gap-[10px]
+              font-[family-name:var(--font-family-button)] text-[14px] font-medium normal-case tracking-normal
               py-[18px] px-5
-              bg-gradient-to-br from-[#0A1628] to-[#20304A] text-white
+              bg-[var(--color-brand-primary,#000000)] text-white
               border-0 cursor-pointer no-underline
-              transition-all duration-300 ease-out
-              shadow-[0_8px_30px_rgba(10,22,40,0.08)]
-              hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(10,22,40,0.18)]
+              transition-all duration-400 ease-out
+              
+              hover:opacity-80
             "
           >
             <span>{checkoutLabel}</span>
@@ -85,13 +85,13 @@ export default function ProductCTAs({ product, ctaMode = 'both', ctaLabel = null
           target="_blank"
           rel="noopener noreferrer"
           className="
-            flex-1 flex items-center justify-center gap-[10px]
-            font-sans text-[10px] font-light tracking-[0.28em] uppercase
+            flex w-full items-center justify-center gap-[10px]
+            font-[family-name:var(--font-family-button)] text-[14px] font-medium normal-case tracking-normal
             py-[18px] px-8
-            text-[#0A1628] bg-transparent
-            border border-[#0A1628] cursor-pointer
-            transition-all duration-300 no-underline
-            hover:bg-[#0A1628] hover:text-[#FAFBFD]
+            text-[var(--color-brand-primary,#000000)] bg-transparent
+            border border-[var(--color-brand-primary,#000000)] cursor-pointer
+            transition-all duration-400 no-underline
+            hover:bg-[var(--color-brand-primary,#000000)] hover:text-[#FAFBFD]
           "
         >
           {ctaLabel || 'WhatsApp'}
@@ -100,3 +100,6 @@ export default function ProductCTAs({ product, ctaMode = 'both', ctaLabel = null
     </div>
   );
 }
+
+
+

@@ -233,34 +233,34 @@ function SmallOption({ title, hint, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="rounded-[8px] border border-[rgba(10,22,40,0.12)] bg-white px-4 py-3 text-left transition hover:border-[rgba(184,151,42,0.45)] hover:bg-[#faf7f2]"
-      style={{ fontFamily: 'Manrope, var(--font-geist-sans), sans-serif' }}
+      className="rounded-none border border-[rgba(0,0,0,0.12)] bg-white px-4 py-3 text-left transition hover:border-[var(--color-brand-primary,#000000)] hover:bg-[var(--color-brand-secondary,#f9f9f9)]"
+      
     >
-      <div className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#0A1628]">{title}</div>
-      <div className="mt-1 text-[11px] leading-[1.6] text-[#6A6A6A]">{hint}</div>
+      <div className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--color-brand-primary,#000000)]">{title}</div>
+      <div className="mt-1 text-[11px] leading-[1.6] text-[var(--theme-muted,#6a6a6a)]">{hint}</div>
     </button>
   );
 }
 
 function ResultInline({ result }) {
   return (
-    <div className="rounded-[10px] border border-[rgba(184,151,42,0.22)] bg-[#faf7f2] px-4 py-4">
-      <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#B8972A]" style={{ fontFamily: 'Manrope, var(--font-geist-sans), sans-serif' }}>
+    <div className="rounded-none border border-[color:var(--theme-border,rgba(0,0,0,0.09))] bg-[var(--color-brand-secondary,#f9f9f9)] px-4 py-4">
+      <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--color-brand-primary,#000000)]" >
         Suggested Match
       </div>
-      <div className="mt-2 text-[28px] leading-none text-[#0A1628] font-display-title">{result.name}</div>
-      <div className="mt-2 text-[10px] uppercase tracking-[0.18em] text-[#6A6A6A]" style={{ fontFamily: 'Manrope, var(--font-geist-sans), sans-serif' }}>
+      <div className="mt-2 text-[28px] leading-none text-[var(--color-brand-primary,#000000)] font-display-title">{result.name}</div>
+      <div className="mt-2 text-[10px] uppercase tracking-[0.18em] text-[var(--theme-muted,#6a6a6a)]" >
         {result.grade}
       </div>
-      <p className="mt-3 text-[12px] leading-[1.75] text-[#253246]" style={{ fontFamily: 'Manrope, var(--font-geist-sans), sans-serif' }}>
+      <p className="mt-3 text-[12px] leading-[1.75] text-[var(--color-brand-primary,#000000)]" >
         {result.copy}
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
         {result.tags.map((tag) => (
           <span
             key={tag}
-            className="rounded-[6px] border border-[rgba(184,151,42,0.24)] px-2.5 py-1 text-[9px] uppercase tracking-[0.16em] text-[#B8972A]"
-            style={{ fontFamily: 'Manrope, var(--font-geist-sans), sans-serif' }}
+            className="rounded-none border border-[color:var(--theme-border,rgba(0,0,0,0.09))] px-2.5 py-1 text-[9px] uppercase tracking-[0.16em] text-[var(--color-brand-primary,#000000)]"
+            
           >
             {tag}
           </span>
@@ -279,19 +279,19 @@ function FlowGuide({ label, steps, currentStep, answers, onStart, onBack, onRest
     return (
       <div className="space-y-4">
         <div>
-          <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#B8972A]" style={{ fontFamily: 'Manrope, var(--font-geist-sans), sans-serif' }}>
+          <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--color-brand-primary,#000000)]" >
             {label} Guide
           </div>
-          <h3 className="mt-2 text-[28px] leading-[1.02] text-[#0A1628] font-display-title">{step.title}</h3>
-          <p className="mt-3 max-w-[720px] text-[12px] leading-[1.8] text-[#253246]" style={{ fontFamily: 'Manrope, var(--font-geist-sans), sans-serif' }}>
+          <h3 className="mt-2 text-[28px] leading-[1.02] text-[var(--color-brand-primary,#000000)] font-display-title">{step.title}</h3>
+          <p className="mt-3 max-w-[720px] text-[12px] leading-[1.8] text-[var(--color-brand-primary,#000000)]" >
             {step.intro}
           </p>
         </div>
         <button
           type="button"
           onClick={onStart}
-          className="rounded-[8px] bg-[#0A1628] px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#faf7f2] transition hover:bg-[#253246]"
-          style={{ fontFamily: 'Manrope, var(--font-geist-sans), sans-serif' }}
+          className="brand-button"
+          
         >
           Start Guide
         </button>
@@ -304,16 +304,16 @@ function FlowGuide({ label, steps, currentStep, answers, onStart, onBack, onRest
       <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#B8972A]" style={{ fontFamily: 'Manrope, var(--font-geist-sans), sans-serif' }}>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--color-brand-primary,#000000)]" >
               {label} Complete
             </div>
-            <h3 className="mt-2 text-[26px] leading-[1.02] text-[#0A1628] font-display-title">Your best fit</h3>
+            <h3 className="mt-2 text-[26px] leading-[1.02] text-[var(--color-brand-primary,#000000)] font-display-title">Your best fit</h3>
           </div>
           <button
             type="button"
             onClick={onRestart}
-            className="rounded-[8px] border border-[rgba(10,22,40,0.14)] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#6A6A6A] transition hover:border-[#0A1628] hover:text-[#0A1628]"
-            style={{ fontFamily: 'Manrope, var(--font-geist-sans), sans-serif' }}
+            className="brand-button bg-white px-3 py-2 text-[10px] text-[var(--color-brand-primary,#000000)] hover:bg-[var(--color-brand-primary,#000000)] hover:text-[var(--color-brand-accent,#ffffff)]"
+            
           >
             Start Over
           </button>
@@ -327,25 +327,25 @@ function FlowGuide({ label, steps, currentStep, answers, onStart, onBack, onRest
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#B8972A]" style={{ fontFamily: 'Manrope, var(--font-geist-sans), sans-serif' }}>
+          <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--color-brand-primary,#000000)]" >
             {label} Step {questionIndex} of {totalQuestions}
           </div>
-          <h3 className="mt-2 text-[24px] leading-[1.08] text-[#0A1628] font-display-title">{step.title}</h3>
+          <h3 className="mt-2 text-[24px] leading-[1.08] text-[var(--color-brand-primary,#000000)] font-display-title">{step.title}</h3>
         </div>
         <div className="flex gap-2">
           <button
             type="button"
             onClick={onBack}
-            className="rounded-[8px] border border-[rgba(10,22,40,0.12)] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#6A6A6A] transition hover:border-[#0A1628] hover:text-[#0A1628]"
-            style={{ fontFamily: 'Manrope, var(--font-geist-sans), sans-serif' }}
+            className="rounded-none border border-[rgba(0,0,0,0.12)] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--theme-muted,#6a6a6a)] transition hover:border-[var(--color-brand-primary,#000000)] hover:text-[var(--color-brand-primary,#000000)]"
+            
           >
             Back
           </button>
           <button
             type="button"
             onClick={onRestart}
-            className="rounded-[8px] border border-[rgba(10,22,40,0.12)] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#6A6A6A] transition hover:border-[#0A1628] hover:text-[#0A1628]"
-            style={{ fontFamily: 'Manrope, var(--font-geist-sans), sans-serif' }}
+            className="rounded-none border border-[rgba(0,0,0,0.12)] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--theme-muted,#6a6a6a)] transition hover:border-[var(--color-brand-primary,#000000)] hover:text-[var(--color-brand-primary,#000000)]"
+            
           >
             Reset
           </button>
@@ -363,7 +363,7 @@ function FlowGuide({ label, steps, currentStep, answers, onStart, onBack, onRest
         ))}
       </div>
 
-      <div className="text-[10px] uppercase tracking-[0.16em] text-[#8B94A5]" style={{ fontFamily: 'Manrope, var(--font-geist-sans), sans-serif' }}>
+      <div className="text-[10px] uppercase tracking-[0.16em] text-[var(--theme-muted,#6a6a6a)]" >
         Current selection: {answers[step.key] ? step.options.find((option) => option.value === answers[step.key])?.title : 'None'}
       </div>
     </div>
@@ -419,44 +419,44 @@ export default function RingGuide() {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="mb-8 flex w-full items-center justify-between rounded-[16px] border border-[rgba(10,22,40,0.10)] bg-[#F7F9FC] px-5 py-5 text-left transition hover:border-[rgba(10,22,40,0.18)] hover:bg-white"
-        style={{ fontFamily: 'Manrope, var(--font-geist-sans), sans-serif' }}
+        className="mb-8 flex w-full items-center justify-between rounded-none border border-[rgba(0,0,0,0.10)] bg-white px-5 py-5 text-left transition hover:border-[rgba(0,0,0,0.18)] hover:bg-white"
+        
       >
         <span className="flex items-center gap-4">
-          <span className="inline-flex h-14 w-14 items-center justify-center rounded-full border border-[rgba(10,22,40,0.10)] bg-white text-[#0A1628] shadow-[0_10px_24px_rgba(10,22,40,0.06)]">
+          <span className="inline-flex h-14 w-14 items-center justify-center rounded-none border border-[rgba(0,0,0,0.10)] bg-white text-[var(--color-brand-primary,#000000)] shadow-[0_10px_24px_rgba(0,0,0,0.06)]">
             <Ruler size={22} />
           </span>
           <span>
-            <span className="block text-[19px] leading-[1.1] text-[#0A1628] font-display-title">
+            <span className="block text-[19px] leading-[1.1] text-[var(--color-brand-primary,#000000)] font-display-title">
               Find your <em className="font-normal italic">ring size</em>
             </span>
-            <span className="mt-1 block text-[12px] tracking-[0.04em] text-[#7A8496]">
+            <span className="mt-1 block text-[12px] tracking-[0.04em] text-[var(--theme-muted,#6a6a6a)]">
               Quick guided sizing — 4 methods
             </span>
           </span>
         </span>
-        <ArrowRight size={22} className="text-[#7A8496]" />
+        <ArrowRight size={22} className="text-[var(--theme-muted,#6a6a6a)]" />
       </button>
 
       {isOpen ? (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/45 px-4 py-6">
-          <div className="relative max-h-[88vh] w-full max-w-[1180px] overflow-y-auto rounded-[24px] bg-white p-5 shadow-[0_24px_90px_rgba(10,22,40,0.28)] sm:p-6">
+          <div className="relative max-h-[88vh] w-full max-w-[1180px] overflow-y-auto rounded-none bg-white p-5 shadow-[0_24px_90px_rgba(0,0,0,0.28)] sm:p-6">
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full border border-[rgba(10,22,40,0.10)] bg-white text-[#0A1628] transition hover:bg-[#FAFBFD]"
+              className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-none border border-[rgba(0,0,0,0.10)] bg-white text-[var(--color-brand-primary,#000000)] transition hover:bg-[var(--color-brand-secondary,#f9f9f9)]"
               aria-label="Close ring guide"
             >
               <X size={18} />
             </button>
 
-            <section className="rounded-[18px] border border-[rgba(10,22,40,0.10)] bg-white px-4 py-5 shadow-[0_14px_36px_rgba(10,22,40,0.04)] sm:px-5">
-      <div className="flex flex-wrap items-end justify-between gap-4 border-b border-[rgba(10,22,40,0.08)] pb-4">
+            <section className="rounded-none border border-[rgba(0,0,0,0.10)] bg-white px-4 py-5 shadow-[0_14px_36px_rgba(0,0,0,0.04)] sm:px-5">
+      <div className="flex flex-wrap items-end justify-between gap-4 border-b border-[rgba(0,0,0,0.08)] pb-4">
         <div>
-          <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#B8972A]" style={{ fontFamily: 'Manrope, var(--font-geist-sans), sans-serif' }}>
+          <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[var(--color-brand-primary,#000000)]" >
             Ring Guide
           </div>
-          <h2 className="mt-2 text-[32px] leading-[0.98] text-[#0A1628] font-display-title">
+          <h2 className="mt-2 text-[32px] leading-[0.98] text-[var(--color-brand-primary,#000000)] font-display-title">
             Quick help, <em className="font-normal italic">without the long scroll</em>
           </h2>
         </div>
@@ -466,12 +466,12 @@ export default function RingGuide() {
               key={tab.id}
               type="button"
               onClick={() => setActiveGuide(tab.id)}
-              className={`rounded-[8px] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] transition ${
+              className={`rounded-none px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] transition ${
                 activeGuide === tab.id
-                  ? 'bg-[#0A1628] text-[#faf7f2]'
-                  : 'border border-[rgba(10,22,40,0.12)] bg-white text-[#6A6A6A] hover:border-[#0A1628] hover:text-[#0A1628]'
+                  ? 'bg-[var(--color-brand-primary,#000000)] text-[var(--color-brand-accent,#ffffff)]'
+                  : 'border border-[rgba(0,0,0,0.12)] bg-white text-[var(--theme-muted,#6a6a6a)] hover:border-[var(--color-brand-primary,#000000)] hover:text-[var(--color-brand-primary,#000000)]'
               }`}
-              style={{ fontFamily: 'Manrope, var(--font-geist-sans), sans-serif' }}
+              
             >
               {tab.label}
             </button>
@@ -536,19 +536,19 @@ export default function RingGuide() {
             {sizeStep === 0 ? (
               <div className="space-y-4">
                 <div>
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#B8972A]" style={{ fontFamily: 'Manrope, var(--font-geist-sans), sans-serif' }}>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--color-brand-primary,#000000)]" >
                     Size Guide
                   </div>
-                  <h3 className="mt-2 text-[28px] leading-[1.02] text-[#0A1628] font-display-title">Find your ring size</h3>
-                  <p className="mt-3 max-w-[720px] text-[12px] leading-[1.8] text-[#253246]" style={{ fontFamily: 'Manrope, var(--font-geist-sans), sans-serif' }}>
+                  <h3 className="mt-2 text-[28px] leading-[1.02] text-[var(--color-brand-primary,#000000)] font-display-title">Find your ring size</h3>
+                  <p className="mt-3 max-w-[720px] text-[12px] leading-[1.8] text-[var(--color-brand-primary,#000000)]" >
                     Choose the method you have available. The estimate updates instantly and keeps the page much shorter than a full chart-first layout.
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setSizeStep(1)}
-                  className="rounded-[8px] bg-[#0A1628] px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#faf7f2] transition hover:bg-[#253246]"
-                  style={{ fontFamily: 'Manrope, var(--font-geist-sans), sans-serif' }}
+                  className="brand-button"
+                  
                 >
                   Start Guide
                 </button>
@@ -559,16 +559,16 @@ export default function RingGuide() {
               <div className="space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#B8972A]" style={{ fontFamily: 'Manrope, var(--font-geist-sans), sans-serif' }}>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--color-brand-primary,#000000)]" >
                       Size Step 1 of 2
                     </div>
-                    <h3 className="mt-2 text-[24px] leading-[1.08] text-[#0A1628] font-display-title">Choose your measuring method</h3>
+                    <h3 className="mt-2 text-[24px] leading-[1.08] text-[var(--color-brand-primary,#000000)] font-display-title">Choose your measuring method</h3>
                   </div>
                   <button
                     type="button"
                     onClick={restartSize}
-                    className="rounded-[8px] border border-[rgba(10,22,40,0.12)] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#6A6A6A] transition hover:border-[#0A1628] hover:text-[#0A1628]"
-                    style={{ fontFamily: 'Manrope, var(--font-geist-sans), sans-serif' }}
+                    className="rounded-none border border-[rgba(0,0,0,0.12)] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--theme-muted,#6a6a6a)] transition hover:border-[var(--color-brand-primary,#000000)] hover:text-[var(--color-brand-primary,#000000)]"
+                    
                   >
                     Reset
                   </button>
@@ -584,10 +584,10 @@ export default function RingGuide() {
               <div className="space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#B8972A]" style={{ fontFamily: 'Manrope, var(--font-geist-sans), sans-serif' }}>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--color-brand-primary,#000000)]" >
                       Size Step 2 of 2
                     </div>
-                    <h3 className="mt-2 text-[24px] leading-[1.08] text-[#0A1628] font-display-title">
+                    <h3 className="mt-2 text-[24px] leading-[1.08] text-[var(--color-brand-primary,#000000)] font-display-title">
                       Enter your {sizeMethod === 'diameter' ? 'diameter' : 'circumference'}
                     </h3>
                   </div>
@@ -595,16 +595,16 @@ export default function RingGuide() {
                     <button
                       type="button"
                       onClick={() => setSizeStep(1)}
-                      className="rounded-[8px] border border-[rgba(10,22,40,0.12)] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#6A6A6A] transition hover:border-[#0A1628] hover:text-[#0A1628]"
-                      style={{ fontFamily: 'Manrope, var(--font-geist-sans), sans-serif' }}
+                      className="rounded-none border border-[rgba(0,0,0,0.12)] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--theme-muted,#6a6a6a)] transition hover:border-[var(--color-brand-primary,#000000)] hover:text-[var(--color-brand-primary,#000000)]"
+                      
                     >
                       Back
                     </button>
                     <button
                       type="button"
                       onClick={restartSize}
-                      className="rounded-[8px] border border-[rgba(10,22,40,0.12)] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[#6A6A6A] transition hover:border-[#0A1628] hover:text-[#0A1628]"
-                      style={{ fontFamily: 'Manrope, var(--font-geist-sans), sans-serif' }}
+                      className="rounded-none border border-[rgba(0,0,0,0.12)] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--theme-muted,#6a6a6a)] transition hover:border-[var(--color-brand-primary,#000000)] hover:text-[var(--color-brand-primary,#000000)]"
+                      
                     >
                       Reset
                     </button>
@@ -612,11 +612,11 @@ export default function RingGuide() {
                 </div>
 
                 <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
-                  <div className="rounded-[10px] border border-[rgba(10,22,40,0.10)] bg-[#faf7f2] p-4">
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#0A1628]" style={{ fontFamily: 'Manrope, var(--font-geist-sans), sans-serif' }}>
+                  <div className="rounded-none border border-[rgba(0,0,0,0.10)] bg-[var(--color-brand-secondary,#f9f9f9)] p-4">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-brand-primary,#000000)]" >
                       {sizeMethod === 'diameter' ? 'Existing Ring' : 'String Method'}
                     </div>
-                    <p className="mt-2 text-[11px] leading-[1.7] text-[#6A6A6A]" style={{ fontFamily: 'Manrope, var(--font-geist-sans), sans-serif' }}>
+                    <p className="mt-2 text-[11px] leading-[1.7] text-[var(--theme-muted,#6a6a6a)]" >
                       {sizeMethod === 'diameter'
                         ? 'Place the ring flat and measure the inner diameter in mm.'
                         : 'Wrap paper around the finger and measure the overlap length in mm.'}
@@ -629,26 +629,26 @@ export default function RingGuide() {
                       value={sizeValue}
                       onChange={(event) => setSizeValue(event.target.value)}
                       placeholder={sizeMethod === 'diameter' ? 'e.g. 17.3 mm' : 'e.g. 54 mm'}
-                      className="mt-3 w-full rounded-[8px] border border-[rgba(10,22,40,0.12)] bg-white px-3 py-3 text-[13px] text-[#0A1628] outline-none transition focus:border-[#B8972A]"
-                      style={{ fontFamily: 'Manrope, var(--font-geist-sans), sans-serif' }}
+                      className="mt-3 w-full rounded-none border border-[rgba(0,0,0,0.12)] bg-white px-3 py-3 text-[13px] text-[var(--color-brand-primary,#000000)] outline-none transition focus:border-[var(--color-brand-primary,#000000)]"
+                      
                     />
                     {sizeResult ? (
-                      <div className="mt-4 rounded-[8px] border border-[rgba(184,151,42,0.22)] bg-white px-3 py-3">
-                        <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#B8972A]" style={{ fontFamily: 'Manrope, var(--font-geist-sans), sans-serif' }}>
+                      <div className="mt-4 rounded-none border border-[color:var(--theme-border,rgba(0,0,0,0.09))] bg-white px-3 py-3">
+                        <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-brand-primary,#000000)]" >
                           Your Size
                         </div>
-                        <div className="mt-1 text-[28px] leading-none text-[#0A1628] font-display-title">EU {sizeResult.eu}</div>
-                        <div className="mt-2 text-[10px] leading-[1.7] uppercase tracking-[0.12em] text-[#6A6A6A]" style={{ fontFamily: 'Manrope, var(--font-geist-sans), sans-serif' }}>
+                        <div className="mt-1 text-[28px] leading-none text-[var(--color-brand-primary,#000000)] font-display-title">EU {sizeResult.eu}</div>
+                        <div className="mt-2 text-[10px] leading-[1.7] uppercase tracking-[0.12em] text-[var(--theme-muted,#6a6a6a)]" >
                           US {sizeResult.us} · UK {sizeResult.uk}
                         </div>
                       </div>
                     ) : null}
                   </div>
 
-                  <div className="overflow-hidden rounded-[10px] border border-[rgba(10,22,40,0.10)] bg-white">
-                    <div className="grid grid-cols-5 bg-[#0A1628] px-3 py-3">
+                  <div className="overflow-hidden rounded-none border border-[rgba(0,0,0,0.10)] bg-white">
+                    <div className="grid grid-cols-5 bg-[var(--color-brand-primary,#000000)] px-3 py-3">
                       {['EU', 'US', 'UK', 'D mm', 'C mm'].map((label) => (
-                        <div key={label} className="text-center text-[9px] font-semibold uppercase tracking-[0.14em] text-[#D4AF37]" style={{ fontFamily: 'Manrope, var(--font-geist-sans), sans-serif' }}>
+                        <div key={label} className="text-center text-[9px] font-semibold uppercase tracking-[0.14em] text-[var(--color-brand-accent,#ffffff)]" >
                           {label}
                         </div>
                       ))}
@@ -656,12 +656,12 @@ export default function RingGuide() {
                     {SIZE_ROWS.map((row) => {
                       const active = sizeResult?.eu === row.eu;
                       return (
-                        <div key={row.eu} className={`grid grid-cols-5 px-3 py-2 border-t border-[rgba(10,22,40,0.06)] ${active ? 'bg-[#faf7f2]' : 'bg-white'}`}>
-                          <div className="text-center text-[13px] text-[#0A1628] font-display-title">{row.eu}</div>
-                          <div className="text-center text-[13px] text-[#0A1628] font-display-title">{row.us}</div>
-                          <div className="text-center text-[13px] text-[#0A1628] font-display-title">{row.uk}</div>
-                          <div className="text-center text-[13px] text-[#0A1628] font-display-title">{row.d}</div>
-                          <div className="text-center text-[13px] text-[#0A1628] font-display-title">{row.c}</div>
+                        <div key={row.eu} className={`grid grid-cols-5 px-3 py-2 border-t border-[rgba(0,0,0,0.06)] ${active ? 'bg-[var(--color-brand-secondary,#f9f9f9)]' : 'bg-white'}`}>
+                          <div className="text-center text-[13px] text-[var(--color-brand-primary,#000000)] font-display-title">{row.eu}</div>
+                          <div className="text-center text-[13px] text-[var(--color-brand-primary,#000000)] font-display-title">{row.us}</div>
+                          <div className="text-center text-[13px] text-[var(--color-brand-primary,#000000)] font-display-title">{row.uk}</div>
+                          <div className="text-center text-[13px] text-[var(--color-brand-primary,#000000)] font-display-title">{row.d}</div>
+                          <div className="text-center text-[13px] text-[var(--color-brand-primary,#000000)] font-display-title">{row.c}</div>
                         </div>
                       );
                     })}
@@ -679,3 +679,5 @@ export default function RingGuide() {
     </>
   );
 }
+
+

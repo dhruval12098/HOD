@@ -67,7 +67,7 @@ function BestSellerTile({ product }: { product: HomeBestSellerProduct }) {
           src={imageUrl}
           alt={product.name}
           fill
-          sizes="(max-width: 639px) 50vw, (max-width: 1023px) 50vw, 33vw"
+          sizes="(max-width: 639px) 50vw, (max-width: 1023px) 50vw, 25vw"
           className="object-cover transition-transform duration-700 ease-[cubic-bezier(.16,1,.3,1)] motion-safe:group-hover:scale-[1.035]"
           onError={() => setImageFailed(true)}
         />
@@ -127,12 +127,14 @@ export default function BestSellers({
       ? 'lg:grid-cols-1'
       : products.length === 2
         ? 'lg:grid-cols-2'
-        : 'lg:grid-cols-3'
+        : products.length === 3
+          ? 'lg:grid-cols-3'
+          : 'lg:grid-cols-4'
 
   if (!products.length) return null
 
   return (
-    <section className="w-full px-[var(--space-2)] py-[var(--space-6)] sm:px-[var(--space-3)] sm:py-[var(--space-8)] lg:px-[var(--space-4)] lg:py-[var(--space-12)]">
+    <section className="w-full bg-white px-[var(--space-2)] py-[var(--space-4)] sm:px-[var(--space-3)] sm:py-[var(--space-6)] lg:px-[var(--space-4)] lg:py-[var(--space-8)]">
       <RevealDiv className="mb-[var(--space-6)] flex flex-wrap items-end justify-between gap-[var(--space-4)] px-[var(--space-1)] sm:mb-[var(--space-8)] lg:mb-[var(--space-12)]">
         <div>
           <h2

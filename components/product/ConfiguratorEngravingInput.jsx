@@ -20,10 +20,10 @@ export default function ConfiguratorEngravingInput({ label = 'Free Engraving', m
   return (
     <div className="mb-5">
       <div className="mb-[10px] flex items-baseline justify-between">
-        <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-[#0A1628]">
+        <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--color-brand-primary,#000000)]">
           {label}
         </span>
-        <span className="font-sans text-[13px] font-medium tracking-[0.01em] text-[#0A1628]">
+        <span className="font-sans text-[13px] font-medium tracking-[0.01em] text-[var(--color-brand-primary,#000000)]">
           {selectedLabel}
           {mode === 'none' && (
             <span className="ml-2 font-sans text-[10px] font-normal tracking-[0.08em] text-[#7F8898]">
@@ -33,7 +33,7 @@ export default function ConfiguratorEngravingInput({ label = 'Free Engraving', m
         </span>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-2 gap-2">
         {['none', 'custom'].map((option) => {
           const isActive = option === mode;
           const optionLabel = option === 'none' ? 'No Engraving' : 'Add Custom Text';
@@ -48,8 +48,8 @@ export default function ConfiguratorEngravingInput({ label = 'Free Engraving', m
                 font-sans text-[10px] font-light uppercase tracking-[0.16em]
                 border transition-all duration-300
                 ${isActive
-                  ? 'border-[#0A1628] bg-[#0A1628] text-[#FAFBFD]'
-                  : 'border-[rgba(10,22,40,0.10)] bg-transparent text-[#253246] hover:border-[#0A1628] hover:text-[#0A1628]'
+                  ? 'border-[var(--color-brand-primary,#000000)] bg-[var(--color-brand-primary,#000000)] text-[#FAFBFD]'
+                  : 'border-black/20 bg-transparent text-[var(--color-brand-primary,#000000)] hover:border-[var(--color-brand-primary,#000000)] hover:bg-[var(--color-brand-primary,#000000)] hover:text-white'
                 }
               `}
             >
@@ -76,9 +76,9 @@ export default function ConfiguratorEngravingInput({ label = 'Free Engraving', m
               mt-[10px] w-full max-w-[340px]
               border border-[rgba(10,22,40,0.10)] bg-[#FAFBFD]
               px-[14px] py-3
-              font-sans text-[15px] text-[#0A1628]
+              font-sans text-[15px] text-[var(--color-brand-primary,#000000)]
               transition-colors duration-300
-              placeholder:text-[#7F8898] focus:border-[#0A1628] focus:outline-none
+              placeholder:text-[#7F8898] focus:border-[var(--color-brand-primary,#000000)] focus:outline-none
             "
           />
           <div id={counterId} className="mt-2 font-sans text-[9px] uppercase tracking-[0.14em] text-[#7F8898]">
@@ -89,3 +89,6 @@ export default function ConfiguratorEngravingInput({ label = 'Free Engraving', m
     </div>
   );
 }
+
+
+

@@ -129,6 +129,13 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
   const line2 = rest.join(' ');
   const currentSlide = slides[activeSlide] ?? slides[0];
   const hasImageHero = Boolean(content.slider_enabled && currentSlide);
+  const currentHeadlineLines = currentSlide?.headline.trim()
+    ? currentSlide.headline.trim().split(/\s+/).reduce<string[]>((lines, word, index) => {
+        if (index % 2 === 0) lines.push(word);
+        else lines[lines.length - 1] += ` ${word}`;
+        return lines;
+      }, [])
+    : [];
   const goToPrevSlide = () => {
     setActiveSlide((current) => (current - 1 + slides.length) % slides.length);
   };
@@ -256,18 +263,22 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
               <>
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-2/3 bg-gradient-to-t from-black/70 via-black/28 to-transparent sm:hidden" />
                 <div className="pointer-events-none absolute inset-0 z-20 flex items-end justify-center px-[var(--space-4)] pb-[var(--space-10)] text-center sm:items-center sm:justify-start sm:px-[var(--space-8)] sm:pb-0 sm:text-left lg:px-[var(--space-12)] xl:px-[var(--space-16)]">
-                  <div className="relative mx-auto w-full max-w-[22rem] py-[var(--space-6)] sm:mx-0 sm:w-full sm:max-w-[25rem] sm:py-[var(--space-10)]">
+                  <div className="relative mx-auto w-full max-w-[calc(100vw-2rem)] py-[var(--space-6)] sm:mx-0 sm:max-w-[42rem] sm:py-[var(--space-10)]">
                     {currentSlide.headline.trim() ? (
                       <h1
-                        className="hero-slide-heading text-[clamp(1.75rem,7vw,2.25rem)] font-medium leading-[1.12] tracking-[-0.02em] text-white sm:text-[clamp(2.25rem,3.4vw,3.25rem)] sm:text-[var(--color-brand-primary,#000)]"
+                        className="hero-slide-heading text-[clamp(1.75rem,7vw,2.25rem)] font-medium leading-[1.12] tracking-[-0.02em] text-white sm:text-[clamp(2.25rem,3.4vw,3.25rem)]"
                       >
-                        {currentSlide.headline}
+                        {currentHeadlineLines.map((line, index) => (
+                          <span key={`${line}-${index}`} className="block whitespace-nowrap">
+                            {line}
+                          </span>
+                        ))}
                       </h1>
                     ) : null}
 
                     {currentSlide.subtitle.trim() ? (
                       <p
-                        className="mx-auto mt-[var(--space-2)] max-w-[20rem] text-[clamp(0.75rem,2.8vw,0.95rem)] leading-[1.55] text-white/90 sm:mx-0 sm:mt-[var(--space-4)] sm:max-w-[25rem] sm:text-[clamp(0.9rem,1.15vw,1.1rem)] sm:text-[var(--color-brand-primary,#000)]"
+                        className="mx-auto mt-[var(--space-2)] max-w-[calc(100vw-2rem)] text-[clamp(0.75rem,2.8vw,0.95rem)] leading-[1.55] text-white/90 sm:mx-0 sm:max-w-[38rem] sm:text-[clamp(0.9rem,1.15vw,1.1rem)]"
                         style={{ fontFamily: 'var(--font-family-secondary)' }}
                       >
                         {currentSlide.subtitle}
@@ -277,7 +288,7 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
                     {currentSlide.button_text.trim() && currentSlide.button_link.trim() ? (
                       <BrandButton
                         href={currentSlide.button_link}
-                        className="pointer-events-auto mx-auto mt-[var(--space-4)] sm:mx-0 sm:mt-[var(--space-6)]"
+                        className="pointer-events-auto mx-auto mt-[var(--space-3)] sm:mx-0"
                       >
                         {currentSlide.button_text}
                       </BrandButton>

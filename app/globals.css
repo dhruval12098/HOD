@@ -102,10 +102,10 @@
   min-height: 3rem;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--color-brand-primary, #000000);
+  border: 1px solid var(--color-brand-accent, #ffffff);
   border-radius: 0;
-  background: var(--color-brand-primary, #000000);
-  color: var(--color-brand-accent, #ffffff);
+  background: var(--color-brand-accent, #ffffff);
+  color: var(--color-brand-primary, #000000);
   padding: var(--space-3, 0.75rem) var(--space-8, 2rem);
   font-family: var(--font-family-button, Arial, sans-serif);
   font-size: 0.75rem;
@@ -121,8 +121,9 @@
 }
 
 .brand-button:hover:not(:disabled):not([aria-disabled="true"]) {
-  background: var(--color-brand-accent, #ffffff);
-  color: var(--color-brand-primary, #000000);
+  border-color: var(--color-brand-primary, #000000);
+  background: var(--color-brand-primary, #000000);
+  color: var(--color-brand-accent, #ffffff);
 }
 
 .brand-button:focus-visible {
@@ -384,3 +385,6 @@ footer *::-moz-selection {
     transform: none !important;
   }
 }
+
+
+

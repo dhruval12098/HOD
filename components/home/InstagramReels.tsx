@@ -15,7 +15,7 @@ function ReelCard({ item, duplicate = false }: { item: HomeInstagramReelsData['i
 
   return (
     <article
-      className="group relative h-[400px] w-[255px] shrink-0 overflow-hidden bg-black shadow-[0_18px_44px_rgba(10,22,40,0.10)] sm:h-[440px] sm:w-[280px]"
+      className="group relative h-[400px] w-[255px] shrink-0 overflow-hidden bg-black sm:h-[440px] sm:w-[280px]"
       aria-hidden={duplicate || undefined}
       onMouseEnter={() => setActive(true)}
       onMouseLeave={() => setActive(false)}
@@ -41,7 +41,7 @@ function ReelCard({ item, duplicate = false }: { item: HomeInstagramReelsData['i
           <span className="absolute inset-0 bg-[radial-gradient(circle_at_70%_15%,rgba(193,140,104,.26),transparent_35%),linear-gradient(150deg,#f8f3e9,#e5d9c9)]" aria-hidden="true" />
         )}
         <span className="absolute inset-0 bg-black/10" aria-hidden="true" />
-        <span className="absolute left-1/2 top-1/2 grid h-16 w-16 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white/80 text-[#111b2b] shadow-[0_10px_26px_rgba(0,0,0,0.22)]" aria-hidden="true">
+        <span className="absolute left-1/2 top-1/2 grid h-16 w-16 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white/80 text-[#111b2b]" aria-hidden="true">
           <span className="ml-1 h-0 w-0 border-y-[13px] border-l-[20px] border-y-transparent border-l-current" />
         </span>
       </button>
@@ -68,7 +68,7 @@ export default function InstagramReels({ data }: { data: HomeInstagramReelsData 
   const items = animated ? [...data.items, ...data.items] : data.items
 
   return (
-    <section aria-labelledby="instagram-reels-heading" className="overflow-hidden bg-white px-[var(--space-2)] py-[var(--space-6)] text-[#111b2b] sm:px-[var(--space-3)] lg:px-[var(--space-4)] lg:py-[var(--space-6)]">
+    <section aria-labelledby="instagram-reels-heading" className="overflow-hidden bg-white px-[var(--space-2)] py-[var(--space-4)] text-[#111b2b] sm:px-[var(--space-3)] lg:px-[var(--space-4)] lg:py-[var(--space-4)]">
       <h2
         id="instagram-reels-heading"
         className="section-title mb-[var(--space-6)] font-primary-display font-light leading-[1.08] tracking-[0.01em] text-[#0A1628] max-md:text-[28px]"
@@ -101,7 +101,6 @@ export default function InstagramReels({ data }: { data: HomeInstagramReelsData 
         }
         .instagram-reel-frame::-webkit-scrollbar { display: none; }
         @media (prefers-reduced-motion: reduce) { .instagram-reels-track { animation: none; overflow-x: auto; max-width: 100%; } }
-        @media (min-width: 640px) { .instagram-reels-mask { mask-image: linear-gradient(90deg,transparent,black 5%,black 95%,transparent); } }
       `}</style>
     </section>
   )

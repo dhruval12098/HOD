@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { getCollectionHref } from '@/lib/browse-context';
@@ -15,6 +15,9 @@ type AuthFormProps = {
 
 export default function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const requestedNext = searchParams.get('next');
+  const nextHref = requestedNext?.startsWith('/') && !requestedNext.startsWith('//') ? requestedNext : '/profile';
   const isSignup = mode === 'signup';
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -36,7 +39,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
 
     try {
       const redirectTo =
-        typeof window !== 'undefined' ? `${window.location.origin}/profile` : undefined;
+        typeof window !== 'undefined' ? `${window.location.origin}${nextHref}` : undefined;
 
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -94,7 +97,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
 
         if (data.session) {
           setToastMessage('Your account is ready. Redirecting to your profile...');
-          router.replace('/profile');
+          router.replace(nextHref);
           router.refresh();
           return;
         }
@@ -113,8 +116,8 @@ export default function AuthForm({ mode }: AuthFormProps) {
         throw signInError;
       }
 
-      setToastMessage('Signed in successfully. Redirecting to your profile...');
-      router.replace('/profile');
+      setToastMessage('Signed in successfully. Redirecting...');
+      router.replace(nextHref);
       router.refresh();
     } catch (authError) {
       const message = authError instanceof Error ? authError.message : 'Something went wrong. Please try again.';
