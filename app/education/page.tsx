@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
 import EducationClient from '@/components/pages/EducationClient'
-import { getPublishedEducationPosts } from '@/lib/education'
+import { getEducationPageHero, getPublishedEducationPosts } from '@/lib/education'
 import { createPageMetadata } from '@/lib/seo'
 
 export const metadata: Metadata = createPageMetadata({
@@ -12,5 +12,6 @@ export const metadata: Metadata = createPageMetadata({
 })
 
 export default async function EducationPage() {
-  return <EducationClient posts={await getPublishedEducationPosts()} />
+  const [posts, hero] = await Promise.all([getPublishedEducationPosts(), getEducationPageHero()])
+  return <EducationClient posts={posts} hero={hero} />
 }

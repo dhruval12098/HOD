@@ -190,3 +190,18 @@ export async function getBlogPageHero(): Promise<BlogPageHero | null> {
 }
 
 
+
+export type BlogFilterCategory = { id: string; name: string; slug: string }
+
+export async function getLiveBlogCategories(): Promise<BlogFilterCategory[]> {
+  const supabase = createSupabaseServerClient()
+  const { data, error } = await supabase
+    .from('catalog_categories')
+    .select('id, name, slug')
+    .eq('status', 'active')
+    .neq('slug', 'hiphop')
+    .order('display_order', { ascending: true })
+
+  if (error) return []
+  return (data ?? []).filter((category) => category.id && category.name && category.slug)
+}

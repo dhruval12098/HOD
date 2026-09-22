@@ -84,7 +84,6 @@ const fallbackConfig: FormConfigState = {
     { label: 'Tennis Bracelet' },
     { label: 'Necklace / Pendant' },
     { label: 'Earrings' },
-    { label: 'Hip Hop Chain' },
     { label: 'Loose Diamond' },
     { label: 'Other' },
   ],

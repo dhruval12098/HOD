@@ -13,6 +13,7 @@ import {
 } from "@/app/fonts";
 import { CurrencyProvider } from "@/context/CurrencyContext";
 import { CartProvider } from "@/lib/hooks/useCart";
+import { ContactDrawerProvider } from "@/lib/hooks/useContactDrawer";
 import { WishlistProvider } from "@/lib/hooks/useWishlistStore";
 import { getSiteUrl } from "@/lib/site-url";
 import JsonLd from "@/components/seo/JsonLd";
@@ -99,11 +100,13 @@ export default async function RootLayout({
         ) : (
           <WishlistProvider>
             <CurrencyProvider initialDetectedCurrency={initialDetectedCurrency}>
-              <CartProvider>
-                <ToastProvider>
-                  <SiteChrome initialNavItems={navItems}>{children}</SiteChrome>
-                </ToastProvider>
-              </CartProvider>
+              <ContactDrawerProvider>
+                <CartProvider>
+                  <ToastProvider>
+                    <SiteChrome initialNavItems={navItems}>{children}</SiteChrome>
+                  </ToastProvider>
+                </CartProvider>
+              </ContactDrawerProvider>
             </CurrencyProvider>
           </WishlistProvider>
         )}

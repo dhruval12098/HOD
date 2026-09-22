@@ -90,23 +90,24 @@ export default function WishlistClient({ embedded = false }: { embedded?: boolea
   const items = useMemo(() => products.filter((product) => wishlist.includes(getProductKey(product))), [products, wishlist])
 
   return (
-    <section className={embedded ? '' : 'mx-auto max-w-[1280px] px-5 py-16 sm:px-7 lg:px-[52px]'}>
+    <section className={embedded ? '' : 'min-h-[calc(100vh-111px)] bg-white px-4 pb-16 pt-12 sm:px-7 sm:pb-24 sm:pt-16'}>
+      <div className={embedded ? '' : 'mx-auto max-w-6xl'}>
       {embedded ? null : (
         <>
-          <h1 className="font-serif text-[clamp(34px,5vw,58px)] font-light text-[#0A1628]">Wishlist</h1>
-          <p className="mt-3 text-[13px] text-[#6A6A6A]">Saved pieces you may want to come back to.</p>
+          <h1 className="text-center text-[clamp(1.35rem,2vw,1.75rem)] font-extrabold uppercase leading-none tracking-[0.04em] text-[#111111]">Wish List</h1>
+          <p className="mt-4 text-center text-[13px] leading-[1.75] text-[#3f3f3f]">Saved pieces you may want to come back to.</p>
         </>
       )}
       {isLoading || !ready ? (
         wishlist.length ? (
-          <div className="mt-10 grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3">
+          <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3">
             {Array.from({ length: Math.min(wishlist.length, 6) }).map((_, index) => (
               <WishlistSkeletonCard key={index} />
             ))}
           </div>
         ) : null
       ) : items.length ? (
-        <div className="mt-10 grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3">
+        <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3">
           {items.map((item) => (
             <ProductCard
               key={item.dbId || item.slug}
@@ -119,13 +120,14 @@ export default function WishlistClient({ embedded = false }: { embedded?: boolea
           ))}
         </div>
       ) : (
-        <div className="mt-10 rounded-[24px] border border-[rgba(10,22,40,0.08)] bg-white px-6 py-12 text-center">
+        <div className="mt-8 border border-[#e4e4e4] bg-white px-6 py-12 text-center">
           <p className="text-[14px] text-[#6A6A6A]">Your wishlist is empty.</p>
-          <Link href="/shop" className="mt-5 inline-flex rounded-full bg-[#0A1628] px-6 py-3 text-[10px] uppercase tracking-[0.24em] text-white">
+          <Link href="/shop" className="brand-button mt-5">
             Explore Products
           </Link>
         </div>
       )}
+      </div>
     </section>
   )
 }

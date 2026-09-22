@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { finalizePaidOrder, markOrderPaymentFailed } from '@/lib/checkout-order'
-import { verifyRazorpayWebhookSignature } from '@/lib/razorpay'
+import { ensureRazorpayPaymentCaptured, verifyRazorpayWebhookSignature } from '@/lib/razorpay'
 import { REFUNDABLE_FINALIZATION_ERRORS, recoverCapturedPayment } from '@/lib/payment-recovery'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -112,41 +112,29 @@ export async function POST(request: Request) {
       if (recoveryError) throw recoveryError
     }
 
-    if ((eventType === 'payment.captured' || eventType === 'order.paid') && razorpayOrderId && razorpayPaymentId) {
-      if (paymentEntity?.status !== 'captured' || !Number.isFinite(Number(paymentEntity.amount)) || !paymentEntity?.currency) {
-        throw new Error('Captured payment details are incomplete.')
-      }
+    if ((eventType === 'payment.authorized' || eventType === 'payment.captured' || eventType === 'order.paid') && razorpayOrderId && razorpayPaymentId) {
+      if (!Number.isFinite(Number(paymentEntity?.amount)) || !paymentEntity?.currency) throw new Error('Paid payment details are incomplete.')
+      const payment = await ensureRazorpayPaymentCaptured({ paymentId: razorpayPaymentId, orderId: razorpayOrderId, amountInSubunits: Number(paymentEntity.amount), currency: paymentEntity.currency })
       const finalized = await finalizePaidOrder({
         adminClient,
         razorpayOrderId,
         paymentId: razorpayPaymentId,
-        paymentMethod: paymentEntity?.method || null,
-        paymentContact: paymentEntity?.contact || null,
-        paymentEmail: paymentEntity?.email || null,
-        gatewayPaymentStatus: paymentEntity?.status || eventType,
-        paymentAmountInSubunits: Number(paymentEntity.amount),
-        paymentCurrency: paymentEntity.currency,
+        paymentMethod: payment.method || paymentEntity.method || null,
+        paymentContact: payment.contact != null ? String(payment.contact) : paymentEntity.contact || null,
+        paymentEmail: payment.email || paymentEntity.email || null,
+        gatewayPaymentStatus: payment.status || 'captured',
+        paymentAmountInSubunits: Number(payment.amount),
+        paymentCurrency: String(payment.currency || paymentEntity.currency),
         rawEvent: payload,
       })
-
       if ('error' in finalized) {
         console.error('Webhook paid order finalization failed:', finalized.error)
         if (finalized.errorCode && REFUNDABLE_FINALIZATION_ERRORS.has(finalized.errorCode)) {
-          const recovery = await recoverCapturedPayment({
-            adminClient,
-            orderId: finalized.orderId,
-            paymentId: razorpayPaymentId,
-            amountInSubunits: Number(paymentEntity.amount),
-            currency: paymentEntity.currency,
-            reasonCode: finalized.errorCode,
-          })
+          const recovery = await recoverCapturedPayment({ adminClient, orderId: finalized.orderId, paymentId: razorpayPaymentId, amountInSubunits: Number(payment.amount), currency: String(payment.currency || paymentEntity.currency), reasonCode: finalized.errorCode })
           if (!recovery.durable) throw new Error('Captured payment recovery could not be recorded.')
-        } else {
-          throw new Error(finalized.error)
-        }
+        } else throw new Error(finalized.error)
       }
     }
-
     if (eventType === 'payment.failed') {
       await markOrderPaymentFailed({
         adminClient,

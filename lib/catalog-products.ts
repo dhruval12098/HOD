@@ -1080,23 +1080,15 @@ export async function getStorefrontProductCards(productLane?: StorefrontProductL
   return getCachedStorefrontProductCards(productLane)
 }
 
-const getCachedStorefrontProductBySlug = unstable_cache(
-  async (slug: string) => {
-    const products = await fetchStorefrontProducts()
-    const exactMatch = products.find((entry) => entry.slug === slug)
-    if (exactMatch) return exactMatch
-
-    const legacySlug = slug.replace(/-\d+$/, '')
-    return legacySlug !== slug
-      ? products.find((entry) => entry.slug === legacySlug) || null
-      : null
-  },
-  ['storefront-product-by-slug-v1'],
-  { revalidate: 300, tags: ['storefront-products'] }
-)
-
 export async function getStorefrontProductBySlug(slug: string) {
-  return getCachedStorefrontProductBySlug(slug)
+  const products = await getRequestStorefrontProducts()
+  const exactMatch = products.find((entry) => entry.slug === slug)
+  if (exactMatch) return exactMatch
+
+  const legacySlug = slug.replace(/-\d+$/, '')
+  return legacySlug !== slug
+    ? products.find((entry) => entry.slug === legacySlug) || null
+    : null
 }
 
 export function filterStorefrontProducts<T extends StorefrontProductCard>(

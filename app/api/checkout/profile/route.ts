@@ -28,7 +28,7 @@ export async function GET(request: Request) {
 
   const { data: profile, error: profileError } = await adminClient
     .from('profiles')
-    .select('email, first_name, last_name, phone, country, state, city, postal_code, address_line_1, address_line_2')
+    .select('email, first_name, last_name, phone, country, state, district, city, postal_code, address_line_1, address_line_2')
     .eq('id', userData.user.id)
     .maybeSingle()
 
@@ -44,6 +44,7 @@ export async function GET(request: Request) {
       phone: profile?.phone || userData.user.user_metadata?.phone || '',
       country: profile?.country || '',
       state: profile?.state || '',
+      district: profile?.district || '',
       city: profile?.city || '',
       postal_code: profile?.postal_code || '',
       address_line_1: profile?.address_line_1 || '',

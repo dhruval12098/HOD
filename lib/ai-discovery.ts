@@ -23,7 +23,6 @@ const corePages = [
   ['/collection', 'Collections', 'Curated House of Diams collections.'],
   ['/bespoke', 'Bespoke Jewellery', 'Custom jewellery design and manufacturing.'],
   ['/about', 'About', 'Company, craftsmanship, values, and founders.'],
-  ['/contact', 'Contact', 'Contact details and enquiry form.'],
   ['/shipping', 'Shipping', 'Shipping information and policies.'],
   ['/returns', 'Returns', 'Returns policy and guidance.'],
   ['/faq', 'Frequently Asked Questions', 'Common customer questions and answers.'],

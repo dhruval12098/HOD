@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 
@@ -15,7 +15,7 @@ function formatAmount(offer: Offer) {
 }
 
 export default function SelectedCouponOffer() {
-  const [offer, setOffer] = useState<Offer | null>(null)
+  const [offer, setOffer] = useState<Offer>({ discountType: 'percentage', discountValue: 10, description: 'Enjoy an exclusive saving on your next House of Diams piece.', minimumOrderAmount: null })
 
   useEffect(() => {
     let active = true
@@ -23,8 +23,8 @@ export default function SelectedCouponOffer() {
       try {
         const response = await fetch('/api/public/promotion-popup/offer', { cache: 'no-store' })
         const payload = await response.json().catch(() => null)
-        if (active && response.ok) setOffer(payload?.offer ?? null)
-      } catch { if (active) setOffer(null) }
+        if (active && response.ok && payload?.offer) setOffer(payload.offer)
+      } catch { /* Keep the visible fallback offer when the endpoint is unavailable. */ }
     }
     void load()
     const refreshOnFocus = () => { void load() }

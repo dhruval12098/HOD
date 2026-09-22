@@ -768,6 +768,7 @@ export default function CheckoutPageClient() {
           phone: current.phone || nextProfile?.phone || '',
           country: current.country || nextProfile?.country || '',
           state: current.state || nextProfile?.state || '',
+          district: current.district || nextProfile?.district || '',
           city: current.city || nextProfile?.city || '',
           postal_code: current.postal_code || nextProfile?.postal_code || '',
           address_line_1: current.address_line_1 || nextProfile?.address_line_1 || '',
@@ -1147,25 +1148,6 @@ export default function CheckoutPageClient() {
     )
   }
 
-  if (!sessionReady) {
-    return (
-      <section className="min-h-[calc(100vh-111px)] bg-white px-4 py-8 sm:px-6 lg:px-10">
-        <div className="mx-auto max-w-[720px] rounded-[24px] border border-[#e7ebf0] bg-white p-8 text-center shadow-[0_18px_50px_rgba(15,23,42,0.04)]">
-          <h1 className="font-[family-name:var(--font-family-primary)] text-[32px] font-medium text-black">Checkout</h1>
-          <p className="mt-3 text-sm leading-7 text-[#667085]">
-            Continue without an account or sign in to use your saved details.
-          </p>
-          {errorMessage ? <p className="mt-3 text-sm text-red-600">{errorMessage}</p> : null}
-          <div className="mt-6 grid gap-3">
-            <button type="button" onClick={() => { getOrCreateGuestCheckoutToken(); setGuestCheckout(true); setSessionReady(true) }} className="flex min-h-12 w-full items-center justify-center border border-black bg-black px-6 font-[family-name:var(--font-family-button)] text-[11px] font-semibold uppercase tracking-[0.1em] text-white transition hover:bg-white hover:text-black">Express Checkout</button>
-            <div className="flex items-center gap-3 font-[family-name:var(--font-family-secondary)] text-[10px] uppercase text-black/40"><span className="h-px flex-1 bg-black/10"/><span>or</span><span className="h-px flex-1 bg-black/10"/></div>
-            <Link href={`/login?next=${encodeURIComponent(`/checkout?${searchParams.toString()}`)}`} className="flex min-h-12 w-full items-center justify-center border border-black bg-white px-6 font-[family-name:var(--font-family-button)] text-[11px] font-semibold uppercase tracking-[0.1em] text-black no-underline transition hover:bg-black hover:text-white">Sign In</Link>
-          </div>
-        </div>
-      </section>
-    )
-  }
-
   if (cartMode && cartItems.length > 0 && resolvedCartItems.length === 0) {
     return (
       <section className="min-h-[calc(100vh-111px)] bg-white px-4 py-8 sm:px-6 lg:px-10">
@@ -1193,7 +1175,7 @@ export default function CheckoutPageClient() {
   }
 
   return (
-    <section className="min-h-[calc(100vh-111px)] bg-white px-4 py-8 sm:px-6 lg:px-10">
+    <section className="min-h-[calc(100vh-111px)] bg-white px-4 py-8 sm:px-6 lg:px-0">
       {paymentUiStage === 'confirming' ? (
         <div className="fixed inset-0 z-[140] flex items-center justify-center bg-[rgba(247,248,250,0.82)] px-4 backdrop-blur-sm">
           <div className="w-full max-w-[420px] rounded-[28px] border border-[#e7ebf0] bg-white px-6 py-8 text-center shadow-[0_24px_80px_rgba(15,23,42,0.12)] sm:px-8">
@@ -1207,14 +1189,14 @@ export default function CheckoutPageClient() {
           </div>
         </div>
       ) : null}
-      <div className="mx-auto max-w-[1240px]">
+      <div className="mx-auto max-w-[1520px] lg:px-20 xl:px-24">
         <div className="mb-6">
           <div className="text-[11px] font-medium uppercase tracking-[0.24em] text-[#98a2b3]">Checkout</div>
           <div className="flex items-end justify-between gap-5"><h1 className="font-[family-name:var(--font-family-primary)] text-[28px] font-semibold uppercase text-black">Checkout</h1><div className="font-[family-name:var(--font-family-secondary)] text-[12px] text-black/45"><span className={currentStep === 0 ? 'font-semibold text-black' : ''}>Shipping</span><span className="px-2">›</span><span className={currentStep === 1 ? 'font-semibold text-black' : ''}>Payment</span></div></div>
           <p className="mt-2 text-sm text-[#667085]">{cartMode ? 'Checkout synced to the products currently saved in your cart.' : 'Checkout preview for your selected product.'}</p>
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_390px] lg:gap-10">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(350px,420px)] lg:gap-14">
           <div className="space-y-5">
             {errorMessage ? (
               <div className="rounded-[24px] border border-[rgba(220,38,38,0.18)] bg-[rgba(254,242,242,0.9)] px-5 py-4 text-sm text-red-700">
@@ -1247,6 +1229,16 @@ export default function CheckoutPageClient() {
               </div>
             ) : null}
 
+            {guestCheckout ? (
+              <div className="border border-black/15 bg-white px-5 py-5 sm:px-7">
+                <div className="font-[family-name:var(--font-family-primary)] text-[18px] font-medium uppercase text-black">Express checkout</div>
+                <p className="mt-2 font-[family-name:var(--font-family-secondary)] text-[12px] leading-5 text-black/55">Continue as a guest or sign in to use your saved details.</p>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <Link href={`/login?next=${encodeURIComponent(`/checkout?${searchParams.toString()}`)}`} className="flex min-h-11 items-center justify-center border border-black bg-white px-5 font-[family-name:var(--font-family-button)] text-[11px] font-semibold uppercase tracking-[0.1em] text-black transition hover:bg-black hover:text-white">Sign in</Link>
+                  <div className="flex min-h-11 items-center justify-center border border-black bg-black px-5 font-[family-name:var(--font-family-button)] text-[11px] font-semibold uppercase tracking-[0.1em] text-white">Guest checkout</div>
+                </div>
+              </div>
+            ) : null}
             <div className="animate-[fadeUp_0.35s_ease]">
               {currentStep === 0 ? <CheckoutInformationStep form={customerForm} onChange={updateCustomerForm} errors={fieldErrors} postalLookup={postalLookup} onPostalBlur={handlePostalCodeBlur} postalAreaOptions={postalAreaOptions} onPostalAreaSelect={handlePostalAreaSelect} isGuest={guestCheckout} /> : null}
               {currentStep === 1 ? <CheckoutConfirmationStep form={customerForm} itemCount={checkoutItems.reduce((sum, item) => sum + item.quantity, 0)} onEdit={() => setCurrentStep(0)} onPay={handlePayNow} processing={processingPayment} disabled={quoteStatus !== 'ready' || unavailableCartItemCount > 0} message={unavailableCartItemCount > 0 ? 'Resolve unavailable cart items before payment.' : quoteStatus === 'loading' ? 'Confirming the latest price and availability...' : quoteStatus === 'error' ? quoteError : undefined} /> : null}

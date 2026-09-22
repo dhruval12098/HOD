@@ -308,7 +308,7 @@ export default function Footer({ navItems = [] }: { navItems?: NavbarRenderItem[
             </div>
           </div>
       </div>
-      <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-[var(--space-10)] gap-y-[var(--space-6)] border-t border-white/25 py-[var(--space-6)] text-[11px] text-white/60">
+      <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-[var(--space-10)] gap-y-[var(--space-6)] py-[var(--space-6)] text-[11px] text-white/60">
         <div className="flex min-w-0 flex-col">
           <Link
             href="/"
@@ -321,7 +321,7 @@ export default function Footer({ navItems = [] }: { navItems?: NavbarRenderItem[
         </div>
         <div className="ml-auto flex flex-wrap items-center gap-x-[var(--space-8)] gap-y-[var(--space-4)]">
           <CurrencySelector />
-          <div className="flex flex-wrap items-center gap-6" aria-label="Accepted payment methods">
+          <div className="flex flex-wrap items-center gap-6 pr-20 lg:pr-28" aria-label="Accepted payment methods">
             {PAYMENT_METHODS.map((method) => (
               <span key={method.name} className="flex items-center justify-center">
                 <img src={method.src} alt={method.name} className="h-11 w-11 object-contain" loading="lazy" />

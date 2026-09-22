@@ -67,19 +67,21 @@ export default function FloatingWidgets() {
           opacity: showBackTop ? 1 : 0,
           visibility: showBackTop ? 'visible' : 'hidden',
           transition: 'all 0.4s',
-          background: 'var(--ink)',
-          color: 'var(--bg)',
-          border: '1px solid var(--ink)',
+          background: '#FFFFFF',
+          color: '#000000',
+          border: '1px solid rgba(0,0,0,0.18)',
         }}
         onMouseEnter={(e) => {
           const el = e.currentTarget;
-          el.style.background = 'var(--theme-ink)';
-          el.style.borderColor = 'var(--theme-ink)';
+          el.style.background = '#FFFFFF';
+          el.style.color = '#000000';
+          el.style.borderColor = '#000000';
         }}
         onMouseLeave={(e) => {
           const el = e.currentTarget;
-          el.style.background = 'var(--ink)';
-          el.style.borderColor = 'var(--ink)';
+          el.style.background = '#FFFFFF';
+          el.style.color = '#000000';
+          el.style.borderColor = 'rgba(0,0,0,0.18)';
         }}
       >
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">

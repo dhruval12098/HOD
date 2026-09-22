@@ -46,7 +46,7 @@ export default function CategoryQuickFilters({ metalOptions, shapeOptions, selec
     <div className="category-quick-filters" ref={rootRef}>
       <style>{`
         .category-quick-filters { position: relative; display: flex; gap: 10px; z-index: 30; }
-        .category-filter-trigger { min-width: 138px; height: 52px; padding: 0 20px; border: 1px solid rgba(10,22,40,.14); border-radius: 0; background: #fff; color: #0A1628; display:flex; align-items:center; justify-content:space-between; gap:18px; font-family:var(--font-family-montserrat); font-size:12px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; cursor:pointer; }
+        .category-filter-trigger { min-width: 138px; height: 42px; padding: 0 20px; border: 1px solid rgba(10,22,40,.14); border-radius: 0; background: #fff; color: #0A1628; display:flex; align-items:center; justify-content:space-between; gap:18px; font-family:var(--font-family-montserrat); font-size:12px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; cursor:pointer; }
         .category-filter-trigger:focus-visible { outline: 2px solid #0A1628; outline-offset: 2px; }
         .category-filter-panel { position:absolute; left:0; top:62px; width:min(420px, calc(100vw - 20px)); max-height:min(520px, 70vh); overflow:auto; padding:28px; border:1px solid rgba(10,22,40,.07); border-radius:0; background:#fff; box-shadow:0 22px 60px rgba(10,22,40,.16); }
         .category-filter-panel h3 { margin:0 0 22px; color:#0A1628; font-family:var(--font-family-montserrat); font-size:20px; font-weight:600; }
@@ -58,7 +58,7 @@ export default function CategoryQuickFilters({ metalOptions, shapeOptions, selec
         .category-filter-option-label { font-family:var(--font-family-montserrat); font-size:12px; font-weight:600; line-height:1.15; text-align:center; }
         @media(max-width:768px){
           .category-quick-filters { width:100%; gap:8px; }
-          .category-filter-trigger { flex:1; min-width:0; height:44px; padding:0 14px; font-size:11px; }
+          .category-filter-trigger { flex:1; min-width:0; height:38px; padding:0 14px; font-size:11px; }
           .category-filter-panel { top:54px; padding:20px; border-radius:0; }
           .category-filter-panel h3 { font-size:20px; margin-bottom:16px; }
           .category-filter-options { gap:9px; }

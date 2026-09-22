@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { type MouseEvent, type ReactNode, useEffect, useMemo, useState } from 'react'
 import {
@@ -83,7 +83,7 @@ function GhostButton({
   return (
     <button
       {...props}
-      className={`inline-flex items-center justify-center rounded-full border border-[rgba(10,22,40,0.12)] bg-white px-5 py-3 text-[10px] font-medium uppercase tracking-[0.26em] text-[#5F6C7B] transition hover:border-[#0A1628] hover:text-[#0A1628] ${className}`}
+      className={`inline-flex items-center justify-center rounded-none border border-[var(--theme-border)] bg-white px-5 py-3 text-[10px] font-medium uppercase tracking-[0.26em] text-[#5F6C7B] transition hover:border-[#0A1628] hover:text-[#0A1628] ${className}`}
     >
       {children}
     </button>
@@ -98,7 +98,7 @@ function PrimaryButton({
   return (
     <button
       {...props}
-      className={`inline-flex items-center justify-center rounded-full bg-[#0A1628] px-5 py-3 text-[10px] font-medium uppercase tracking-[0.26em] text-white transition hover:bg-[#15253A] disabled:cursor-not-allowed disabled:opacity-40 ${className}`}
+      className={`inline-flex items-center justify-center rounded-none bg-black px-5 py-3 text-[10px] font-medium uppercase tracking-[0.26em] text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-40 ${className}`}
     >
       {children}
     </button>
@@ -171,7 +171,7 @@ export default function LoveLetterModal({ onClose, onContinue }: LoveLetterModal
       className="fixed inset-0 z-[1400] flex items-start justify-center overflow-y-auto overscroll-none bg-[rgba(10,22,40,0.58)] px-2 py-2 sm:items-center sm:px-4 sm:py-6"
       onClick={closeIfBackdrop}
     >
-      <div className="relative my-auto max-h-[calc(100dvh-16px)] w-full max-w-[780px] touch-pan-y overflow-y-auto overscroll-contain rounded-[24px] border border-[rgba(10,22,40,0.12)] bg-[linear-gradient(180deg,#FFFFFF_0%,#F3F5F8_100%)] shadow-[0_24px_64px_rgba(10,22,40,0.16)] sm:max-h-[90vh] sm:rounded-[26px]">
+      <div className="relative my-auto max-h-[calc(100dvh-16px)] w-full max-w-[780px] touch-pan-y overflow-y-auto overscroll-contain rounded-none border border-[var(--theme-border)] bg-white shadow-[0_24px_64px_rgba(10,22,40,0.16)] sm:max-h-[90vh] sm:rounded-none">
         <button
           type="button"
           onClick={onClose}
@@ -242,7 +242,7 @@ export default function LoveLetterModal({ onClose, onContinue }: LoveLetterModal
 
                     continueWithoutLetter()
                   }}
-                  className="w-full rounded-[18px] border border-[rgba(10,22,40,0.1)] bg-[rgba(255,255,255,0.82)] px-4 py-4 text-left transition hover:border-[rgba(166,124,34,0.34)] hover:bg-white sm:rounded-[20px] sm:px-4 sm:py-5"
+                  className="w-full rounded-none border border-[rgba(10,22,40,0.1)] bg-[rgba(255,255,255,0.82)] px-4 py-4 text-left transition hover:border-[rgba(166,124,34,0.34)] hover:bg-white sm:rounded-none sm:px-4 sm:py-5"
                 >
                   <div className="text-[10px] font-medium uppercase tracking-[0.24em] text-[#A67C22]">
                     Option
@@ -274,7 +274,7 @@ export default function LoveLetterModal({ onClose, onContinue }: LoveLetterModal
                 setDraft((current) => ({ ...current, recipientName: event.target.value }))
               }
               placeholder="Her name"
-              className="mt-7 w-full rounded-[18px] border border-[rgba(10,22,40,0.1)] bg-white px-5 py-3.5 text-center font-serif text-[22px] text-[#0A1628] outline-none placeholder:text-[#BFC3CA] sm:text-[24px]"
+              className="mt-7 w-full rounded-none border border-[rgba(10,22,40,0.1)] bg-white px-5 py-3.5 text-center font-serif text-[22px] text-[#0A1628] outline-none placeholder:text-[#BFC3CA] sm:text-[24px]"
             />
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-between">
               <GhostButton type="button" onClick={() => setStep('choice')} className="w-full sm:w-auto">
@@ -308,7 +308,7 @@ export default function LoveLetterModal({ onClose, onContinue }: LoveLetterModal
               }
               placeholder="She is the person who..."
               maxLength={300}
-              className="mt-7 min-h-[150px] w-full rounded-[18px] border border-[rgba(10,22,40,0.1)] bg-white px-4 py-4 font-serif text-[17px] leading-7 text-[#0A1628] outline-none placeholder:text-[#BFC3CA]"
+              className="mt-7 min-h-[150px] w-full rounded-none border border-[rgba(10,22,40,0.1)] bg-white px-4 py-4 font-serif text-[17px] leading-7 text-[#0A1628] outline-none placeholder:text-[#BFC3CA]"
             />
             <div className="mt-3 text-right text-[10px] uppercase tracking-[0.12em] text-[#8A92A0]">
               {(draft.aboutHerText || '').length} / 300
@@ -349,8 +349,8 @@ export default function LoveLetterModal({ onClose, onContinue }: LoveLetterModal
                 }
                 options={occasionOptions}
                 placeholder="Select an occasion"
-                triggerClassName="rounded-[18px] border-[rgba(10,22,40,0.1)] bg-white px-4 py-3 text-[13px] text-[#0A1628] shadow-none focus:shadow-[0_12px_28px_rgba(10,22,40,0.08)]"
-                contentClassName="rounded-[18px]"
+                triggerClassName="rounded-none border-[rgba(10,22,40,0.1)] bg-white px-4 py-3 text-[13px] text-[#0A1628] shadow-none focus:shadow-[0_12px_28px_rgba(10,22,40,0.08)]"
+                contentClassName="rounded-none"
                 validationLabel="Occasion"
                 contentSide="bottom"
                 avoidCollisions={false}
@@ -388,7 +388,7 @@ export default function LoveLetterModal({ onClose, onContinue }: LoveLetterModal
                   setDraft((current) => ({ ...current, recipientName: event.target.value }))
                 }
                 placeholder="Her name"
-                className="rounded-[18px] border border-[rgba(10,22,40,0.1)] bg-white px-4 py-3 text-[14px] text-[#0A1628] outline-none placeholder:text-[#BFC3CA]"
+                className="rounded-none border border-[rgba(10,22,40,0.1)] bg-white px-4 py-3 text-[14px] text-[#0A1628] outline-none placeholder:text-[#BFC3CA]"
               />
               <input
                 value={draft.senderName || ''}
@@ -396,7 +396,7 @@ export default function LoveLetterModal({ onClose, onContinue }: LoveLetterModal
                   setDraft((current) => ({ ...current, senderName: event.target.value }))
                 }
                 placeholder="Your name"
-                className="rounded-[18px] border border-[rgba(10,22,40,0.1)] bg-white px-4 py-3 text-[14px] text-[#0A1628] outline-none placeholder:text-[#BFC3CA]"
+                className="rounded-none border border-[rgba(10,22,40,0.1)] bg-white px-4 py-3 text-[14px] text-[#0A1628] outline-none placeholder:text-[#BFC3CA]"
               />
             </div>
             <textarea
@@ -406,7 +406,7 @@ export default function LoveLetterModal({ onClose, onContinue }: LoveLetterModal
               }
               placeholder="Write your letter here..."
               maxLength={800}
-              className="mt-4 min-h-[200px] w-full rounded-[18px] border border-[rgba(10,22,40,0.1)] bg-white px-4 py-4 font-serif text-[17px] leading-7 text-[#0A1628] outline-none placeholder:text-[#BFC3CA]"
+              className="mt-4 min-h-[200px] w-full rounded-none border border-[rgba(10,22,40,0.1)] bg-white px-4 py-4 font-serif text-[17px] leading-7 text-[#0A1628] outline-none placeholder:text-[#BFC3CA]"
             />
             <div className="mt-3 text-right text-[10px] uppercase tracking-[0.12em] text-[#8A92A0]">
               {(draft.customLetterText || '').length} / 800
@@ -461,7 +461,7 @@ export default function LoveLetterModal({ onClose, onContinue }: LoveLetterModal
                       setDraft((current) => ({ ...current, senderName: event.target.value }))
                     }
                     placeholder="Your name"
-                    className="mt-2 w-full rounded-[16px] border border-[rgba(10,22,40,0.1)] bg-white px-4 py-3 text-[13px] text-[#0A1628] outline-none placeholder:text-[#BFC3CA]"
+                    className="mt-2 w-full rounded-none border border-[rgba(10,22,40,0.1)] bg-white px-4 py-3 text-[13px] text-[#0A1628] outline-none placeholder:text-[#BFC3CA]"
                   />
                 </div>
 
@@ -510,7 +510,7 @@ export default function LoveLetterModal({ onClose, onContinue }: LoveLetterModal
 
             <div className="px-4 pb-8 pt-7 sm:px-6 sm:py-8">
               <div
-                className="mx-auto max-w-[410px] rounded-[22px] border border-[rgba(10,22,40,0.1)] bg-[linear-gradient(180deg,#FFFFFF_0%,#F5F7FA_100%)] px-5 py-6 shadow-[0_14px_34px_rgba(10,22,40,0.08)] sm:px-6 sm:py-7"
+                className="mx-auto max-w-[410px] rounded-none border border-[rgba(10,22,40,0.1)] bg-white px-5 py-6 shadow-[0_14px_34px_rgba(10,22,40,0.08)] sm:px-6 sm:py-7"
                 style={{ fontFamily: 'Manrope, var(--font-geist-sans), sans-serif' }}
               >
                 <div className="text-[11px] italic tracking-[0.08em] text-[#8A92A0]">

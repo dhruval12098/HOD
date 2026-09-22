@@ -1,40 +1,17 @@
 'use client'
 
-import Image from 'next/image'
-import Link from 'next/link'
 import { useMemo, useState } from 'react'
-import { ChevronDown } from 'lucide-react'
-import type { BlogPageHero as BlogPageHeroData } from '@/lib/blog'
-import { getStorageImageUrl, posts, type BlogPost } from '@/lib/data/blog-posts'
+import { Select } from '@/components/ui/select'
+import type { BlogFilterCategory, BlogPageHero as BlogPageHeroData } from '@/lib/blog'
+import { posts, type BlogPost } from '@/lib/data/blog-posts'
+import BlogListCard from '@/components/blog/BlogListCard'
 import { BlogPageHero } from '@/components/blog/BlogPageHero'
 
-function BlogCard({ post }: { post: BlogPost }) {
-  const imageUrl = getStorageImageUrl(post.cardImagePath || post.heroImagePath)
-  return (
-    <article className="min-w-0 bg-white">
-      <Link href={post.slug ? `/blog/${post.slug}` : '/blog'} className="group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111] focus-visible:ring-offset-4">
-        <div className="relative aspect-[4/5] overflow-hidden bg-[#f1f1ef]">
-          {imageUrl ? <Image src={imageUrl} alt={post.heroImageAlt || post.titleRaw} fill sizes="(max-width: 639px) 92vw, (max-width: 1023px) 46vw, 30vw" className="object-cover" /> : null}
-        </div>
-        <div className="pt-4">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 font-secondary text-[10px] font-semibold uppercase text-[#6a6a6a]">
-            <span>{post.catalogCategory?.name || post.category}</span>
-            {post.date ? <><span aria-hidden="true">·</span><time>{post.date}</time></> : null}
-          </div>
-          <h2 className="mt-2 font-secondary text-[15px] font-semibold leading-[1.35] text-[#111] sm:text-[16px]">{post.cardTitle || post.titleRaw}</h2>
-          {post.subtitle ? <p className="mt-2 line-clamp-2 font-secondary text-[12px] leading-5 text-[#666]">{post.subtitle}</p> : null}
-          <span className="mt-3 inline-flex border-b border-[#111] pb-0.5 font-secondary text-[10px] font-semibold uppercase text-[#111]">Read article</span>
-        </div>
-      </Link>
-    </article>
-  )
-}
-
-export default function BlogClient({ blogPosts = posts, hero }: { blogPosts?: BlogPost[]; hero?: BlogPageHeroData | null }) {
+export default function BlogClient({ blogPosts = posts, hero, categories: liveCategories = [] }: { blogPosts?: BlogPost[]; hero?: BlogPageHeroData | null; categories?: BlogFilterCategory[] }) {
   const safePosts = blogPosts.length ? blogPosts : posts
   const [category, setCategory] = useState('all')
   const [sort, setSort] = useState('featured')
-  const categories = useMemo(() => Array.from(new Map(safePosts.filter((post) => post.catalogCategory).map((post) => [post.catalogCategory!.slug, post.catalogCategory!])).values()), [safePosts])
+  const categories = useMemo(() => liveCategories.length ? liveCategories : Array.from(new Map(safePosts.filter((post) => post.catalogCategory).map((post) => [post.catalogCategory!.slug, post.catalogCategory!])).values()), [liveCategories, safePosts])
   const visiblePosts = useMemo(() => {
     const filtered = category === 'all' ? safePosts : safePosts.filter((post) => post.catalogCategory?.slug === category)
     return [...filtered].sort((a, b) => {
@@ -50,29 +27,39 @@ export default function BlogClient({ blogPosts = posts, hero }: { blogPosts?: Bl
         {hero ? <BlogPageHero hero={hero} /> : <div className="border-b border-[#d9d9d9] py-14"><h1 className="font-primary-display text-[clamp(34px,5vw,58px)] font-medium">Journal</h1></div>}
 
         <section className="mt-14 sm:mt-16" aria-label="Blog articles">
-          <div className="flex flex-col gap-3 border-y border-[#d8d8d8] py-4 sm:flex-row sm:items-center sm:justify-between">
-            <label className="relative block sm:min-w-[230px]">
-              <span className="sr-only">Filter by category</span>
-              <select value={category} onChange={(event) => setCategory(event.target.value)} className="h-11 w-full appearance-none border border-[#d7d7d7] bg-white px-4 pr-10 font-secondary text-[11px] font-semibold uppercase outline-none focus:border-[#111]">
-                <option value="all">Filter by Category: All</option>
-                {categories.map((item) => <option key={item.id} value={item.slug}>{item.name}</option>)}
-              </select>
-              <ChevronDown aria-hidden="true" size={14} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2" />
-            </label>
-            <label className="relative block sm:min-w-[190px]">
-              <span className="sr-only">Sort articles</span>
-              <select value={sort} onChange={(event) => setSort(event.target.value)} className="h-11 w-full appearance-none border border-[#d7d7d7] bg-white px-4 pr-10 font-secondary text-[11px] font-semibold uppercase outline-none focus:border-[#111]">
-                <option value="featured">Sort by: Featured</option>
-                <option value="newest">Sort by: Newest</option>
-                <option value="title">Sort by: Title A-Z</option>
-              </select>
-              <ChevronDown aria-hidden="true" size={14} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2" />
-            </label>
+          <div className="sticky top-[calc(var(--hod-announcement-current-height,35px)+38px)] z-30 flex flex-col gap-3 border-y border-[#d8d8d8] bg-white/95 py-4 backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">
+            <div className="w-full sm:min-w-[230px] sm:max-w-[280px]">
+              <Select
+                value={category}
+                onValueChange={setCategory}
+                options={[{ value: 'all', label: 'All Categories' }, ...categories.map((item) => ({ value: item.slug, label: item.name }))]}
+                validationLabel="Filter articles by category"
+                triggerLabel="Filter By"
+                showItemIndicator={false}
+                triggerClassName="!h-[42px] !rounded-none !border-black/15 !bg-white !px-4 !py-0 !font-[family-name:var(--font-family-montserrat)] !text-[11px] !font-semibold !uppercase !tracking-[0.08em] !text-[#0A1628] !shadow-none [&>span:last-child]:!h-auto [&>span:last-child]:!w-auto [&>span:last-child]:!rounded-none [&>span:last-child]:!border-0 [&>span:last-child]:!bg-transparent [&>span:last-child]:!text-[#0A1628]"
+                contentClassName="!min-w-[238px] !rounded-none !border-black/10 !bg-white !shadow-[0_10px_26px_rgba(0,0,0,0.16)]"
+                itemClassName="!rounded-none !bg-white !px-5 !py-3 !font-[family-name:var(--font-family-montserrat)] !text-[12px] !font-semibold !uppercase !tracking-[0.03em] !text-[#111] focus:!bg-[#F5F5F5] data-[state=checked]:!bg-[#F5F5F5] data-[state=checked]:!text-[#111]"
+              />
+            </div>
+            <div className="w-full sm:min-w-[190px] sm:max-w-[230px]">
+              <Select
+                value={sort}
+                onValueChange={setSort}
+                options={[{ value: 'featured', label: 'Featured' }, { value: 'newest', label: 'Newest' }, { value: 'title', label: 'Title A-Z' }]}
+                validationLabel="Sort articles"
+                triggerLabel="Sort By"
+                showItemIndicator={false}
+                contentAlign="end"
+                triggerClassName="!h-[42px] !rounded-none !border-black/15 !bg-white !px-4 !py-0 !font-[family-name:var(--font-family-montserrat)] !text-[11px] !font-semibold !uppercase !tracking-[0.08em] !text-[#0A1628] !shadow-none [&>span:last-child]:!h-auto [&>span:last-child]:!w-auto [&>span:last-child]:!rounded-none [&>span:last-child]:!border-0 [&>span:last-child]:!bg-transparent [&>span:last-child]:!text-[#0A1628]"
+                contentClassName="!min-w-[238px] !rounded-none !border-black/10 !bg-white !shadow-[0_10px_26px_rgba(0,0,0,0.16)]"
+                itemClassName="!rounded-none !bg-white !px-5 !py-3 !font-[family-name:var(--font-family-montserrat)] !text-[12px] !font-semibold !uppercase !tracking-[0.03em] !text-[#111] focus:!bg-[#F5F5F5] data-[state=checked]:!bg-[#F5F5F5] data-[state=checked]:!text-[#111]"
+              />
+            </div>
           </div>
 
           {visiblePosts.length ? (
             <div className="mt-7 grid grid-cols-1 gap-x-5 gap-y-12 sm:grid-cols-2 lg:grid-cols-3 lg:gap-x-7 lg:gap-y-14">
-              {visiblePosts.map((post) => <BlogCard key={post.id} post={post} />)}
+              {visiblePosts.map((post) => <BlogListCard key={post.id} post={post} />)}
             </div>
           ) : <p className="py-20 text-center font-secondary text-sm text-[#666]">No articles are available in this category yet.</p>}
         </section>

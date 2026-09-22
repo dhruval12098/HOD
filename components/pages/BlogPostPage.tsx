@@ -20,7 +20,7 @@ export default function BlogPostPage({
   const router = useRouter()
 
   return (
-    <div className="min-h-screen bg-[var(--theme-base)] font-[var(--font-manrope)] text-[#0A1628]">
+    <div className="min-h-screen bg-white font-[family-name:var(--font-family-inter)] text-black">
       <BlogPostBack onBack={() => router.push('/blog')} />
       <BlogPostHero post={post} />
 
@@ -35,6 +35,7 @@ export default function BlogPostPage({
           subtitle={post.subtitle}
           body={post.body}
           contentBlocks={post.contentBlocks}
+          featuredProducts={post.featuredProducts ?? []}
         />
         <BlogPostTags tags={post.tags} />
       </section>

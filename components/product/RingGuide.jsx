@@ -1,7 +1,8 @@
-'use client';
+﻿'use client';
 
 import { useMemo, useState } from 'react';
 import { ArrowRight, Ruler, X } from 'lucide-react';
+import SizeChartDrawer from './SizeChartDrawer';
 
 const GUIDE_TABS = [
   { id: 'metal', label: 'Metal' },
@@ -382,6 +383,7 @@ export default function RingGuide() {
   const [styleAnswers, setStyleAnswers] = useState({ look: '', focus: '', feel: '' });
   const [sizeMethod, setSizeMethod] = useState('');
   const [sizeValue, setSizeValue] = useState('');
+  const [sizeChartOpen, setSizeChartOpen] = useState(false);
 
   const metalResult = useMemo(() => (
     metalAnswers.wardrobe && metalAnswers.life && metalAnswers.skin ? METALS[scoreMetal(metalAnswers)] : null
@@ -546,7 +548,7 @@ export default function RingGuide() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setSizeStep(1)}
+                  onClick={() => setSizeChartOpen(true)}
                   className="brand-button"
                   
                 >
@@ -594,7 +596,7 @@ export default function RingGuide() {
                   <div className="flex gap-2">
                     <button
                       type="button"
-                      onClick={() => setSizeStep(1)}
+                      onClick={() => setSizeChartOpen(true)}
                       className="rounded-none border border-[rgba(0,0,0,0.12)] px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--theme-muted,#6a6a6a)] transition hover:border-[var(--color-brand-primary,#000000)] hover:text-[var(--color-brand-primary,#000000)]"
                       
                     >

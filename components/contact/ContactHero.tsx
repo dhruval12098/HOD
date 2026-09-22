@@ -68,37 +68,37 @@ export default function ContactHero() {
 
   return (
     <section
-      className="pt-[100px] pb-[60px] px-[52px] text-center max-lg:px-7 max-md:px-5 max-md:pt-[60px] max-md:pb-10"
-      style={{ background: 'linear-gradient(180deg, #FAFBFD 0%, #F5F7FC 100%)' }}
+      className="border-b border-black/10 bg-white px-[52px] pb-16 pt-24 text-center max-lg:px-7 max-md:px-5 max-md:pb-12 max-md:pt-16"
+      
     >
       <RevealDiv className="flex justify-center mb-5">
-        <div className="text-[9px] tracking-[0.3em] uppercase text-[#6A6A6A]">
-          <Link href="/" className="text-[#6A6A6A] no-underline hover:text-[#0A1628] transition-colors duration-300">
+        <div className="text-[9px] tracking-[0.3em] uppercase text-black/60">
+          <Link href="/" className="text-black/60 no-underline hover:text-[var(--theme-ink)] transition-colors duration-300">
             Home
           </Link>
-          <span className="mx-2.5 text-[#7F8898]">/</span>
-          <span className="text-[#0A1628]">Contact</span>
+          <span className="mx-2.5 text-black/35">/</span>
+          <span className="text-[var(--theme-ink)]">Contact</span>
         </div>
       </RevealDiv>
 
       <RevealDiv delay={50} className="flex justify-center">
-        <div className="text-[10px] font-normal tracking-[0.32em] text-[#0A1628] uppercase mb-[18px] inline-flex items-center gap-3 before:content-[''] before:w-6 before:h-px before:bg-[#0A1628]">
+        <div className="text-[10px] font-normal tracking-[0.32em] text-[var(--theme-ink)] uppercase mb-[18px] inline-flex items-center gap-3 before:content-[''] before:w-6 before:h-px before:bg-[#0A1628]">
           {content?.eyebrow || 'Get In Touch'}
         </div>
       </RevealDiv>
 
       <RevealDiv delay={100}>
         <h1
-          className={`${cinzelFont.variable} font-primary-display font-light leading-[1] tracking-[-0.01em] text-[#0A1628] mt-6 mb-7 mx-auto max-w-[900px]`}
-          style={{ fontSize: 'clamp(56px, 7vw, 108px)' }}
+          className={`${cinzelFont.variable} font-primary-display font-light leading-[1] tracking-[-0.01em] text-[var(--theme-ink)] mt-6 mb-7 mx-auto max-w-[900px]`}
+          style={{ fontSize: 'clamp(42px, 6vw, 82px)' }}
         >
           {headingLead}{' '}
-          <em className="not-italic text-[#0A1628] font-normal">{headingAccent}</em>.
+          <em className="not-italic text-[var(--theme-ink)] font-normal">{headingAccent}</em>.
         </h1>
       </RevealDiv>
 
       <RevealDiv delay={200}>
-        <p className="text-[13px] font-light leading-[2] text-[#6A6A6A] tracking-[0.06em] max-w-[640px] mx-auto">
+        <p className="text-[13px] font-light leading-[2] text-black/60 tracking-[0.06em] max-w-[640px] mx-auto">
           {content?.subtitle || 'Questions about a piece, a custom order, or B2B wholesale? Reach out - we reply within 24 hours.'}
         </p>
       </RevealDiv>

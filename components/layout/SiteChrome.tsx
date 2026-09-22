@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import NextTopLoader from 'nextjs-toploader';
 import Navbar from '@/components/common/Navbar';
 import CartDrawer from '@/components/commerce/CartDrawer';
+import ContactDrawer from '@/components/contact/ContactDrawer';
 import ViewportDeferred from '@/components/home/ViewportDeferred';
 import type { NavbarRenderItem } from '@/lib/navbar';
 
@@ -23,7 +24,7 @@ export default function SiteChrome({ children, initialNavItems }: { children: Re
   const navItems = initialNavItems;
   const [showNonCriticalChrome, setShowNonCriticalChrome] = useState(false);
   const isMinimalChromeRoute = pathname
-    ? AUTH_ROUTES.has(pathname) || pathname.startsWith('/checkout')
+    ? AUTH_ROUTES.has(pathname) || pathname === '/checkout'
     : false;
 
 
@@ -62,6 +63,7 @@ export default function SiteChrome({ children, initialNavItems }: { children: Re
             <Navbar navItems={navItems} />
           </div>
           <CartDrawer />
+          <ContactDrawer />
           <main className="flex-1" style={{ paddingTop: 'var(--hod-site-header-height, 118px)' }}>{children}</main>
           <div id="site-footer-shell">
             <ViewportDeferred minHeight={520}>
@@ -70,7 +72,7 @@ export default function SiteChrome({ children, initialNavItems }: { children: Re
               <Footer navItems={navItems} />
             </ViewportDeferred>
           </div>
-          {showNonCriticalChrome ? <PromotionPopup /> : null}
+          <PromotionPopup />
           {showNonCriticalChrome ? (
             <div>
               <FloatingWidgets />

@@ -230,7 +230,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
           disabled={submitting}
           className="font-primary-display text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--theme-muted)] transition hover:text-[var(--theme-ink)] disabled:cursor-not-allowed disabled:opacity-70"
         >
-          {isSignup ? 'Sign Up With Google' : 'Sign In With Google'}
+          <span className="inline-flex items-center gap-2"><img src="/produc page svgs/google.svg" alt="" className="h-4 w-4" />{isSignup ? 'Sign Up With Google' : 'Sign In With Google'}</span>
         </button>
       </div>
 

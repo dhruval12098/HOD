@@ -17,8 +17,8 @@ export default function ShopToolbar({ count, sort, onSortChange, quickFilters })
           display: grid;
           grid-template-columns: minmax(0, 1fr) auto auto;
           align-items: center;
-          gap: 20px;
-          margin-bottom: 32px;
+          gap: 4px;
+          margin-bottom: 4px;
         }
         .shop-toolbar-count {
           font-family: var(--font-family-montserrat);
@@ -30,8 +30,8 @@ export default function ShopToolbar({ count, sort, onSortChange, quickFilters })
         @media (max-width: 768px) {
           .shop-toolbar {
             grid-template-columns: minmax(0, 1fr) auto;
-            gap: 10px;
-            margin-bottom: 18px;
+            gap: 4px;
+            margin-bottom: 4px;
           }
           .shop-toolbar-count {
             grid-column: 1 / -1;

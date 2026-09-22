@@ -44,14 +44,14 @@ export default function FoundersSection({ initialItems = [] }) {
   const goToNext = () => setActiveIndex((current) => (current + 1) % items.length);
 
   return (
-    <section style={{ padding: "110px 52px", maxWidth: "1400px", margin: "0 auto" }} className="founders-section">
+    <section style={{ padding: "130px 52px", maxWidth: "1600px", margin: "0 auto" }} className="founders-section">
       <style>{`
         @keyframes founderFade {
           from { opacity: 0; transform: translateX(24px); }
           to { opacity: 1; transform: translateX(0); }
         }
         @media (max-width: 1024px) {
-          .founders-section { padding: 70px 28px !important; }
+          .founders-section { padding: 80px 28px !important; }
           .founder-slide { grid-template-columns: 1fr !important; gap: 32px !important; }
         }
         @media (max-width: 640px) {
@@ -67,10 +67,22 @@ export default function FoundersSection({ initialItems = [] }) {
         <div className="relative">
           <div
             key={activeIndex}
-            className="founder-slide grid items-center gap-[56px]"
+            className="founder-slide grid min-h-[620px] items-center gap-[72px]"
             style={{ gridTemplateColumns: "minmax(0, 0.9fr) minmax(0, 1.1fr)", animation: "founderFade .6s ease both" }}
           >
-            <div className="relative aspect-square w-full overflow-hidden" style={{ background: "linear-gradient(135deg, #F5F7FC, #EAF0FA)" }}>
+            <div className="flex flex-col items-center text-center">
+              <h3 className={`${cinzelFont.variable} font-primary-display`} style={{ fontSize: "clamp(28px, 3vw, 40px)", fontWeight: 400, letterSpacing: ".02em", color: "#0A1628", lineHeight: 1.15, marginBottom: "6px" }}>
+                {active.name}
+              </h3>
+              <div style={{ fontSize: "10px", fontWeight: 400, letterSpacing: ".28em", color: "#0A1628", textTransform: "uppercase", marginBottom: "20px" }}>
+                {active.designation}
+              </div>
+              <p style={{ fontFamily: "var(--font-family-inter), Inter, Arial, sans-serif", fontSize: "13px", fontWeight: 300, lineHeight: 1.9, color: "#6A6A6A", letterSpacing: ".02em", maxWidth: "640px" }}>
+                {active.bio}
+              </p>
+            </div>
+
+            <div className="relative min-h-[620px] w-full overflow-hidden" style={{ background: "linear-gradient(135deg, #F5F7FC, #EAF0FA)" }}>
               {active.image_path ? (
                 <img src={buildImageUrl(active.image_path)} alt={active.name} className="absolute inset-0 h-full w-full object-cover" />
               ) : (
@@ -80,17 +92,7 @@ export default function FoundersSection({ initialItems = [] }) {
               )}
             </div>
 
-            <div>
-              <h3 className={`${cinzelFont.variable} font-primary-display`} style={{ fontSize: "clamp(28px, 3vw, 40px)", fontWeight: 400, letterSpacing: ".02em", color: "#0A1628", lineHeight: 1.15, marginBottom: "6px" }}>
-                {active.name}
-              </h3>
-              <div style={{ fontSize: "10px", fontWeight: 400, letterSpacing: ".28em", color: "#0A1628", textTransform: "uppercase", marginBottom: "20px" }}>
-                {active.designation}
-              </div>
-              <p style={{ fontSize: "13px", fontWeight: 300, lineHeight: 1.9, color: "#6A6A6A", letterSpacing: ".02em", maxWidth: "560px" }}>
-                {active.bio}
-              </p>
-            </div>
+
           </div>
 
           {items.length > 1 ? (

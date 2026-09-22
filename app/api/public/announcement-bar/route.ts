@@ -16,7 +16,9 @@ type AnnouncementItem = {
 
 type AnnouncementPayload = {
   active: boolean
-  item: AnnouncementItem | null
+  autoplay: boolean
+  intervalMs: number
+  items: AnnouncementItem[]
 }
 
 function getServerClient() {
@@ -36,7 +38,7 @@ export async function GET() {
 
   const { data: section, error: sectionError } = await supabase
     .from('support_announcement_bar')
-    .select('id, is_active')
+    .select('id, is_active, autoplay')
     .eq('section_key', SECTION_KEY)
     .maybeSingle()
 
@@ -45,18 +47,16 @@ export async function GET() {
   }
 
   if (!section) {
-    const payload: AnnouncementPayload = { active: false, item: null }
+    const payload: AnnouncementPayload = { active: false, autoplay: false, intervalMs: 3000, items: [] }
     return NextResponse.json(payload, { headers: { 'Cache-Control': 'no-store' } })
   }
 
-  const { data: item, error: itemError } = await supabase
+  const { data: items, error: itemError } = await supabase
     .from('support_announcement_bar_items')
     .select('message, link_url, open_in_new_tab')
     .eq('bar_id', section.id)
     .eq('is_active', true)
     .order('sort_order', { ascending: true })
-    .limit(1)
-    .maybeSingle()
 
   if (itemError) {
     return NextResponse.json({ error: itemError.message }, { status: 500 })
@@ -64,13 +64,13 @@ export async function GET() {
 
   const payload: AnnouncementPayload = {
     active: Boolean(section.is_active),
-    item: item
-      ? {
-          message: item.message,
-          linkUrl: item.link_url ?? '',
-          openInNewTab: Boolean(item.open_in_new_tab),
-        }
-      : null,
+    autoplay: Boolean(section.autoplay),
+    intervalMs: 3000,
+    items: (items ?? []).map((item) => ({
+      message: item.message,
+      linkUrl: item.link_url ?? '',
+      openInNewTab: Boolean(item.open_in_new_tab),
+    })),
   }
 
   return NextResponse.json(payload, { headers: { 'Cache-Control': 'no-store' } })

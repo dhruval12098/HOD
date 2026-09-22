@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { finalizePaidOrder, markOrderPaymentFailed } from '@/lib/checkout-order'
-import { getRazorpayClient, verifyRazorpayPaymentSignature } from '@/lib/razorpay'
+import { ensureRazorpayPaymentCaptured, verifyRazorpayPaymentSignature } from '@/lib/razorpay'
 import { enforceRateLimit } from '@/lib/rate-limit'
 import { REFUNDABLE_FINALIZATION_ERRORS, recoverCapturedPayment } from '@/lib/payment-recovery'
 import { getGuestCheckoutTokenHash } from '@/lib/guest-checkout'
@@ -81,23 +81,15 @@ export async function POST(request: Request) {
   }
 
   try {
-    const razorpay = getRazorpayClient()
-    const payment = await razorpay.payments.fetch(payload.razorpay_payment_id)
     const expectedAmountInSubunits = Math.round(Number(ownedOrder.payment_amount || 0) * 100)
     const expectedCurrency = String(ownedOrder.payment_currency || '').toUpperCase()
+    const payment = await ensureRazorpayPaymentCaptured({
+      paymentId: payload.razorpay_payment_id,
+      orderId: payload.razorpay_order_id,
+      amountInSubunits: expectedAmountInSubunits,
+      currency: expectedCurrency,
+    })
     const paymentCurrency = String(payment.currency || '').toUpperCase()
-
-    if (payment.order_id !== ownedOrder.razorpay_order_id || payment.order_id !== payload.razorpay_order_id) {
-      return NextResponse.json({ error: 'Payment does not match this order.' }, { status: 400 })
-    }
-
-    if (Number(payment.amount) !== expectedAmountInSubunits || paymentCurrency !== expectedCurrency) {
-      return NextResponse.json({ error: 'Payment amount or currency does not match this order.' }, { status: 400 })
-    }
-
-    if (payment.status !== 'captured') {
-      return NextResponse.json({ error: 'Payment has not been captured.' }, { status: 400 })
-    }
 
     const finalized = await finalizePaidOrder({
       adminClient,

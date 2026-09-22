@@ -72,7 +72,7 @@ function MetalDot({ type, colorHex }: { type: keyof typeof METAL_COLORS; colorHe
   );
 }
 
-function MegaSection({ section, onNavigate }: { section: NavbarRenderSection; onNavigate?: () => void }) {
+function MegaSection({ section, onNavigate, onPreview }: { section: NavbarRenderSection; onNavigate?: () => void; onPreview?: (imageUrl: string, imageAlt: string) => void }) {
   const entries = [
     ...(section.metals?.map((metal) => ({
       kind: 'metal' as const, key: `${metal.type}-${metal.label}`, label: metal.label,
@@ -88,7 +88,7 @@ function MegaSection({ section, onNavigate }: { section: NavbarRenderSection; on
   return (
     <div className="flex flex-col">
       <div
-        className="mb-[22px] border-0 pb-0 text-[19px] font-semibold leading-[1.2] tracking-[-0.01em] text-[#050505]"
+        className="mb-[18px] border-0 pb-0 text-[17px] font-semibold leading-[1.2] tracking-[-0.01em] text-[#050505]"
         style={{ fontFamily: 'var(--font-family-primary, Montserrat, sans-serif)' }}
       >
         <span>{section.title}</span>
@@ -99,7 +99,7 @@ function MegaSection({ section, onNavigate }: { section: NavbarRenderSection; on
           className="grid grid-flow-col gap-x-6 gap-y-1"
           style={{
             gridTemplateRows: `repeat(${rowCount}, minmax(0, auto))`,
-            gridAutoColumns: 'minmax(150px, max-content)',
+            gridAutoColumns: 'minmax(140px, max-content)',
           }}
         >
           {entries.map((entry) => (
@@ -107,7 +107,8 @@ function MegaSection({ section, onNavigate }: { section: NavbarRenderSection; on
               key={entry.key}
               href={entry.href}
               onClick={onNavigate}
-              className="block min-h-[34px] py-[5px] text-[16px] font-normal leading-[1.45] tracking-[-0.01em] text-[#050505] no-underline transition-colors duration-200 hover:text-[#8b6a3d]"
+              onMouseEnter={() => { if (entry.kind === 'link' && entry.iconUrl) onPreview?.(entry.iconUrl, entry.label) }}
+              className="block min-h-[31px] py-[4px] text-[14px] font-normal leading-[1.45] tracking-[-0.01em] text-[#050505] no-underline transition-colors duration-200 hover:text-[#8b6a3d]"
               style={{ fontFamily: 'Inter, var(--font-family-secondary, sans-serif)' }}
             >
               {entry.label}
@@ -117,6 +118,14 @@ function MegaSection({ section, onNavigate }: { section: NavbarRenderSection; on
       ) : null}
     </div>
   );
+}
+
+function getDefaultMegaPreview(item: NavbarRenderItem) {
+  for (const section of item.mega?.sections ?? []) {
+    const link = section.links?.find((entry) => entry.iconUrl)
+    if (link?.iconUrl) return { imageUrl: link.iconUrl, imageAlt: link.label }
+  }
+  return item.mega?.featuredImage ? { imageUrl: item.mega.featuredImage.imageUrl, imageAlt: item.mega.featuredImage.imageAlt || item.label } : null
 }
 
 function getMobileSectionEntries(section: NavbarRenderSection) {
@@ -155,21 +164,24 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
   const [mobileOpenSection, setMobileOpenSection] = useState<string | null>(null);
   const mobileActiveItem = navItems.find((item) => item.label === mobileOpenItem) ?? null;
   const [activeMegaItem, setActiveMegaItem] = useState<string | null>(null);
+  const [activeMegaPreview, setActiveMegaPreview] = useState<{ itemLabel: string; imageUrl: string; imageAlt: string } | null>(null);
   const [navHidden, setNavHidden] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSearchIndex, setActiveSearchIndex] = useState(-1);
   const [searchItems, setSearchItems] = useState<SearchItem[]>(() => cachedSearchItems ?? []);
   const [searchLoadState, setSearchLoadState] = useState<'idle' | 'loading' | 'ready' | 'error'>(() => cachedSearchItems ? 'ready' : 'idle');
-  const [announcementItem, setAnnouncementItem] = useState<{
+  const [announcementItems, setAnnouncementItems] = useState<Array<{
     message: string;
     linkUrl: string;
     openInNewTab: boolean;
-  } | null>({
+  }>>([{
     message: 'Free Worldwide Insured Shipping',
     linkUrl: '',
     openInNewTab: false,
-  });
+  }]);
+  const [announcementIndex, setAnnouncementIndex] = useState(0);
+  const [announcementAutoplay, setAnnouncementAutoplay] = useState(true);
   const [announcementActive, setAnnouncementActive] = useState(true);
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
@@ -187,6 +199,12 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
     const updateNavbarForScroll = () => {
       const currentScrollY = window.scrollY;
       setScrolled(currentScrollY > 10);
+
+      if (window.innerWidth < 1024) {
+        setNavHidden(false);
+        lastScrollY.current = currentScrollY;
+        return;
+      }
 
       const previousScrollY = lastScrollY.current;
       const scrollingDown = currentScrollY > previousScrollY + 4;
@@ -309,15 +327,12 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
         if (controller.signal.aborted) return;
 
         setAnnouncementActive(Boolean(payload?.active));
-        setAnnouncementItem(
-          payload?.item && typeof payload.item.message === 'string'
-            ? {
-                message: payload.item.message,
-                linkUrl: typeof payload.item.linkUrl === 'string' ? payload.item.linkUrl : '',
-                openInNewTab: Boolean(payload.item.openInNewTab),
-              }
-            : null
-        );
+        const nextItems = Array.isArray(payload?.items)
+          ? payload.items.filter((item: { message?: unknown }) => typeof item?.message === 'string' && item.message.trim())
+          : [];
+        setAnnouncementItems(nextItems);
+        setAnnouncementIndex(0);
+        setAnnouncementAutoplay(payload?.autoplay !== false);
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') return;
         // Retain the single safe initial fallback only when the endpoint fails.
@@ -332,12 +347,22 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
     const root = document.documentElement;
     root.style.setProperty(
       '--hod-announcement-current-height',
-      announcementActive && announcementItem ? 'var(--hod-announcement-height, 35px)' : '0px'
+      announcementActive && announcementItems.length ? 'var(--hod-announcement-height, 35px)' : '0px'
     );
     return () => {
       root.style.removeProperty('--hod-announcement-current-height');
     };
-  }, [announcementActive, announcementItem]);
+  }, [announcementActive, announcementItems.length]);
+
+  useEffect(() => {
+    if (!announcementActive || !announcementAutoplay || announcementItems.length < 2) return;
+    const timer = window.setInterval(() => {
+      setAnnouncementIndex((current) => (current + 1) % announcementItems.length);
+    }, 3000);
+    return () => window.clearInterval(timer);
+  }, [announcementActive, announcementAutoplay, announcementItems.length]);
+
+  const announcementItem = announcementItems[announcementIndex] ?? null;
 
   useEffect(() => {
     let mounted = true;
@@ -509,7 +534,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
   const desktopHeaderBorder = 'rgba(0,0,0,0.06)';
   const desktopUtilityBg = 'rgba(255,255,255,0.92)';
   const desktopHeaderBg = 'var(--color-brand-accent, #ffffff)';
-  const desktopHeaderShadow = scrolled ? '0 2px 20px rgba(0,0,0,0.06)' : 'none';
+  const desktopHeaderShadow = 'none';
 
   return (
     <>
@@ -519,11 +544,13 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
           --hod-announcement-current-height: var(--hod-announcement-height);
           --hod-navbar-height: 83px;
           --hod-site-header-height: calc(var(--hod-announcement-current-height) + var(--hod-navbar-height));
+          --hod-nav-hide-transform: translateY(-120%);
         }
 
         @media (min-width: 64rem) {
           :root {
             --hod-navbar-height: 96px;
+            --hod-nav-hide-transform: translateY(-58px);
           }
         }
 
@@ -539,6 +566,14 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
           isolation: isolate;
         }
 
+        @keyframes hodAnnouncementCrossfade {
+          from { opacity: 0; transform: translateY(4px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hod-announcement-message {
+          animation: hodAnnouncementCrossfade 420ms ease both;
+        }
         #hod-announcement-bar::before,
         #hod-announcement-bar::after {
           content: none !important;
@@ -588,7 +623,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
             isolation: 'isolate',
           }}
         >
-          <div className="flex max-w-full items-center justify-center gap-x-[var(--space-3)]">
+          <div key={`${announcementIndex}-${announcementItem.message}`} className="hod-announcement-message flex max-w-full items-center justify-center gap-x-[var(--space-3)]">
                   <span className="block max-w-full">
                     {announcementItem.linkUrl ? (
                       <Link
@@ -615,7 +650,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
         ].join(' ')}
         style={{
           top: announcementActive && announcementItem ? 'var(--hod-announcement-height, 35px)' : 0,
-          transform: navHidden && !searchOpen && !menuOpen ? 'translateY(-120%)' : 'translateY(0)',
+          transform: navHidden && !searchOpen && !menuOpen ? 'var(--hod-nav-hide-transform)' : 'translateY(0)',
           backgroundColor: desktopHeaderBg,
           boxShadow: desktopHeaderShadow,
           borderBottom: `1px solid ${desktopHeaderBorder}`,
@@ -626,14 +661,14 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
         >
           <div className="relative flex items-center justify-center border-b border-black/[0.06] bg-white px-4 py-[14px] lg:hidden">
           <div className="absolute left-3 top-1/2 flex -translate-y-1/2 items-center gap-1.5 min-[375px]:left-4 min-[375px]:gap-2.5 sm:gap-3">
-            <Link
-              href="/wishlist"
-              aria-label="Wishlist"
-              className="group relative flex h-[34px] w-[34px] items-center justify-center transition-opacity duration-300 hover:opacity-75"
+            <button
+              type="button"
+              onClick={openSearch}
+              aria-label="Search"
+              className="group relative flex h-[34px] w-[34px] items-center justify-center border-0 bg-transparent transition-opacity duration-300 hover:opacity-75"
             >
-              <img src="/Navbar svgs/heart.svg" alt="" aria-hidden="true" className="h-[20px] w-[20px] object-contain opacity-75 transition-opacity group-hover:opacity-100" />
-              {wishlistCount ? <span className="absolute -right-1 -top-1 inline-flex min-w-[18px] items-center justify-center rounded-full bg-[#0A1628] px-1 text-[10px] text-white">{wishlistCount}</span> : null}
-            </Link>
+              <img src="/Navbar svgs/search-01-stroke-rounded (1).svg" alt="" aria-hidden="true" className="h-[20px] w-[20px] object-contain opacity-75 transition-opacity group-hover:opacity-100" />
+            </button>
             <button
               type="button"
               onClick={openCart}
@@ -708,6 +743,8 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
                   onMouseEnter={() => {
                     if (item.mega) {
                       openMegaMenu(item.label);
+                      const preview = getDefaultMegaPreview(item);
+                      if (preview) setActiveMegaPreview({ itemLabel: item.label, ...preview });
                       prefetchMegaMenu(item);
                     }
                   }}
@@ -729,7 +766,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
 
                   {item.mega ? (
                     <div
-                      className="mega-drop absolute top-full min-h-[calc((100dvh-var(--hod-site-header-height,131px))*0.8)] overflow-hidden bg-white border-t border-black/10 shadow-[0_24px_64px_rgba(0,0,0,0.08)]"
+                      className="mega-drop absolute top-full min-h-[calc((100dvh-var(--hod-site-header-height,131px))*0.8)] overflow-hidden border-t border-black/10 bg-white"
                       style={{
                         left: '50%',
                         width: '100vw',
@@ -757,28 +794,27 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
                           className="grid w-full items-start gap-x-10"
                           style={{
                             gridTemplateColumns: item.mega.featuredImage?.imageUrl
-                              ? `minmax(0, 1fr) minmax(360px, 472px)`
+                              ? `minmax(0, 1fr) minmax(560px, 640px)`
                               : `minmax(0, 1fr)`,
                           }}
                         >
-                          <div data-mega-content className="grid max-w-[900px] grid-cols-[repeat(4,minmax(150px,max-content))] justify-start gap-x-10 gap-y-10">
+                          <div data-mega-content className="grid max-w-[840px] grid-cols-[repeat(4,minmax(140px,max-content))] justify-start gap-x-8 gap-y-8">
                             {item.mega.sections.map((section, idx) => (
                               <div
                                 key={`${item.label}-${section.title}-${idx}`}
                                 className={`min-w-[150px] ${idx === 3 ? 'lg:border-l lg:border-black/15 lg:pl-10' : ''}`}
                               >
-                                <MegaSection section={section} onNavigate={closeMegaMenu} />
+                                <MegaSection section={section} onNavigate={closeMegaMenu} onPreview={(imageUrl, imageAlt) => setActiveMegaPreview({ itemLabel: item.label, imageUrl, imageAlt })} />
                               </div>
                             ))}
                           </div>
                           {item.mega.featuredImage?.imageUrl ? (
-                            <div data-mega-content className="justify-self-end">
-                              <div className="h-[416px] w-[472px] max-w-[32vw] overflow-hidden bg-[#F7F8FA]">
-                                <img
-                                  src={item.mega.featuredImage.imageUrl}
-                                  alt={item.mega.featuredImage.imageAlt || item.label}
-                                  className="h-full w-full object-cover"
-                                />
+                            <div data-mega-content className="flex justify-self-end overflow-hidden bg-[#F7F8FA]">
+                              <div className="h-[430px] w-[300px] max-w-[21vw] overflow-hidden">
+                                <img src={item.mega.featuredImage.imageUrl} alt={item.mega.featuredImage.imageAlt || item.label} className="h-full w-full object-cover" />
+                              </div>
+                              <div className="h-[430px] w-[300px] max-w-[21vw] overflow-hidden border-l border-white/20">
+                                {activeMegaPreview?.itemLabel === item.label ? <img src={activeMegaPreview.imageUrl} alt={activeMegaPreview.imageAlt} className="h-full w-full object-cover" /> : null}
                               </div>
                             </div>
                           ) : null}

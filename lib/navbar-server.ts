@@ -29,7 +29,7 @@ async function loadHiddenDirectNavSlugs(supabase: SupabaseClient) {
   const result = await supabase
     .from('navbar_items')
     .select('slug')
-    .in('slug', ['hiphop', 'bespoke'])
+    .in('slug', ['bespoke'])
     .eq('status', 'hidden')
 
   if (result.error) return new Set<string>()
@@ -85,7 +85,7 @@ async function loadNavbarRenderItems(): Promise<NavbarRenderItem[]> {
   if (error) throw new Error(error.message)
 
   const fallbackItems: NavbarRenderItem[] = (categoriesResult.data ?? [])
-    .filter((entry) => entry.show_in_nav !== false)
+    .filter((entry) => entry.show_in_nav !== false && entry.slug !== 'hiphop')
     .map((entry) => ({
       label: entry.name,
       href: entry.nav_type === 'direct_link' && entry.direct_link_url ? entry.direct_link_url : `/${entry.slug}`,
@@ -117,9 +117,10 @@ async function loadNavbarRenderItems(): Promise<NavbarRenderItem[]> {
 
   const activeCategoryIds = new Set((categoriesResult.data ?? []).map((entry) => entry.id))
   const activeCategorySlugs = new Set((categoriesResult.data ?? []).map((entry) => entry.slug))
-  const alwaysAllowedHrefs = new Set(['/hiphop', '/bespoke'])
+  const alwaysAllowedHrefs = new Set(['/bespoke'])
 
   return mergedNavItems.filter((item) => {
+    if (item.slug === 'hiphop' || item.href === '/hiphop') return false
     if (item.linkedCategoryId) return activeCategoryIds.has(item.linkedCategoryId)
     if (item.slug && hiddenDirectSlugs.has(item.slug)) return false
     if (!item.href) return true

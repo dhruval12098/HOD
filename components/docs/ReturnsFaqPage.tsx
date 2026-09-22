@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, ChevronDown } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Search } from 'lucide-react';
 
 export type ReturnsContactRow = {
   id: number | string;
@@ -27,6 +27,8 @@ export default function ReturnsFaqPage({
   contactRows: ReturnsContactRow[];
 }) {
   const [openId, setOpenId] = useState<number | null>(items[0]?.id ?? null);
+  const [query, setQuery] = useState('');
+  const filteredItems = items.filter((item) => !query.trim() || `${title} ${item.question} ${item.answer}`.toLowerCase().includes(query.trim().toLowerCase()));
 
   return (
     <main className="min-h-screen bg-(--color-white) px-4 pb-16 pt-12 text-[#222222] sm:px-7 sm:pb-24 sm:pt-16">
@@ -47,7 +49,7 @@ export default function ReturnsFaqPage({
         <div className="border border-[#e4e4e4] bg-(--color-white) px-6 py-6 sm:px-10 sm:py-8">
           {items.length ? (
             <div className="divide-y divide-[#e4e4e4]">
-              {items.map((item) => {
+              {filteredItems.map((item) => {
                 const open = openId === item.id;
                 return (
                   <section key={item.id}>
@@ -76,7 +78,7 @@ export default function ReturnsFaqPage({
               })}
             </div>
           ) : (
-            <p className="py-4 text-[13px] leading-[1.75] text-[#3f3f3f]">No returns questions are published yet.</p>
+            <p className="py-4 text-[13px] leading-[1.75] text-[#3f3f3f]">{query ? 'No matching returns questions found.' : 'No returns questions are published yet.'}</p>
           )}
         </div>
 

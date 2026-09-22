@@ -74,6 +74,7 @@ export default function CartDrawer() {
 
   useEffect(() => {
     if (!isOpen) return
+    window.dispatchEvent(new Event('hod:close-contact'))
 
     const previousBodyOverflow = document.body.style.overflow
     const previousHtmlOverflow = document.documentElement.style.overflow
@@ -234,10 +235,10 @@ export default function CartDrawer() {
 
           <div className="mt-3 grid gap-2">
             <Link href="/cart" onClick={closeCart} className="flex h-11 items-center justify-center border border-black bg-white font-[family-name:var(--font-family-montserrat)] text-[10px] font-semibold uppercase tracking-[0.08em] text-black no-underline">
-              View Bag
+              View Cart
             </Link>
             <Link href="/checkout?mode=cart" onClick={closeCart} aria-disabled={!resolvedItems.length} className={`flex h-11 items-center justify-center border border-black bg-black font-[family-name:var(--font-family-montserrat)] text-[10px] font-semibold uppercase tracking-[0.08em] text-white no-underline ${resolvedItems.length ? '' : 'pointer-events-none opacity-40'}`}>
-              Continue Checkout
+              Express Checkout
             </Link>
           </div>
 

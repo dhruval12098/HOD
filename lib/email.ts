@@ -37,6 +37,7 @@ const emailUser = process.env.EMAIL_USER
 const emailPass = process.env.EMAIL_PASS
 const emailFrom = process.env.EMAIL_FROM
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || 'http://localhost:3000'
+const logoUrl = `${siteUrl.replace(/\/$/, '')}/logo.jpeg`
 
 let cachedTransporter: nodemailer.Transporter | null = null
 
@@ -67,11 +68,11 @@ function renderItems(items: OrderEmailItem[], currency?: string | null) {
     .map(
       (item) => `
         <tr>
-          <td style="padding:14px 0;border-bottom:1px solid #ece7dd;color:#1c1f26;font-size:14px;line-height:1.5;">
+          <td style="padding:14px 0;border-bottom:1px solid #e5e5e5;color:#000000;font-size:14px;line-height:1.5;">
             <div style="font-weight:600;">${escapeHtml(item.product_name)}</div>
-            <div style="font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:.16em;margin-top:4px;">Qty ${escapeHtml(item.quantity)}</div>
+            <div style="font-size:12px;color:#666666;text-transform:uppercase;letter-spacing:.16em;margin-top:4px;">Qty ${escapeHtml(item.quantity)}</div>
           </td>
-          <td style="padding:14px 0;border-bottom:1px solid #ece7dd;color:#1c1f26;font-size:14px;line-height:1.5;text-align:right;font-weight:600;">
+          <td style="padding:14px 0;border-bottom:1px solid #e5e5e5;color:#000000;font-size:14px;line-height:1.5;text-align:right;font-weight:600;">
             ${formatMoney(item.line_total, currency)}
           </td>
         </tr>
@@ -107,32 +108,32 @@ function renderTotals({
       : gstLabel
 
   return `
-    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-top:18px;border-top:1px solid #ece7dd;border-collapse:collapse;">
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-top:18px;border-top:1px solid #e5e5e5;border-collapse:collapse;">
       <tr>
-        <td style="padding-top:18px;padding-bottom:10px;font-size:14px;color:#4b5563;">Subtotal</td>
-        <td style="padding-top:18px;padding-bottom:10px;text-align:right;font-size:14px;color:#1c1f26;font-weight:600;">${formatMoney(subtotalAmount, currency)}</td>
+        <td style="padding-top:18px;padding-bottom:10px;font-size:14px;color:#555555;">Subtotal</td>
+        <td style="padding-top:18px;padding-bottom:10px;text-align:right;font-size:14px;color:#000000;font-weight:600;">${formatMoney(subtotalAmount, currency)}</td>
       </tr>
       <tr>
-        <td style="padding-bottom:10px;font-size:14px;color:#4b5563;">Shipping</td>
-        <td style="padding-bottom:10px;text-align:right;font-size:14px;color:#1c1f26;font-weight:600;">${shippingAmount > 0 ? formatMoney(shippingAmount, currency) : 'Free'}</td>
+        <td style="padding-bottom:10px;font-size:14px;color:#555555;">Shipping</td>
+        <td style="padding-bottom:10px;text-align:right;font-size:14px;color:#000000;font-weight:600;">${shippingAmount > 0 ? formatMoney(shippingAmount, currency) : 'Free'}</td>
       </tr>
       <tr>
-        <td style="padding-bottom:10px;font-size:14px;color:#4b5563;">${escapeHtml(taxLabel)}</td>
-        <td style="padding-bottom:10px;text-align:right;font-size:14px;color:#1c1f26;font-weight:600;">${gstAmount > 0 ? formatMoney(gstAmount, currency) : 'Free'}</td>
+        <td style="padding-bottom:10px;font-size:14px;color:#555555;">${escapeHtml(taxLabel)}</td>
+        <td style="padding-bottom:10px;text-align:right;font-size:14px;color:#000000;font-weight:600;">${gstAmount > 0 ? formatMoney(gstAmount, currency) : 'Free'}</td>
       </tr>
       ${
         couponDiscountAmount > 0
           ? `
       <tr>
-        <td style="padding-bottom:10px;font-size:14px;color:#14804a;">Coupon${couponCode ? ` (${escapeHtml(couponCode)})` : ''}</td>
-        <td style="padding-bottom:10px;text-align:right;font-size:14px;color:#14804a;font-weight:600;">-${formatMoney(couponDiscountAmount, currency)}</td>
+        <td style="padding-bottom:10px;font-size:14px;color:#237a4b;">Coupon${couponCode ? ` (${escapeHtml(couponCode)})` : ''}</td>
+        <td style="padding-bottom:10px;text-align:right;font-size:14px;color:#237a4b;font-weight:600;">-${formatMoney(couponDiscountAmount, currency)}</td>
       </tr>
       `
           : ''
       }
       <tr>
-        <td style="padding-top:10px;border-top:1px solid #ece7dd;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#8b7355;">Total</td>
-        <td style="padding-top:10px;border-top:1px solid #ece7dd;text-align:right;font-size:22px;font-weight:700;color:#0f1726;">${formatMoney(totalAmount, currency)}</td>
+        <td style="padding-top:10px;border-top:1px solid #e5e5e5;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#000000;">Total</td>
+        <td style="padding-top:10px;border-top:1px solid #e5e5e5;text-align:right;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;font-size:22px;font-weight:600;color:#000000;">${formatMoney(totalAmount, currency)}</td>
       </tr>
     </table>
   `
@@ -194,32 +195,32 @@ function renderShell({
     : new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })
 
   return `
-    <div style="margin:0;padding:32px 16px;background:#f5f1eb;font-family:Arial,sans-serif;color:#1c1f26;">
-      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:680px;margin:0 auto;background:#fffdf9;border:1px solid #e9dfd2;border-radius:28px;overflow:hidden;">
+    <div style="margin:0;padding:32px 16px;background:#f9f9f9;font-family:'Inter','Helvetica Neue',Arial,sans-serif;color:#000000;">
+      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:680px;margin:0 auto;background:#ffffff;border:1px solid #dedede;border-radius:0;overflow:hidden;">
         <tr>
-          <td style="padding:20px 28px;background:#0f1726;color:#f7f4ee;">
-            <div style="font-size:11px;letter-spacing:.34em;text-transform:uppercase;color:#c8b08a;">House of Diams</div>
-            <div style="margin-top:10px;font-size:30px;line-height:1.1;font-weight:500;">${escapeHtml(title)}</div>
-            <div style="margin-top:10px;font-size:14px;line-height:1.7;color:#d4d8df;">${escapeHtml(body)}</div>
+          <td style="padding:30px 28px;background:#000000;color:#ffffff;text-align:center;">
+            <img src="${escapeHtml(logoUrl)}" width="58" alt="House of Diams" style="display:block;width:58px;height:auto;margin:0 auto 18px;border:0;" /><div style="font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;font-size:12px;font-weight:600;letter-spacing:.28em;text-transform:uppercase;color:#ffffff;">House of Diams</div>
+            <div style="margin-top:14px;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;font-size:28px;line-height:1.18;font-weight:600;letter-spacing:.02em;">${escapeHtml(title)}</div>
+            <div style="margin-top:10px;font-size:14px;line-height:1.7;color:#e5e5e5;">${escapeHtml(body)}</div>
           </td>
         </tr>
         <tr>
           <td style="padding:28px;">
-            <div style="font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:#8b7355;">${escapeHtml(pretitle)}</div>
+            <div style="font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:#000000;">${escapeHtml(pretitle)}</div>
             ${
               badge
-                ? `<div style="display:inline-block;margin-top:14px;padding:8px 14px;border-radius:999px;background:#f1eadf;color:#6b5639;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;">${escapeHtml(badge)}</div>`
+                ? `<div style="display:inline-block;margin-top:14px;padding:8px 14px;border-radius:0;border:1px solid #dedede;background:#f9f9f9;color:#000000;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;">${escapeHtml(badge)}</div>`
                 : ''
             }
 
             <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-top:22px;border-collapse:collapse;">
               <tr>
-                <td style="padding:0 0 8px;color:#8b7355;font-size:11px;letter-spacing:.18em;text-transform:uppercase;">Order Number</td>
-                <td style="padding:0 0 8px;color:#8b7355;font-size:11px;letter-spacing:.18em;text-transform:uppercase;text-align:right;">Order Date</td>
+                <td style="padding:0 0 8px;color:#000000;font-size:11px;letter-spacing:.18em;text-transform:uppercase;">Order Number</td>
+                <td style="padding:0 0 8px;color:#000000;font-size:11px;letter-spacing:.18em;text-transform:uppercase;text-align:right;">Order Date</td>
               </tr>
               <tr>
-                <td style="padding:0 0 18px;font-size:17px;font-weight:600;color:#1c1f26;">${escapeHtml(orderNumber)}</td>
-                <td style="padding:0 0 18px;font-size:14px;color:#4b5563;text-align:right;">${escapeHtml(orderDateLabel)}</td>
+                <td style="padding:0 0 18px;font-size:17px;font-weight:600;color:#000000;">${escapeHtml(orderNumber)}</td>
+                <td style="padding:0 0 18px;font-size:14px;color:#555555;text-align:right;">${escapeHtml(orderDateLabel)}</td>
               </tr>
             </table>
 
@@ -230,14 +231,14 @@ function renderShell({
             ${totalsMarkup}
 
             <div style="margin-top:28px;">
-              <a href="${escapeHtml(ctaHref)}" style="display:inline-block;padding:14px 22px;border-radius:999px;background:#0f1726;color:#ffffff;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;">
+              <a href="${escapeHtml(ctaHref)}" style="display:inline-block;min-width:190px;padding:15px 24px;text-align:center;font-family:'Montserrat','Helvetica Neue',Arial,sans-serif;border-radius:0;background:#000000;color:#ffffff;text-decoration:none;font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;">
                 ${escapeHtml(ctaLabel)}
               </a>
             </div>
           </td>
         </tr>
         <tr>
-          <td style="padding:20px 28px;border-top:1px solid #ece7dd;background:#fbf8f2;color:#6b7280;font-size:13px;line-height:1.7;">
+          <td style="padding:20px 28px;border-top:1px solid #e5e5e5;background:#f9f9f9;color:#666666;font-size:13px;line-height:1.7;">
             Questions about your order? Reply to this email and our team will help you.
           </td>
         </tr>

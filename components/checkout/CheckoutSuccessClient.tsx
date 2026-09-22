@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { CalendarDays, CreditCard, MapPin, PackageCheck } from 'lucide-react'
+import { CalendarDays, CreditCard, MapPin } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
@@ -33,6 +33,8 @@ export default function CheckoutSuccessClient() {
 
   useEffect(() => {
     let active = true
+    let timer: number | undefined
+    let attempts = 0
     async function load() {
       if (!requestedOrder) { setState('error'); return }
       const { data } = await supabase.auth.getSession()
@@ -45,10 +47,12 @@ export default function CheckoutSuccessClient() {
         if (!active) return
         if (!response.ok || !result?.order) { setState(response.status >= 500 ? 'error' : 'failed'); return }
         setPayload(result); setState(result.state); setGuestOrder(!token)
+        attempts += 1
+        if (result.state === 'pending' && attempts < 20) timer = window.setTimeout(() => void load(), 3000)
       } catch { if (active) setState('error') }
     }
     void load()
-    return () => { active = false }
+    return () => { active = false; if (timer) window.clearTimeout(timer) }
   }, [requestedOrder])
 
   if (state === 'loading') return <div className="flex min-h-[60vh] items-center justify-center bg-white font-[family-name:var(--font-family-secondary)] text-sm uppercase tracking-[0.18em] text-neutral-600">Confirming your order...</div>
@@ -63,13 +67,13 @@ export default function CheckoutSuccessClient() {
   const address = order ? [order.shipping_address_line_1, order.shipping_address_line_2, order.shipping_city, order.shipping_district, order.shipping_state, order.shipping_postal_code, order.shipping_country].filter(Boolean).join(', ') : ''
 
   return <main className="bg-white text-[#111]">
-    <section className="relative flex min-h-[440px] items-center overflow-hidden border-b border-black/10 bg-[#f4f2ef] px-6 py-16 sm:px-10 lg:px-[8vw]" style={{ backgroundImage: `linear-gradient(90deg, rgba(255,255,255,.96) 0%, rgba(255,255,255,.78) 42%, rgba(255,255,255,.05) 72%), url('${mainImage}')`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-      <div className="relative z-10 max-w-[610px]">
+    <section className="relative flex min-h-[440px] items-center overflow-hidden border-b border-black/10 bg-[#f4f2ef] px-6 py-16 sm:px-10 lg:px-[8vw]" style={{ backgroundImage: `linear-gradient(90deg, rgba(0,0,0,.82) 0%, rgba(0,0,0,.58) 44%, rgba(0,0,0,.08) 76%), url('${mainImage}')`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+      <div className="relative z-10 max-w-[610px] text-white">
         <p className="font-[family-name:var(--font-family-secondary)] text-[11px] uppercase tracking-[0.22em]">{cms?.eyebrow || fallback.eyebrow}</p>
         <h1 className="mt-5 font-[family-name:var(--font-family-primary)] text-4xl font-normal leading-[1.05] sm:text-5xl lg:text-[58px]">{cms?.heading || fallback.heading}</h1>
-        <p className="mt-5 max-w-xl font-[family-name:var(--font-family-secondary)] text-sm leading-7 text-neutral-700">{cms?.paragraph || fallback.paragraph}</p>
-        <a href={buttonHref} className="mt-7 inline-flex h-12 items-center justify-center bg-black px-8 font-[family-name:var(--font-family-button)] text-xs uppercase tracking-[0.16em] text-white">{cms?.order_button_label || fallback.button}</a>
-        {order ? <div className="mt-6 flex flex-wrap gap-x-8 gap-y-2 border-t border-black/20 pt-4 font-[family-name:var(--font-family-secondary)] text-xs uppercase tracking-[0.12em]"><span>Order #{order.order_number}</span><span>Placed {date(order.created_at)}</span></div> : null}
+        <p className="mt-5 max-w-xl font-[family-name:var(--font-family-secondary)] text-sm leading-7 text-white/85">{cms?.paragraph || fallback.paragraph}</p>
+        <a href={buttonHref} className="mt-7 inline-flex h-12 items-center justify-center border border-white bg-white px-8 font-[family-name:var(--font-family-button)] text-xs uppercase tracking-[0.16em] text-black transition hover:bg-transparent hover:text-white">{cms?.order_button_label || fallback.button}</a>
+        {order ? <div className="mt-6 flex flex-wrap gap-x-8 gap-y-2 border-t border-white/35 pt-4 font-[family-name:var(--font-family-secondary)] text-xs uppercase tracking-[0.12em]"><span>Order #{order.order_number}</span><span>Placed {date(order.created_at)}</span></div> : null}
       </div>
     </section>
 

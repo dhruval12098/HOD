@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { enforceRateLimit } from '@/lib/rate-limit'
 import { getGuestCheckoutTokenHash } from '@/lib/guest-checkout'
+import { finalizePaidOrder } from '@/lib/checkout-order'
+import { ensureRazorpayPaymentCaptured, findCapturedOrAuthorizedPayment } from '@/lib/razorpay'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -44,7 +46,7 @@ export async function GET(request: Request) {
   if (!orderNumber || orderNumber.length > 100) return NextResponse.json({ error: 'Order confirmation not found.' }, { status: 404 })
 
   const adminClient = createClient(supabaseUrl, supabaseServiceRoleKey)
-  let query = adminClient.from('orders').select('id, order_number, created_at, customer_email, customer_first_name, customer_last_name, customer_phone, shipping_country, shipping_state, shipping_district, shipping_city, shipping_postal_code, shipping_address_line_1, shipping_address_line_2, subtotal_amount, gst_amount, shipping_amount, total_amount, status, payment_status, payment_gateway, payment_currency, payment_amount, razorpay_payment_method, gateway_order_status, gateway_payment_status').eq('order_number', orderNumber)
+  let query = adminClient.from('orders').select('id, order_number, created_at, customer_email, customer_first_name, customer_last_name, customer_phone, shipping_country, shipping_state, shipping_district, shipping_city, shipping_postal_code, shipping_address_line_1, shipping_address_line_2, subtotal_amount, gst_amount, shipping_amount, total_amount, status, payment_status, payment_gateway, payment_currency, payment_amount, razorpay_order_id, razorpay_payment_id, razorpay_payment_method, gateway_order_status, gateway_payment_status').eq('order_number', orderNumber)
   query = userId ? query.eq('user_id', userId) : query.eq('guest_token_hash', guestTokenHash!)
   const { data: order, error: orderError } = await query.maybeSingle()
   if (orderError) {
@@ -53,7 +55,46 @@ export async function GET(request: Request) {
   }
   if (!order) return NextResponse.json({ error: 'Order confirmation not found.' }, { status: 404 })
 
-  const state = resultState(order.payment_status ?? order.gateway_payment_status)
+  let state = resultState(order.payment_status ?? order.gateway_payment_status)
+  if (state === 'pending' && order.razorpay_order_id) {
+    try {
+      const candidate = await findCapturedOrAuthorizedPayment(order.razorpay_order_id)
+      if (candidate?.id) {
+        const payment = await ensureRazorpayPaymentCaptured({
+          paymentId: candidate.id,
+          orderId: order.razorpay_order_id,
+          amountInSubunits: Math.round(Number(order.payment_amount || 0) * 100),
+          currency: String(order.payment_currency || '').toUpperCase(),
+        })
+        const finalized = await finalizePaidOrder({
+          adminClient,
+          orderId: order.id,
+          razorpayOrderId: order.razorpay_order_id,
+          paymentId: payment.id,
+          paymentMethod: payment.method || null,
+          paymentContact: payment.contact != null ? String(payment.contact) : null,
+          paymentEmail: payment.email || null,
+          gatewayPaymentStatus: payment.status || 'captured',
+          paymentAmountInSubunits: Number(payment.amount),
+          paymentCurrency: String(payment.currency || order.payment_currency),
+          rawEvent: payment,
+        })
+        if (!('error' in finalized)) {
+          state = 'success'
+          order.payment_status = 'paid'
+          order.gateway_payment_status = 'captured'
+          order.gateway_order_status = 'paid'
+          order.razorpay_payment_id = payment.id
+          order.razorpay_payment_method = payment.method || null
+        } else {
+          console.error('Order status self-reconciliation finalization failed:', finalized.error)
+        }
+      }
+    } catch (error) {
+      // Keep the page pending and allow polling/webhook retries; never misreport a payment as failed.
+      console.error('Order status self-reconciliation failed:', error)
+    }
+  }
   const [itemsResult, pageResult, stateResult, contactResult, categoriesResult] = await Promise.all([
     adminClient.from('order_items').select('product_name, product_slug, quantity, unit_price, line_total, image_url, selected_metal, selected_purity, selected_size_or_fit, selected_gemstone, selected_carat, item_type').eq('order_id', order.id).order('created_at', { ascending: true }),
     adminClient.from('checkout_result_page').select('main_banner_image_path, main_banner_image_alt, secondary_banner_image_path, secondary_banner_image_alt, secondary_eyebrow, secondary_heading, secondary_paragraph, is_enabled').eq('id', 1).eq('is_enabled', true).maybeSingle(),

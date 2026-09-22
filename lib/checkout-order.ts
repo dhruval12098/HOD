@@ -293,7 +293,7 @@ export async function prepareCheckoutPayload({
   const profileResult = user
     ? await adminClient
         .from('profiles')
-        .select('email, first_name, last_name, phone, country, state, city, postal_code, address_line_1, address_line_2')
+        .select('email, first_name, last_name, phone, country, state, district, city, postal_code, address_line_1, address_line_2')
         .eq('id', user.id)
         .maybeSingle()
     : { data: null, error: null }
@@ -372,7 +372,7 @@ export async function prepareCheckoutPayload({
     phone: (customer.phone || profile?.phone || user?.user_metadata?.phone || '').trim(),
     country: (customer.country || profile?.country || '').trim(),
     state: (customer.state || profile?.state || '').trim(),
-    district: (customer.district || '').trim(),
+    district: (customer.district || profile?.district || '').trim(),
     city: (customer.city || profile?.city || '').trim(),
     postal_code: (customer.postal_code || profile?.postal_code || '').trim(),
     address_line_1: (customer.address_line_1 || profile?.address_line_1 || '').trim(),

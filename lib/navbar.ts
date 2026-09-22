@@ -203,7 +203,6 @@ const METAL_TYPE_MAP: Record<string, 'yellow' | 'rose' | 'white' | 'platinum'> =
 }
 
 const DEFAULT_DIRECT_NAV_ITEMS: NavbarRenderItem[] = [
-  { slug: 'hiphop', label: 'Hip Hop', href: '/hiphop' },
   { slug: 'bespoke', label: 'Bespoke', href: '/bespoke' },
 ]
 

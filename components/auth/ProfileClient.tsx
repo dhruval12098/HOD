@@ -83,6 +83,13 @@ function buildSelectionLabel(metal?: string | null, purity?: string | null) {
   return `${normalizedPurity} ${normalizedMetal}`.trim();
 }
 
+function formatProfileDate(value: string) {
+  if (!value) return null;
+  const date = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
 function getUsername(email: string | null | undefined, metadata: Record<string, unknown> | undefined) {
   const preferredKeys = ['username', 'full_name', 'name', 'given_name'];
 
@@ -145,6 +152,15 @@ export default function ProfileClient() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
+  const [birthDate, setBirthDate] = useState('');
+  const [anniversaryDate, setAnniversaryDate] = useState('');
+  const [country, setCountry] = useState('');
+  const [region, setRegion] = useState('');
+  const [district, setDistrict] = useState('');
+  const [city, setCity] = useState('');
+  const [postalCode, setPostalCode] = useState('');
+  const [addressLine1, setAddressLine1] = useState('');
+  const [addressLine2, setAddressLine2] = useState('');
   const [saving, setSaving] = useState(false);
   const [accountStatus, setAccountStatus] = useState('');
 
@@ -197,6 +213,47 @@ export default function ProfileClient() {
   }, []);
 
   const signedInUserId = state.status === 'signed-in' ? state.userId : '';
+
+  useEffect(() => {
+    if (!signedInUserId) return;
+    let ignore = false;
+
+    void (async () => {
+      const { data } = await supabase.auth.getSession();
+      const accessToken = data.session?.access_token;
+      if (!accessToken) return;
+      try {
+        const response = await fetch('/api/profile', { headers: { Authorization: `Bearer ${accessToken}` } });
+        const payload = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(payload?.error || 'Unable to load your profile.');
+        if (ignore) return;
+        const profile = payload?.profile || {};
+        setFirstName(profile.first_name || '');
+        setLastName(profile.last_name || '');
+        setPhone(profile.phone || '');
+        setBirthDate(profile.birth_date || '');
+        setAnniversaryDate(profile.anniversary_date || '');
+        setCountry(profile.country || '');
+        setRegion(profile.state || '');
+        setDistrict(profile.district || '');
+        setCity(profile.city || '');
+        setPostalCode(profile.postal_code || '');
+        setAddressLine1(profile.address_line_1 || '');
+        setAddressLine2(profile.address_line_2 || '');
+        setState((current) => {
+          if (current.status !== 'signed-in') return current;
+          const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+          const next = { ...current, username: fullName || current.username, firstName: profile.first_name || '', lastName: profile.last_name || '', phone: profile.phone || '' };
+          cachedProfileState = next;
+          return next;
+        });
+      } catch (loadError) {
+        if (!ignore) setAccountStatus(loadError instanceof Error ? loadError.message : 'Unable to load your profile.');
+      }
+    })();
+
+    return () => { ignore = true; };
+  }, [signedInUserId]);
 
   useEffect(() => {
     if (!signedInUserId) return;
@@ -270,6 +327,11 @@ export default function ProfileClient() {
     });
   }, [state]);
 
+  const defaultAddressLabel = useMemo(
+    () => [addressLine1, addressLine2, city, district, region, postalCode, country].map((value) => value.trim()).filter(Boolean).join(', '),
+    [addressLine1, addressLine2, city, country, district, postalCode, region],
+  );
+
   const handleSignOut = async () => {
     setSigningOut(true);
     await supabase.auth.signOut();
@@ -289,25 +351,28 @@ export default function ProfileClient() {
     if (state.status !== 'signed-in') return;
     setSaving(true);
     setAccountStatus('');
-    const fullName = `${firstName} ${lastName}`.trim();
-    const { error } = await supabase.auth.updateUser({
-      data: { first_name: firstName, last_name: lastName, phone, full_name: fullName },
-    });
-    if (error) {
-      setAccountStatus(error.message);
-    } else {
-      const next: SignedInProfileState = {
-        ...state,
-        username: fullName || state.username,
-        firstName,
-        lastName,
-        phone,
-      };
+    try {
+      const { data } = await supabase.auth.getSession();
+      const accessToken = data.session?.access_token;
+      if (!accessToken) throw new Error('Please sign in again before saving your profile.');
+      const response = await fetch('/api/profile', {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${accessToken}`, 'content-type': 'application/json' },
+        body: JSON.stringify({ first_name: firstName, last_name: lastName, phone, birth_date: birthDate, anniversary_date: anniversaryDate, country, state: region, district, city, postal_code: postalCode, address_line_1: addressLine1, address_line_2: addressLine2 }),
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(payload?.error || 'Unable to save your profile.');
+      const fullName = `${firstName} ${lastName}`.trim();
+      await supabase.auth.updateUser({ data: { first_name: firstName, last_name: lastName, phone, full_name: fullName } });
+      const next: SignedInProfileState = { ...state, username: fullName || state.username, firstName, lastName, phone };
       cachedProfileState = next;
       setState(next);
-      setAccountStatus('Profile saved.');
+      setAccountStatus('Profile and default checkout address saved.');
+    } catch (saveError) {
+      setAccountStatus(saveError instanceof Error ? saveError.message : 'Unable to save your profile.');
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   const handleChangePassword = async () => {
@@ -420,6 +485,11 @@ export default function ProfileClient() {
                 <DetailField label="Email Address" value={state.email} />
                 <DetailField label="Phone" value={state.phone || null} onAdd={() => setTab('account')} />
                 <DetailField label="Member Since" value={joinedLabel} />
+                <DetailField label="Birth Date" value={formatProfileDate(birthDate)} onAdd={() => setTab('account')} />
+                <DetailField label="Anniversary Date" value={formatProfileDate(anniversaryDate)} onAdd={() => setTab('account')} />
+                <div className="sm:col-span-2">
+                  <DetailField label="Default Checkout Address" value={defaultAddressLabel || null} onAdd={() => setTab('account')} />
+                </div>
               </div>
             </div>
           </>
@@ -449,19 +519,18 @@ export default function ProfileClient() {
                   className={INPUT_CLASS}
                   required
                 />
-                <input
-                  value={phone}
-                  onChange={(event) => setPhone(event.target.value)}
-                  type="tel"
-                  placeholder="Phone"
-                  aria-label="Phone"
-                  className={INPUT_CLASS + ' sm:col-span-2'}
-                />
-                <div>
-                  <button type="submit" disabled={saving} className="brand-button">
-                    {saving ? 'Saving...' : 'Save'}
-                  </button>
-                </div>
+                <input value={phone} onChange={(event) => setPhone(event.target.value)} type="tel" placeholder="Phone" aria-label="Phone" autoComplete="tel" className={INPUT_CLASS + ' sm:col-span-2'} />
+                <label className="grid gap-1.5 text-[12px] font-semibold text-[#222222]">Birth Date <span className="font-normal text-[#767676]">Optional</span><input value={birthDate} onChange={(event) => setBirthDate(event.target.value)} type="date" max={new Date().toISOString().slice(0, 10)} className={INPUT_CLASS} /></label>
+                <label className="grid gap-1.5 text-[12px] font-semibold text-[#222222]">Anniversary Date <span className="font-normal text-[#767676]">Optional</span><input value={anniversaryDate} onChange={(event) => setAnniversaryDate(event.target.value)} type="date" className={INPUT_CLASS} /></label>
+                <div className="mt-5 border-t border-[#e4e4e4] pt-6 sm:col-span-2"><BoxHeading>Default Checkout Address</BoxHeading><p className="mt-2 text-[12px] leading-5 text-[#767676]">Optional. Saved details will prefill checkout whenever you are signed in.</p></div>
+                <input value={addressLine1} onChange={(event) => setAddressLine1(event.target.value)} type="text" placeholder="Address Line 1" aria-label="Address line 1" autoComplete="address-line1" className={INPUT_CLASS + ' sm:col-span-2'} />
+                <input value={addressLine2} onChange={(event) => setAddressLine2(event.target.value)} type="text" placeholder="Address Line 2" aria-label="Address line 2" autoComplete="address-line2" className={INPUT_CLASS + ' sm:col-span-2'} />
+                <input value={country} onChange={(event) => setCountry(event.target.value)} type="text" placeholder="Country" aria-label="Country" autoComplete="country-name" className={INPUT_CLASS} />
+                <input value={region} onChange={(event) => setRegion(event.target.value)} type="text" placeholder="State / Province / Region" aria-label="State, province, or region" autoComplete="address-level1" className={INPUT_CLASS} />
+                <input value={district} onChange={(event) => setDistrict(event.target.value)} type="text" placeholder="District" aria-label="District" className={INPUT_CLASS} />
+                <input value={city} onChange={(event) => setCity(event.target.value)} type="text" placeholder="City" aria-label="City" autoComplete="address-level2" className={INPUT_CLASS} />
+                <input value={postalCode} onChange={(event) => setPostalCode(event.target.value)} type="text" placeholder="Postal Code / Pincode" aria-label="Postal code or pincode" autoComplete="postal-code" className={INPUT_CLASS} />
+                <div className="sm:col-span-2"><button type="submit" disabled={saving} className="brand-button">{saving ? 'Saving...' : 'Save Profile'}</button>{accountStatus ? <p role="status" className="mt-3 text-[13px] text-[#3f3f3f]">{accountStatus}</p> : null}</div>
               </form>
             </div>
 
@@ -481,7 +550,7 @@ export default function ProfileClient() {
                   </button>
                 </div>
               </div>
-              {accountStatus ? <p className="mt-6 text-[13px] text-[#3f3f3f]">{accountStatus}</p> : null}
+
             </div>
           </>
         ) : null}

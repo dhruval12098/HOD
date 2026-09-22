@@ -208,12 +208,18 @@ export default function ProductGrid({ products, sourceProducts = products, initi
       <style>{`
         .shop-grid-layout {
           width: 100%;
-          padding: 60px 24px 100px;
+          padding: 0 24px 100px;
           display: block;
           background: var(--theme-surface);
         }
         .shop-grid-toolbar {
-          padding: 0 44px;
+          position: sticky;
+          top: calc(var(--hod-site-header-height, 131px) - 58px);
+          z-index: 35;
+          padding: 0 44px 2px;
+          margin-bottom: 0;
+          background: var(--theme-surface);
+          box-shadow: none;
         }
         @media (min-width: 1025px) {
           .shop-grid-layout.shop-grid-wide {
@@ -262,7 +268,8 @@ export default function ProductGrid({ products, sourceProducts = products, initi
             padding: 40px 20px 70px;
           }
           .shop-grid-toolbar {
-            padding: 0 20px;
+            top: var(--hod-site-header-height, 83px);
+            padding: 0 20px 2px;
           }
           .product-grid {
             grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -273,7 +280,7 @@ export default function ProductGrid({ products, sourceProducts = products, initi
             padding: 28px 10px 56px;
           }
           .shop-grid-toolbar {
-            padding: 0 7px;
+            padding: 0 7px 2px;
           }
           .product-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));

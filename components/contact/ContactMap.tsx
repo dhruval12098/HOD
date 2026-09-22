@@ -87,9 +87,9 @@ export default function ContactMap() {
   return (
     <RevealDiv className="mx-[52px] mb-20 max-lg:mx-7 max-md:mx-5 max-md:mb-12">
       <div
-        className="relative h-[320px] overflow-hidden border border-[rgba(10,22,40,0.10)]"
+        className="relative h-[320px] overflow-hidden border border-black/12 shadow-[0_12px_35px_rgba(10,22,40,0.06)]"
         style={{
-          background: 'linear-gradient(135deg, #F5F7FC 0%, #EAF0FA 100%)',
+          background: '#fff',
         }}
       >
         {mapSrc ? (
@@ -116,24 +116,24 @@ export default function ContactMap() {
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
               <div className="relative mx-auto mb-4 h-12 w-12">
                 <div
-                  className="absolute inset-0 rounded-full bg-[rgba(10,22,40,0.2)] animate-ping"
+                  className="absolute inset-0 rounded-none bg-[rgba(10,22,40,0.2)] animate-ping"
                   style={{ animationDuration: '2s' }}
                 />
                 <div
-                  className="absolute inset-0 bg-[#0A1628] shadow-[0_8px_20px_rgba(10,22,40,0.4)] animate-[mapPinPulse_2s_ease-in-out_infinite]"
+                  className="absolute inset-0 bg-black shadow-[0_8px_20px_rgba(10,22,40,0.4)] animate-[mapPinPulse_2s_ease-in-out_infinite]"
                   style={{
                     borderRadius: '50% 50% 50% 0',
                     transform: 'rotate(-45deg)',
                   }}
                 >
-                  <div className="absolute top-1/2 left-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white" />
+                  <div className="absolute top-1/2 left-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-none bg-white" />
                 </div>
               </div>
 
-              <div className="mb-1 font-serif text-[22px] font-normal tracking-[0.02em] text-[#0A1628]">
+              <div className="mb-1 font-serif text-[22px] font-normal tracking-[0.02em] text-[var(--theme-ink)]">
                 House of Diams Atelier
               </div>
-              <div className="text-[10px] uppercase tracking-[0.24em] text-[#6A6A6A]">
+              <div className="text-[10px] uppercase tracking-[0.24em] text-black/60">
                 Surat · Gujarat · India
               </div>
             </div>

@@ -26,7 +26,7 @@ export default function BlogPostHero({ post }: BlogPostHeroProps) {
         )}
 
         {/* Category badge */}
-        <div className="absolute bottom-5 left-6 text-[7.5px] tracking-[0.2em] uppercase font-medium bg-[#0A1628] text-white px-3.5 py-[5px]">
+        <div className="absolute bottom-5 left-6 text-[7.5px] tracking-[0.2em] uppercase font-medium bg-black text-white px-3.5 py-[5px]">
           {post.category}
         </div>
       </div>

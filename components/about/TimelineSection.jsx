@@ -172,9 +172,9 @@ export default function TimelineSection({ initialItems = [] }) {
               <div
                 className="timeline-year"
                 style={{
-                  fontFamily: "var(--font-family-primary)",
+                  fontFamily: "var(--font-family-montserrat), Montserrat, Arial, sans-serif",
                   fontSize: "26px",
-                  fontWeight: 400,
+                  fontWeight: 700,
                   color: "#0A1628",
                   marginBottom: "4px",
                 }}
@@ -186,8 +186,9 @@ export default function TimelineSection({ initialItems = [] }) {
               <div
                 className="timeline-label"
                 style={{
+                  fontFamily: "var(--font-family-inter), Inter, Arial, sans-serif",
                   fontSize: "10px",
-                  fontWeight: 300,
+                  fontWeight: 400,
                   letterSpacing: ".14em",
                   color: "#6A6A6A",
                 }}
