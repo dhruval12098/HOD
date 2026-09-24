@@ -11,7 +11,7 @@ export default function AboutWideBanner({ content }) {
       <div className="mx-auto w-full max-w-[42rem] py-[var(--space-6)] sm:py-[var(--space-10)]">
         {content.heading ? <h2 className="hero-slide-heading text-[clamp(1.75rem,7vw,2.25rem)] font-medium leading-[1.12] tracking-[-0.02em] text-white [text-shadow:0_2px_16px_rgba(0,0,0,0.35)] sm:text-[clamp(2.25rem,3.4vw,3.25rem)]">{content.heading}</h2> : null}
         {content.paragraph ? <p className="mx-auto mt-[var(--space-2)] max-w-[38rem] font-[family-name:var(--font-family-secondary)] text-[clamp(0.75rem,2.8vw,0.95rem)] leading-[1.55] text-white [text-shadow:0_1px_10px_rgba(0,0,0,0.45)] sm:text-[clamp(0.9rem,1.15vw,1.1rem)]">{content.paragraph}</p> : null}
-        {content.show_button && content.button_label && content.button_link ? <BrandButton href={content.button_link} className="pointer-events-auto mx-auto mt-[var(--space-3)]">{content.button_label}</BrandButton> : null}
+        {content.show_button && content.button_label && content.button_link ? <BrandButton href={content.button_link} className="banner-light-button pointer-events-auto mx-auto mt-[var(--space-3)]">{content.button_label}</BrandButton> : null}
       </div>
     </div> : null}
   </section>

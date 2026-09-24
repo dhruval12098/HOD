@@ -205,7 +205,7 @@ export default function ShopHero({
 
   return (
     <section className="border-b border-black/10 bg-white pb-7 pt-[calc(118px+var(--space-7))] sm:pb-9 sm:pt-[calc(118px+var(--space-8))] lg:pt-[calc(146px+var(--space-8))]" aria-labelledby="shop-collection-heading">
-      <div className={`flex flex-col gap-5 px-4 sm:px-7 lg:flex-row lg:items-end lg:justify-between ${wideGutter ? 'lg:px-[56px]' : 'lg:px-[52px]'}`}>
+      <div className={`flex flex-col gap-5 px-4 sm:px-7 lg:flex-row lg:items-end lg:justify-between ${wideGutter ? 'lg:px-[50px]' : 'lg:px-[52px]'}`}>
         <h1
           id="shop-collection-heading"
           className="section-title text-left text-[clamp(1.35rem,2.2vw,2rem)] font-medium uppercase leading-none tracking-[0.025em] text-[var(--color-brand-primary,#000)]"
@@ -236,10 +236,10 @@ export default function ShopHero({
         ) : null}
       </div>
 
-      <div className="relative mt-6">
+      <div className="relative mt-6 px-[60px]">
         <div
           ref={railRef}
-          className={`flex snap-x snap-mandatory gap-[3px] overflow-x-auto px-[var(--space-2)] pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${wideGutter ? 'lg:px-[56px]' : ''}`}
+          className="flex snap-x snap-mandatory gap-[3px] overflow-x-auto py-[10px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           aria-label={(activeSection?.title || title) + ' visual options'}
         >
         <Link
@@ -298,7 +298,7 @@ export default function ShopHero({
             type="button"
             aria-label="Scroll collection options backward"
             onClick={scrollRailBackward}
-            className={`absolute left-4 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center border border-black/15 bg-white text-[#0A1628] shadow-[0_8px_24px_rgba(10,22,40,0.14)] transition-colors hover:bg-[#0A1628] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A1628] ${wideGutter ? 'lg:left-[56px]' : ''}`}
+            className={`absolute left-[60px] top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center border border-black/15 bg-white text-[#0A1628] shadow-[0_8px_24px_rgba(10,22,40,0.14)] transition-colors hover:bg-[#0A1628] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A1628] ${wideGutter ? 'lg:left-[60px]' : ''}`}
           >
             <ChevronLeft size={20} strokeWidth={1.75} aria-hidden="true" />
           </button>
@@ -309,7 +309,7 @@ export default function ShopHero({
             type="button"
             aria-label="Scroll collection options forward"
             onClick={scrollRailForward}
-            className={`absolute right-4 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center border border-black/15 bg-white text-[#0A1628] shadow-[0_8px_24px_rgba(10,22,40,0.14)] transition-colors hover:bg-[#0A1628] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A1628] ${wideGutter ? 'lg:right-[56px]' : ''}`}
+            className={`absolute right-[60px] top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center border border-black/15 bg-white text-[#0A1628] shadow-[0_8px_24px_rgba(10,22,40,0.14)] transition-colors hover:bg-[#0A1628] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A1628] ${wideGutter ? 'lg:right-[60px]' : ''}`}
           >
             <ChevronRight size={20} strokeWidth={1.75} aria-hidden="true" />
           </button>
@@ -318,5 +318,3 @@ export default function ShopHero({
     </section>
   );
 }
-
-

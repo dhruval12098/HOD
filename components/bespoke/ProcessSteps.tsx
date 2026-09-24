@@ -70,7 +70,7 @@ export default function ProcessSteps({ initialItems = [] }: { initialItems?: { i
             <div className="font-serif text-[28px] font-normal text-[#0A1628] mb-3.5 tracking-[0.02em]">
               {step.title}
             </div>
-            <p className="text-[12px] font-light leading-[1.9] text-[#6A6A6A] tracking-[0.02em]">
+            <p className="text-[12px] font-light leading-[1.9] text-[#292727] tracking-[0.02em]">
               {step.description}
             </p>
           </div>

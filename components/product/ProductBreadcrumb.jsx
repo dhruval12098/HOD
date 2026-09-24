@@ -19,19 +19,19 @@ export default function ProductBreadcrumb({
   return (
     <div className="mb-3 flex items-center justify-between gap-4">
       <nav
-        className="flex flex-wrap items-center font-sans text-[9px] font-light tracking-[0.3em] uppercase text-[#6A6A6A]"
+        className="flex flex-wrap items-center font-sans text-[9px] font-light tracking-[0.3em] uppercase text-[#292727]"
         aria-label="Breadcrumb"
       >
         <a
           href="/"
-          className="text-[#6A6A6A] no-underline hover:text-[#0A1628] transition-colors duration-300"
+          className="text-[#292727] no-underline hover:text-[#0A1628] transition-colors duration-300"
         >
           Home
         </a>
         <span className="mx-[10px] text-[#7F8898]">/</span>
         <a
           href={collectionHref}
-          className="text-[#6A6A6A] no-underline hover:text-[#0A1628] transition-colors duration-300"
+          className="text-[#292727] no-underline hover:text-[#0A1628] transition-colors duration-300"
         >
           {collectionLabel}
         </a>

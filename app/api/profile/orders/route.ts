@@ -35,7 +35,7 @@ export async function GET(request: Request) {
   const { data: orders, error: ordersError, count } = await adminClient
     .from('orders')
     .select(
-      'id, order_number, status, payment_status, subtotal_amount, gst_amount, shipping_amount, total_amount, created_at',
+      'id, order_number, status, payment_status, subtotal_amount, gst_amount, shipping_amount, total_amount, customer_email, customer_first_name, customer_last_name, customer_phone, customer_birth_date, customer_anniversary_date, shipping_country, shipping_state, shipping_district, shipping_city, shipping_postal_code, shipping_address_line_1, shipping_address_line_2, payment_gateway, razorpay_payment_method, created_at',
       { count: 'exact' }
     )
     .eq('user_id', userData.user.id)
@@ -52,7 +52,7 @@ export async function GET(request: Request) {
   if (orderIds.length > 0) {
     const { data: items, error: itemsError } = await adminClient
       .from('order_items')
-      .select('order_id, product_name, quantity, unit_price, line_total, image_url, selected_metal, selected_purity, selected_size_or_fit, selected_gemstone, selected_carat')
+      .select('order_id, product_name, quantity, unit_price, line_total, image_url, selected_metal, selected_purity, selected_size_or_fit, selected_gemstone, selected_carat, item_type')
       .in('order_id', orderIds)
 
     if (itemsError) {

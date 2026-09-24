@@ -50,7 +50,6 @@ function ProductVideo({ src }: { src: string }) {
         <video
           src={src}
           className="absolute inset-0 h-full w-full bg-white object-contain object-center"
-          controls
           autoPlay
           loop
           muted
@@ -274,7 +273,6 @@ export default function ProductGallery({
                   <video
                     src={activeLightboxAsset.url}
                     className="h-full w-full bg-white object-contain object-center"
-                    controls
                     autoPlay
                     loop
                     muted

@@ -2,12 +2,12 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { getStorageImageUrl, type BlogPost } from '@/lib/data/blog-posts'
 
-export default function BlogListCard({ post }: { post: BlogPost }) {
+export default function BlogListCard({ post, basePath = '/blog' }: { post: BlogPost; basePath?: string }) {
   const imageUrl = getStorageImageUrl(post.cardImagePath || post.heroImagePath)
 
   return (
     <article className="min-w-0 bg-white">
-      <Link href={post.slug ? `/blog/${post.slug}` : '/blog'} className="group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111] focus-visible:ring-offset-4">
+      <Link href={post.slug ? `${basePath}/${post.slug}` : basePath} className="group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#111] focus-visible:ring-offset-4">
         <div className="relative aspect-[4/5] overflow-hidden bg-[#f1f1ef]">
           {imageUrl ? <Image src={imageUrl} alt={post.heroImageAlt || post.titleRaw} fill sizes="(max-width: 639px) 92vw, (max-width: 1023px) 46vw, 30vw" className="object-cover" /> : null}
         </div>

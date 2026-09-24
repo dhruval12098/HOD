@@ -64,7 +64,7 @@ export default function CheckoutReviewStep({
         <div className="mb-4 border border-[#d8dde5] bg-[#faf9f7] p-4">
           <div className="text-sm font-medium text-[#344054]">Love letter</div>
           {loveLetter.wantsLetter ? (
-            <div className="mt-2 space-y-1 text-sm leading-6 text-[#667085]">
+            <div className="mt-2 space-y-1 text-sm leading-6 text-[#292727]">
               <div className="text-[#101828]">
                 {loveLetter.letterType === 'write_myself' ? 'A custom written letter will be printed with this order.' : 'A generated love letter will be printed with this order.'}
               </div>
@@ -72,16 +72,16 @@ export default function CheckoutReviewStep({
               {loveLetter.occasionKey ? <div>Occasion: {getLoveLetterOccasionLabel(loveLetter.occasionKey)}</div> : null}
             </div>
           ) : (
-            <p className="mt-2 text-sm leading-6 text-[#667085]">No letter will be included with this order.</p>
+            <p className="mt-2 text-sm leading-6 text-[#292727]">No letter will be included with this order.</p>
           )}
         </div>
       ) : null}
       <div className="border border-[#eaecf0] bg-white p-4">
         <div className="text-sm font-medium text-[#344054]">Ready to place your order</div>
-        <p className="mt-2 text-sm leading-6 text-[#667085]">
+        <p className="mt-2 text-sm leading-6 text-[#292727]">
           We will create your pending order first, then open Razorpay so the payment can be completed securely.
         </p>
-        <div className="mt-3 space-y-1 text-sm text-[#667085]">
+        <div className="mt-3 space-y-1 text-sm text-[#292727]">
           <div>
             Catalog total: <span className="font-medium text-[#101828]">{format(totalAmount)}</span>
           </div>
@@ -98,7 +98,7 @@ export default function CheckoutReviewStep({
           ) : null}
         </div>
         <div className="mt-5 border-t border-[#eaecf0] pt-5">
-          <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#667085]">
+          <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#292727]">
             <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#b8964e]" />
             Secure payment options
           </div>
@@ -145,7 +145,7 @@ export default function CheckoutReviewStep({
               )}
             </button>
           </div>
-          <p id="apple-pay-availability" className="mt-3 text-xs leading-5 text-[#667085]">
+          <p id="apple-pay-availability" className="mt-3 text-xs leading-5 text-[#292727]">
             Both payment options open the same secure Razorpay Checkout.
           </p>
           <Link

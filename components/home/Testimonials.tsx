@@ -164,12 +164,12 @@ export default function Testimonials({ initialData }: { initialData?: HomeTestim
                       ))}
                     </div>
 
-                    <p className="mb-6 text-[13px] font-light leading-[1.9] tracking-[0.02em] text-[#253246]">
+                    <p className="mb-6 text-[13px] font-light leading-[1.9] tracking-[0.02em] text-[#292727]">
                       {t.quote}
                     </p>
 
                     <div className="font-serif text-[18px] font-normal text-[#0A1628]">{t.author}</div>
-                    <div className="mt-1 text-[9px] font-normal uppercase tracking-[0.26em] text-[#6A6A6A]">
+                    <div className="mt-1 text-[9px] font-normal uppercase tracking-[0.26em] text-[#292727]">
                       {t.origin}
                     </div>
                   </div>

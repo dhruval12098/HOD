@@ -14,7 +14,7 @@ export default function CollectionShowcase({ config }: { config: CollectionPageC
         {desktopImage ? <img src={desktopImage} alt={config.showcaseHeading || 'Collection showcase'} className="block size-full object-cover object-center" loading="lazy" /> : <span className="block size-full bg-black" />}
       </picture>
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-transparent" />
-      <div className="absolute inset-0 z-10 flex items-end px-[var(--space-4)] pb-[var(--space-10)] sm:items-center sm:px-[var(--space-8)] sm:pb-0 lg:px-[var(--space-12)] xl:px-[var(--space-16)]">
+      <div className="absolute inset-0 z-10 flex items-end justify-start px-[var(--space-4)] pb-[var(--space-10)] text-left sm:items-end sm:px-[var(--space-8)] sm:pb-[var(--space-10)] lg:px-[var(--space-12)] xl:px-[var(--space-16)]">
         <div className="w-full max-w-[42rem] py-[var(--space-6)] sm:py-[var(--space-10)]">
           <h2 id="collection-showcase-heading" className="hero-slide-heading text-[clamp(1.75rem,7vw,2.25rem)] font-medium leading-[1.12] tracking-[-0.02em] text-white sm:text-[clamp(2.25rem,3.4vw,3.25rem)]">
             {config.showcaseHeading || 'Collection'}

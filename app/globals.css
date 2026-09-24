@@ -28,6 +28,7 @@
   /* Primitive design tokens. */
   --color-black: #000000;
   --color-off-white: #f9f9f9;
+  --color-section-soft: #fbfbfb;
   --color-white: #ffffff;
 
   --font-family-cinzel: var(--font-cinzel, Georgia), Georgia, serif;
@@ -75,7 +76,7 @@
   --theme-panel-4: #edf2fa;
   --theme-ink: #0a1628;
   --theme-heading: #0a0a0a;
-  --theme-muted: #6a6a6a;
+  --theme-muted: #292727;
   --theme-muted-2: #7f8898;
   --theme-border: rgba(10, 22, 40, 0.09);
   --theme-border-strong: rgba(10, 22, 40, 0.2);
@@ -306,19 +307,19 @@ button, [role="button"], input[type="button"], input[type="submit"], input[type=
 }
 
 .checkout-input {
-  color: #101828 !important;
+  color: #000000 !important;
   background-color: transparent;
   caret-color: #101828;
   opacity: 1;
   -webkit-appearance: none;
   appearance: none;
-  -webkit-text-fill-color: #101828;
+  -webkit-text-fill-color: #000000;
 }
 
 .checkout-input::placeholder {
-  color: #98a2b3 !important;
+  color: #707070 !important;
   opacity: 1;
-  -webkit-text-fill-color: #98a2b3;
+  -webkit-text-fill-color: #707070;
 }
 
 .checkout-input:read-only {
@@ -341,14 +342,32 @@ button, [role="button"], input[type="button"], input[type="submit"], input[type=
 }
 
 ::selection {
-  background: rgba(10, 22, 40, 0.14);
-  color: var(--theme-heading);
+  background: #d8c19a;
+  color: #000000;
 }
 
 footer::selection,
 footer *::selection {
   background: rgba(255, 255, 255, 0.28);
   color: #ffffff;
+}
+
+/* CTAs over image banners use a light treatment; regular site buttons remain dark. */
+.banner-light-button {
+  border-color: #ffffff !important;
+  background: #ffffff !important;
+  color: #111111 !important;
+}
+
+.banner-light-button:hover:not(:disabled):not([aria-disabled="true"]) {
+  border-color: #ffffff !important;
+  background: transparent !important;
+  color: #ffffff !important;
+}
+
+/* Keep every homepage section heading aligned with the same 30px inset. */
+.home-page .section-title {
+  padding-inline: 30px;
 }
 
 footer::-moz-selection,

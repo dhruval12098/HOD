@@ -1,6 +1,7 @@
 ﻿'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { Minus, Plus } from 'lucide-react'
 import { useCart } from '@/lib/hooks/useCart'
@@ -11,7 +12,7 @@ import CheckoutSummary from '@/components/checkout/CheckoutSummary'
 
 const APPLIED_COUPON_KEY = 'hod_applied_coupon'
 
-type SearchProduct = CartProductSnapshot
+type SearchProduct = CartProductSnapshot & { mainCategorySlug?: string; mainCategoryName?: string }
 
 type AppliedCoupon = {
   id: number
@@ -38,10 +39,11 @@ function selectedDetails(selection: CartItemSelection) {
   ].filter(Boolean).join(', ')
 }
 
-export default function CartClient() {
-  const { items, updateQuantity, removeItem, clearCart, isHydrated } = useCart()
+export default function CartClient({ summaryInfo }: { summaryInfo?: ReactNode }) {
+  const { items, addItem, updateQuantity, removeItem, clearCart, isHydrated } = useCart()
   const { format } = useCurrency()
   const [products, setProducts] = useState<SearchProduct[]>([])
+  const [recommendations, setRecommendations] = useState<SearchProduct[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [promotions, setPromotions] = useState<StorefrontPromotion[]>([])
   const [couponCode, setCouponCode] = useState('')
@@ -68,6 +70,24 @@ export default function CartClient() {
     void load()
     return () => { ignore = true }
   }, [isHydrated, legacyLookupKey])
+
+  useEffect(() => {
+    if (!isHydrated) return
+    let ignore = false
+    void fetch('/api/public/products/search')
+      .then((response) => response.json())
+      .then((payload) => {
+        if (ignore || !Array.isArray(payload?.items)) return
+        const cartKeys = new Set(items.map((item) => item.productKey || item.productSlug))
+        const cartSlugs = new Set(items.map((item) => item.productSlug).filter(Boolean))
+        const cartCategories = new Set((payload.items as SearchProduct[]).filter((product) => cartSlugs.has(product.slug)).map((product) => product.mainCategorySlug).filter(Boolean))
+        const candidates = (payload.items as SearchProduct[]).filter((product) => !cartKeys.has(getProductKey(product)))
+        candidates.sort((a, b) => Number(cartCategories.has(b.mainCategorySlug)) - Number(cartCategories.has(a.mainCategorySlug)))
+        setRecommendations(candidates.slice(0, 4))
+      })
+      .catch(() => {})
+    return () => { ignore = true }
+  }, [isHydrated, items])
 
   useEffect(() => {
     void fetch('/api/public/promotions').then((response) => response.json()).then((payload) => setPromotions(Array.isArray(payload?.items) ? payload.items : [])).catch(() => {})
@@ -104,7 +124,7 @@ export default function CartClient() {
   }
 
   return (
-    <main className="min-h-screen bg-[#fafafa] px-5 pb-20 pt-10 text-[var(--color-brand-primary,#000000)] sm:px-8 sm:pt-14 lg:px-[52px] xl:px-[72px]">
+    <main className="min-h-screen bg-white px-5 pb-20 pt-10 text-[var(--color-brand-primary,#000000)] sm:px-8 sm:pt-14 lg:px-[10vw] 2xl:px-[200px]">
       <header className="flex items-end justify-between gap-5 border-b border-black/15 pb-6">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h1 className="font-[family-name:var(--font-family-primary)] text-[clamp(1.75rem,3vw,2.75rem)] font-medium leading-none">My Bag</h1>
@@ -116,6 +136,7 @@ export default function CartClient() {
       {!isHydrated ? (
         <div className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,1fr)_380px]"><div className="space-y-0 divide-y divide-black/10 border-y border-black/10"><div className="h-48 animate-pulse bg-[var(--color-brand-secondary,#f9f9f9)]"/><div className="h-48 animate-pulse bg-[var(--color-brand-secondary,#f9f9f9)]"/></div><div className="h-80 animate-pulse bg-[var(--color-brand-secondary,#f9f9f9)]"/></div>
       ) : resolvedItems.length || (isLoading && items.length) ? (
+        <>
         <div className="grid items-start gap-12 pt-8 lg:grid-cols-[minmax(0,1fr)_360px] xl:gap-20 xl:grid-cols-[minmax(0,1fr)_400px]">
           <section aria-label="Bag items" className="min-w-0">
             <div className="divide-y divide-black/10 border-y border-black/10 bg-white">
@@ -130,10 +151,10 @@ export default function CartClient() {
                     </Link>
 
                     <div className="flex min-w-0 flex-col">
-                      <p className="font-[family-name:var(--font-family-secondary)] text-[10px] uppercase tracking-[0.1em] text-black/45">{product.shortMeta}</p>
+                      <p className="font-[family-name:var(--font-family-secondary)] text-[12px] uppercase tracking-[0.1em] text-black/70">{product.shortMeta}</p>
                       <Link href={`/shop/${product.slug}`} className="mt-2 font-[family-name:var(--font-family-primary)] text-[16px] font-semibold leading-[1.4] text-black no-underline sm:text-[18px]">{product.name}</Link>
-                      {details ? <p className="mt-2 font-[family-name:var(--font-family-secondary)] text-[12px] leading-5 text-black/60">{details}</p> : null}
-                      <p className="mt-1 font-[family-name:var(--font-family-secondary)] text-[11px] leading-5 text-black/50">{item.selection.loveLetter?.wantsLetter ? `Love letter included${item.selection.loveLetter.recipientName ? ` for ${item.selection.loveLetter.recipientName}` : ''}` : 'No love letter'}</p>
+                      {details ? <p className="mt-2 font-[family-name:var(--font-family-secondary)] text-[13px] leading-5 text-black/75">{details}</p> : null}
+                      <p className="mt-1 font-[family-name:var(--font-family-secondary)] text-[12px] leading-5 text-black/70">{item.selection.loveLetter?.wantsLetter ? `Love letter included${item.selection.loveLetter.recipientName ? ` for ${item.selection.loveLetter.recipientName}` : ''}` : 'No love letter'}</p>
 
                       <div className="mt-auto flex flex-wrap items-end gap-x-6 gap-y-3 pt-5">
                         <div className="grid h-9 grid-cols-[34px_38px_34px] border border-black/25" aria-label={`Quantity for ${product.name}`}>
@@ -141,13 +162,13 @@ export default function CartClient() {
                           <span className="flex items-center justify-center border-x border-black/15 font-[family-name:var(--font-family-secondary)] text-[12px]">{item.quantity}</span>
                           <button type="button" onClick={() => updateQuantity(item.key, item.quantity + 1)} aria-label="Increase quantity" className="flex items-center justify-center border-0 bg-white text-black transition hover:bg-black hover:text-white"><Plus size={13} strokeWidth={1.5}/></button>
                         </div>
-                        <button type="button" onClick={() => removeItem(item.key)} className="mb-2 border-0 bg-transparent p-0 font-[family-name:var(--font-family-secondary)] text-[11px] text-black/55 underline underline-offset-4 transition hover:text-black">Remove</button>
+                        <button type="button" onClick={() => removeItem(item.key)} className="mb-2 border-0 bg-transparent p-0 font-[family-name:var(--font-family-secondary)] text-[12px] text-black/70 underline underline-offset-4 transition hover:text-black">Remove</button>
                       </div>
                     </div>
 
                     <div className="flex items-start justify-between gap-4 sm:block sm:min-w-[110px] sm:text-right">
                       <span className="font-[family-name:var(--font-family-secondary)] text-[13px] font-semibold text-black sm:text-[14px]">{format(unitPrice * item.quantity)}</span>
-                      {item.quantity > 1 ? <span className="mt-1 block font-[family-name:var(--font-family-secondary)] text-[10px] text-black/45">{format(unitPrice)} each</span> : null}
+                      {item.quantity > 1 ? <span className="mt-1 block font-[family-name:var(--font-family-secondary)] text-[12px] text-black/70">{format(unitPrice)} each</span> : null}
                     </div>
                   </article>
                 )
@@ -157,7 +178,7 @@ export default function CartClient() {
             </div>
           </section>
 
-                    <aside className="h-fit lg:sticky lg:top-28">
+          <aside className="h-fit lg:sticky lg:top-28">
             <CheckoutSummary
               summary={{
                 items: resolvedItems.map(({ item, product }) => ({
@@ -195,11 +216,15 @@ export default function CartClient() {
                 added: appliedCoupon?.rewardType === 'free_gift' && appliedCoupon.gift != null && appliedCoupon.code === featuredPromotion.code,
                 onAction: () => { if (!appliedCoupon && total >= featuredPromotion.minimumOrderAmount) { setCouponCode(featuredPromotion.code); void applyCoupon(featuredPromotion.code) } },
               } : null}
+              belowSummary={<>
+                <Link href="/checkout?mode=cart" className="mt-5 flex min-h-12 w-full items-center justify-center border border-black bg-black px-6 font-[family-name:var(--font-family-button)] text-[12px] font-semibold uppercase tracking-[0.1em] text-white no-underline transition hover:bg-white hover:text-black">Checkout</Link>
+              </>}
             />
-            <Link href="/checkout?mode=cart" className="mt-4 flex min-h-12 w-full items-center justify-center border border-black bg-black px-6 font-[family-name:var(--font-family-button)] text-[12px] font-semibold uppercase tracking-[0.1em] text-white no-underline transition hover:bg-white hover:text-black">Continue to Checkout</Link>
-            <p className="mt-4 text-center font-[family-name:var(--font-family-secondary)] text-[10px] leading-4 text-black/45">Complimentary insured shipping and signature packaging included.</p>
+            {summaryInfo}
           </aside>
         </div>
+        {recommendations[0] ? <section className="mt-12 grid border-t border-black/10 pt-8 lg:grid-cols-[minmax(0,1fr)_360px] xl:gap-20 xl:grid-cols-[minmax(0,1fr)_400px]"><article className="grid w-full gap-6 border border-black/10 bg-[#f8f8fa] p-5 sm:grid-cols-[240px_minmax(0,1fr)] sm:p-6"><Link href={`/shop/${recommendations[0].slug}`} className="aspect-square overflow-hidden border border-black/10 bg-white p-3">{recommendations[0].imageUrl ? <img src={recommendations[0].imageUrl} alt={recommendations[0].name} className="h-full w-full object-contain" /> : null}</Link><div className="flex min-w-0 flex-col py-1"><p className="font-[family-name:var(--font-family-inter)] text-[15px] text-black/60">{recommendations[0].mainCategoryName || recommendations[0].shortMeta}</p><Link href={`/shop/${recommendations[0].slug}`} className="mt-1 max-w-2xl font-[family-name:var(--font-family-inter)] text-[24px] font-semibold leading-8 text-black no-underline">{recommendations[0].name}</Link><p className="mt-2 font-[family-name:var(--font-family-inter)] text-[21px] font-semibold text-black">{format(recommendations[0].priceFrom)}</p><button type="button" onClick={() => addItem(recommendations[0], {})} className="mt-auto min-h-12 w-full max-w-md border border-black bg-black px-6 font-[family-name:var(--font-family-button)] text-[12px] font-semibold uppercase tracking-[0.1em] text-white transition hover:bg-white hover:text-black">Add to bag</button></div></article></section> : null}
+        </>
       ) : (
         <section className="flex min-h-[440px] flex-col items-center justify-center border-b border-black/15 px-6 text-center">
           <h2 className="font-[family-name:var(--font-family-primary)] text-[24px] font-medium text-black">Your bag is empty</h2>

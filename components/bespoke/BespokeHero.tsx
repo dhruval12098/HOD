@@ -239,7 +239,7 @@ export default function BespokeHero({ onEnquireClick, initialHero = null, initia
           </RevealDiv>
 
           <RevealDiv delay={200}>
-            <p className="text-[13px] font-light leading-[2] text-[#6A6A6A] tracking-[0.06em] max-w-[640px] mx-auto mb-10">
+            <p className="text-[13px] font-light leading-[2] text-[#292727] tracking-[0.06em] max-w-[640px] mx-auto mb-10">
               {hero.subtitle}
             </p>
           </RevealDiv>

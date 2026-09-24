@@ -29,7 +29,7 @@ export default function ProductCategoryPill({ category, carat }) {
       <span className="w-[3px] h-[3px] bg-[#0A1628] opacity-50 rounded-full" />
 
       {/* carat meta */}
-      <span className="font-light tracking-[0.18em] text-[#6A6A6A] font-numeric">{carat}</span>
+      <span className="font-light tracking-[0.18em] text-[#292727] font-numeric">{carat}</span>
     </div>
   );
 }

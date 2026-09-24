@@ -262,7 +262,7 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
               (currentSlide.button_text.trim() && currentSlide.button_link.trim())) ? (
               <>
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-2/3 bg-gradient-to-t from-black/70 via-black/28 to-transparent sm:hidden" />
-                <div className="pointer-events-none absolute inset-0 z-20 flex items-end justify-center px-[var(--space-4)] pb-[var(--space-10)] text-center sm:items-center sm:justify-start sm:px-[var(--space-8)] sm:pb-0 sm:text-left lg:px-[var(--space-12)] xl:px-[var(--space-16)]">
+                <div className="pointer-events-none absolute inset-0 z-20 flex items-end justify-start px-[var(--space-4)] pb-[var(--space-10)] text-left sm:items-end sm:justify-start sm:px-[var(--space-8)] sm:pb-[var(--space-10)] lg:px-[var(--space-12)] xl:px-[var(--space-16)]">
                   <div className="relative mx-auto w-full max-w-[calc(100vw-2rem)] py-[var(--space-6)] sm:mx-0 sm:max-w-[42rem] sm:py-[var(--space-10)]">
                     {currentSlide.headline.trim() ? (
                       <h1
@@ -288,7 +288,7 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
                     {currentSlide.button_text.trim() && currentSlide.button_link.trim() ? (
                       <BrandButton
                         href={currentSlide.button_link}
-                        className="pointer-events-auto mx-auto mt-[var(--space-3)] sm:mx-0"
+                        className="banner-light-button pointer-events-auto mx-auto mt-[var(--space-3)] sm:mx-0"
                       >
                         {currentSlide.button_text}
                       </BrandButton>

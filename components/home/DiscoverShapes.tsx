@@ -76,7 +76,7 @@ export default function DiscoverShapes({ initialItems = [] }: { initialItems?: I
                     alt={item.imageAlt}
                     fill
                     sizes="(max-width: 639px) 64px, (max-width: 1023px) 72px, 80px"
-                    className="object-contain transition-transform duration-300 ease-out group-hover:scale-105 group-focus-visible:scale-105"
+                    className="object-contain"
                   />
                 </span>
                 <span className="mt-[var(--space-2)] max-w-full text-center font-[family-name:var(--font-family-secondary)] text-[0.7rem] font-medium leading-[1.25] tracking-[0.01em] text-[var(--color-brand-primary,#000)] sm:text-xs">
@@ -85,7 +85,7 @@ export default function DiscoverShapes({ initialItems = [] }: { initialItems?: I
               </>
             );
 
-            const className = "group flex min-w-0 flex-col items-center rounded-sm px-[var(--space-2)] py-[var(--space-3)] outline-none transition-colors hover:bg-[var(--color-brand-secondary,#F9F9F9)] focus-visible:bg-[var(--color-brand-secondary,#F9F9F9)] focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary,#000)]";
+            const className = "group flex min-w-0 flex-col items-center rounded-sm px-[var(--space-2)] py-[var(--space-3)] outline-none shadow-none hover:bg-transparent hover:shadow-none focus-visible:bg-transparent focus-visible:shadow-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary,#000)]";
 
             return item.href ? (
               <Link key={item.id} href={item.href} className={className} aria-label={`Browse ${item.name}`}>

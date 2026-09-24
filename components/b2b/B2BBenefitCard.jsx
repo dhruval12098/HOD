@@ -7,7 +7,7 @@ export default function B2BBenefitCard({ icon, title, description }) {
       <div className="font-serif text-[20px] font-normal text-[#0A1628] mb-2.5 tracking-[0.02em]">
         {title}
       </div>
-      <p className="text-[11px] font-light tracking-[0.08em] text-[#6A6A6A] leading-[1.9]">
+      <p className="text-[11px] font-light tracking-[0.08em] text-[#292727] leading-[1.9]">
         {description}
       </p>
     </div>

@@ -7,6 +7,7 @@ import { useSearchParams } from 'next/navigation';
 import CheckoutInformationStep from '@/components/checkout/CheckoutInformationStep';
 import CheckoutConfirmationStep from '@/components/checkout/CheckoutConfirmationStep';
 import CheckoutSummary from '@/components/checkout/CheckoutSummary';
+import CheckoutDeliveryPreview from '@/components/checkout/CheckoutDeliveryPreview';
 import type { CheckoutChargeQuote, CheckoutDisplayItem, CheckoutPostalAreaOption, CheckoutPostalLookupState, CheckoutProfileForm } from '@/components/checkout/types';
 import { useCurrency } from '@/context/CurrencyContext';
 import { getCollectionHref } from '@/lib/browse-context';
@@ -170,6 +171,8 @@ const EMPTY_PROFILE_FORM: CheckoutProfileForm = {
   last_name: '',
   email: '',
   phone: '',
+  birth_date: '',
+  anniversary_date: '',
   country: '',
   state: '',
   district: '',
@@ -211,6 +214,7 @@ export default function CheckoutPageClient() {
     bannerImageUrl?: string
   } | null>(null);
   const [couponLoading, setCouponLoading] = useState(false);
+  const [giftPromotion, setGiftPromotion] = useState<{ code: string; minimumOrderAmount: number; rewardType: string; gift?: { name: string; imageUrl?: string } | null } | null>(null)
   const [pendingPaymentSession, setPendingPaymentSession] = useState<PendingPaymentSession | null>(null)
   const [chargeQuote, setChargeQuote] = useState<CheckoutChargeQuote | null>(null)
   const [quoteStatus, setQuoteStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle')
@@ -250,6 +254,13 @@ export default function CheckoutPageClient() {
     }
     try { const stored = localStorage.getItem(APPLIED_COUPON_KEY); if (stored) { const parsed = JSON.parse(stored); setAppliedCoupon(parsed); setCouponCodeInput(parsed.code || '') } } catch {}
   }, [cartMode])
+
+  useEffect(() => {
+    void fetch('/api/public/promotions').then((response) => response.json()).then((payload) => {
+      const promotion = Array.isArray(payload?.items) ? payload.items.find((item: { rewardType?: string }) => item.rewardType === 'free_gift') : null
+      if (promotion) setGiftPromotion(promotion)
+    }).catch(() => {})
+  }, [])
 
   const singleItem = useMemo<CheckoutDisplayItem>(() => ({
     name: searchParams.get('name') ?? 'Selected Piece',
@@ -766,6 +777,8 @@ export default function CheckoutPageClient() {
           last_name: current.last_name || nextProfile?.last_name || '',
           email: current.email || nextProfile?.email || sessionUser?.email || '',
           phone: current.phone || nextProfile?.phone || '',
+          birth_date: current.birth_date || nextProfile?.birth_date || '',
+          anniversary_date: current.anniversary_date || nextProfile?.anniversary_date || '',
           country: current.country || nextProfile?.country || '',
           state: current.state || nextProfile?.state || '',
           district: current.district || nextProfile?.district || '',
@@ -820,6 +833,8 @@ export default function CheckoutPageClient() {
       last_name: customerForm.last_name.trim(),
       email: customerForm.email.trim(),
       phone: customerForm.phone.trim(),
+      birth_date: customerForm.birth_date.trim(),
+      anniversary_date: customerForm.anniversary_date.trim(),
       country: customerForm.country.trim(),
       state: customerForm.state.trim(),
       district: customerForm.district.trim(),
@@ -853,6 +868,8 @@ export default function CheckoutPageClient() {
       nextErrors.postal_code = 'Enter a valid postal code or pincode.'
     }
     if (!trimmed.address_line_1) nextErrors.address_line_1 = 'Address line 1 is required.'
+    if (trimmed.birth_date && (trimmed.birth_date > new Date().toISOString().slice(0, 10) || !/^\d{4}-\d{2}-\d{2}$/.test(trimmed.birth_date))) nextErrors.birth_date = 'Enter a valid birth date.'
+    if (trimmed.anniversary_date && !/^\d{4}-\d{2}-\d{2}$/.test(trimmed.anniversary_date)) nextErrors.anniversary_date = 'Enter a valid anniversary date.'
 
     return nextErrors
   }
@@ -861,7 +878,7 @@ export default function CheckoutPageClient() {
     const allErrors = validateCheckoutForm()
     const keysForStep: Array<keyof CheckoutProfileForm> =
       stepIndex === 0
-        ? ['first_name', 'last_name', 'email', 'phone', 'country', 'state', 'city', 'postal_code', 'address_line_1']
+        ? ['first_name', 'last_name', 'email', 'phone', 'birth_date', 'anniversary_date', 'country', 'state', 'city', 'postal_code', 'address_line_1']
         : []
 
     const stepErrors = keysForStep.reduce<Partial<Record<keyof CheckoutProfileForm, string>>>((acc, key) => {
@@ -1092,8 +1109,8 @@ export default function CheckoutPageClient() {
       }
     };
 
-  const handleApplyCoupon = async () => {
-    const normalizedCode = couponCodeInput.trim().toUpperCase()
+  const handleApplyCoupon = async (requestedCode?: string) => {
+    const normalizedCode = (requestedCode ?? couponCodeInput).trim().toUpperCase()
     if (!normalizedCode) return
 
     setCouponLoading(true)
@@ -1141,7 +1158,7 @@ export default function CheckoutPageClient() {
   if (sessionLoading) {
     return (
       <section className="min-h-[calc(100vh-111px)] bg-white px-4 py-8 sm:px-6 lg:px-10">
-        <div className="mx-auto max-w-[1240px] rounded-[24px] border border-[#e7ebf0] bg-white p-6 text-sm text-[#667085] shadow-[0_18px_50px_rgba(15,23,42,0.04)]">
+        <div className="mx-auto max-w-[1240px] rounded-[24px] border border-[#e7ebf0] bg-white p-6 text-sm text-[#292727] shadow-[0_18px_50px_rgba(15,23,42,0.04)]">
           Loading checkout...
         </div>
       </section>
@@ -1151,7 +1168,7 @@ export default function CheckoutPageClient() {
   if (cartMode && cartItems.length > 0 && resolvedCartItems.length === 0) {
     return (
       <section className="min-h-[calc(100vh-111px)] bg-white px-4 py-8 sm:px-6 lg:px-10">
-        <div className="mx-auto max-w-[1240px] rounded-[24px] border border-[#e7ebf0] bg-white p-6 text-sm text-[#667085] shadow-[0_18px_50px_rgba(15,23,42,0.04)]">
+        <div className="mx-auto max-w-[1240px] rounded-[24px] border border-[#e7ebf0] bg-white p-6 text-sm text-[#292727] shadow-[0_18px_50px_rgba(15,23,42,0.04)]">
           Loading checkout...
         </div>
       </section>
@@ -1163,7 +1180,7 @@ export default function CheckoutPageClient() {
       <section className="min-h-[calc(100vh-111px)] bg-white px-4 py-8 sm:px-6 lg:px-10">
         <div className="mx-auto max-w-[720px] rounded-[24px] border border-[#e7ebf0] bg-white p-8 text-center shadow-[0_18px_50px_rgba(15,23,42,0.04)]">
           <h1 className="text-[32px] font-semibold tracking-[-0.04em] text-[#101828]">Nothing ready for checkout</h1>
-          <p className="mt-3 text-sm leading-7 text-[#667085]">Add a product to cart or start checkout from a product page first.</p>
+          <p className="mt-3 text-sm leading-7 text-[#292727]">Add a product to cart or start checkout from a product page first.</p>
           <div className="mt-6">
             <Link href="/shop" className="inline-flex h-11 items-center justify-center rounded-full bg-[#101828] px-6 text-sm font-medium text-white transition hover:bg-[#1d2939]">
               Explore Products
@@ -1183,7 +1200,7 @@ export default function CheckoutPageClient() {
               <div className="h-7 w-7 animate-spin rounded-full border-2 border-[#d0d5dd] border-t-[#101828]" />
             </div>
             <div className="mt-5 text-[24px] font-semibold tracking-[-0.03em] text-[#101828]">Confirming your order</div>
-            <p className="mt-2 text-sm leading-7 text-[#667085]">
+            <p className="mt-2 text-sm leading-7 text-[#292727]">
               Your payment is done. We are now verifying Razorpay and preparing your order confirmation.
             </p>
           </div>
@@ -1193,7 +1210,7 @@ export default function CheckoutPageClient() {
         <div className="mb-6">
           <div className="text-[11px] font-medium uppercase tracking-[0.24em] text-[#98a2b3]">Checkout</div>
           <div className="flex items-end justify-between gap-5"><h1 className="font-[family-name:var(--font-family-primary)] text-[28px] font-semibold uppercase text-black">Checkout</h1><div className="font-[family-name:var(--font-family-secondary)] text-[12px] text-black/45"><span className={currentStep === 0 ? 'font-semibold text-black' : ''}>Shipping</span><span className="px-2">›</span><span className={currentStep === 1 ? 'font-semibold text-black' : ''}>Payment</span></div></div>
-          <p className="mt-2 text-sm text-[#667085]">{cartMode ? 'Checkout synced to the products currently saved in your cart.' : 'Checkout preview for your selected product.'}</p>
+          <p className="mt-2 text-sm text-[#292727]">{cartMode ? 'Checkout synced to the products currently saved in your cart.' : 'Checkout preview for your selected product.'}</p>
         </div>
 
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(350px,420px)] lg:gap-14">
@@ -1205,7 +1222,7 @@ export default function CheckoutPageClient() {
             ) : null}
 
             {quoteStatus === 'loading' ? (
-              <div className="rounded-[24px] border border-[#d0d5dd] bg-white px-5 py-4 text-sm text-[#667085]">
+              <div className="rounded-[24px] border border-[#d0d5dd] bg-white px-5 py-4 text-sm text-[#292727]">
                 Confirming the latest price, tax, stock, and availability…
               </div>
             ) : null}
@@ -1240,7 +1257,7 @@ export default function CheckoutPageClient() {
               </div>
             ) : null}
             <div className="animate-[fadeUp_0.35s_ease]">
-              {currentStep === 0 ? <CheckoutInformationStep form={customerForm} onChange={updateCustomerForm} errors={fieldErrors} postalLookup={postalLookup} onPostalBlur={handlePostalCodeBlur} postalAreaOptions={postalAreaOptions} onPostalAreaSelect={handlePostalAreaSelect} isGuest={guestCheckout} /> : null}
+              {currentStep === 0 ? <><CheckoutInformationStep form={customerForm} onChange={updateCustomerForm} errors={fieldErrors} postalLookup={postalLookup} onPostalBlur={handlePostalCodeBlur} postalAreaOptions={postalAreaOptions} onPostalAreaSelect={handlePostalAreaSelect} isGuest={guestCheckout} /><CheckoutDeliveryPreview items={checkoutItems} /></> : null}
               {currentStep === 1 ? <CheckoutConfirmationStep form={customerForm} itemCount={checkoutItems.reduce((sum, item) => sum + item.quantity, 0)} onEdit={() => setCurrentStep(0)} onPay={handlePayNow} processing={processingPayment} disabled={quoteStatus !== 'ready' || unavailableCartItemCount > 0} message={unavailableCartItemCount > 0 ? 'Resolve unavailable cart items before payment.' : quoteStatus === 'loading' ? 'Confirming the latest price and availability...' : quoteStatus === 'error' ? quoteError : undefined} /> : null}
             </div>
             {!isLastStep ? (
@@ -1252,7 +1269,7 @@ export default function CheckoutPageClient() {
               <div className="flex justify-start">
                 <Link
                   href={continueHref}
-                  className="inline-flex h-11 items-center justify-center rounded-full border border-transparent px-2 text-sm font-medium text-[#667085] transition hover:text-[#101828]"
+                  className="inline-flex h-11 items-center justify-center rounded-full border border-transparent px-2 text-sm font-medium text-[#292727] transition hover:text-[#101828]"
                 >
                   Continue Shopping
                 </Link>
@@ -1276,6 +1293,20 @@ export default function CheckoutPageClient() {
                 onCouponAction={() => { if (appliedCoupon) handleRemoveCoupon(); else void handleApplyCoupon() }}
                 couponApplied={Boolean(appliedCoupon)}
                 couponLoading={couponLoading}
+                giftOffer={giftPromotion?.rewardType === 'free_gift' && giftPromotion.gift ? {
+                  name: giftPromotion.gift.name,
+                  imageUrl: giftPromotion.gift.imageUrl,
+                  minimumOrderAmount: giftPromotion.minimumOrderAmount,
+                  remainingAmount: Math.max(0, giftPromotion.minimumOrderAmount - subtotal),
+                  unlocked: subtotal >= giftPromotion.minimumOrderAmount,
+                  added: Boolean(appliedCoupon?.rewardType === 'free_gift' && (authoritativePricing?.gift || appliedCoupon.gift)),
+                  onAction: () => {
+                    if (!appliedCoupon && subtotal >= giftPromotion.minimumOrderAmount) {
+                      setCouponCodeInput(giftPromotion.code)
+                      void handleApplyCoupon(giftPromotion.code)
+                    }
+                  },
+                } : null}
               />
             </div>
           </div>

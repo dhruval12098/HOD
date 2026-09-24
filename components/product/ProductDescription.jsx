@@ -13,7 +13,7 @@ export default function ProductDescription({ text, compact = false }) {
           About The Product
         </h2>
       ) : null}
-      <p className={`${compact ? 'max-w-[58ch] text-[12px] leading-[1.8]' : 'text-[13px] leading-[1.9]'} font-sans font-light text-[#253246] tracking-[0.02em]`}>
+      <p className={`${compact ? 'max-w-[58ch] text-[12px] leading-[1.8]' : 'text-[13px] leading-[1.9]'} font-sans font-light text-[#292727] tracking-[0.02em]`}>
         {text}
       </p>
     </div>

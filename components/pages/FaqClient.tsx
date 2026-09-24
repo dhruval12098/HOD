@@ -32,15 +32,50 @@ export default function FaqClient({
   const [query, setQuery] = useState('');
   const [activeCategoryId, setActiveCategoryId] = useState<number | null>(null);
   const [openQuestion, setOpenQuestion] = useState<string | null>(items[0]?.question ?? null);
+  const normalizedQuery = query.trim().toLocaleLowerCase();
+
+  const categorySuggestions = useMemo(() => {
+    if (!normalizedQuery) return [];
+    return categories
+      .filter((category) => category.name.toLocaleLowerCase().includes(normalizedQuery))
+      .slice(0, 5);
+  }, [categories, normalizedQuery]);
+
+  const questionSuggestions = useMemo(() => {
+    if (!normalizedQuery || categorySuggestions.length) return [];
+    return items
+      .filter((item) => item.question.toLocaleLowerCase().includes(normalizedQuery))
+      .slice(0, 6);
+  }, [categorySuggestions.length, items, normalizedQuery]);
+
+  const categoryQuestionSuggestions = useMemo(() => {
+    if (!categorySuggestions.length) return [];
+    const categoryIds = new Set(categorySuggestions.map((category) => category.id));
+    return items.filter((item) => item.category_id !== null && categoryIds.has(item.category_id)).slice(0, 6);
+  }, [categorySuggestions, items]);
 
   const filteredItems = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = normalizedQuery;
     return items.filter((item) => {
       if (activeCategoryId !== null && item.category_id !== activeCategoryId) return false;
       if (!q) return true;
-      return item.question.toLowerCase().includes(q) || item.answer.toLowerCase().includes(q);
+      if (categorySuggestions.length) {
+        return categorySuggestions.some((category) => category.id === item.category_id);
+      }
+      return item.question.toLocaleLowerCase().includes(q);
     });
-  }, [activeCategoryId, items, query]);
+  }, [activeCategoryId, categorySuggestions, items, normalizedQuery]);
+
+  const selectCategorySuggestion = (categoryId: number) => {
+    setActiveCategoryId(categoryId);
+    setQuery('');
+  };
+
+  const selectQuestionSuggestion = (item: FaqClientItem) => {
+    setActiveCategoryId(item.category_id);
+    setOpenQuestion(item.question);
+    setQuery('');
+  };
 
   return (
     <>
@@ -48,20 +83,55 @@ export default function FaqClient({
         How May We Help You?
       </h1>
 
-      <div className="mx-auto mt-6 flex max-w-lg items-center gap-3 border border-[#e4e4e4] bg-(--color-white) px-4 py-3">
-        <Search size={16} strokeWidth={1.75} className="shrink-0 text-[#767676]" aria-hidden="true" />
-        <input
-          type="search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search questions"
-          aria-label="Search frequently asked questions"
-          className="w-full bg-transparent text-[14px] text-[#222222] outline-none placeholder:text-[#9a9a9a]"
-        />
+      <div className="relative z-10 mx-auto mt-6 max-w-lg">
+        <div className="flex items-center gap-3 border border-[#e4e4e4] bg-(--color-white) px-4 py-3">
+          <Search size={16} strokeWidth={1.75} className="shrink-0 text-[#767676]" aria-hidden="true" />
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search categories or questions"
+            aria-label="Search FAQ categories or questions"
+            aria-autocomplete="list"
+            aria-expanded={Boolean(normalizedQuery)}
+            aria-controls="faq-search-suggestions"
+            className="w-full bg-transparent text-[14px] text-[#222222] outline-none placeholder:text-[#9a9a9a]"
+          />
+        </div>
+        {normalizedQuery ? (
+          <div id="faq-search-suggestions" role="listbox" aria-label={categorySuggestions.length ? 'Matching categories and related questions' : 'Matching questions'} className="absolute inset-x-0 top-full max-h-72 overflow-y-auto border border-t-0 border-[#e4e4e4] bg-white shadow-md">
+            {categorySuggestions.length ? (
+              <>
+                {categorySuggestions.map((category) => (
+                  <button key={category.id} type="button" role="option" aria-selected={false} onClick={() => selectCategorySuggestion(category.id)} className="block w-full border-0 border-b border-[#eeeeee] bg-white px-4 py-3 text-left text-[13px] text-[#222222] hover:bg-[#f7f7f7]">
+                    <span className="block text-[10px] uppercase tracking-[0.08em] text-[#767676]">Category</span>
+                    <span>{category.name}</span>
+                  </button>
+                ))}
+                {categoryQuestionSuggestions.length ? <p className="border-b border-[#eeeeee] bg-[#fafafa] px-4 py-2 text-[10px] font-medium uppercase tracking-[0.08em] text-[#767676]">Related questions</p> : null}
+                {categoryQuestionSuggestions.map((item) => (
+                  <button key={item.question} type="button" role="option" aria-selected={false} onClick={() => selectQuestionSuggestion(item)} className="block w-full border-0 border-b border-[#eeeeee] bg-white px-4 py-3 text-left text-[13px] text-[#222222] last:border-b-0 hover:bg-[#f7f7f7]">
+                    <span className="block text-[10px] uppercase tracking-[0.08em] text-[#767676]">Related question</span>
+                    <span>{item.question}</span>
+                  </button>
+                ))}
+              </>
+            ) : questionSuggestions.length ? (
+              questionSuggestions.map((item) => (
+                <button key={item.question} type="button" role="option" aria-selected={false} onClick={() => selectQuestionSuggestion(item)} className="block w-full border-0 border-b border-[#eeeeee] bg-white px-4 py-3 text-left text-[13px] text-[#222222] last:border-b-0 hover:bg-[#f7f7f7]">
+                  <span className="block text-[10px] uppercase tracking-[0.08em] text-[#767676]">Question</span>
+                  <span>{item.question}</span>
+                </button>
+              ))
+            ) : (
+              <p className="px-4 py-3 text-[13px] text-[#555555]">No matching categories or questions.</p>
+            )}
+          </div>
+        ) : null}
       </div>
 
       {subtitle ? (
-        <p className="mt-10 text-center text-[13px] leading-[1.75] text-[#3f3f3f]">{subtitle}</p>
+        <p className="mt-10 text-center text-[13px] leading-[1.75] text-[#292727]">{subtitle}</p>
       ) : null}
 
       {categories.length ? (
@@ -132,13 +202,13 @@ export default function FaqClient({
                       </svg>
                     </button>
                     {isOpen ? (
-                      <p className="pb-5 text-[13px] leading-[1.75] text-[#3f3f3f]">{item.answer}</p>
+                      <p className="pb-5 text-[13px] leading-[1.75] text-[#292727]">{item.answer}</p>
                     ) : null}
                   </section>
                 );
               })
             ) : (
-              <p className="py-4 text-[13px] leading-[1.75] text-[#3f3f3f]">No questions match your search.</p>
+              <p className="py-4 text-[13px] leading-[1.75] text-[#292727]">No questions match your search.</p>
             )}
           </div>
         </div>

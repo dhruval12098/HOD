@@ -61,7 +61,7 @@ export default function ProductMetalComposition({ composition, fallbackColor = '
             </div>
             <div>
               <div className="text-[30px] font-semibold leading-[1.1] text-[var(--color-brand-primary,#000000)]">{composition.name}</div>
-              {composition.description ? <p className="mt-3 max-w-[36ch] text-[13px] leading-[1.8] text-[#6A6A6A]">{composition.description}</p> : null}
+              {composition.description ? <p className="mt-3 max-w-[36ch] text-[13px] leading-[1.8] text-[#292727]">{composition.description}</p> : null}
             </div>
           </div>
         </div>

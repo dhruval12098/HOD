@@ -95,7 +95,7 @@ export default function WishlistClient({ embedded = false }: { embedded?: boolea
       {embedded ? null : (
         <>
           <h1 className="text-center text-[clamp(1.35rem,2vw,1.75rem)] font-extrabold uppercase leading-none tracking-[0.04em] text-[#111111]">Wish List</h1>
-          <p className="mt-4 text-center text-[13px] leading-[1.75] text-[#3f3f3f]">Saved pieces you may want to come back to.</p>
+          <p className="mt-4 text-center text-[13px] leading-[1.75] text-[#292727]">Saved pieces you may want to come back to.</p>
         </>
       )}
       {isLoading || !ready ? (
@@ -121,7 +121,7 @@ export default function WishlistClient({ embedded = false }: { embedded?: boolea
         </div>
       ) : (
         <div className="mt-8 border border-[#e4e4e4] bg-white px-6 py-12 text-center">
-          <p className="text-[14px] text-[#6A6A6A]">Your wishlist is empty.</p>
+          <p className="text-[14px] text-[#292727]">Your wishlist is empty.</p>
           <Link href="/shop" className="brand-button mt-5">
             Explore Products
           </Link>

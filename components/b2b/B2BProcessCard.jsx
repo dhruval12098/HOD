@@ -15,7 +15,7 @@ export default function B2BProcessCard({ step, eyebrow, title, description }) {
         {title}
       </div>
 
-      <p className="text-[12px] font-light tracking-[0.08em] text-[#6A6A6A] leading-[1.9] max-w-[46ch]">
+      <p className="text-[12px] font-light tracking-[0.08em] text-[#292727] leading-[1.9] max-w-[46ch]">
         {description}
       </p>
     </div>

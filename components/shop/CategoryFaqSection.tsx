@@ -35,7 +35,7 @@ export default function CategoryFaqSection({ categoryName, items }: { categoryNa
                     <path d="M6 1V11M1 6H11" strokeWidth="1.5" strokeLinecap="round" />
                   </svg>
                 </button>
-                {isOpen ? <p className="pb-5 font-[family-name:var(--font-family-secondary)] text-[13px] leading-[1.75] text-[#3f3f3f]">{item.answer}</p> : null}
+                {isOpen ? <p className="pb-5 font-[family-name:var(--font-family-secondary)] text-[13px] leading-[1.75] text-[#292727]">{item.answer}</p> : null}
               </article>
             )
           })}

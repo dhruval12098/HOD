@@ -319,7 +319,7 @@ export default function BespokePortfolio({
             </h2>
           </RevealDiv>
           <RevealDiv delay={200}>
-            <p className="text-[12px] font-light tracking-[0.12em] text-[#6A6A6A] leading-[1.9] max-w-[560px] mx-auto mt-4">
+            <p className="text-[12px] font-light tracking-[0.12em] text-[#292727] leading-[1.9] max-w-[560px] mx-auto mt-4">
               A selection of pieces we&apos;ve crafted for clients across 40+ countries. Click any piece to view the story and craftsmanship video.
             </p>
           </RevealDiv>
@@ -333,7 +333,7 @@ export default function BespokePortfolio({
               className={`px-[22px] py-2.5 text-[10px] font-normal tracking-[0.24em] uppercase border cursor-pointer transition-all duration-300 ${
                 activeFilter === filter.key
                   ? 'bg-[#0A1628] text-[#FAFBFD] border-[#0A1628]'
-                  : 'bg-transparent text-[#6A6A6A] border-[rgba(10,22,40,0.10)] hover:text-[#0A1628] hover:border-[#253246]'
+                  : 'bg-transparent text-[#292727] border-[rgba(10,22,40,0.10)] hover:text-[#0A1628] hover:border-[#253246]'
               }`}
             >
               {filter.label}
@@ -388,7 +388,7 @@ export default function BespokePortfolio({
         ) : null}
 
         <RevealDiv className="text-center mt-12">
-          <p className="text-[12px] text-[#6A6A6A] tracking-[0.06em] leading-[1.9] max-w-[520px] mx-auto">
+          <p className="text-[12px] text-[#292727] tracking-[0.06em] leading-[1.9] max-w-[520px] mx-auto">
             Have a piece in mind? Every creation begins with a conversation. Share your vision below and we&apos;ll bring it to life.
           </p>
         </RevealDiv>

@@ -233,7 +233,7 @@ export default function HipHopHero({
         }}
       />
 
-      <div className="reveal relative z-10 mb-5 text-[9px] tracking-[0.3em] uppercase text-[#6A6A6A]">
+      <div className="reveal relative z-10 mb-5 text-[9px] tracking-[0.3em] uppercase text-[#292727]">
         <Link href="/" className="text-white/60 transition-colors duration-300 hover:text-white">
           Home
         </Link>

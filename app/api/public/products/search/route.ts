@@ -15,6 +15,8 @@ const getSearchItems = unstable_cache(
       shortMeta: product.shortMeta,
       imageUrl: product.imageUrl || '',
       priceFrom: product.priceFrom,
+      mainCategorySlug: product.mainCategorySlug,
+      mainCategoryName: product.mainCategoryName,
     }))
   },
   ['navbar-product-search-items'],

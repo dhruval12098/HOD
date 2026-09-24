@@ -13,12 +13,18 @@ import type { BlogPost } from '@/lib/data/blog-posts'
 export default function EducationPostPage({ post, relatedPosts }: { post: BlogPost; relatedPosts: BlogPost[] }) {
   const router = useRouter()
   return (
-    <div className="min-h-screen bg-[#faf7f2] font-[var(--font-manrope)] text-[#0A1628]">
+    <div className="min-h-screen bg-white font-[family-name:var(--font-family-inter)] text-black">
       <BlogPostBack label="Back to Education" onBack={() => router.push('/education')} />
       <BlogPostHero post={post} />
       <section className="mx-auto max-w-[860px] px-6 py-14">
         <BlogPostMeta date={post.date} author={post.author} readTime={post.readTime} />
-        <BlogPostBody title={post.title} subtitle={post.subtitle} body={post.body} contentBlocks={post.contentBlocks} />
+        <BlogPostBody
+          title={post.title}
+          subtitle={post.subtitle}
+          body={post.body}
+          contentBlocks={post.contentBlocks}
+          featuredProducts={post.featuredProducts ?? []}
+        />
         <BlogPostTags tags={post.tags} />
       </section>
       <BlogProductGrid products={post.featuredProducts ?? []} />

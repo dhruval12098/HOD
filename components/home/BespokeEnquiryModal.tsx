@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { X } from 'lucide-react';
+import { BrandButton } from '@/components/ui/BrandButton';
 import {
   Select,
   SelectContent,
@@ -243,32 +245,32 @@ export default function BespokeEnquiryModal({ open, onClose }: BespokeEnquiryMod
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full border border-[rgba(10,22,40,0.12)] text-[#0A1628] transition hover:bg-[#0A1628] hover:text-white"
+          className="absolute right-5 top-5 flex h-10 w-10 items-center justify-center border border-black/20 bg-white text-black transition hover:bg-black hover:text-white"
         >
-          x
+          <X size={18} strokeWidth={1.5} />
         </button>
 
         <div className="text-[10px] font-normal uppercase tracking-[0.3em] text-[#8B7B5C]">Bespoke Atelier</div>
         <h3 className="mt-3 font-display-title text-[34px] font-light leading-[1.08] tracking-[0.01em] text-[#0A1628]">
           {config.settings.intro_heading || 'Configure Your Bespoke Order'}
         </h3>
-        <p className="mt-3 max-w-[500px] text-[13px] font-light leading-[1.8] tracking-[0.03em] text-[#6A6A6A]">
+        <p className="mt-3 max-w-[500px] text-[13px] font-light leading-[1.8] tracking-[0.03em] text-[#292727]">
           {config.settings.intro_subtitle}
         </p>
 
         <form onSubmit={handleSubmit} className="mt-8 grid gap-5">
           <div className="grid gap-5 md:grid-cols-2">
             <FormField label="Full Name" htmlFor="bespoke-name">
-              <input id="bespoke-name" name="name" type="text" required value={form.name} onChange={handleChange} className={inputClassName} />
+              <input id="bespoke-name" name="name" type="text" required value={form.name} onChange={handleChange} placeholder="Full Name *" className={inputClassName} />
             </FormField>
             <FormField label="Email" htmlFor="bespoke-email">
-              <input id="bespoke-email" name="email" type="email" required value={form.email} onChange={handleChange} className={inputClassName} />
+              <input id="bespoke-email" name="email" type="email" required value={form.email} onChange={handleChange} placeholder="Email *" className={inputClassName} />
             </FormField>
             <FormField label="Phone / WhatsApp" htmlFor="bespoke-phone">
-              <input id="bespoke-phone" name="phone" type="tel" value={form.phone} onChange={handleChange} className={inputClassName} />
+              <input id="bespoke-phone" name="phone" type="tel" value={form.phone} onChange={handleChange} placeholder="Phone / WhatsApp" className={inputClassName} />
             </FormField>
             <FormField label="Country" htmlFor="bespoke-country">
-              <input id="bespoke-country" name="country" type="text" required value={form.country} onChange={handleChange} className={inputClassName} />
+              <input id="bespoke-country" name="country" type="text" required value={form.country} onChange={handleChange} placeholder="Country *" className={inputClassName} />
             </FormField>
           </div>
 
@@ -279,8 +281,8 @@ export default function BespokeEnquiryModal({ open, onClose }: BespokeEnquiryMod
                 value={form.piece}
                 onValueChange={setDropdown('piece')}
               >
-                <SelectTrigger id="bespoke-piece" className="rounded-none font-sans text-[13px] font-light tracking-[0.02em]">
-                  <SelectValue placeholder="Select piece..." />
+                <SelectTrigger id="bespoke-piece" className={selectClassName}>
+                  <SelectValue placeholder="Piece Type *" />
                 </SelectTrigger>
                 <SelectContent>
                   {config.pieceTypes.map((item) => (
@@ -296,8 +298,8 @@ export default function BespokeEnquiryModal({ open, onClose }: BespokeEnquiryMod
                 value={form.stone}
                 onValueChange={setDropdown('stone')}
               >
-                <SelectTrigger id="bespoke-stone" className="rounded-none font-sans text-[13px] font-light tracking-[0.02em]">
-                  <SelectValue placeholder="Stone preference..." />
+                <SelectTrigger id="bespoke-stone" className={selectClassName}>
+                  <SelectValue placeholder="Preferred Stone" />
                 </SelectTrigger>
                 <SelectContent>
                   {config.stoneOptions.map((item) => (
@@ -313,8 +315,8 @@ export default function BespokeEnquiryModal({ open, onClose }: BespokeEnquiryMod
                 value={form.carat}
                 onValueChange={setDropdown('carat')}
               >
-                <SelectTrigger id="bespoke-carat" className="rounded-none font-sans text-[13px] font-light tracking-[0.02em]">
-                  <SelectValue placeholder="Select size..." />
+                <SelectTrigger id="bespoke-carat" className={selectClassName}>
+                  <SelectValue placeholder="Approx. Carat" />
                 </SelectTrigger>
                 <SelectContent>
                   {config.caratOptions.map((item) => (
@@ -330,8 +332,8 @@ export default function BespokeEnquiryModal({ open, onClose }: BespokeEnquiryMod
                 value={form.metal}
                 onValueChange={setDropdown('metal')}
               >
-                <SelectTrigger id="bespoke-metal" className="rounded-none font-sans text-[13px] font-light tracking-[0.02em]">
-                  <SelectValue placeholder="Select metal..." />
+                <SelectTrigger id="bespoke-metal" className={selectClassName}>
+                  <SelectValue placeholder="Preferred Metal" />
                 </SelectTrigger>
                 <SelectContent>
                   {config.metalOptions.map((item) => (
@@ -357,14 +359,14 @@ export default function BespokeEnquiryModal({ open, onClose }: BespokeEnquiryMod
             />
           </FormField>
 
-          <button
+          <BrandButton
             type="submit"
             disabled={submitting}
-            className="inline-flex w-full items-center justify-center bg-[#0A1628] px-8 py-4 font-sans text-[10px] uppercase tracking-[0.28em] text-[#FAF7F2] transition hover:bg-[#8B7B5C] disabled:cursor-wait disabled:opacity-70"
+            className="w-full disabled:cursor-wait"
           >
             {submitting ? 'Submitting...' : 'Submit Bespoke Enquiry'}
-          </button>
-          <p className="text-center text-[10px] tracking-[0.04em] text-[#6A6A6A]">{config.settings.footer_note}</p>
+          </BrandButton>
+          <p className="text-center text-[10px] tracking-[0.04em] text-[#292727]">{config.settings.footer_note}</p>
         </form>
       </div>
     </div>
@@ -372,12 +374,15 @@ export default function BespokeEnquiryModal({ open, onClose }: BespokeEnquiryMod
 }
 
 const inputClassName =
-  'w-full border border-[rgba(10,22,40,0.10)] bg-[#FAFBFD] px-4 py-3.5 font-sans text-[13px] font-light tracking-[0.02em] text-[#0A1628] outline-none transition focus:border-[#0A1628] focus:bg-white';
+  'h-[64px] w-full border border-[#858585] bg-white px-[22px] font-[family-name:var(--font-family-montserrat)] text-[18px] font-normal tracking-normal text-[#111111] outline-none placeholder:text-[#707070] placeholder:font-medium placeholder:opacity-100 focus:border-[#858585]';
+
+const selectClassName =
+  'h-[64px] rounded-none border-[#858585] bg-white px-[22px] font-[family-name:var(--font-family-montserrat)] text-[18px] font-normal tracking-normal text-[#111111] data-[placeholder]:text-[#707070] data-[placeholder]:font-medium';
 
 function FormField({ label, htmlFor, children }: { label: string; htmlFor: string; children: React.ReactNode }) {
   return (
     <div className="block">
-      <label htmlFor={htmlFor} className="mb-2 block text-[9px] font-normal uppercase tracking-[0.28em] text-[#6A6A6A]">{label}</label>
+      <label htmlFor={htmlFor} className="sr-only">{label}</label>
       {children}
     </div>
   );

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import CartClient from '@/components/pages/CartClient'
+import AdditionalSummaryDetails from '@/components/common/AdditionalSummaryDetails'
 
 export const metadata: Metadata = {
   title: 'Cart',
@@ -8,5 +9,5 @@ export const metadata: Metadata = {
 }
 
 export default function CartPage() {
-  return <CartClient />
+  return <CartClient summaryInfo={<AdditionalSummaryDetails />} />
 }

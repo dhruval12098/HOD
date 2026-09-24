@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { type MouseEvent, type ReactNode, useEffect, useMemo, useState } from 'react'
 import {
@@ -521,7 +521,7 @@ export default function LoveLetterModal({ onClose, onContinue }: LoveLetterModal
                 </div>
                 <div className="mt-6 h-px w-10 bg-[rgba(166,124,34,0.35)]" />
                 <div
-                  className="prose prose-neutral mt-5 max-w-none text-[14px] font-normal leading-[1.85] text-[#253246] [&_p]:mb-4"
+                  className="prose prose-neutral mt-5 max-w-none text-[14px] font-normal leading-[1.85] text-[#292727] [&_p]:mb-4"
                   dangerouslySetInnerHTML={{
                     __html: preview.html || '<p>Your letter preview will appear here.</p>',
                   }}

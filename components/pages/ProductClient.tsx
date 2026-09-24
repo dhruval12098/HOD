@@ -347,9 +347,14 @@ export default function ProductClient({ product, relatedProducts, serviceBanner 
         .hod-product-detail .font-display-title {
           font-family: var(--font-family-primary), Montserrat, Arial, Helvetica, sans-serif !important;
         }
+
+        .hod-product-detail .font-sans,
+        .hod-product-detail .font-numeric {
+          font-size: 14px !important;
+        }
       `}</style>
       <div
-        className={`fixed left-0 right-0 top-[35px] z-[45] border-b border-[color:var(--theme-border,rgba(0,0,0,0.09))] bg-white/95 backdrop-blur-md transition-transform duration-300 ${
+        className={`fixed left-0 right-0 top-[calc(var(--hod-announcement-current-height,35px)+var(--hod-navbar-visible-height,96px))] z-[45] border-b border-[color:var(--theme-border,rgba(0,0,0,0.09))] bg-white/95 backdrop-blur-md transition-[top,transform] duration-300 ${
           showStickyCartBar
             ? 'translate-y-0'
             : '-translate-y-[120%] max-[700px]:translate-y-[120%]'
@@ -513,4 +518,3 @@ export default function ProductClient({ product, relatedProducts, serviceBanner 
     </div>
   );
 }
-

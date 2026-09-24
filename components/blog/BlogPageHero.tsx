@@ -18,7 +18,7 @@ export function BlogPageHero({ hero }: { hero: BlogPageHeroData }) {
         <h1 id="blog-hero-heading" className="font-primary-display text-[clamp(30px,4vw,52px)] font-medium leading-[1.05] text-white">{hero.heading}</h1>
         {hero.paragraph ? <p className="mt-4 max-w-[520px] font-secondary text-[13px] leading-6 text-white/90 sm:text-[14px]">{hero.paragraph}</p> : null}
         {hero.buttonLabel && hero.buttonLink ? (
-          <Link href={hero.buttonLink} className="brand-button mt-6 w-fit border border-white bg-white px-5 text-[#111] hover:bg-transparent hover:text-white">{hero.buttonLabel}</Link>
+          <Link href={hero.buttonLink} className="brand-button banner-light-button mt-6 w-fit px-5">{hero.buttonLabel}</Link>
         ) : null}
       </div>
     </section>

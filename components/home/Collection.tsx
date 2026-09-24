@@ -96,7 +96,7 @@ export default function Collection({ items = [] }: CollectionProps) {
         <h2 className={`${cinzelFont.variable} font-primary-display section-title font-light leading-[1.08] tracking-[0.01em] text-[#0A1628] max-md:text-[28px]`} style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}>
           Our <em className="not-italic italic">Collections</em>
         </h2>
-        <p className="mx-auto mt-3 max-w-xl text-[12px] font-light tracking-[0.1em] text-[#6A6A6A] sm:text-[13px]">
+        <p className="mx-auto mt-3 max-w-xl text-[12px] font-light tracking-[0.1em] text-[#292727] sm:text-[13px]">
           Discover the signature worlds of House of Diams through a refined card-based selection.
         </p>
       </div>

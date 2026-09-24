@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Hero from '@/components/home/Hero';
+import HomeTrustStripe from '@/components/home/HomeTrustStripe';
 import ShopByCategory from '@/components/home/ShopByCategory';
 import TestimonialMarquee from '@/components/home/TestimonialMarquee';
 import TrustedPartnersMarquee from '@/components/home/TrustedPartnersMarquee';
@@ -155,8 +156,9 @@ export default function HomeClient({
   };
 
   return (
-    <div className="min-h-screen bg-(--bg) text-(--ink)">
+    <div className="home-page min-h-screen bg-(--bg) text-(--ink)">
       <Hero initialContent={heroContent} />
+      <HomeTrustStripe />
       <ShopByCategory data={shopByCategory} />
       <>
           {collectionPageConfig.pageEnabled && collectionPageConfig.showHomeShowcase ? <CollectionShowcase config={collectionPageConfig} /> : null}

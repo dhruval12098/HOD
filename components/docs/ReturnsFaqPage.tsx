@@ -71,14 +71,14 @@ export default function ReturnsFaqPage({
                       />
                     </button>
                     {open ? (
-                      <p className="pb-5 text-[13px] leading-[1.75] text-[#3f3f3f]">{item.answer}</p>
+                      <p className="pb-5 text-[13px] leading-[1.75] text-[#292727]">{item.answer}</p>
                     ) : null}
                   </section>
                 );
               })}
             </div>
           ) : (
-            <p className="py-4 text-[13px] leading-[1.75] text-[#3f3f3f]">{query ? 'No matching returns questions found.' : 'No returns questions are published yet.'}</p>
+            <p className="py-4 text-[13px] leading-[1.75] text-[#292727]">{query ? 'No matching returns questions found.' : 'No returns questions are published yet.'}</p>
           )}
         </div>
 
@@ -110,9 +110,9 @@ export default function ReturnsFaqPage({
                       {row.value}
                     </a>
                   ) : (
-                    <p className="text-[13px] leading-[1.75] text-[#3f3f3f]">{row.value}</p>
+                    <p className="text-[13px] leading-[1.75] text-[#292727]">{row.value}</p>
                   )}
-                  {row.note ? <p className="text-[12px] leading-[1.6] text-[#3f3f3f]">{row.note}</p> : null}
+                  {row.note ? <p className="text-[12px] leading-[1.6] text-[#292727]">{row.note}</p> : null}
                 </div>
               ))}
             </div>

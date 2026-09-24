@@ -42,6 +42,8 @@ export type CheckoutProfileForm = {
   last_name: string
   email: string
   phone: string
+  birth_date: string
+  anniversary_date: string
   country: string
   state: string
   district: string

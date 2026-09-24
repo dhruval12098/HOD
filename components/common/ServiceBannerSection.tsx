@@ -38,7 +38,7 @@ export default function ServiceBannerSection({ data }: { data: ServiceBannerData
                     aria-expanded={isOpen}
                     aria-controls={panelId}
                     onClick={() => setOpenId((current) => current === block.id ? null : block.id)}
-                    className="flex min-h-[76px] w-full items-center justify-between gap-6 bg-white px-1 py-5 text-left font-[family-name:var(--font-family-primary)] text-[15px] font-medium leading-[1.45] text-[var(--color-brand-primary,#000000)] outline-none transition-colors hover:text-[var(--theme-muted,#6a6a6a)] focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary,#000000)] focus-visible:ring-offset-4 sm:min-h-[82px] sm:text-[16px]"
+                    className="flex min-h-[76px] w-full items-center justify-between gap-6 bg-white px-1 py-5 text-left font-[family-name:var(--font-family-primary)] text-[15px] font-medium leading-[1.45] text-[var(--color-brand-primary,#000000)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary,#000000)] focus-visible:ring-offset-4 sm:min-h-[82px] sm:text-[16px]"
                   >
                     <span>{block.title}</span>
                     <Plus aria-hidden="true" className={`h-5 w-5 shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-45' : ''}`} strokeWidth={1.4} />

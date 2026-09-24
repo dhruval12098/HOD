@@ -327,7 +327,7 @@ export default function ProductConfigurator({
             <div className="mb-5 flex items-center justify-between gap-4">
               <div>
                 <h3 id={ringModalTitleId} className="text-[22px] font-medium text-[var(--color-brand-primary,#000000)]">Ring Categories</h3>
-                <p className="mt-1 text-[12px] tracking-[0.08em] text-[#6A6A6A]">Switch category and pick the size you want.</p>
+                <p className="mt-1 text-[12px] tracking-[0.08em] text-[#292727]">Switch category and pick the size you want.</p>
               </div>
               <button ref={ringModalCloseRef} type="button" onClick={() => setShowRingModal(false)} className="rounded-none border border-black/20 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-brand-primary,#000000)]">
                 Close

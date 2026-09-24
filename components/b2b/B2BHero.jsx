@@ -33,7 +33,7 @@ export default function B2BHero() {
           Jewellery Supply.
         </h1>
 
-        <p className="text-[13px] font-light leading-[2] text-[#6A6A6A] tracking-[0.06em] max-w-[720px] mx-auto mb-10">
+        <p className="text-[13px] font-light leading-[2] text-[#292727] tracking-[0.06em] max-w-[720px] mx-auto mb-10">
           IGI and GIA certified stones, consistent parcels, and fast global
           fulfilment from Surat. Built for retailers, designers, and wholesalers
           who need reliable quality at scale.

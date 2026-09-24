@@ -168,8 +168,8 @@ export default function FAQ() {
           return (
             <div
               key={faq.id ?? `${faq.question}-${index}`}
-              className={`border-b border-[rgba(10,22,40,0.10)] transition-colors duration-300 last:border-b-0 ${
-                isOpen ? 'bg-[#F5F7FC]' : 'hover:bg-[#F5F7FC]'
+                className={`border-b border-[rgba(10,22,40,0.10)] transition-colors duration-300 last:border-b-0 ${
+                isOpen ? 'bg-[#F5F7FC]' : 'bg-white'
               }`}
             >
               <button
@@ -185,7 +185,7 @@ export default function FAQ() {
                   className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border transition-all duration-300 ${
                     isOpen
                       ? 'rotate-45 border-[#0A1628] bg-[#0A1628] text-white'
-                      : 'border-[rgba(10,22,40,0.12)] bg-white text-[#253246]'
+                      : 'border-[rgba(10,22,40,0.12)] bg-white text-[#292727]'
                   }`}
                 >
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="stroke-current">
@@ -198,7 +198,7 @@ export default function FAQ() {
                 className="overflow-hidden transition-[max-height,padding] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 style={{ maxHeight: isOpen ? '320px' : '0px', padding: isOpen ? '0 24px 28px' : '0 24px' }}
               >
-                <p className="max-w-[760px] text-[14px] font-medium leading-[1.9] tracking-[0.01em] text-[#5E6470]">
+                <p className="max-w-[760px] text-[14px] font-medium leading-[1.9] tracking-[0.01em] text-[#292727]">
                   {faq.answer}
                 </p>
               </div>

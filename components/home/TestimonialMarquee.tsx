@@ -33,7 +33,7 @@ export default function TestimonialMarquee({ initialData }: { initialData?: Home
             {quotes.map((item, i) => (
               <div
                 key={`${item.quote}-${item.author}-${i}`}
-                className="flex items-center gap-[18px] whitespace-nowrap font-serif text-[18px] font-normal tracking-[0.02em] text-[#253246]"
+                className="flex items-center gap-[18px] whitespace-nowrap font-serif text-[18px] font-normal tracking-[0.02em] text-[#292727]"
               >
                 &ldquo;{item.quote}&rdquo;
                 <span className="ml-4 font-sans text-[10px] font-medium not-italic uppercase tracking-[0.24em] text-[#0A1628]">

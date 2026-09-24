@@ -15,7 +15,7 @@ export default function CheckoutStepper({ currentStep }: { currentStep: number }
             >
               {index + 1}
             </div>
-            <span className={`text-sm font-medium ${index === currentStep ? 'text-[#101828]' : 'text-[#667085]'}`}>{step}</span>
+            <span className={`text-sm font-medium ${index === currentStep ? 'text-[#101828]' : 'text-[#292727]'}`}>{step}</span>
             {index < STEPS.length - 1 ? <div className={`hidden h-px w-8 sm:block ${index < currentStep ? 'bg-[#101828]' : 'bg-[#d0d5dd]'}`} /> : null}
           </div>
         ))}

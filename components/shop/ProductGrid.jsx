@@ -208,7 +208,7 @@ export default function ProductGrid({ products, sourceProducts = products, initi
       <style>{`
         .shop-grid-layout {
           width: 100%;
-          padding: 0 24px 100px;
+          padding: 0 50px 100px;
           display: block;
           background: var(--theme-surface);
         }
@@ -216,19 +216,19 @@ export default function ProductGrid({ products, sourceProducts = products, initi
           position: sticky;
           top: calc(var(--hod-site-header-height, 131px) - 58px);
           z-index: 35;
-          padding: 0 44px 2px;
+          padding: 10px 50px 12px;
           margin-bottom: 0;
           background: var(--theme-surface);
           box-shadow: none;
         }
         @media (min-width: 1025px) {
           .shop-grid-layout.shop-grid-wide {
-            padding-left: 56px;
-            padding-right: 56px;
+            padding-left: 50px;
+            padding-right: 50px;
           }
           .shop-grid-layout.shop-grid-wide .shop-grid-toolbar {
-            padding-left: 56px;
-            padding-right: 56px;
+            padding-left: 50px;
+            padding-right: 50px;
           }
         }
         .product-grid {

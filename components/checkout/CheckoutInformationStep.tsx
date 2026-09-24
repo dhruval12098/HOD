@@ -11,6 +11,10 @@ export default function CheckoutInformationStep({ form, onChange, errors = {}, p
         <CheckoutField label="First Name" value={form.first_name} onChange={(value) => onChange('first_name', value)} placeholder="First name" required error={errors.first_name} />
         <CheckoutField label="Last Name" value={form.last_name} onChange={(value) => onChange('last_name', value)} placeholder="Last name" required error={errors.last_name} />
         <div className="md:col-span-2"><CheckoutField label="Phone Number" value={form.phone} onChange={(value) => onChange('phone', value)} placeholder="Phone number with country code" required error={errors.phone} /></div>
+        {isGuest ? <>
+          <CheckoutField label="Birth Date" value={form.birth_date} onChange={(value) => onChange('birth_date', value)} type="date" placeholder="Birth date (optional)" error={errors.birth_date} />
+          <CheckoutField label="Anniversary Date" value={form.anniversary_date} onChange={(value) => onChange('anniversary_date', value)} type="date" placeholder="Anniversary date (optional)" error={errors.anniversary_date} />
+        </> : null}
         <div className="md:col-span-2"><CheckoutField label="Street Address" value={form.address_line_1} onChange={(value) => onChange('address_line_1', value)} placeholder="Street address" required error={errors.address_line_1} /></div>
         <div className="md:col-span-2"><CheckoutField label="Apartment / Suite / Floor" value={form.address_line_2} onChange={(value) => onChange('address_line_2', value)} placeholder="Apartment, suite, floor or landmark (optional)" /></div>
         <CheckoutField label="Postal Code / Pincode" value={form.postal_code} onChange={(value) => onChange('postal_code', value)} onBlur={onPostalBlur} placeholder="Postal code" required error={errors.postal_code} trailing={postalLookup?.status === 'loading' ? <span className="inline-flex h-4 w-4 animate-spin border-2 border-black/20 border-t-black" /> : postalLookup?.status === 'success' ? <span className="text-black">✓</span> : null} />

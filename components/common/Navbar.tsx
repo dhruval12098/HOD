@@ -83,7 +83,7 @@ function MegaSection({ section, onNavigate, onPreview }: { section: NavbarRender
       href: link.href, iconUrl: link.iconUrl,
     })) ?? []),
   ];
-  const rowCount = Math.min(9, entries.length);
+  const rowCount = Math.min(12, entries.length);
 
   return (
     <div className="flex flex-col">
@@ -355,6 +355,15 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
   }, [announcementActive, announcementItems.length]);
 
   useEffect(() => {
+    const root = document.documentElement;
+    const isNavCollapsed = navHidden && !searchOpen && !menuOpen;
+    root.style.setProperty('--hod-navbar-visible-height', isNavCollapsed ? '38px' : 'var(--hod-navbar-height, 83px)');
+    return () => {
+      root.style.removeProperty('--hod-navbar-visible-height');
+    };
+  }, [menuOpen, navHidden, searchOpen]);
+
+  useEffect(() => {
     if (!announcementActive || !announcementAutoplay || announcementItems.length < 2) return;
     const timer = window.setInterval(() => {
       setAnnouncementIndex((current) => (current + 1) % announcementItems.length);
@@ -543,6 +552,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
           --hod-announcement-height: 35px;
           --hod-announcement-current-height: var(--hod-announcement-height);
           --hod-navbar-height: 83px;
+          --hod-navbar-visible-height: var(--hod-navbar-height);
           --hod-site-header-height: calc(var(--hod-announcement-current-height) + var(--hod-navbar-height));
           --hod-nav-hide-transform: translateY(-120%);
         }
@@ -705,7 +715,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
           </div>
           <Link
             href="/"
-            className="flex items-center no-underline cursor-pointer transition-opacity duration-300 hover:opacity-60"
+            className="flex items-center no-underline cursor-pointer"
           >
             <span
               className="text-[11px] min-[360px]:text-[13px] min-[390px]:text-[15px] sm:text-[20px] font-bold tracking-[0.1em] min-[360px]:tracking-[0.12em] min-[390px]:tracking-[0.14em] uppercase"
@@ -723,7 +733,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
           </button>
           <Link
             href="/"
-            className="absolute left-1/2 top-1/2 z-[2] flex -translate-x-1/2 -translate-y-1/2 items-center whitespace-nowrap no-underline transition-opacity duration-300 hover:opacity-70"
+            className="absolute left-1/2 top-1/2 z-[2] flex -translate-x-1/2 -translate-y-1/2 items-center whitespace-nowrap no-underline"
           >
             <span
               className="text-[clamp(22px,2.1vw,32px)] font-bold  tracking-[0.06em]"
@@ -1099,7 +1109,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
                     <div className="overflow-hidden">
                       <div className="pb-5">
                         {entries.map((entry) => (
-                          <SmartNavLink key={section.id + '-' + entry.label + '-' + entry.href} href={entry.href} onClick={closeMenu} className="block py-3 pl-6 text-[15px] font-normal leading-[1.4] text-[#253246] no-underline transition-colors hover:text-[#8b6a3d]">
+                          <SmartNavLink key={section.id + '-' + entry.label + '-' + entry.href} href={entry.href} onClick={closeMenu} className="block py-3 pl-6 text-[15px] font-normal leading-[1.4] text-[#292727] no-underline transition-colors hover:text-[#8b6a3d]">
                             {entry.label}
                           </SmartNavLink>
                         ))}

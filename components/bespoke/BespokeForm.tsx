@@ -230,13 +230,13 @@ export default function BespokeForm({ onSuccess, initialConfig }: BespokeFormPro
           <h2 className="mb-5 font-serif text-[#0A1628]" style={{ fontSize: '48px', fontWeight: 300, letterSpacing: '0.02em', lineHeight: 1.1 }}>
             {config.settings.intro_heading || 'Configure Your Bespoke Order'}
           </h2>
-          <p className="mb-8 text-[12px] font-light leading-[2] tracking-[0.04em] text-[#6A6A6A]">
+          <p className="mb-8 text-[12px] font-light leading-[2] tracking-[0.04em] text-[#292727]">
             {config.settings.intro_subtitle}
           </p>
 
           <div className="flex flex-col gap-3.5">
             {config.guarantees.map((item, i) => (
-              <div key={item.id ?? i} className="flex items-start gap-3.5 text-[11px] font-light leading-[1.6] tracking-[0.04em] text-[#253246]">
+              <div key={item.id ?? i} className="flex items-start gap-3.5 text-[11px] font-light leading-[1.6] tracking-[0.04em] text-[#292727]">
                 <span className="mt-[7px] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#0A1628]" />
                 {item.label}
               </div>
@@ -249,35 +249,35 @@ export default function BespokeForm({ onSuccess, initialConfig }: BespokeFormPro
             <form onSubmit={handleSubmit}>
               <div className="grid grid-cols-2 gap-5 max-md:grid-cols-1">
                 <div>
-                  <label className="mb-2 block text-[9px] font-normal uppercase tracking-[0.28em] text-[#6A6A6A]" htmlFor="b-name">
+                  <label className="mb-2 block text-[9px] font-normal uppercase tracking-[0.28em] text-[#292727]" htmlFor="b-name">
                     Full Name
                   </label>
                   <input id="b-name" type="text" required value={form.name} onChange={set('name')} className={inputClasses} />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-[9px] font-normal uppercase tracking-[0.28em] text-[#6A6A6A]" htmlFor="b-email">
+                  <label className="mb-2 block text-[9px] font-normal uppercase tracking-[0.28em] text-[#292727]" htmlFor="b-email">
                     Email
                   </label>
                   <input id="b-email" type="email" required value={form.email} onChange={set('email')} className={inputClasses} />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-[9px] font-normal uppercase tracking-[0.28em] text-[#6A6A6A]" htmlFor="b-phone">
+                  <label className="mb-2 block text-[9px] font-normal uppercase tracking-[0.28em] text-[#292727]" htmlFor="b-phone">
                     Phone / WhatsApp
                   </label>
                   <input id="b-phone" type="tel" value={form.phone} onChange={set('phone')} className={inputClasses} />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-[9px] font-normal uppercase tracking-[0.28em] text-[#6A6A6A]" htmlFor="b-country">
+                  <label className="mb-2 block text-[9px] font-normal uppercase tracking-[0.28em] text-[#292727]" htmlFor="b-country">
                     Country
                   </label>
                   <input id="b-country" type="text" required value={form.country} onChange={set('country')} className={inputClasses} />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-[9px] font-normal uppercase tracking-[0.28em] text-[#6A6A6A]" htmlFor="b-piece">
+                  <label className="mb-2 block text-[9px] font-normal uppercase tracking-[0.28em] text-[#292727]" htmlFor="b-piece">
                     Piece Type
                   </label>
                   <input tabIndex={-1} readOnly required aria-label="Piece type" value={form.piece} className="pointer-events-none absolute h-px w-px opacity-0" />
@@ -299,7 +299,7 @@ export default function BespokeForm({ onSuccess, initialConfig }: BespokeFormPro
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-[9px] font-normal uppercase tracking-[0.28em] text-[#6A6A6A]" htmlFor="b-stone">
+                  <label className="mb-2 block text-[9px] font-normal uppercase tracking-[0.28em] text-[#292727]" htmlFor="b-stone">
                     Preferred Stone
                   </label>
                   <Select
@@ -320,7 +320,7 @@ export default function BespokeForm({ onSuccess, initialConfig }: BespokeFormPro
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-[9px] font-normal uppercase tracking-[0.28em] text-[#6A6A6A]" htmlFor="b-carat">
+                  <label className="mb-2 block text-[9px] font-normal uppercase tracking-[0.28em] text-[#292727]" htmlFor="b-carat">
                     Approx. Carat
                   </label>
                   <Select
@@ -341,7 +341,7 @@ export default function BespokeForm({ onSuccess, initialConfig }: BespokeFormPro
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-[9px] font-normal uppercase tracking-[0.28em] text-[#6A6A6A]" htmlFor="b-metal">
+                  <label className="mb-2 block text-[9px] font-normal uppercase tracking-[0.28em] text-[#292727]" htmlFor="b-metal">
                     Preferred Metal
                   </label>
                   <Select
@@ -362,7 +362,7 @@ export default function BespokeForm({ onSuccess, initialConfig }: BespokeFormPro
                 </div>
 
                 <div className="col-span-2 max-md:col-span-1">
-                  <label className="mb-2 block text-[9px] font-normal uppercase tracking-[0.28em] text-[#6A6A6A]" htmlFor="b-message">
+                  <label className="mb-2 block text-[9px] font-normal uppercase tracking-[0.28em] text-[#292727]" htmlFor="b-message">
                     Describe Your Vision
                   </label>
                   <textarea
@@ -378,7 +378,7 @@ export default function BespokeForm({ onSuccess, initialConfig }: BespokeFormPro
               </div>
 
               <div className="mt-5 flex flex-wrap items-center justify-between gap-4 border-t border-[rgba(10,22,40,0.10)] pt-6">
-                <p className="text-[10px] tracking-[0.04em] text-[#6A6A6A]">
+                <p className="text-[10px] tracking-[0.04em] text-[#292727]">
                   {config.settings.footer_note}
                 </p>
                 <button

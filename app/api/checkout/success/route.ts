@@ -46,7 +46,7 @@ export async function GET(request: Request) {
   if (!orderNumber || orderNumber.length > 100) return NextResponse.json({ error: 'Order confirmation not found.' }, { status: 404 })
 
   const adminClient = createClient(supabaseUrl, supabaseServiceRoleKey)
-  let query = adminClient.from('orders').select('id, order_number, created_at, customer_email, customer_first_name, customer_last_name, customer_phone, shipping_country, shipping_state, shipping_district, shipping_city, shipping_postal_code, shipping_address_line_1, shipping_address_line_2, subtotal_amount, gst_amount, shipping_amount, total_amount, status, payment_status, payment_gateway, payment_currency, payment_amount, razorpay_order_id, razorpay_payment_id, razorpay_payment_method, gateway_order_status, gateway_payment_status').eq('order_number', orderNumber)
+  let query = adminClient.from('orders').select('id, order_number, created_at, customer_email, customer_first_name, customer_last_name, customer_phone, customer_birth_date, customer_anniversary_date, shipping_country, shipping_state, shipping_district, shipping_city, shipping_postal_code, shipping_address_line_1, shipping_address_line_2, subtotal_amount, gst_amount, shipping_amount, total_amount, status, payment_status, payment_gateway, payment_currency, payment_amount, razorpay_order_id, razorpay_payment_id, razorpay_payment_method, gateway_order_status, gateway_payment_status').eq('order_number', orderNumber)
   query = userId ? query.eq('user_id', userId) : query.eq('guest_token_hash', guestTokenHash!)
   const { data: order, error: orderError } = await query.maybeSingle()
   if (orderError) {
@@ -95,12 +95,13 @@ export async function GET(request: Request) {
       console.error('Order status self-reconciliation failed:', error)
     }
   }
-  const [itemsResult, pageResult, stateResult, contactResult, categoriesResult] = await Promise.all([
+  const [itemsResult, pageResult, stateResult, contactResult, categoriesResult, statusHistoryResult] = await Promise.all([
     adminClient.from('order_items').select('product_name, product_slug, quantity, unit_price, line_total, image_url, selected_metal, selected_purity, selected_size_or_fit, selected_gemstone, selected_carat, item_type').eq('order_id', order.id).order('created_at', { ascending: true }),
     adminClient.from('checkout_result_page').select('main_banner_image_path, main_banner_image_alt, secondary_banner_image_path, secondary_banner_image_alt, secondary_eyebrow, secondary_heading, secondary_paragraph, is_enabled').eq('id', 1).eq('is_enabled', true).maybeSingle(),
     adminClient.from('checkout_result_states').select('state, eyebrow, heading, paragraph, order_button_label, is_enabled').eq('state', state).eq('is_enabled', true).maybeSingle(),
     adminClient.from('contact_info').select('id, sort_order, label, value, note, href, icon_path').order('sort_order', { ascending: true }),
     adminClient.from('categories').select('name, slug, display_order').eq('status', 'active').order('display_order', { ascending: true }).limit(3),
+    adminClient.from('order_status_history').select('status, created_at').eq('order_id', order.id).order('created_at', { ascending: true }),
   ])
 
   if (itemsResult.error) {
@@ -111,11 +112,13 @@ export async function GET(request: Request) {
   if (stateResult.error) console.warn('Checkout result CMS state unavailable:', stateResult.error.message)
   if (contactResult.error) console.warn('Checkout result contact information unavailable:', contactResult.error.message)
   if (categoriesResult.error) console.warn('Checkout result categories unavailable:', categoriesResult.error.message)
+  if (statusHistoryResult.error) console.warn('Order status history unavailable:', statusHistoryResult.error.message)
 
   const cmsPage = pageResult.data
   return NextResponse.json({
     state,
     order: { ...order, items: itemsResult.data ?? [] },
+    statusEvents: statusHistoryResult.data ?? [],
     cms: {
       page: cmsPage ? { ...cmsPage, main_banner_image_url: publicImageUrl(adminClient, cmsPage.main_banner_image_path), secondary_banner_image_url: publicImageUrl(adminClient, cmsPage.secondary_banner_image_path) } : null,
       state: stateResult.data ?? null,

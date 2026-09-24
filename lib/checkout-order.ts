@@ -13,6 +13,8 @@ export type CheckoutPayload = {
     last_name?: string
     email?: string
     phone?: string
+    birth_date?: string
+    anniversary_date?: string
     country?: string
     state?: string
     district?: string
@@ -175,6 +177,8 @@ type PreparedCheckout = {
     last_name: string
     email: string
     phone: string
+    birth_date: string
+    anniversary_date: string
     country: string
     state: string
     district: string
@@ -293,7 +297,7 @@ export async function prepareCheckoutPayload({
   const profileResult = user
     ? await adminClient
         .from('profiles')
-        .select('email, first_name, last_name, phone, country, state, district, city, postal_code, address_line_1, address_line_2')
+        .select('email, first_name, last_name, phone, birth_date, anniversary_date, country, state, district, city, postal_code, address_line_1, address_line_2')
         .eq('id', user.id)
         .maybeSingle()
     : { data: null, error: null }
@@ -370,6 +374,8 @@ export async function prepareCheckoutPayload({
     last_name: (customer.last_name || profile?.last_name || user?.user_metadata?.last_name || '').trim(),
     email: (customer.email || profile?.email || user?.email || '').trim(),
     phone: (customer.phone || profile?.phone || user?.user_metadata?.phone || '').trim(),
+    birth_date: (customer.birth_date || profile?.birth_date || '').trim(),
+    anniversary_date: (customer.anniversary_date || profile?.anniversary_date || '').trim(),
     country: (customer.country || profile?.country || '').trim(),
     state: (customer.state || profile?.state || '').trim(),
     district: (customer.district || profile?.district || '').trim(),
@@ -397,6 +403,18 @@ export async function prepareCheckoutPayload({
   }
   if (!resolvedCustomer.address_line_1) {
     return { error: 'Address line 1 is required.', status: 400 as const }
+  }
+  const isValidOptionalDate = (value: string) => {
+    if (!value) return true
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
+    const parsed = new Date(`${value}T00:00:00Z`)
+    return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value
+  }
+  if (!isValidOptionalDate(resolvedCustomer.birth_date) || (resolvedCustomer.birth_date && resolvedCustomer.birth_date > new Date().toISOString().slice(0, 10))) {
+    return { error: 'Birth date must be a valid date that is not in the future.', status: 400 as const }
+  }
+  if (!isValidOptionalDate(resolvedCustomer.anniversary_date)) {
+    return { error: 'Anniversary date must be a valid date.', status: 400 as const }
   }
 
   const chargeQuote = await buildCheckoutChargeQuote({
@@ -457,6 +475,8 @@ export async function createPendingOrder({
       customer_first_name: prepared.resolvedCustomer.first_name || 'Customer',
       customer_last_name: prepared.resolvedCustomer.last_name,
       customer_phone: prepared.resolvedCustomer.phone,
+      customer_birth_date: prepared.resolvedCustomer.birth_date || null,
+      customer_anniversary_date: prepared.resolvedCustomer.anniversary_date || null,
       shipping_country: prepared.resolvedCustomer.country,
       shipping_state: prepared.resolvedCustomer.state,
       shipping_district: prepared.resolvedCustomer.district,
@@ -546,11 +566,13 @@ export async function createPendingOrder({
 
   // TODO(sql-audit): Review create_pending_order_atomic for ambiguous column references in its SQL definition.
   const { data: order, error: orderError } = await adminClient
-    .rpc('create_pending_order_atomic', {
+    .rpc('create_pending_order_with_customer_dates', {
       p_user_id: userId,
       p_order: orderInput,
       p_items: itemInputs,
       p_love_letter: loveLetterInput,
+      p_customer_birth_date: prepared.resolvedCustomer.birth_date || null,
+      p_customer_anniversary_date: prepared.resolvedCustomer.anniversary_date || null,
     })
     .single()
 

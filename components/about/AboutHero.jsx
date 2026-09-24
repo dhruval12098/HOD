@@ -27,7 +27,7 @@ export default function AboutHero({ content }) {
       <div className={`w-full max-w-[42rem] py-[var(--space-6)] sm:py-[var(--space-10)] ${content.overlay_position?.includes('center') ? 'mx-auto' : ''}`}>
         {content.heading ? <h1 className="hero-slide-heading text-[clamp(1.75rem,7vw,2.25rem)] font-medium leading-[1.12] tracking-[-0.02em] text-white sm:text-[clamp(2.25rem,3.4vw,3.25rem)]">{content.heading}</h1> : null}
         {content.paragraph ? <p className="mt-[var(--space-2)] max-w-[38rem] font-[family-name:var(--font-family-secondary)] text-[clamp(0.75rem,2.8vw,0.95rem)] leading-[1.55] text-white/90 sm:text-[clamp(0.9rem,1.15vw,1.1rem)]">{content.paragraph}</p> : null}
-        {content.show_button && content.button_label && content.button_link ? <BrandButton href={content.button_link} className="pointer-events-auto mt-[var(--space-3)]">{content.button_label}</BrandButton> : null}
+        {content.show_button && content.button_label && content.button_link ? <BrandButton href={content.button_link} className="banner-light-button pointer-events-auto mt-[var(--space-3)]">{content.button_label}</BrandButton> : null}
       </div>
     </div> : null}
   </section>

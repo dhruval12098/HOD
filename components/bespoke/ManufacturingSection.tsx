@@ -65,7 +65,7 @@ export default function ManufacturingSection() {
                 <div className="p-8">
                   <div className="text-[9px] font-normal tracking-[0.3em] text-[#0A1628] uppercase mb-3.5">{item.eyebrow}</div>
                   <div className="font-serif text-[28px] font-normal text-[#0A1628] mb-3.5 tracking-[0.02em]">{item.title}</div>
-                  <p className="text-[12px] font-light leading-[1.9] text-[#6A6A6A] tracking-[0.02em]">{item.description}</p>
+                  <p className="text-[12px] font-light leading-[1.9] text-[#292727] tracking-[0.02em]">{item.description}</p>
                 </div>
               </div>
             </RevealDiv>

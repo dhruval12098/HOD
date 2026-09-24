@@ -9,5 +9,5 @@ export async function POST(request: Request) {
   const wantedSlugs = new Set(slugs)
   const wantedIds = new Set(ids)
   const products = await getStorefrontProducts()
-  return NextResponse.json({ items: products.filter((product) => wantedSlugs.has(product.slug) || wantedIds.has(product.dbId) || wantedIds.has(String(product.id))).map((product) => ({ id: String(product.id), dbId: product.dbId, slug: product.slug, name: product.name, shortMeta: product.shortMeta, imageUrl: product.imageUrl || '', priceFrom: product.priceFrom })) })
+  return NextResponse.json({ items: products.filter((product) => wantedSlugs.has(product.slug) || wantedIds.has(product.dbId) || wantedIds.has(String(product.id))).map((product) => ({ id: String(product.id), dbId: product.dbId, slug: product.slug, name: product.name, shortMeta: product.shortMeta, imageUrl: product.imageUrl || '', priceFrom: product.priceFrom, mainCategorySlug: product.mainCategorySlug, mainCategoryName: product.mainCategoryName })) })
 }

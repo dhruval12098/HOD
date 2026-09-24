@@ -36,6 +36,7 @@ type OrderItem = {
   selected_size_or_fit?: string | null;
   selected_gemstone?: string | null;
   selected_carat?: string | null;
+  item_type?: string | null;
 };
 type OrderRecord = {
   id: string;
@@ -46,6 +47,21 @@ type OrderRecord = {
   gst_amount: number;
   shipping_amount: number;
   total_amount: number;
+  customer_birth_date?: string | null;
+  customer_anniversary_date?: string | null;
+  customer_email?: string | null;
+  customer_first_name?: string | null;
+  customer_last_name?: string | null;
+  customer_phone?: string | null;
+  shipping_country?: string | null;
+  shipping_state?: string | null;
+  shipping_district?: string | null;
+  shipping_city?: string | null;
+  shipping_postal_code?: string | null;
+  shipping_address_line_1?: string | null;
+  shipping_address_line_2?: string | null;
+  payment_gateway?: string | null;
+  razorpay_payment_method?: string | null;
   created_at: string;
   items: OrderItem[];
 };
@@ -81,6 +97,13 @@ function buildSelectionLabel(metal?: string | null, purity?: string | null) {
   if (!normalizedMetal) return normalizedPurity;
   if (!normalizedPurity || normalizedMetal.toLowerCase().includes(normalizedPurity.toLowerCase())) return normalizedMetal;
   return `${normalizedPurity} ${normalizedMetal}`.trim();
+}
+
+function cacheOrderPreview(order: OrderRecord) {
+  if (typeof window === 'undefined' || !order.order_number) return;
+  const payment = String(order.payment_status || '').toLowerCase();
+  const state = payment === 'paid' || payment === 'captured' || payment === 'success' ? 'success' : payment === 'failed' || payment === 'cancelled' || payment === 'canceled' ? 'failed' : 'pending';
+  sessionStorage.setItem(`hod_order_preview_${order.order_number}`, JSON.stringify({ state, order }));
 }
 
 function formatProfileDate(value: string) {
@@ -128,7 +151,7 @@ function DetailField({ label, value, onAdd }: { label: string; value?: string | 
     <div>
       <p className="text-[13px] font-semibold text-[#222222]">{label}</p>
       {value ? (
-        <p className="mt-1 break-all text-[13px] leading-[1.75] text-[#3f3f3f]">{value}</p>
+        <p className="mt-1 break-all text-[13px] leading-[1.75] text-[#292727]">{value}</p>
       ) : (
         <button type="button" onClick={onAdd} className="mt-1 text-[13px] text-[#222222] underline underline-offset-4">
           Add
@@ -389,7 +412,7 @@ export default function ProfileClient() {
   if (state.status === 'loading') {
     return (
       <section className="min-h-[calc(100vh-111px)] bg-(--color-white) px-4 py-16 sm:px-7">
-        <div className="mx-auto max-w-4xl border border-[#e4e4e4] bg-(--color-white) px-6 py-12 text-center text-[13px] text-[#3f3f3f]">
+        <div className="mx-auto max-w-4xl border border-[#e4e4e4] bg-(--color-white) px-6 py-12 text-center text-[13px] text-[#292727]">
           Loading your account...
         </div>
       </section>
@@ -403,7 +426,7 @@ export default function ProfileClient() {
           <h1 className="text-[clamp(1.35rem,2vw,1.75rem)] uppercase leading-none tracking-[0.04em] text-[#111111] font-bold!">
             Sign in to view your account
           </h1>
-          <p className="mt-4 text-[13px] leading-[1.75] text-[#3f3f3f]">
+          <p className="mt-4 text-[13px] leading-[1.75] text-[#292727]">
             Your profile details and future order history will appear here once you&apos;re signed in.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -530,7 +553,7 @@ export default function ProfileClient() {
                 <input value={district} onChange={(event) => setDistrict(event.target.value)} type="text" placeholder="District" aria-label="District" className={INPUT_CLASS} />
                 <input value={city} onChange={(event) => setCity(event.target.value)} type="text" placeholder="City" aria-label="City" autoComplete="address-level2" className={INPUT_CLASS} />
                 <input value={postalCode} onChange={(event) => setPostalCode(event.target.value)} type="text" placeholder="Postal Code / Pincode" aria-label="Postal code or pincode" autoComplete="postal-code" className={INPUT_CLASS} />
-                <div className="sm:col-span-2"><button type="submit" disabled={saving} className="brand-button">{saving ? 'Saving...' : 'Save Profile'}</button>{accountStatus ? <p role="status" className="mt-3 text-[13px] text-[#3f3f3f]">{accountStatus}</p> : null}</div>
+                <div className="sm:col-span-2"><button type="submit" disabled={saving} className="brand-button">{saving ? 'Saving...' : 'Save Profile'}</button>{accountStatus ? <p role="status" className="mt-3 text-[13px] text-[#292727]">{accountStatus}</p> : null}</div>
               </form>
             </div>
 
@@ -540,7 +563,7 @@ export default function ProfileClient() {
                 <DetailField label="Email Address" value={state.email} />
                 <div>
                   <p className="text-[13px] font-semibold text-[#222222]">Password</p>
-                  <p className="mt-1 text-[13px] leading-[1.75] text-[#3f3f3f]">••••••••</p>
+                  <p className="mt-1 text-[13px] leading-[1.75] text-[#292727]">••••••••</p>
                   <button
                     type="button"
                     onClick={handleChangePassword}
@@ -560,7 +583,7 @@ export default function ProfileClient() {
             <SectionHeading>Orders</SectionHeading>
             <div className="mt-8">
               {ordersLoading ? (
-                <div className="border border-[#e4e4e4] bg-(--color-white) px-6 py-12 text-center text-[13px] text-[#3f3f3f]">
+                <div className="border border-[#e4e4e4] bg-(--color-white) px-6 py-12 text-center text-[13px] text-[#292727]">
                   Loading your orders...
                 </div>
               ) : ordersError ? (
@@ -570,7 +593,7 @@ export default function ProfileClient() {
               ) : orders.length === 0 ? (
                 <div className="border border-[#e4e4e4] bg-(--color-white) px-6 py-12 text-center">
                   <ShoppingBag size={22} strokeWidth={1.5} className="mx-auto text-[#222222]" aria-hidden="true" />
-                  <p className="mt-4 text-[13px] leading-[1.75] text-[#3f3f3f]">
+                  <p className="mt-4 text-[13px] leading-[1.75] text-[#292727]">
                     No orders have been placed for the selected time period.
                   </p>
                   <Link
@@ -588,7 +611,7 @@ export default function ProfileClient() {
                         <div className="flex flex-col gap-4 border-b border-[#e4e4e4] pb-4 sm:flex-row sm:items-start sm:justify-between">
                           <div>
                             <p className="text-[13px] font-semibold text-[#222222]">{order.order_number || 'Pending Number'}</p>
-                            <p className="mt-1 text-[12px] text-[#3f3f3f]">
+                            <p className="mt-1 text-[12px] text-[#292727]">
                               {order.created_at
                                 ? new Date(order.created_at).toLocaleDateString(undefined, {
                                     year: 'numeric',
@@ -597,8 +620,9 @@ export default function ProfileClient() {
                                   })
                                 : 'Recently placed'}
                             </p>
+                            {order.customer_birth_date || order.customer_anniversary_date ? <p className="mt-2 text-[12px] text-[#292727]">{[order.customer_birth_date ? `Birth date: ${new Date(`${order.customer_birth_date}T00:00:00`).toLocaleDateString()}` : '', order.customer_anniversary_date ? `Anniversary: ${new Date(`${order.customer_anniversary_date}T00:00:00`).toLocaleDateString()}` : ''].filter(Boolean).join(' · ')}</p> : null}
                           </div>
-                          <div className="flex flex-wrap gap-6">
+                          <div className="flex flex-wrap items-start gap-6">
                             <div>
                               <p className="text-[11px] uppercase tracking-[0.08em] text-[#767676]">Status</p>
                               <p className="mt-1 text-[13px] font-semibold capitalize text-[#222222]">{order.status || 'pending'}</p>
@@ -613,6 +637,7 @@ export default function ProfileClient() {
                               <p className="text-[11px] uppercase tracking-[0.08em] text-[#767676]">Total</p>
                               <p className="mt-1 text-[13px] font-semibold text-[#222222]">{formatMoney(order.total_amount)}</p>
                             </div>
+                            {order.order_number ? <Link href={`/checkout/success?order=${encodeURIComponent(order.order_number)}`} onClick={() => cacheOrderPreview(order)} className="inline-flex h-9 items-center border border-black bg-black px-4 font-[family-name:var(--font-family-button)] text-[10px] font-semibold uppercase tracking-[0.1em] text-white no-underline transition hover:bg-white hover:text-black">View Order</Link> : null}
                           </div>
                         </div>
 
@@ -625,7 +650,7 @@ export default function ProfileClient() {
                               <div className="min-w-0 flex-1">
                                 <p className="truncate text-[13px] font-semibold text-[#222222]">{item.product_name}</p>
                                 <p className="mt-1 text-[12px] uppercase tracking-[0.08em] text-[#767676]">Qty {item.quantity}</p>
-                                <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[12px] text-[#3f3f3f]">
+                                <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[12px] text-[#292727]">
                                   {buildSelectionLabel(item.selected_metal, item.selected_purity) ? (
                                     <span>Metal: {buildSelectionLabel(item.selected_metal, item.selected_purity)}</span>
                                   ) : null}
@@ -643,7 +668,7 @@ export default function ProfileClient() {
                   </div>
 
                   <div className="mt-6 flex flex-col gap-3 border-t border-[#e4e4e4] pt-5 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="text-[13px] text-[#3f3f3f]">
+                    <p className="text-[13px] text-[#292727]">
                       Page {ordersPage} of {ordersTotalPages}
                     </p>
                     <div className="flex gap-3">

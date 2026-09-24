@@ -45,7 +45,7 @@ export default function MaterialStrip({ items = [] }: { items?: HomeMaterialItem
         <h2 className="font-display-title section-title font-light uppercase tracking-[0.01em] text-[#0A1628] leading-[1.08] mb-[22px] max-md:text-[28px]" style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}>
           More Than <em className="not-italic text-[#0A1628] font-normal">Diamonds</em>
         </h2>
-        <p className="text-[13px] font-light leading-[2] text-[#6A6A6A] tracking-[0.04em] mb-8">
+        <p className="text-[13px] font-light leading-[2] text-[#292727] tracking-[0.04em] mb-8">
           We work with the world&apos;s most precious materials - from lab-grown diamonds to natural gemstones,
           platinum to 22K gold. Every material selected for its rarity, beauty and integrity.
         </p>
@@ -78,7 +78,7 @@ export default function MaterialStrip({ items = [] }: { items?: HomeMaterialItem
             <div className="font-serif text-[20px] font-normal text-[#0A1628] mb-2.5 tracking-[0.02em]">
               {mat.title}
             </div>
-            <p className="text-[10px] font-light tracking-[0.1em] text-[#6A6A6A] leading-[1.8]">
+            <p className="text-[10px] font-light tracking-[0.1em] text-[#292727] leading-[1.8]">
               {mat.description}
             </p>
           </div>

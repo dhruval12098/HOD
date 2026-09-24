@@ -61,7 +61,7 @@ export default function ProductFaqSection({ items = [] }: ProductFaqSectionProps
                     onClick={() =>
                       setOpenItems((current) => ({ ...current, [key]: !current[key] }))
                     }
-                    className="flex min-h-[72px] w-full items-center justify-between gap-6 py-5 text-left font-[family-name:var(--font-family-secondary)] text-[15px] font-medium leading-[1.5] text-[var(--color-brand-primary,#000000)] outline-none transition-colors hover:text-[var(--theme-muted,#6a6a6a)] focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary,#000000)] focus-visible:ring-offset-4 focus-visible:ring-offset-white sm:min-h-[82px] sm:py-6 sm:text-[17px]"
+                    className="flex min-h-[72px] w-full items-center justify-between gap-6 py-5 text-left font-[family-name:var(--font-family-secondary)] text-[15px] font-medium leading-[1.5] text-[var(--color-brand-primary,#000000)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary,#000000)] focus-visible:ring-offset-4 focus-visible:ring-offset-white sm:min-h-[82px] sm:py-6 sm:text-[17px]"
                   >
                     <span>{item.question}</span>
                     <ChevronDown

@@ -237,9 +237,6 @@ export default function CartDrawer() {
             <Link href="/cart" onClick={closeCart} className="flex h-11 items-center justify-center border border-black bg-white font-[family-name:var(--font-family-montserrat)] text-[10px] font-semibold uppercase tracking-[0.08em] text-black no-underline">
               View Cart
             </Link>
-            <Link href="/checkout?mode=cart" onClick={closeCart} aria-disabled={!resolvedItems.length} className={`flex h-11 items-center justify-center border border-black bg-black font-[family-name:var(--font-family-montserrat)] text-[10px] font-semibold uppercase tracking-[0.08em] text-white no-underline ${resolvedItems.length ? '' : 'pointer-events-none opacity-40'}`}>
-              Express Checkout
-            </Link>
           </div>
 
           <div className="mt-4 grid grid-cols-3 gap-2 border-t border-black/10 pt-4 text-center">
@@ -249,7 +246,7 @@ export default function CartDrawer() {
             </div>
             <div className="flex flex-col items-center gap-1.5">
               <RefreshCcw size={20} strokeWidth={1.25} />
-              <span className="text-[9px] leading-[1.25]">Complimentary<br />30-Day Returns</span>
+              <span className="text-[9px] leading-[1.25]">Complimentary<br />15-Day Returns</span>
             </div>
             <div className="flex flex-col items-center gap-1.5">
               <Gift size={20} strokeWidth={1.25} />

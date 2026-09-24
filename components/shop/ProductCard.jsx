@@ -244,7 +244,7 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
           onClick={(event) => {
             event.preventDefault();
             event.stopPropagation();
-            onWishlist(product);
+            onWishlist?.(product);
           }}
           aria-label={wishlisted ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
           aria-pressed={wishlisted}

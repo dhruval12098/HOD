@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ArrowLeft, Check, ChevronRight, X } from 'lucide-react';
 
 import quizConfigJson from '@/lib/find-your-match-config.json';
@@ -217,37 +218,37 @@ export function FindYourMatchQuiz() {
   const shopHref = useMemo(() => state.productId ? buildShopHref(state.productId, state.results) : '/shop', [state.productId, state.results]);
 
   return <>
-    <BrandButton id="find-your-match-trigger" onClick={openQuiz} className="mt-[var(--space-8)] gap-[var(--space-3)]">
+    <BrandButton id="find-your-match-trigger" onClick={openQuiz} className="banner-light-button mt-[var(--space-8)] gap-[var(--space-3)]">
       TAKE THE QUIZ <span aria-hidden="true">&rarr;</span>
     </BrandButton>
 
-    {open ? <div className="fixed inset-0 z-[10000] flex items-end justify-center bg-black/55 p-0 backdrop-blur-[2px] sm:items-center sm:p-[var(--space-6)]" onMouseDown={(event) => { if (event.target === event.currentTarget) close(true); }}>
-      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} className="relative flex max-h-[94dvh] w-full max-w-[58rem] flex-col overflow-hidden bg-[var(--color-brand-accent,#fff)] text-[var(--color-brand-primary,#000)] shadow-[0_24px_80px_rgba(0,0,0,.24)] sm:max-h-[88dvh]">
-        <header className="flex shrink-0 items-center justify-between border-b border-black/10 px-[var(--space-5)] py-[var(--space-4)] sm:px-[var(--space-8)]">
+    {open && typeof document !== 'undefined' ? createPortal(<div className="fixed inset-0 z-[2147483000] flex items-end justify-center bg-black/55 p-3 backdrop-blur-[2px] sm:items-center sm:p-5" onMouseDown={(event) => { if (event.target === event.currentTarget) close(true); }}>
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} className="relative flex max-h-[88dvh] w-full max-w-[48rem] flex-col overflow-hidden bg-[var(--color-brand-accent,#fff)] text-[var(--color-brand-primary,#000)] shadow-[0_24px_80px_rgba(0,0,0,.24)]">
+        <header className="flex shrink-0 items-center justify-between border-b border-black/10 px-4 py-3 sm:px-6">
           <div className="font-[family-name:var(--font-family-secondary)] text-[10px] font-semibold uppercase tracking-[.22em]">House of Diams · Find Your Match</div>
-          <button type="button" aria-label="Close quiz" onClick={() => close(true)} className="grid size-10 place-items-center border border-black/15 transition hover:bg-black hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2"><X size={18}/></button>
+          <button type="button" aria-label="Close quiz" onClick={() => close(true)} className="grid size-9 place-items-center border border-black/15 transition hover:bg-black hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2"><X size={17}/></button>
         </header>
 
-        <div className="overflow-y-auto overscroll-contain px-[var(--space-5)] py-[var(--space-8)] sm:px-[var(--space-10)] sm:py-[var(--space-10)]">
+        <div className="overflow-y-auto overscroll-contain px-4 py-5 sm:px-7 sm:py-7">
           {screen === 'product' ? <section>
             <p className="font-[family-name:var(--font-family-secondary)] text-xs uppercase tracking-[.18em] text-black/55">Step 01 · One tap</p>
-            <h2 id={titleId} className="mt-[var(--space-3)] font-medium leading-[1.08]" style={{fontFamily:'var(--font-family-primary)',fontSize:'clamp(2rem,5vw,3.75rem)'}}>What are you looking for?</h2>
-            <div className="mt-[var(--space-8)] grid gap-px bg-black/15 sm:grid-cols-2">
-              {PRODUCT_IDS.map((id) => { const item = config.products[id]; return <button key={id} type="button" onClick={() => selectProduct(id)} className="group flex min-h-32 items-center justify-between bg-white p-[var(--space-6)] text-left transition hover:bg-[var(--color-brand-secondary,#F9F9F9)] focus-visible:relative focus-visible:z-10 focus-visible:outline-2">
-                <span><strong className="block font-[family-name:var(--font-family-primary)] text-xl font-medium">{item.name}</strong><span className="mt-2 block font-[family-name:var(--font-family-secondary)] text-sm text-black/60">{item.sub}</span></span><ChevronRight className="transition group-hover:translate-x-1"/>
+            <h2 id={titleId} className="mt-3 font-medium leading-[1.08]" style={{fontFamily:'var(--font-family-primary)',fontSize:'clamp(1.75rem,4vw,2.8rem)'}}>What are you looking for?</h2>
+            <div className="mt-6 grid gap-px bg-black/15 sm:grid-cols-2">
+              {PRODUCT_IDS.map((id) => { const item = config.products[id]; return <button key={id} type="button" onClick={() => selectProduct(id)} className="group flex min-h-24 items-center justify-between bg-white p-5 text-left transition hover:bg-[var(--color-brand-secondary,#F9F9F9)] focus-visible:relative focus-visible:z-10 focus-visible:outline-2">
+                <span><strong className="block font-[family-name:var(--font-family-primary)] text-lg font-medium">{item.name}</strong><span className="mt-1.5 block font-[family-name:var(--font-family-secondary)] text-[13px] text-black/60">{item.sub}</span></span><ChevronRight className="transition group-hover:translate-x-1"/>
               </button>; })}
             </div>
           </section> : null}
 
           {screen === 'hub' && product ? <section>
             <div className="flex flex-wrap items-start justify-between gap-4">
-              <div><p className="font-[family-name:var(--font-family-secondary)] text-xs uppercase tracking-[.18em] text-black/55">Step 02 · Your edit</p><h2 id={titleId} className="mt-3 font-medium leading-[1.08]" style={{fontFamily:'var(--font-family-primary)',fontSize:'clamp(1.9rem,4vw,3.25rem)'}}>What do you want help deciding?</h2></div>
+              <div><p className="font-[family-name:var(--font-family-secondary)] text-[11px] uppercase tracking-[.18em] text-black/55">Step 02 · Your edit</p><h2 id={titleId} className="mt-2 font-medium leading-[1.08]" style={{fontFamily:'var(--font-family-primary)',fontSize:'clamp(1.65rem,3.5vw,2.5rem)'}}>What do you want help deciding?</h2></div>
               <button type="button" onClick={() => setScreen('product')} className="border-b border-black font-[family-name:var(--font-family-button)] text-xs font-semibold uppercase tracking-[.14em]">{product.name} · Edit</button>
             </div>
-            <div className="mt-[var(--space-8)] grid gap-px bg-black/15 sm:grid-cols-2">
-              {config.trackOrder.map((id, index) => { const item = getTrack(product,id); const result = state.results[id]; return <button key={id} type="button" onClick={() => startTrack(id)} className="group min-h-40 bg-white p-[var(--space-6)] text-left transition hover:bg-[var(--color-brand-secondary,#F9F9F9)] focus-visible:relative focus-visible:z-10 focus-visible:outline-2">
+            <div className="mt-6 grid gap-px bg-black/15 sm:grid-cols-2">
+              {config.trackOrder.map((id, index) => { const item = getTrack(product,id); const result = state.results[id]; return <button key={id} type="button" onClick={() => startTrack(id)} className="group min-h-32 bg-white p-5 text-left transition hover:bg-[var(--color-brand-secondary,#F9F9F9)] focus-visible:relative focus-visible:z-10 focus-visible:outline-2">
                 <span className="flex items-center justify-between"><span className="font-[family-name:var(--font-family-secondary)] text-[10px] uppercase tracking-[.18em] text-black/45">0{index+1} · {item.questions.length} question{item.questions.length === 1 ? '' : 's'}</span>{result ? <span className="grid size-6 place-items-center bg-black text-white"><Check size={14}/></span>:<ChevronRight size={18}/>}</span>
-                <strong className="mt-5 block font-[family-name:var(--font-family-primary)] text-2xl font-medium">{item.name}</strong><span className="mt-2 block font-[family-name:var(--font-family-secondary)] text-sm text-black/60">{result ? `Your match · ${result.name}` : item.blurb}</span>
+                <strong className="mt-4 block font-[family-name:var(--font-family-primary)] text-xl font-medium">{item.name}</strong><span className="mt-1.5 block font-[family-name:var(--font-family-secondary)] text-[13px] text-black/60">{result ? `Your match · ${result.name}` : item.blurb}</span>
               </button>; })}
             </div>
             {completedCount > 0 ? <div className="mt-[var(--space-8)] flex flex-col items-start justify-between gap-5 border-t border-black/15 pt-[var(--space-6)] sm:flex-row sm:items-center"><p className="font-[family-name:var(--font-family-secondary)] text-sm text-black/65">{completedCount} of 4 matches found. You can shop now or keep refining.</p><BrandButton href={shopHref} onClick={() => emitQuizEvent('cta_click',{action:'shop_matches',product:product.id})}>SHOP YOUR MATCHES</BrandButton></div> : null}
@@ -255,21 +256,21 @@ export function FindYourMatchQuiz() {
 
           {screen === 'track' && product && activeTrack && track ? <section>
             <button type="button" onClick={() => setScreen('hub')} className="inline-flex items-center gap-2 font-[family-name:var(--font-family-button)] text-xs font-semibold uppercase tracking-[.14em]"><ArrowLeft size={15}/> Back to your edit</button>
-            <div className="mt-[var(--space-8)] flex items-end justify-between border-b border-black/15 pb-[var(--space-4)]"><div><p className="font-[family-name:var(--font-family-secondary)] text-xs uppercase tracking-[.18em] text-black/55">{track.name} · Question {questionIndex+1} of {track.questions.length}</p><h2 id={titleId} className="mt-3 max-w-[40rem] font-medium leading-[1.12]" style={{fontFamily:'var(--font-family-primary)',fontSize:'clamp(1.75rem,4vw,3rem)'}}>{track.questions[questionIndex].text}</h2></div><span className="font-[family-name:var(--font-family-secondary)] text-sm tabular-nums">{Math.round(((questionIndex+1)/track.questions.length)*100)}%</span></div>
-            <div className="mt-[var(--space-6)] grid gap-3 sm:grid-cols-2">
-              {track.questions[questionIndex].options.map((option) => <button key={option.id} type="button" onClick={() => answerQuestion(option)} className="group flex min-h-28 items-center justify-between border border-black/15 p-[var(--space-5)] text-left transition hover:border-black hover:bg-black hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2"><span><strong className="block font-[family-name:var(--font-family-secondary)] text-sm font-semibold">{option.label}</strong><span className="mt-2 block font-[family-name:var(--font-family-secondary)] text-xs leading-relaxed opacity-60">{option.sub}</span></span><ChevronRight size={18}/></button>)}
+            <div className="mt-6 flex items-end justify-between border-b border-black/15 pb-4"><div><p className="font-[family-name:var(--font-family-secondary)] text-[11px] uppercase tracking-[.18em] text-black/55">{track.name} · Question {questionIndex+1} of {track.questions.length}</p><h2 id={titleId} className="mt-2 max-w-[40rem] font-medium leading-[1.12]" style={{fontFamily:'var(--font-family-primary)',fontSize:'clamp(1.5rem,3.5vw,2.5rem)'}}>{track.questions[questionIndex].text}</h2></div><span className="font-[family-name:var(--font-family-secondary)] text-sm tabular-nums">{Math.round(((questionIndex+1)/track.questions.length)*100)}%</span></div>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              {track.questions[questionIndex].options.map((option) => <button key={option.id} type="button" onClick={() => answerQuestion(option)} className="group flex min-h-24 items-center justify-between border border-black/15 p-4 text-left transition hover:border-black hover:bg-black hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2"><span><strong className="block font-[family-name:var(--font-family-secondary)] text-sm font-semibold">{option.label}</strong><span className="mt-1.5 block font-[family-name:var(--font-family-secondary)] text-xs leading-relaxed opacity-60">{option.sub}</span></span><ChevronRight size={18}/></button>)}
             </div>
           </section> : null}
 
           {screen === 'result' && product && activeTrack && activeResult ? <section>
             <p className="font-[family-name:var(--font-family-secondary)] text-xs uppercase tracking-[.18em] text-black/55">Your {activeTrack} match</p>
-            <h2 id={titleId} className="mt-3 font-medium leading-none" style={{fontFamily:'var(--font-family-primary)',fontSize:'clamp(2.5rem,7vw,5.5rem)'}}>{activeResult.name}</h2>
-            <p className="mt-[var(--space-6)] max-w-[42rem] font-[family-name:var(--font-family-secondary)] text-base leading-[1.75] text-black/70">{activeResult.reason}</p>
-            <div className="mt-[var(--space-8)] border-y border-black/15 py-[var(--space-5)]"><span className="font-[family-name:var(--font-family-secondary)] text-[10px] font-semibold uppercase tracking-[.18em] text-black/45">Your one alternative</span><p className="mt-2 font-[family-name:var(--font-family-primary)] text-xl font-medium">{activeResult.runnerUp}</p></div>
-            <div className="mt-[var(--space-8)] flex flex-wrap gap-3"><BrandButton href={shopHref} onClick={() => emitQuizEvent('cta_click',{action:'shop_result',product:product.id,track:activeTrack})}>SHOP THIS MATCH</BrandButton><BrandButton onClick={() => setScreen('hub')} className="!border !border-black !bg-white !text-black hover:!bg-[var(--color-brand-secondary,#F9F9F9)]">CONTINUE YOUR EDIT</BrandButton></div>
+            <h2 id={titleId} className="mt-2 font-medium leading-none" style={{fontFamily:'var(--font-family-primary)',fontSize:'clamp(2rem,5vw,3.5rem)'}}>{activeResult.name}</h2>
+            <p className="mt-4 max-w-[42rem] font-[family-name:var(--font-family-secondary)] text-[14px] leading-[1.7] text-black/70">{activeResult.reason}</p>
+            <div className="mt-6 border-y border-black/15 py-4"><span className="font-[family-name:var(--font-family-secondary)] text-[10px] font-semibold uppercase tracking-[.18em] text-black/45">Your one alternative</span><p className="mt-2 font-[family-name:var(--font-family-primary)] text-lg font-medium">{activeResult.runnerUp}</p></div>
+            <div className="mt-6 flex flex-wrap gap-3"><BrandButton href={shopHref} onClick={() => emitQuizEvent('cta_click',{action:'shop_result',product:product.id,track:activeTrack})}>SHOP THIS MATCH</BrandButton><BrandButton onClick={() => setScreen('hub')} className="!border !border-black !bg-white !text-black hover:!bg-[var(--color-brand-secondary,#F9F9F9)]">CONTINUE YOUR EDIT</BrandButton></div>
           </section> : null}
         </div>
       </div>
-    </div> : null}
+    </div>, document.body) : null}
   </>;
 }

@@ -100,7 +100,7 @@ export default function ProductTabs({
 
   const renderPolicyBody = (body, keyPrefix) => (
     <div className="overflow-hidden">
-      <div className={`${detailsAccordion ? 'px-1 pb-5 pt-1' : 'border-t border-[rgba(10,22,40,0.10)] bg-[#FAFBFD] px-6 pb-5 pt-5'} font-sans text-[13px] font-light leading-[1.9] text-[#6A6A6A]`}>
+      <div className={`${detailsAccordion ? 'px-1 pb-5 pt-1' : 'border-t border-[rgba(10,22,40,0.10)] bg-[#FAFBFD] px-6 pb-5 pt-5'} font-sans text-[13px] font-light leading-[1.9] text-[#292727]`}>
         {body
           .split(/\n+/)
           .map((entry) => entry.trim())
@@ -118,11 +118,11 @@ export default function ProductTabs({
     ? 'overflow-hidden border-b border-[rgba(10,22,40,0.10)] bg-transparent'
     : 'mt-8 overflow-hidden border border-[rgba(10,22,40,0.10)] bg-white';
   const policyButtonClass = detailsAccordion
-    ? 'flex w-full items-center justify-between bg-transparent px-1 py-4 text-left transition-colors duration-200'
-    : 'flex w-full items-center justify-between bg-white px-6 py-5 text-left transition-colors duration-200 hover:bg-[#FAFBFD]';
+    ? 'flex w-full items-center justify-between bg-transparent px-1 py-4 text-left'
+    : 'flex w-full items-center justify-between bg-white px-6 py-5 text-left';
   const policyTitleClass = detailsAccordion
     ? 'font-display-title text-[18px] font-normal normal-case tracking-normal text-[var(--color-brand-primary,#000000)]'
-    : 'font-sans text-[12px] font-medium uppercase tracking-[0.12em] text-[#253246]';
+    : 'font-sans text-[12px] font-medium uppercase tracking-[0.12em] text-[#292727]';
   const chevronClass = detailsAccordion ? 'h-5 w-5' : 'h-4 w-4';
 
   return (
@@ -148,7 +148,7 @@ export default function ProductTabs({
                     <div className={`${openPanels.description ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'} grid transition-all duration-300`}>
                       <div className="overflow-hidden">
                         <div className="px-1 py-5">
-                          <p className="max-w-[58ch] font-sans text-[13px] font-light leading-[1.9] tracking-[0.02em] text-[#253246]">
+                          <p className="max-w-[58ch] font-sans text-[13px] font-light leading-[1.9] tracking-[0.02em] text-[#292727]">
                             {description}
                           </p>
                         </div>
@@ -175,8 +175,8 @@ export default function ProductTabs({
                           <div className="space-y-3">
                             {accordionDetailsRows.map((row, index) => (
                               <div key={`${row.label}-${index}`} className="grid grid-cols-[minmax(120px,0.9fr)_minmax(0,1.2fr)] gap-5 font-sans text-[13px] leading-[1.35]">
-                                <div className="text-[#6A6A6A]">{row.label}</div>
-                                <div className="font-medium text-[#0A1628]">{row.value}</div>
+                <div className="text-[#40444b]">{row.label}</div>
+                                <div className="font-medium text-[#292727]">{row.value}</div>
                               </div>
                             ))}
                           </div>
@@ -216,7 +216,7 @@ export default function ProductTabs({
                 />
               ))
             ) : (
-              <div className="font-sans text-[12px] font-light leading-[1.9] text-[#253246]">
+              <div className="font-sans text-[12px] font-light leading-[1.9] text-[#292727]">
                 No specifications have been added for this product yet.
               </div>
             )}

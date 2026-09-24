@@ -11,8 +11,9 @@ const FALLBACK_IMAGE = '/HOD%20specs/profile%20banner/wesfly-jzXYuYd-o00-unsplas
 
 type ResultState = 'success' | 'pending' | 'failed' | 'error'
 type Item = { product_name: string; product_slug?: string | null; quantity: number; line_total: number; image_url?: string | null; selected_metal?: string | null; selected_purity?: string | null; selected_size_or_fit?: string | null; selected_gemstone?: string | null; selected_carat?: string | null; item_type?: string | null }
-type Order = { order_number: string; created_at: string; customer_email?: string | null; customer_first_name?: string | null; customer_last_name?: string | null; customer_phone?: string | null; shipping_country?: string | null; shipping_state?: string | null; shipping_district?: string | null; shipping_city?: string | null; shipping_postal_code?: string | null; shipping_address_line_1?: string | null; shipping_address_line_2?: string | null; subtotal_amount: number; gst_amount: number; shipping_amount: number; total_amount: number; payment_gateway?: string | null; razorpay_payment_method?: string | null; items: Item[] }
-type Payload = { state: ResultState; order: Order; cms?: { page?: { main_banner_image_url?: string; main_banner_image_alt?: string; secondary_banner_image_url?: string; secondary_banner_image_alt?: string; secondary_eyebrow?: string; secondary_heading?: string; secondary_paragraph?: string } | null; state?: { eyebrow?: string; heading?: string; paragraph?: string; order_button_label?: string } | null }; contact?: Array<{ id: string; label?: string; value?: string; note?: string; href?: string }>; categories?: Array<{ name: string; slug: string }> }
+type Order = { order_number: string; created_at: string; status?: string | null; payment_status?: string | null; customer_email?: string | null; customer_first_name?: string | null; customer_last_name?: string | null; customer_phone?: string | null; customer_birth_date?: string | null; customer_anniversary_date?: string | null; shipping_country?: string | null; shipping_state?: string | null; shipping_district?: string | null; shipping_city?: string | null; shipping_postal_code?: string | null; shipping_address_line_1?: string | null; shipping_address_line_2?: string | null; subtotal_amount: number; gst_amount: number; shipping_amount: number; total_amount: number; payment_gateway?: string | null; razorpay_payment_method?: string | null; items: Item[] }
+type StatusEvent = { status: string; created_at: string }
+type Payload = { state: ResultState; order: Order; statusEvents?: StatusEvent[]; cms?: { page?: { main_banner_image_url?: string; main_banner_image_alt?: string; secondary_banner_image_url?: string; secondary_banner_image_alt?: string; secondary_eyebrow?: string; secondary_heading?: string; secondary_paragraph?: string } | null; state?: { eyebrow?: string; heading?: string; paragraph?: string; order_button_label?: string } | null }; contact?: Array<{ id: string; label?: string; value?: string; note?: string; href?: string }>; categories?: Array<{ name: string; slug: string }> }
 
 const copy: Record<ResultState, { eyebrow: string; heading: string; paragraph: string; button: string }> = {
   success: { eyebrow: 'Order confirmed', heading: 'A beautiful choice, now officially yours.', paragraph: 'Your order has been successfully placed and our team is preparing it with care.', button: 'View my order' },
@@ -24,11 +25,74 @@ const copy: Record<ResultState, { eyebrow: string; heading: string; paragraph: s
 const money = (value: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(Number(value || 0))
 const date = (value: string) => new Intl.DateTimeFormat('en-IN', { day: '2-digit', month: 'long', year: 'numeric' }).format(new Date(value))
 
+function readOrderPreview(orderNumber: string): Payload | null {
+  if (typeof window === 'undefined' || !orderNumber) return null
+  try {
+    const raw = sessionStorage.getItem(`hod_order_preview_${orderNumber}`)
+    if (!raw) return null
+    const preview = JSON.parse(raw) as Payload
+    return preview?.order?.order_number === orderNumber && preview.state ? preview : null
+  } catch {
+    return null
+  }
+}
+
+const ORDER_STEPS = [
+  { label: 'Payment received', description: 'Your payment has been securely recorded.' },
+  { label: 'Order confirmed', description: 'Your piece has been accepted for fulfillment.' },
+  { label: 'Preparing your piece', description: 'Our team is quality-checking and preparing your order.' },
+  { label: 'Dispatched', description: 'Your order is on its way. Tracking will follow when available.' },
+  { label: 'Delivered', description: 'Your House of Diams piece has been delivered.' },
+]
+
+function statusStep(status: string | null | undefined) {
+  const value = String(status || '').trim().toLowerCase().replace(/[\s-]+/g, '_')
+  if (['delivered', 'complete', 'completed'].includes(value)) return 4
+  if (['shipped', 'dispatched', 'out_for_delivery', 'out_for_dispatch'].includes(value)) return 3
+  if (['processing', 'preparing', 'in_production', 'packed', 'quality_check'].includes(value)) return 2
+  if (['confirmed', 'paid', 'payment_received'].includes(value)) return 1
+  return 0
+}
+
+function isFailureStatus(status: string | null | undefined) {
+  return ['failed', 'cancelled', 'canceled', 'refunded', 'refund_pending'].includes(String(status || '').trim().toLowerCase())
+}
+
+function OrderProgress({ order, events = [] }: { order: Order; events?: StatusEvent[] }) {
+  const failed = isFailureStatus(order.status) || isFailureStatus(order.payment_status)
+  const currentStep = failed ? 0 : Math.max(statusStep(order.status), ['paid', 'captured', 'success'].includes(String(order.payment_status || '').toLowerCase()) ? 1 : 0)
+  const eventByStep = new Map<number, StatusEvent>()
+  events.forEach((event) => {
+    const step = statusStep(event.status)
+    if (!eventByStep.has(step)) eventByStep.set(step, event)
+  })
+  const progress = failed ? 0 : (currentStep / (ORDER_STEPS.length - 1)) * 100
+  const currentLabel = failed ? 'Order requires attention' : ORDER_STEPS[currentStep].label
+
+  return <section className="mx-auto max-w-[1440px] px-5 pb-14 sm:px-8 lg:px-12">
+    <div className="pt-5">
+      <div className="flex items-center justify-between gap-4 border-b border-black/10 pb-3">
+        <h2 className="font-[family-name:var(--font-family-secondary)] text-[13px] font-semibold uppercase tracking-[0.14em] text-black">What happens next</h2>
+        <span className={`text-[10px] font-semibold uppercase tracking-[0.12em] ${failed ? 'text-[#b42318]' : currentStep === 0 ? 'text-[#92400e]' : currentStep === 4 ? 'text-[#166534]' : 'text-[#176b3a]'}`}>{failed ? 'Attention needed' : currentStep === 0 ? 'Awaiting update' : currentLabel}</span>
+      </div>
+      <ol className="relative mt-5 grid gap-6 md:grid-cols-5 md:gap-0">
+        <div className="absolute left-[10%] right-[10%] top-[18px] hidden h-px bg-black/30 md:block" aria-hidden="true"><div className={failed ? 'h-full bg-[#b42318]' : 'h-full bg-[#177245] transition-[width] duration-500'} style={{ width: `${progress}%` }} /></div>
+        {ORDER_STEPS.map((step, index) => {
+          const isComplete = !failed && index < currentStep
+          const isCurrent = !failed && index === currentStep
+          const event = eventByStep.get(index)
+          return <li key={step.label} className="relative z-[1] min-w-0 text-left md:px-3 md:text-center"><span className={`mb-3 flex h-9 w-9 items-center justify-center rounded-full border bg-white text-[12px] font-semibold md:mx-auto ${failed && index === 0 ? 'border-[#b42318] text-[#b42318]' : isComplete ? 'border-[#177245] text-[#176b3a]' : isCurrent ? 'border-[#b7791f] text-[#92400e]' : 'border-black/70 text-black'}`}>{isComplete ? '✓' : index + 1}</span><h3 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-black">{step.label}</h3><p className="mt-2 text-[12px] leading-[1.35] text-[#292727]">{failed && index === 0 ? 'Payment or order processing could not be completed.' : step.description}</p>{event ? <p className="mt-2 text-[10px] uppercase tracking-[0.06em] text-[#292727]">Updated {date(event.created_at)}</p> : null}</li>
+        })}
+      </ol>
+    </div>
+  </section>
+}
+
 export default function CheckoutSuccessClient() {
   const searchParams = useSearchParams()
   const requestedOrder = searchParams.get('order')?.trim() || ''
-  const [payload, setPayload] = useState<Payload | null>(null)
-  const [state, setState] = useState<ResultState | 'loading'>('loading')
+  const [payload, setPayload] = useState<Payload | null>(() => readOrderPreview(requestedOrder))
+  const [state, setState] = useState<ResultState | 'loading'>(() => readOrderPreview(requestedOrder)?.state ?? 'loading')
   const [guestOrder, setGuestOrder] = useState(false)
 
   useEffect(() => {
@@ -84,6 +148,7 @@ export default function CheckoutSuccessClient() {
           <div><CalendarDays size={19}/><p className="mt-3 text-[10px] uppercase tracking-[0.14em] text-neutral-500">Estimated delivery</p><p className="mt-1 text-sm">Approximately 3 to 4 weeks</p></div>
           <div><MapPin size={19}/><p className="mt-3 text-[10px] uppercase tracking-[0.14em] text-neutral-500">Shipping to</p><p className="mt-1 text-sm leading-6">{[order.customer_first_name, order.customer_last_name].filter(Boolean).join(' ')}<br/>{address}</p></div>
           <div><CreditCard size={19}/><p className="mt-3 text-[10px] uppercase tracking-[0.14em] text-neutral-500">Payment method</p><p className="mt-1 text-sm capitalize">{order.razorpay_payment_method || order.payment_gateway || 'Online payment'}</p></div>
+          {order.customer_birth_date || order.customer_anniversary_date ? <div><CalendarDays size={19}/><p className="mt-3 text-[10px] uppercase tracking-[0.14em] text-neutral-500">Customer dates</p><p className="mt-1 text-sm leading-6">{order.customer_birth_date ? <>Birth date: {date(order.customer_birth_date)}<br/></> : null}{order.customer_anniversary_date ? <>Anniversary: {date(order.customer_anniversary_date)}</> : null}</p></div> : null}
         </div>
       </article>
       <article className="border border-black/15 p-6 sm:p-8">
@@ -93,7 +158,7 @@ export default function CheckoutSuccessClient() {
       </article>
     </section> : null}
 
-    <section className="mx-auto max-w-[1440px] px-5 pb-14 sm:px-8 lg:px-12"><h2 className="border-b border-black/15 pb-3 font-[family-name:var(--font-family-secondary)] text-sm uppercase tracking-[0.16em]">What happens next</h2><div className="grid gap-0 sm:grid-cols-2 lg:grid-cols-4">{[['1','Order confirmed','Your order has been securely received.'],['2','Quality checked','Your jewellery is carefully inspected by our team.'],['3','Carefully packaged','Your piece is placed inside our signature packaging.'],['4','On its way','You will receive tracking details once dispatched.']].map(([n,title,text]) => <div key={n} className="border-b border-black/10 px-4 py-7 sm:border-r"><span className="flex h-8 w-8 items-center justify-center rounded-full border border-black text-xs">{n}</span><h3 className="mt-4 text-xs uppercase tracking-[0.14em]">{title}</h3><p className="mt-2 text-sm leading-6 text-neutral-600">{text}</p></div>)}</div></section>
+    {order ? <OrderProgress order={order} events={payload?.statusEvents} /> : null}
 
     <section className="relative flex min-h-[260px] items-center bg-neutral-900 px-6 py-12 text-white sm:px-10 lg:px-[8vw]" style={{ backgroundImage: `linear-gradient(90deg, rgba(0,0,0,.7), rgba(0,0,0,.12)), url('${secondaryImage}')`, backgroundSize: 'cover', backgroundPosition: 'center' }}><div className="max-w-xl"><p className="text-[10px] uppercase tracking-[0.2em]">{page?.secondary_eyebrow || 'Made with intention'}</p><h2 className="mt-3 font-[family-name:var(--font-family-primary)] text-4xl">{page?.secondary_heading || 'Every piece tells a story.'}</h2><p className="mt-3 text-sm leading-7 text-white/85">{page?.secondary_paragraph || 'Your jewellery is prepared and inspected with care before it begins its journey to you.'}</p></div></section>
 

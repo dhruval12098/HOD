@@ -48,7 +48,7 @@ export default function ConfiguratorPillGroup({
                 border transition-all duration-300 whitespace-nowrap
                 ${isActive
                   ? activeClass
-                  : 'bg-transparent text-[#253246] border-[rgba(10,22,40,0.10)] hover:border-[var(--color-brand-primary,#000000)] hover:text-[var(--color-brand-primary,#000000)]'
+                  : 'bg-transparent text-[#292727] border-[rgba(10,22,40,0.10)] hover:border-[var(--color-brand-primary,#000000)] hover:text-[var(--color-brand-primary,#000000)]'
                 }
               `}
             >

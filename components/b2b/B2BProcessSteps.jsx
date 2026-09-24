@@ -49,7 +49,7 @@ export default function B2BProcessSteps() {
           >
             Simple. Predictable. Repeatable.
           </h2>
-          <p className="text-[12px] font-light tracking-[0.12em] text-[#6A6A6A] leading-[1.9] max-w-[720px] mx-auto mt-5">
+          <p className="text-[12px] font-light tracking-[0.12em] text-[#292727] leading-[1.9] max-w-[720px] mx-auto mt-5">
             A trade-first process designed for speed and clarity from first message to delivery.
           </p>
         </div>

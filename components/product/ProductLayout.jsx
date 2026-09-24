@@ -20,7 +20,7 @@ export default function ProductLayout({ gallery, info }) {
       <div>{gallery}</div>
 
       {/* Right: product info */}
-      <div className="min-[1101px]:sticky min-[1101px]:top-[100px] min-[1101px]:self-start">{info}</div>
+      <div className="min-[1101px]:sticky min-[1101px]:top-[calc(var(--hod-site-header-height,110px)+16px)] min-[1101px]:self-start">{info}</div>
     </div>
   );
 }

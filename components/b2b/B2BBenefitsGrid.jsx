@@ -83,7 +83,7 @@ export default function B2BBenefitsGrid() {
         >
           Built for Trade
         </h2>
-        <p className="text-[12px] font-light tracking-[0.12em] text-[#6A6A6A] leading-[1.9] max-w-[680px] mx-auto mt-5">
+        <p className="text-[12px] font-light tracking-[0.12em] text-[#292727] leading-[1.9] max-w-[680px] mx-auto mt-5">
           Everything we do is designed to make procurement and production easy, consistent, and scalable.
         </p>
       </div>

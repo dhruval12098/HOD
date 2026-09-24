@@ -156,7 +156,7 @@ export default function DiamondInfoSequence({
                       </div>
                       <div>
                         <h3 className="text-[15px] font-medium leading-[1.25] text-[#0A1628] sm:text-[16px]">{feature.title}</h3>
-                        <p className="mt-1 text-[13px] leading-[1.65] text-[#5F6676] sm:text-[13.5px]">{feature.description}</p>
+                        <p className="mt-1 text-[13px] leading-[1.65] text-[#292727] sm:text-[13.5px]">{feature.description}</p>
                       </div>
                     </div>
                   ))}

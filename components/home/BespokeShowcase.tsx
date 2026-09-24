@@ -68,7 +68,7 @@ export default function BespokeShowcase({
                 {section.subtitle || 'Begin a bespoke commission with House of Diams, from first sketch to final setting.'}
               </p>
 
-              <BrandButton onClick={onEnquireClick} className="mt-[var(--space-8)]">
+              <BrandButton onClick={onEnquireClick} className="banner-light-button mt-[var(--space-8)]">
                 {section.ctaLabel || 'Start Bespoke Enquiry'}
               </BrandButton>
             </div>

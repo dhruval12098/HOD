@@ -5,7 +5,7 @@ import Link from "next/link";
 export default function Breadcrumb({ items = [] }) {
   return (
     <nav aria-label="Breadcrumb">
-      <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[9px] tracking-[0.3em] uppercase text-[#6A6A6A]">
+      <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[9px] tracking-[0.3em] uppercase text-[#292727]">
         {items.map((it, idx) => {
           const last = idx === items.length - 1;
           return (
@@ -14,7 +14,7 @@ export default function Breadcrumb({ items = [] }) {
               {it.href && !last ? (
                 <Link
                   href={it.href}
-                  className="text-[#6A6A6A] no-underline hover:text-[#0A1628] transition-colors duration-300"
+                  className="text-[#292727] no-underline hover:text-[#0A1628] transition-colors duration-300"
                 >
                   {it.label}
                 </Link>
