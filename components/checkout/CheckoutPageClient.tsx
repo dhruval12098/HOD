@@ -1293,20 +1293,39 @@ export default function CheckoutPageClient() {
                 onCouponAction={() => { if (appliedCoupon) handleRemoveCoupon(); else void handleApplyCoupon() }}
                 couponApplied={Boolean(appliedCoupon)}
                 couponLoading={couponLoading}
-                giftOffer={giftPromotion?.rewardType === 'free_gift' && giftPromotion.gift ? {
-                  name: giftPromotion.gift.name,
-                  imageUrl: giftPromotion.gift.imageUrl,
-                  minimumOrderAmount: giftPromotion.minimumOrderAmount,
-                  remainingAmount: Math.max(0, giftPromotion.minimumOrderAmount - subtotal),
-                  unlocked: subtotal >= giftPromotion.minimumOrderAmount,
-                  added: Boolean(appliedCoupon?.rewardType === 'free_gift' && (authoritativePricing?.gift || appliedCoupon.gift)),
-                  onAction: () => {
-                    if (!appliedCoupon && subtotal >= giftPromotion.minimumOrderAmount) {
-                      setCouponCodeInput(giftPromotion.code)
-                      void handleApplyCoupon(giftPromotion.code)
-                    }
-                  },
-                } : null}
+                giftOffer={appliedCoupon
+                  ? appliedCoupon.rewardType === 'free_gift' && (authoritativePricing?.gift || appliedCoupon.gift)
+                    ? {
+                        name: (authoritativePricing?.gift || appliedCoupon.gift)!.name,
+                        imageUrl: (authoritativePricing?.gift || appliedCoupon.gift)!.imageUrl,
+                        minimumOrderAmount: Number(appliedCoupon.minimumOrderAmount ?? 0),
+                        remainingAmount: 0,
+                        unlocked: true,
+                        added: true,
+                        appliedCouponCode: appliedCoupon.code,
+                      }
+                    : {
+                        name: 'Discount applied',
+                        minimumOrderAmount: Number(appliedCoupon.minimumOrderAmount ?? 0),
+                        remainingAmount: 0,
+                        unlocked: true,
+                        isDiscount: true,
+                        appliedCouponCode: appliedCoupon.code,
+                        appliedDiscountAmount: couponDiscount,
+                      }
+                  : giftPromotion?.rewardType === 'free_gift' && giftPromotion.gift ? {
+                      name: giftPromotion.gift.name,
+                      imageUrl: giftPromotion.gift.imageUrl,
+                      minimumOrderAmount: giftPromotion.minimumOrderAmount,
+                      remainingAmount: Math.max(0, giftPromotion.minimumOrderAmount - subtotal),
+                      unlocked: subtotal >= giftPromotion.minimumOrderAmount,
+                      onAction: () => {
+                        if (subtotal >= giftPromotion.minimumOrderAmount) {
+                          setCouponCodeInput(giftPromotion.code)
+                          void handleApplyCoupon(giftPromotion.code)
+                        }
+                      },
+                    } : null}
               />
             </div>
           </div>

@@ -48,6 +48,8 @@ export type PublicCategoryRow = {
   id: string
   name: string
   slug: string
+  nav_type?: 'mega_menu' | 'direct_link' | null
+  direct_link_url?: string | null
   display_order: number
   status: 'active' | 'hidden'
 }
@@ -155,6 +157,7 @@ export type NavbarRenderItem = {
   linkedCategoryId?: string | null
   label: string
   href?: string
+  navigationType?: 'mega_menu' | 'direct_link'
   mega?: {
     cols: number
     sections: NavbarRenderSection[]
@@ -386,12 +389,17 @@ export function buildNavbarRenderItems(args: {
           return left.display_order - right.display_order
         })
 
-      if (item.item_type !== 'mega_menu') {
+      const isDirectLink = item.item_type !== 'mega_menu' || itemCategory?.nav_type === 'direct_link'
+
+      if (isDirectLink) {
       return {
         slug: item.slug,
         linkedCategoryId: item.linked_category_id,
         label: item.label,
-        href: item.direct_link_url ?? buildItemBaseHref(item.slug),
+        href: itemCategory?.nav_type === 'direct_link'
+          ? itemCategory.direct_link_url ?? item.direct_link_url ?? buildItemBaseHref(item.slug)
+          : item.direct_link_url ?? buildItemBaseHref(item.slug),
+        navigationType: 'direct_link' as const,
       }
       }
 
@@ -569,6 +577,7 @@ export function buildNavbarRenderItems(args: {
         linkedCategoryId: item.linked_category_id,
         label: item.label,
         href: itemHref,
+        navigationType: 'mega_menu' as const,
         mega: {
           cols: Math.max(1, ...renderedSections.map((_, index) => visibleSections[index]?.column_number ?? index + 1)),
           sections: renderedSections,

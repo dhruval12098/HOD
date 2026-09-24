@@ -207,15 +207,36 @@ export default function CartClient({ summaryInfo }: { summaryInfo?: ReactNode })
               onCouponAction={() => { if (appliedCoupon) { setAppliedCoupon(null); setCouponCode(''); setCouponMessage(''); localStorage.removeItem(APPLIED_COUPON_KEY) } else void applyCoupon() }}
               couponApplied={Boolean(appliedCoupon)}
               couponLoading={couponLoading}
-              giftOffer={featuredPromotion?.rewardType === 'free_gift' && featuredPromotion.gift ? {
-                name: featuredPromotion.gift.name,
-                imageUrl: featuredPromotion.gift.imageUrl,
-                minimumOrderAmount: featuredPromotion.minimumOrderAmount,
-                remainingAmount: Math.max(0, featuredPromotion.minimumOrderAmount - total),
-                unlocked: total >= featuredPromotion.minimumOrderAmount,
-                added: appliedCoupon?.rewardType === 'free_gift' && appliedCoupon.gift != null && appliedCoupon.code === featuredPromotion.code,
-                onAction: () => { if (!appliedCoupon && total >= featuredPromotion.minimumOrderAmount) { setCouponCode(featuredPromotion.code); void applyCoupon(featuredPromotion.code) } },
-              } : null}
+              giftOffer={appliedCoupon
+                ? appliedCoupon.rewardType === 'free_gift' && appliedCoupon.gift
+                  ? {
+                      name: appliedCoupon.gift.name,
+                      imageUrl: appliedCoupon.gift.imageUrl,
+                      minimumOrderAmount: Number(appliedCoupon.minimumOrderAmount ?? 0),
+                      remainingAmount: 0,
+                      unlocked: true,
+                      added: true,
+                      appliedCouponCode: appliedCoupon.code,
+                    }
+                  : {
+                      name: 'Discount applied',
+                      minimumOrderAmount: Number(appliedCoupon.minimumOrderAmount ?? 0),
+                      remainingAmount: 0,
+                      unlocked: true,
+                      isDiscount: true,
+                      appliedCouponCode: appliedCoupon.code,
+                      appliedDiscountAmount: Number(appliedCoupon.discountAmount ?? 0),
+                    }
+                : featuredPromotion?.rewardType === 'free_gift' && featuredPromotion.gift
+                  ? {
+                      name: featuredPromotion.gift.name,
+                      imageUrl: featuredPromotion.gift.imageUrl,
+                      minimumOrderAmount: featuredPromotion.minimumOrderAmount,
+                      remainingAmount: Math.max(0, featuredPromotion.minimumOrderAmount - total),
+                      unlocked: total >= featuredPromotion.minimumOrderAmount,
+                      onAction: () => { if (total >= featuredPromotion.minimumOrderAmount) { setCouponCode(featuredPromotion.code); void applyCoupon(featuredPromotion.code) } },
+                    }
+                  : null}
               belowSummary={<>
                 <Link href="/checkout?mode=cart" className="mt-5 flex min-h-12 w-full items-center justify-center border border-black bg-black px-6 font-[family-name:var(--font-family-button)] text-[12px] font-semibold uppercase tracking-[0.1em] text-white no-underline transition hover:bg-white hover:text-black">Checkout</Link>
               </>}

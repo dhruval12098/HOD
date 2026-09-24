@@ -11,12 +11,12 @@ const TRUST_ITEMS = [
 
 export default function HomeTrustStripe() {
   return (
-    <section aria-label="House of Diams promises" className="flex min-h-[102px] w-full items-center justify-center overflow-x-auto bg-[var(--color-section-soft)] px-4 py-4">
-      <div className="flex min-w-max items-center justify-center gap-6 sm:gap-10 lg:gap-16">
+    <section aria-label="House of Diams promises" className="flex min-h-[102px] w-full items-center justify-center bg-[var(--color-section-soft)] px-4 py-4">
+      <div className="grid w-full max-w-[520px] grid-cols-2 items-center justify-items-center gap-x-5 gap-y-4 sm:flex sm:w-auto sm:max-w-none sm:justify-center sm:gap-10 lg:gap-16">
         {TRUST_ITEMS.map(({ label, Icon }) => (
-          <div key={label} className="flex items-center gap-2.5 whitespace-nowrap text-black">
+          <div key={label} className="flex min-w-0 items-center justify-center gap-2 text-center text-black sm:gap-2.5 sm:whitespace-nowrap">
             <Icon aria-hidden="true" size={19} strokeWidth={1.5} className="shrink-0 text-[#0A1628]" />
-            <span className="font-[family-name:var(--font-family-secondary)] text-[10px] font-medium uppercase tracking-[0.08em] sm:text-[11px]">{label}</span>
+            <span className="font-[family-name:var(--font-family-secondary)] text-[9px] font-medium uppercase leading-[1.35] tracking-[0.06em] sm:text-[11px] sm:leading-normal sm:tracking-[0.08em]">{label}</span>
           </div>
         ))}
       </div>

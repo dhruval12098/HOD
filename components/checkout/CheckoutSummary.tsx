@@ -18,7 +18,7 @@ type SummaryProps = {
   onCouponAction?: () => void
   couponApplied?: boolean
   couponLoading?: boolean
-  giftOffer?: { name: string; imageUrl?: string; minimumOrderAmount: number; remainingAmount: number; unlocked: boolean; added?: boolean; onAction?: () => void } | null
+  giftOffer?: { name: string; imageUrl?: string; minimumOrderAmount: number; remainingAmount: number; unlocked: boolean; added?: boolean; appliedCouponCode?: string; appliedDiscountAmount?: number; isDiscount?: boolean; onAction?: () => void } | null
   belowSummary?: ReactNode
 }
 
@@ -38,7 +38,30 @@ export default function CheckoutSummary({ summary, couponValue = '', onCouponCha
 
   return (
     <aside className="border border-black/10 bg-[#f7f7f7] p-5 sm:p-6">
-      {giftOffer ? <div className="mb-4 border-b border-black/10 pb-4"><div className="flex items-center gap-3">{giftOffer.imageUrl ? <div className="h-14 w-14 shrink-0 overflow-hidden border border-black/10 bg-white"><img src={giftOffer.imageUrl} alt={giftOffer.name} className="h-full w-full object-cover" /></div> : null}<div><p className="font-[family-name:var(--font-family-primary)] text-[14px] font-semibold text-black">{giftOffer.name}</p><p className={`mt-1 font-[family-name:var(--font-family-secondary)] text-[12px] ${giftOffer.unlocked ? 'text-[#16804b]' : 'text-black/75'}`}>{giftOffer.unlocked ? 'Unlocked with this order' : `Add ${format(giftOffer.remainingAmount)} more to unlock`}</p></div></div><button type="button" onClick={giftOffer.added ? undefined : giftOffer.onAction} disabled={giftOffer.added} className="mt-3 flex min-h-10 w-full items-center justify-center border border-black bg-black px-4 font-[family-name:var(--font-family-button)] text-[11px] font-semibold uppercase tracking-[0.08em] text-white">{giftOffer.added ? 'Gift added' : giftOffer.unlocked ? 'Add my free gift' : 'Add more to unlock'}</button></div> : null}
+      {giftOffer ? <div className="mb-4 border-b border-black/10 pb-4">
+        {giftOffer.isDiscount ? (
+          <>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="font-[family-name:var(--font-family-primary)] text-[14px] font-semibold text-black">Discount applied</p>
+              {giftOffer.appliedCouponCode ? <span className="border border-[#b7ddc5] bg-[#eaf7ee] px-2 py-1 font-[family-name:var(--font-family-secondary)] text-[10px] font-medium text-[#16804b]">{giftOffer.appliedCouponCode}</span> : null}
+            </div>
+            <p className="mt-1 font-[family-name:var(--font-family-secondary)] text-[12px] text-[#16804b]">You saved {format(giftOffer.appliedDiscountAmount ?? 0)}.</p>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center gap-3">
+              {giftOffer.imageUrl ? <div className="h-14 w-14 shrink-0 overflow-hidden border border-black/10 bg-white"><img src={giftOffer.imageUrl} alt={giftOffer.name} className="h-full w-full object-cover" /></div> : null}
+              <div>
+                <p className="font-[family-name:var(--font-family-primary)] text-[14px] font-semibold text-black">{giftOffer.name}</p>
+                <p className={`mt-1 font-[family-name:var(--font-family-secondary)] text-[12px] ${giftOffer.unlocked ? 'text-[#16804b]' : 'text-black/75'}`}>
+                  {giftOffer.added ? `Gift unlocked${giftOffer.appliedCouponCode ? ` with ${giftOffer.appliedCouponCode}` : ''}` : giftOffer.unlocked ? 'Unlocked with this order' : `Add ${format(giftOffer.remainingAmount)} more to unlock`}
+                </p>
+              </div>
+            </div>
+            {!giftOffer.added ? <button type="button" onClick={giftOffer.onAction} className="mt-3 flex min-h-10 w-full items-center justify-center border border-black bg-black px-4 font-[family-name:var(--font-family-button)] text-[11px] font-semibold uppercase tracking-[0.08em] text-white">{giftOffer.unlocked ? 'Add my free gift' : 'Add more to unlock'}</button> : null}
+          </>
+        )}
+      </div> : null}
       <h2 className="font-[family-name:var(--font-family-primary)] text-[22px] font-semibold text-black">Order Summary</h2>
       <button type="button" onClick={() => setItemsOpen((open) => !open)} className="mt-5 flex h-11 w-full items-center justify-between border border-black/10 bg-white px-3 font-[family-name:var(--font-family-secondary)] text-[13px] text-black">
         <span>{summary.items.reduce((count, item) => count + item.quantity, 0)} items</span><span className="flex items-center gap-3"><strong>{format(subtotal)}</strong><ChevronDown size={14} className={itemsOpen ? 'rotate-180' : ''} /></span>

@@ -564,9 +564,8 @@ export async function createPendingOrder({
     })
   }
 
-  // TODO(sql-audit): Review create_pending_order_atomic for ambiguous column references in its SQL definition.
   const { data: order, error: orderError } = await adminClient
-    .rpc('create_pending_order_with_customer_dates', {
+    .rpc('create_pending_order_v2', {
       p_user_id: userId,
       p_order: orderInput,
       p_items: itemInputs,
@@ -574,7 +573,6 @@ export async function createPendingOrder({
       p_customer_birth_date: prepared.resolvedCustomer.birth_date || null,
       p_customer_anniversary_date: prepared.resolvedCustomer.anniversary_date || null,
     })
-    .single()
 
   if (orderError || !order) {
     return { error: orderError?.message || 'Unable to create order.' }

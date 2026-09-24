@@ -42,5 +42,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Keep local Supabase migrations and generated state out of Git.
-/supabase/
+# Database migrations are application source and must remain versioned.
+# Ignore only local/generated Supabase state and secrets.
+/supabase/.branches/
+/supabase/.temp/
+/supabase/functions/.env

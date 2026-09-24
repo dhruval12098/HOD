@@ -89,6 +89,7 @@ async function loadNavbarRenderItems(): Promise<NavbarRenderItem[]> {
     .map((entry) => ({
       label: entry.name,
       href: entry.nav_type === 'direct_link' && entry.direct_link_url ? entry.direct_link_url : `/${entry.slug}`,
+      navigationType: entry.nav_type === 'direct_link' ? 'direct_link' as const : 'mega_menu' as const,
     }))
 
   const savedNavItems =

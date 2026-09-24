@@ -128,6 +128,10 @@ function getDefaultMegaPreview(item: NavbarRenderItem) {
   return item.mega?.featuredImage ? { imageUrl: item.mega.featuredImage.imageUrl, imageAlt: item.mega.featuredImage.imageAlt || item.label } : null
 }
 
+function hasMegaMenu(item: NavbarRenderItem) {
+  return item.navigationType !== 'direct_link' && Boolean(item.mega)
+}
+
 function getMobileSectionEntries(section: NavbarRenderSection) {
   const metalEntries =
     section.metals?.map((metal) => ({
@@ -748,10 +752,10 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
               {navItems.map((item) => (
                 <li
                   key={item.label}
-                  className={item.mega ? `mega-parent${activeMegaItem === item.label ? ' mega-open' : ''}` : ''}
+                  className={hasMegaMenu(item) ? `mega-parent${activeMegaItem === item.label ? ' mega-open' : ''}` : ''}
                   style={{ position: 'static' }}
                   onMouseEnter={() => {
-                    if (item.mega) {
+                    if (hasMegaMenu(item)) {
                       openMegaMenu(item.label);
                       const preview = getDefaultMegaPreview(item);
                       if (preview) setActiveMegaPreview({ itemLabel: item.label, ...preview });
@@ -759,7 +763,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
                     }
                   }}
                   onMouseLeave={() => {
-                    if (item.mega) queueCloseMegaMenu(item.label);
+                    if (hasMegaMenu(item)) queueCloseMegaMenu(item.label);
                   }}
                 >
                   <SmartNavLink
@@ -774,7 +778,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
                     {item.label}
                   </SmartNavLink>
 
-                  {item.mega ? (
+                  {hasMegaMenu(item) && item.mega ? (
                     <div
                       className="mega-drop absolute top-full min-h-[calc((100dvh-var(--hod-site-header-height,131px))*0.8)] overflow-hidden border-t border-black/10 bg-white"
                       style={{
@@ -997,7 +1001,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
             </SmartNavLink>
 
             {navItems.map((item) => {
-              const hasMega = Boolean(item.mega?.sections?.length);
+              const hasMega = item.navigationType !== 'direct_link' && Boolean(item.mega?.sections?.length);
               if (!hasMega) {
                 return (
                   <SmartNavLink key={item.label} href={item.href ?? '#'} onClick={closeMenu} className="flex min-h-[58px] items-center justify-between border-b border-black/[0.06] py-4 text-[13px] font-semibold uppercase tracking-[0.16em] text-[#0A1628] no-underline">

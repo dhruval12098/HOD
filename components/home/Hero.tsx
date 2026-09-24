@@ -129,20 +129,6 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
   const line2 = rest.join(' ');
   const currentSlide = slides[activeSlide] ?? slides[0];
   const hasImageHero = Boolean(content.slider_enabled && currentSlide);
-  const currentHeadlineLines = currentSlide?.headline.trim()
-    ? currentSlide.headline.trim().split(/\s+/).reduce<string[]>((lines, word, index) => {
-        if (index % 2 === 0) lines.push(word);
-        else lines[lines.length - 1] += ` ${word}`;
-        return lines;
-      }, [])
-    : [];
-  const goToPrevSlide = () => {
-    setActiveSlide((current) => (current - 1 + slides.length) % slides.length);
-  };
-  const goToNextSlide = () => {
-    setActiveSlide((current) => (current + 1) % slides.length);
-  };
-
   useEffect(() => {
     if (!contentResolved) return;
     if (!hasImageHero) {
@@ -261,18 +247,14 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
               currentSlide.subtitle.trim() ||
               (currentSlide.button_text.trim() && currentSlide.button_link.trim())) ? (
               <>
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-2/3 bg-gradient-to-t from-black/70 via-black/28 to-transparent sm:hidden" />
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-full bg-gradient-to-t from-black/75 via-black/35 to-transparent" />
                 <div className="pointer-events-none absolute inset-0 z-20 flex items-end justify-start px-[var(--space-4)] pb-[var(--space-10)] text-left sm:items-end sm:justify-start sm:px-[var(--space-8)] sm:pb-[var(--space-10)] lg:px-[var(--space-12)] xl:px-[var(--space-16)]">
                   <div className="relative mx-auto w-full max-w-[calc(100vw-2rem)] py-[var(--space-6)] sm:mx-0 sm:max-w-[42rem] sm:py-[var(--space-10)]">
                     {currentSlide.headline.trim() ? (
                       <h1
                         className="hero-slide-heading text-[clamp(1.75rem,7vw,2.25rem)] font-medium leading-[1.12] tracking-[-0.02em] text-white sm:text-[clamp(2.25rem,3.4vw,3.25rem)]"
                       >
-                        {currentHeadlineLines.map((line, index) => (
-                          <span key={`${line}-${index}`} className="block whitespace-nowrap">
-                            {line}
-                          </span>
-                        ))}
+                        <span className="block whitespace-pre-line break-words">{currentSlide.headline.trim()}</span>
                       </h1>
                     ) : null}
 
@@ -298,31 +280,8 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
               </>
             ) : null}
 
-            {slides.length > 1 ? (
-              <div className="absolute inset-x-0 bottom-4 z-30 flex items-center justify-end gap-2 px-4 sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2 sm:justify-between sm:px-6 lg:px-8">
-                <button
-                  type="button"
-                  onClick={goToPrevSlide}
-                  aria-label="Previous slide"
-                  className="flex h-11 w-11 items-center justify-center rounded-full border border-white/22 bg-white/12 text-white backdrop-blur-xl transition hover:bg-white/18 hover:border-white/34"
-                  style={{ boxShadow: '0 14px 38px rgba(10,22,40,0.18)' }}
-                >
-                  <span className="text-lg leading-none">&#8592;</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={goToNextSlide}
-                  aria-label="Next slide"
-                  className="flex h-11 w-11 items-center justify-center rounded-full border border-white/22 bg-white/12 text-white backdrop-blur-xl transition hover:bg-white/18 hover:border-white/34"
-                  style={{ boxShadow: '0 14px 38px rgba(10,22,40,0.18)' }}
-                >
-                  <span className="text-lg leading-none">&#8594;</span>
-                </button>
-              </div>
-            ) : null}
-
-            <div className="absolute inset-x-0 bottom-0 z-30 flex items-end px-4 pb-4 sm:px-6 sm:pb-6 lg:px-8 lg:pb-8">
-              <div className="flex min-h-[48px] items-end">
+            <div className="absolute inset-x-0 bottom-0 z-30 flex items-end justify-end px-4 pb-4 sm:px-6 sm:pb-6 lg:px-8 lg:pb-8">
+              <div className="flex min-h-[48px] items-end justify-end">
                 {slides.length > 1 ? (
                   <div className="flex items-center gap-2">
                     {slides.map((slide, index) => (
