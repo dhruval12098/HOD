@@ -32,6 +32,8 @@ export default function AuthForm({ mode }: AuthFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [toastMessage, setToastMessage] = useState('');
@@ -94,6 +96,11 @@ export default function AuthForm({ mode }: AuthFormProps) {
       return;
     }
 
+    if (isSignup && password !== confirmPassword) {
+      setError('Password and confirm password must match.');
+      return;
+    }
+
     if (!isSignup && (password.length < 8 || password.length > 72 || /\s/.test(password))) {
       setError('Please enter a valid email and password.');
       return;
@@ -126,6 +133,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
 
         setToastMessage('Your account was created. Please check your email to confirm your address, then sign in.');
         setPassword('');
+        setConfirmPassword('');
         return;
       }
 
@@ -218,6 +226,31 @@ export default function AuthForm({ mode }: AuthFormProps) {
             {showPassword ? <EyeOff size={17} strokeWidth={1.8} /> : <Eye size={17} strokeWidth={1.8} />}
           </button>
         </div>
+
+        {isSignup ? (
+          <div className="relative">
+            <input
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              type={showConfirmPassword ? 'text' : 'password'}
+              autoComplete="new-password"
+              placeholder="Confirm Password*"
+              minLength={12}
+              maxLength={72}
+              aria-invalid={confirmPassword.length > 0 && confirmPassword !== password}
+              className="h-11 w-full border border-[#b8b8b8] bg-white px-4 pr-11 font-secondary text-[13px] text-[var(--theme-ink)] outline-none transition placeholder:text-[#4f5662] focus:border-[var(--theme-ink)]"
+              required
+            />
+            <button
+              type="button"
+              aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+              onClick={() => setShowConfirmPassword((current) => !current)}
+              className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-[#737982] transition hover:text-[var(--theme-ink)]"
+            >
+              {showConfirmPassword ? <EyeOff size={17} strokeWidth={1.8} /> : <Eye size={17} strokeWidth={1.8} />}
+            </button>
+          </div>
+        ) : null}
 
         {!isSignup ? (
           <Link

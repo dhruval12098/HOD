@@ -80,6 +80,8 @@ const ordersCache = new Map<string, OrdersCacheEntry>();
 const PROFILE_BANNER = '/HOD%20specs/profile%20banner/wesfly-jzXYuYd-o00-unsplash.jpg';
 const INPUT_CLASS =
   'h-11 border border-[#b8b8b8] bg-white px-4 font-secondary text-[13px] text-[var(--theme-ink)] outline-none transition placeholder:text-[#4f5662] focus:border-[var(--theme-ink)]';
+const PROFILE_NAME_PATTERN = /^[\p{L}][\p{L}\p{M}' -]{0,79}$/u;
+const PROFILE_PHONE_PATTERN = /^\+?[0-9(). -]{7,24}$/;
 const TABS: Array<{ id: AccountTab; label: string }> = [
   { id: 'dashboard', label: 'Dashboard' },
   { id: 'account', label: 'Account Details' },
@@ -372,6 +374,22 @@ export default function ProfileClient() {
   const handleSaveProfile = async (event: FormEvent) => {
     event.preventDefault();
     if (state.status !== 'signed-in') return;
+    const normalizedFirstName = firstName.trim();
+    const normalizedLastName = lastName.trim();
+    const normalizedPhone = phone.trim();
+    const today = new Date().toISOString().slice(0, 10);
+    if (!PROFILE_NAME_PATTERN.test(normalizedFirstName) || !PROFILE_NAME_PATTERN.test(normalizedLastName)) {
+      setAccountStatus('First and last names must contain only letters, spaces, apostrophes, or hyphens.');
+      return;
+    }
+    if (normalizedPhone && !PROFILE_PHONE_PATTERN.test(normalizedPhone)) {
+      setAccountStatus('Please enter a valid phone number.');
+      return;
+    }
+    if ((birthDate && birthDate > today) || (anniversaryDate && anniversaryDate > today)) {
+      setAccountStatus('Birth date and anniversary date cannot be in the future.');
+      return;
+    }
     setSaving(true);
     setAccountStatus('');
     try {
@@ -381,13 +399,29 @@ export default function ProfileClient() {
       const response = await fetch('/api/profile', {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${accessToken}`, 'content-type': 'application/json' },
-        body: JSON.stringify({ first_name: firstName, last_name: lastName, phone, birth_date: birthDate, anniversary_date: anniversaryDate, country, state: region, district, city, postal_code: postalCode, address_line_1: addressLine1, address_line_2: addressLine2 }),
+        body: JSON.stringify({ first_name: normalizedFirstName, last_name: normalizedLastName, phone: normalizedPhone, birth_date: birthDate, anniversary_date: anniversaryDate, country, state: region, district, city, postal_code: postalCode, address_line_1: addressLine1, address_line_2: addressLine2 }),
       });
       const payload = await response.json().catch(() => null);
       if (!response.ok) throw new Error(payload?.error || 'Unable to save your profile.');
-      const fullName = `${firstName} ${lastName}`.trim();
-      await supabase.auth.updateUser({ data: { first_name: firstName, last_name: lastName, phone, full_name: fullName } });
-      const next: SignedInProfileState = { ...state, username: fullName || state.username, firstName, lastName, phone };
+      const savedProfile = payload?.profile;
+      const savedFirstName = savedProfile?.first_name || normalizedFirstName;
+      const savedLastName = savedProfile?.last_name || normalizedLastName;
+      const savedPhone = savedProfile?.phone || '';
+      setFirstName(savedFirstName);
+      setLastName(savedLastName);
+      setPhone(savedPhone);
+      setBirthDate(savedProfile?.birth_date || '');
+      setAnniversaryDate(savedProfile?.anniversary_date || '');
+      setCountry(savedProfile?.country || '');
+      setRegion(savedProfile?.state || '');
+      setDistrict(savedProfile?.district || '');
+      setCity(savedProfile?.city || '');
+      setPostalCode(savedProfile?.postal_code || '');
+      setAddressLine1(savedProfile?.address_line_1 || '');
+      setAddressLine2(savedProfile?.address_line_2 || '');
+      const fullName = `${savedFirstName} ${savedLastName}`.trim();
+      await supabase.auth.updateUser({ data: { first_name: savedFirstName, last_name: savedLastName, phone: savedPhone, full_name: fullName } });
+      const next: SignedInProfileState = { ...state, username: fullName || state.username, firstName: savedFirstName, lastName: savedLastName, phone: savedPhone };
       cachedProfileState = next;
       setState(next);
       setAccountStatus('Profile and default checkout address saved.');
@@ -530,6 +564,11 @@ export default function ProfileClient() {
                   type="text"
                   placeholder="First Name*"
                   aria-label="First name"
+                  autoComplete="given-name"
+                  minLength={1}
+                  maxLength={80}
+                  pattern="[A-Za-zÀ-ÿ' -]+"
+                  title="Use letters, spaces, apostrophes, or hyphens only."
                   className={INPUT_CLASS}
                   required
                 />
@@ -539,12 +578,17 @@ export default function ProfileClient() {
                   type="text"
                   placeholder="Last Name*"
                   aria-label="Last name"
+                  autoComplete="family-name"
+                  minLength={1}
+                  maxLength={80}
+                  pattern="[A-Za-zÀ-ÿ' -]+"
+                  title="Use letters, spaces, apostrophes, or hyphens only."
                   className={INPUT_CLASS}
                   required
                 />
-                <input value={phone} onChange={(event) => setPhone(event.target.value)} type="tel" placeholder="Phone" aria-label="Phone" autoComplete="tel" className={INPUT_CLASS + ' sm:col-span-2'} />
+                <input value={phone} onChange={(event) => setPhone(event.target.value)} type="tel" placeholder="Phone" aria-label="Phone" autoComplete="tel" inputMode="tel" maxLength={24} pattern="\+?[0-9(). -]{7,24}" title="Enter a valid phone number." className={INPUT_CLASS + ' sm:col-span-2'} />
                 <label className="grid gap-1.5 text-[12px] font-semibold text-[#222222]">Birth Date <span className="font-normal text-[#767676]">Optional</span><input value={birthDate} onChange={(event) => setBirthDate(event.target.value)} type="date" max={new Date().toISOString().slice(0, 10)} className={INPUT_CLASS} /></label>
-                <label className="grid gap-1.5 text-[12px] font-semibold text-[#222222]">Anniversary Date <span className="font-normal text-[#767676]">Optional</span><input value={anniversaryDate} onChange={(event) => setAnniversaryDate(event.target.value)} type="date" className={INPUT_CLASS} /></label>
+                <label className="grid gap-1.5 text-[12px] font-semibold text-[#222222]">Anniversary Date <span className="font-normal text-[#767676]">Optional</span><input value={anniversaryDate} onChange={(event) => setAnniversaryDate(event.target.value)} type="date" max={new Date().toISOString().slice(0, 10)} className={INPUT_CLASS} /></label>
                 <div className="mt-5 border-t border-[#e4e4e4] pt-6 sm:col-span-2"><BoxHeading>Default Checkout Address</BoxHeading><p className="mt-2 text-[12px] leading-5 text-[#767676]">Optional. Saved details will prefill checkout whenever you are signed in.</p></div>
                 <input value={addressLine1} onChange={(event) => setAddressLine1(event.target.value)} type="text" placeholder="Address Line 1" aria-label="Address line 1" autoComplete="address-line1" className={INPUT_CLASS + ' sm:col-span-2'} />
                 <input value={addressLine2} onChange={(event) => setAddressLine2(event.target.value)} type="text" placeholder="Address Line 2" aria-label="Address line 2" autoComplete="address-line2" className={INPUT_CLASS + ' sm:col-span-2'} />

@@ -6,6 +6,7 @@ import {
   type LoveLetterDraft,
   type LoveLetterOccasionKey,
 } from '@/lib/love-letter'
+import { X } from 'lucide-react'
 import { Select } from '@/components/ui/select'
 
 type LoveLetterModalProps = {
@@ -168,16 +169,16 @@ export default function LoveLetterModal({ onClose, onContinue }: LoveLetterModal
 
   return (
     <div
-      className="fixed inset-0 z-[1400] flex items-start justify-center overflow-y-auto overscroll-none bg-[rgba(10,22,40,0.58)] px-2 py-2 sm:items-center sm:px-4 sm:py-6"
+      className="fixed inset-0 z-[1400] flex items-start justify-center overflow-y-auto overscroll-none bg-black/25 px-2 py-2 sm:items-center sm:px-4 sm:py-6"
       onClick={closeIfBackdrop}
     >
-      <div className="relative my-auto max-h-[calc(100dvh-16px)] w-full max-w-[780px] touch-pan-y overflow-y-auto overscroll-contain rounded-none border border-[var(--theme-border)] bg-white shadow-[0_24px_64px_rgba(10,22,40,0.16)] sm:max-h-[90vh] sm:rounded-none">
+      <div className="relative my-auto max-h-[calc(100dvh-16px)] w-full max-w-[780px] touch-pan-y overflow-y-auto overscroll-contain rounded-none border border-black/15 bg-white shadow-[0_24px_64px_rgba(0,0,0,0.16)] sm:max-h-[90vh] sm:rounded-none">
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-[rgba(10,22,40,0.1)] bg-[rgba(255,255,255,0.88)] text-[16px] text-[#0A1628] transition hover:bg-[#0A1628] hover:text-white sm:right-4 sm:top-4 sm:h-10 sm:w-10 sm:text-[18px]"
+          className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center border-0 bg-transparent text-black transition-colors hover:bg-black hover:text-white sm:right-4 sm:top-4 sm:h-9 sm:w-9"
         >
-          X
+          <X size={19} strokeWidth={1.4} aria-hidden="true" />
         </button>
 
         {step === 'intro' ? (
