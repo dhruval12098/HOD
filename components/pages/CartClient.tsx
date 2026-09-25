@@ -215,6 +215,7 @@ export default function CartClient({ summaryInfo }: { summaryInfo?: ReactNode })
               onCouponAction={() => { if (appliedCoupon) { setAppliedCoupon(null); setCouponCode(''); setCouponMessage(''); localStorage.removeItem(APPLIED_COUPON_KEY) } else void applyCoupon() }}
               couponApplied={Boolean(appliedCoupon)}
               couponLoading={couponLoading}
+              couponMessage={couponMessage}
               giftOffer={appliedCoupon
                 ? appliedCoupon.rewardType === 'free_gift' && appliedCoupon.gift
                   ? {
