@@ -135,14 +135,14 @@ export default function CartDrawer() {
         role="dialog"
         aria-modal="true"
         aria-labelledby="cart-drawer-title"
-        className={`absolute inset-y-0 right-0 flex w-full max-w-[460px] flex-col bg-white text-[#111] shadow-[-16px_0_42px_rgba(0,0,0,0.16)] transition-transform duration-300 ease-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`absolute inset-y-0 right-0 flex w-full max-w-[540px] flex-col bg-white text-[#111] shadow-[-16px_0_42px_rgba(0,0,0,0.16)] transition-transform duration-300 ease-out ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
         style={{ fontFamily: 'var(--font-family-inter)' }}
       >
         <header className="flex h-14 shrink-0 items-center justify-between border-b border-black/15 px-4 sm:px-5">
           <div className="flex items-center gap-2.5">
-            <h2 id="cart-drawer-title" className="m-0 font-[family-name:var(--font-family-montserrat)] text-[15px] font-semibold uppercase tracking-[0.04em]">
+            <div id="cart-drawer-title" role="heading" aria-level={2} className="m-0 font-[family-name:var(--font-family-montserrat)] text-[16px] font-bold uppercase tracking-[0.04em] text-black">
               Your Bag
-            </h2>
+            </div>
             <span className="bg-[#F4F4F4] px-2 py-1 text-[10px] text-black/60">
               {count} {count === 1 ? 'item' : 'items'}
             </span>
@@ -174,20 +174,20 @@ export default function CartDrawer() {
                   const unitPrice = Number(item.selection.resolvedPrice ?? product.priceFrom ?? 0)
 
                   return (
-                    <article key={item.key} className="grid grid-cols-[94px_minmax(0,1fr)] gap-3 py-4">
+                    <article key={item.key} className="grid grid-cols-[112px_minmax(0,1fr)] gap-4 py-5">
                       <Link href={`/shop/${product.slug}`} onClick={closeCart} className="relative block aspect-[4/5] overflow-hidden bg-[#F6F6F6]">
                         {imageUrl ? <img src={imageUrl} alt={product.name} className="absolute inset-0 h-full w-full object-cover" /> : null}
                       </Link>
 
                       <div className="flex min-w-0 flex-col">
                         <div className="flex items-start justify-between gap-3">
-                          <Link href={`/shop/${product.slug}`} onClick={closeCart} className="min-w-0 font-[family-name:var(--font-family-montserrat)] text-[12px] font-semibold leading-[1.35] text-black no-underline">
+                          <Link href={`/shop/${product.slug}`} onClick={closeCart} className="min-w-0 font-[family-name:var(--font-family-montserrat)] text-[14px] font-semibold leading-[1.4] text-black no-underline">
                             {product.name}
                           </Link>
                           <span className="shrink-0 text-[12px] font-semibold">{format(unitPrice)}</span>
                         </div>
 
-                        <p className="mt-1 text-[11px] leading-[1.45] text-black/75">
+                        <p className="mt-1 text-[13px] leading-[1.5] text-black">
                           {details || product.shortMeta}
                         </p>
 
@@ -195,7 +195,7 @@ export default function CartDrawer() {
                           <button
                             type="button"
                             onClick={() => removeItem(item.key)}
-                            className="border-0 bg-transparent p-0 text-[10px] text-black/60 underline underline-offset-2 hover:text-black"
+                            className="border-0 bg-transparent p-0 text-[11px] text-black underline underline-offset-2 hover:text-black"
                           >
                             Remove
                           </button>
@@ -236,6 +236,9 @@ export default function CartDrawer() {
           <div className="mt-3 grid gap-2">
             <Link href="/cart" onClick={closeCart} className="flex h-11 items-center justify-center border border-black bg-white font-[family-name:var(--font-family-montserrat)] text-[10px] font-semibold uppercase tracking-[0.08em] text-black no-underline">
               View Cart
+            </Link>
+            <Link href="/checkout?mode=cart" onClick={closeCart} className="flex h-11 items-center justify-center border border-black bg-black font-[family-name:var(--font-family-montserrat)] text-[10px] font-semibold uppercase tracking-[0.08em] text-white no-underline transition hover:bg-white hover:text-black">
+              Checkout
             </Link>
           </div>
 

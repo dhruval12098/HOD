@@ -13,6 +13,15 @@ type AuthFormProps = {
   mode: AuthMode
 };
 
+const EMAIL_PATTERN = /^[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?(?:\.[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?)+$/i;
+const USERNAME_PATTERN = /^[A-Za-z0-9._-]{2,40}$/;
+const STRONG_PASSWORD_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9\s])\S{12,72}$/;
+
+function validateEmail(value: string) {
+  const normalized = value.trim();
+  return normalized.length <= 254 && EMAIL_PATTERN.test(normalized);
+}
+
 export default function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -67,13 +76,26 @@ export default function AuthForm({ mode }: AuthFormProps) {
     setError('');
     setToastMessage('');
 
-    if (isSignup && username.trim().length < 2) {
-      setError('Please enter a username with at least 2 characters.');
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedUsername = username.trim();
+
+    if (isSignup && !USERNAME_PATTERN.test(normalizedUsername)) {
+      setError('Username must be 2–40 characters and use only letters, numbers, dots, underscores, or hyphens.');
       return;
     }
 
-    if (password.length < 8) {
-      setError('Please use a password with at least 8 characters.');
+    if (!validateEmail(normalizedEmail)) {
+      setError('Please enter a valid email address, including a valid domain.');
+      return;
+    }
+
+    if (isSignup && !STRONG_PASSWORD_PATTERN.test(password)) {
+      setError('Password must be 12–72 characters with uppercase, lowercase, number, and special character.');
+      return;
+    }
+
+    if (!isSignup && (password.length < 8 || password.length > 72 || /\s/.test(password))) {
+      setError('Please enter a valid email and password.');
       return;
     }
 
@@ -82,11 +104,11 @@ export default function AuthForm({ mode }: AuthFormProps) {
     try {
       if (isSignup) {
         const { data, error: signUpError } = await supabase.auth.signUp({
-          email: email.trim(),
+          email: normalizedEmail,
           password,
           options: {
             data: {
-              username: username.trim(),
+              username: normalizedUsername,
             },
           },
         });
@@ -108,7 +130,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
       }
 
       const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+        email: normalizedEmail,
         password,
       });
 
@@ -120,8 +142,10 @@ export default function AuthForm({ mode }: AuthFormProps) {
       router.replace(nextHref);
       router.refresh();
     } catch (authError) {
-      const message = authError instanceof Error ? authError.message : 'Something went wrong. Please try again.';
-      setError(message);
+      console.warn('Authentication request failed:', authError instanceof Error ? authError.message : authError);
+      setError(isSignup
+        ? 'Unable to create this account. Check your details or try another email address.'
+        : 'The email or password is incorrect.');
     } finally {
       setSubmitting(false);
     }
@@ -150,6 +174,10 @@ export default function AuthForm({ mode }: AuthFormProps) {
             type="text"
             autoComplete="username"
             placeholder="Username*"
+            minLength={2}
+            maxLength={40}
+            pattern="[A-Za-z0-9._-]{2,40}"
+            title="Use 2–40 letters, numbers, dots, underscores, or hyphens."
             className="h-11 border border-[#b8b8b8] bg-white px-4 font-secondary text-[13px] text-[var(--theme-ink)] outline-none transition placeholder:text-[#4f5662] focus:border-[var(--theme-ink)]"
             required
           />
@@ -161,6 +189,8 @@ export default function AuthForm({ mode }: AuthFormProps) {
           type="email"
           autoComplete="email"
           placeholder="Email*"
+          inputMode="email"
+          maxLength={254}
           className="h-11 border border-[#b8b8b8] bg-white px-4 font-secondary text-[13px] text-[var(--theme-ink)] outline-none transition placeholder:text-[#4f5662] focus:border-[var(--theme-ink)]"
           required
         />
@@ -172,6 +202,10 @@ export default function AuthForm({ mode }: AuthFormProps) {
             type={showPassword ? 'text' : 'password'}
             autoComplete={isSignup ? 'new-password' : 'current-password'}
             placeholder="Password*"
+            minLength={isSignup ? 12 : 8}
+            maxLength={72}
+            pattern={isSignup ? "(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9\\s])\\S{12,72}" : undefined}
+            title={isSignup ? 'Use 12–72 characters with uppercase, lowercase, number, and special character.' : undefined}
             className="h-11 w-full border border-[#b8b8b8] bg-white px-4 pr-11 font-secondary text-[13px] text-[var(--theme-ink)] outline-none transition placeholder:text-[#4f5662] focus:border-[var(--theme-ink)]"
             required
           />

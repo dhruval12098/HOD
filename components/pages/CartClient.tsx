@@ -125,28 +125,29 @@ export default function CartClient({ summaryInfo }: { summaryInfo?: ReactNode })
 
   return (
     <main className="min-h-screen bg-white px-5 pb-20 pt-10 text-[var(--color-brand-primary,#000000)] sm:px-8 sm:pt-14 lg:px-[10vw] 2xl:px-[200px]">
-      <header className="flex items-end justify-between gap-5 border-b border-black/15 pb-6">
-        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+      <header className="relative flex justify-center border-b border-black/15 pb-6 text-center">
+        <div className="flex flex-wrap items-baseline justify-center gap-x-3 gap-y-1">
           <h1 className="font-[family-name:var(--font-family-primary)] text-[clamp(1.75rem,3vw,2.75rem)] font-medium leading-none">My Bag</h1>
           <span className="font-[family-name:var(--font-family-secondary)] text-[14px] text-black/55">({totalItems} {totalItems === 1 ? 'item' : 'items'})</span>
         </div>
-        {resolvedItems.length ? <button type="button" onClick={clearCart} className="border-0 bg-transparent font-[family-name:var(--font-family-secondary)] text-[11px] text-black/55 underline underline-offset-4 transition hover:text-black">Clear bag</button> : null}
+        {resolvedItems.length ? <button type="button" onClick={clearCart} className="absolute right-0 top-1 border-0 bg-transparent font-[family-name:var(--font-family-secondary)] text-[11px] text-black/55 underline underline-offset-4 transition hover:text-black">Clear bag</button> : null}
       </header>
 
       {!isHydrated ? (
         <div className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,1fr)_380px]"><div className="space-y-0 divide-y divide-black/10 border-y border-black/10"><div className="h-48 animate-pulse bg-[var(--color-brand-secondary,#f9f9f9)]"/><div className="h-48 animate-pulse bg-[var(--color-brand-secondary,#f9f9f9)]"/></div><div className="h-80 animate-pulse bg-[var(--color-brand-secondary,#f9f9f9)]"/></div>
       ) : resolvedItems.length || (isLoading && items.length) ? (
         <>
-        <div className="grid items-start gap-12 pt-8 lg:grid-cols-[minmax(0,1fr)_360px] xl:gap-20 xl:grid-cols-[minmax(0,1fr)_400px]">
+        <div className="grid items-start gap-8 pt-12 lg:grid-cols-[minmax(0,1fr)_400px] xl:gap-12 xl:grid-cols-[minmax(0,1fr)_450px]">
           <section aria-label="Bag items" className="min-w-0">
-            <div className="divide-y divide-black/10 border-y border-black/10 bg-white">
+            <div className="rounded-md border border-black/10 bg-white p-3 sm:p-4">
+              <div className="divide-y divide-black/10">
               {resolvedItems.map(({ item, product }) => {
                 const unitPrice = Number(item.selection.resolvedPrice ?? product.priceFrom ?? 0)
                 const details = selectedDetails(item.selection)
                 const imageUrl = item.selection.resolvedImageUrl || product.imageUrl
                 return (
-                  <article key={item.key} className="grid gap-5 border-b border-black/10 bg-white px-4 py-6 sm:grid-cols-[124px_minmax(0,1fr)_auto] sm:gap-6 lg:grid-cols-[142px_minmax(0,1fr)_auto] lg:py-7">
-                    <Link href={`/shop/${product.slug}`} className="relative block aspect-square w-[124px] overflow-hidden bg-[var(--color-brand-secondary,#f9f9f9)] sm:w-full">
+                  <article key={item.key} className="grid grid-cols-[96px_minmax(0,1fr)] gap-4 border-b border-black/10 bg-white px-4 py-6 first:rounded-t-sm last:border-b-0 sm:grid-cols-[124px_minmax(0,1fr)_auto] sm:gap-6 lg:grid-cols-[142px_minmax(0,1fr)_auto] lg:py-7">
+                    <Link href={`/shop/${product.slug}`} className="row-span-2 sm:row-span-1 relative block aspect-square w-[96px] overflow-hidden rounded-sm border border-black/10 bg-[var(--color-brand-secondary,#f9f9f9)] sm:w-full">
                       {imageUrl ? <img src={imageUrl} alt={product.name} className="absolute inset-0 h-full w-full object-cover" /> : null}
                     </Link>
 
@@ -175,6 +176,13 @@ export default function CartClient({ summaryInfo }: { summaryInfo?: ReactNode })
               })}
 
               {isLoading && items.filter((item) => !item.snapshot).map((item) => <div key={`legacy-${item.key}`} className="grid grid-cols-[124px_1fr] gap-5 py-6" aria-label="Refreshing saved cart item"><div className="aspect-[4/5] animate-pulse bg-[var(--color-brand-secondary,#f9f9f9)]"/><div className="space-y-3 py-2"><div className="h-3 w-24 animate-pulse bg-black/5"/><div className="h-5 w-1/2 animate-pulse bg-black/5"/><div className="h-4 w-28 animate-pulse bg-black/5"/></div></div>)}
+              {appliedCoupon?.rewardType === 'free_gift' && appliedCoupon.gift && total >= Number(appliedCoupon.minimumOrderAmount ?? 0) ? <article className="grid grid-cols-[96px_minmax(0,1fr)] gap-4 rounded-b-sm bg-white px-4 py-6 sm:grid-cols-[124px_minmax(0,1fr)_auto] sm:gap-6 lg:grid-cols-[142px_minmax(0,1fr)_auto] lg:py-7">
+                <div className="row-span-2 sm:row-span-1 relative aspect-square w-[96px] overflow-hidden rounded-sm border border-black/10 bg-white sm:w-full">{appliedCoupon.gift.imageUrl ? <img src={appliedCoupon.gift.imageUrl} alt={appliedCoupon.gift.name} className="h-full w-full object-cover" /> : null}</div>
+                <div><span className="inline-flex border border-[#b7ddc5] bg-[#eaf7ee] px-2 py-1 font-[family-name:var(--font-family-secondary)] text-[10px] font-medium uppercase tracking-[0.08em] text-[#16804b]">Gift</span><p className="mt-2 font-[family-name:var(--font-family-primary)] text-[16px] font-semibold leading-[1.4] text-black sm:text-[18px]">{appliedCoupon.gift.name}</p><p className="mt-1 font-[family-name:var(--font-family-secondary)] text-[12px] text-black/70">Gift with your order</p></div>
+                <span className="sm:order-2 font-[family-name:var(--font-family-secondary)] text-[13px] font-semibold text-black sm:text-[14px]">{format(0)}</span>
+              </article> : null}
+              </div>
+              {recommendations[0] ? <article className="mt-4 grid grid-cols-[120px_minmax(0,1fr)] w-full gap-4 rounded-xl border border-black/10 bg-[#f8f8fa] p-4 sm:grid-cols-[220px_minmax(0,1fr)] sm:gap-6 sm:p-6"><Link href={`/shop/${recommendations[0].slug}`} className="row-span-2 sm:row-span-1 aspect-square overflow-hidden rounded-lg border border-black/10 bg-white p-2 sm:p-3">{recommendations[0].imageUrl ? <img src={recommendations[0].imageUrl} alt={recommendations[0].name} className="h-full w-full object-contain" /> : null}</Link><div className="flex min-w-0 flex-col justify-center py-1"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="font-[family-name:var(--font-family-inter)] text-[12px] text-black/60 sm:text-[14px]">{recommendations[0].mainCategoryName || recommendations[0].shortMeta}</p><Link href={`/shop/${recommendations[0].slug}`} className="mt-1 block max-w-2xl font-[family-name:var(--font-family-inter)] text-[16px] font-semibold leading-6 text-black no-underline sm:text-[21px] sm:leading-7">{recommendations[0].name}</Link></div><p className="shrink-0 pt-1 font-[family-name:var(--font-family-inter)] text-[13px] font-semibold text-black sm:text-[16px]">{format(recommendations[0].priceFrom)}</p></div><button type="button" onClick={() => addItem(recommendations[0], {})} className="mt-4 min-h-10 w-full max-w-[180px] self-start border border-black bg-black px-4 font-[family-name:var(--font-family-button)] text-[10px] font-semibold uppercase tracking-[0.1em] text-white transition hover:bg-white hover:text-black sm:mt-5 sm:min-h-12 sm:px-6 sm:text-[12px]">Add to bag</button></div></article> : null}
             </div>
           </section>
 
@@ -244,7 +252,6 @@ export default function CartClient({ summaryInfo }: { summaryInfo?: ReactNode })
             {summaryInfo}
           </aside>
         </div>
-        {recommendations[0] ? <section className="mt-12 grid border-t border-black/10 pt-8 lg:grid-cols-[minmax(0,1fr)_360px] xl:gap-20 xl:grid-cols-[minmax(0,1fr)_400px]"><article className="grid w-full gap-6 border border-black/10 bg-[#f8f8fa] p-5 sm:grid-cols-[240px_minmax(0,1fr)] sm:p-6"><Link href={`/shop/${recommendations[0].slug}`} className="aspect-square overflow-hidden border border-black/10 bg-white p-3">{recommendations[0].imageUrl ? <img src={recommendations[0].imageUrl} alt={recommendations[0].name} className="h-full w-full object-contain" /> : null}</Link><div className="flex min-w-0 flex-col py-1"><p className="font-[family-name:var(--font-family-inter)] text-[15px] text-black/60">{recommendations[0].mainCategoryName || recommendations[0].shortMeta}</p><Link href={`/shop/${recommendations[0].slug}`} className="mt-1 max-w-2xl font-[family-name:var(--font-family-inter)] text-[24px] font-semibold leading-8 text-black no-underline">{recommendations[0].name}</Link><p className="mt-2 font-[family-name:var(--font-family-inter)] text-[21px] font-semibold text-black">{format(recommendations[0].priceFrom)}</p><button type="button" onClick={() => addItem(recommendations[0], {})} className="mt-auto min-h-12 w-full max-w-md border border-black bg-black px-6 font-[family-name:var(--font-family-button)] text-[12px] font-semibold uppercase tracking-[0.1em] text-white transition hover:bg-white hover:text-black">Add to bag</button></div></article></section> : null}
         </>
       ) : (
         <section className="flex min-h-[440px] flex-col items-center justify-center border-b border-black/15 px-6 text-center">

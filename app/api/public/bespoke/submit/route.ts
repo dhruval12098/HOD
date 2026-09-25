@@ -1,14 +1,11 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { enforceRateLimit } from '@/lib/rate-limit'
+import { createSupabaseServiceRoleClient } from '@/lib/server-supabase'
 import { isValidEmail, isValidPhone } from '@/lib/validation'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
 export async function POST(request: Request) {
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return NextResponse.json({ error: 'Missing Supabase env vars.' }, { status: 500 })
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json({ error: 'Form submission is temporarily unavailable.' }, { status: 503 })
   }
 
   const rateLimit = await enforceRateLimit(request, { key: 'public-bespoke-submit', limit: 5, windowSeconds: 60 })
@@ -64,7 +61,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Enter a message between 10 and 5000 characters.' }, { status: 400 })
   }
 
-  const supabase = createClient(supabaseUrl, supabaseAnonKey)
+  const supabase = createSupabaseServiceRoleClient()
   const { error } = await supabase.from('bespoke_submissions').insert({
     full_name: fullName,
     email,
@@ -78,6 +75,9 @@ export async function POST(request: Request) {
     status: 'new',
   })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error('Bespoke submission failed:', error)
+    return NextResponse.json({ error: 'Unable to submit the form right now.' }, { status: 500 })
+  }
   return NextResponse.json({ ok: true })
 }

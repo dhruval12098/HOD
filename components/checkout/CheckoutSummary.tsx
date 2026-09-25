@@ -37,7 +37,7 @@ export default function CheckoutSummary({ summary, couponValue = '', onCouponCha
   const total = taxableSubtotal + gstAmount
 
   return (
-    <aside className="border border-black/10 bg-[#f7f7f7] p-5 sm:p-6">
+    <aside className="border border-black/10 bg-[#f7f7f7] p-6 sm:p-7">
       {giftOffer ? <div className="mb-4 border-b border-black/10 pb-4">
         {giftOffer.isDiscount ? (
           <>
@@ -50,7 +50,7 @@ export default function CheckoutSummary({ summary, couponValue = '', onCouponCha
         ) : (
           <>
             <div className="flex items-center gap-3">
-              {giftOffer.imageUrl ? <div className="h-14 w-14 shrink-0 overflow-hidden border border-black/10 bg-white"><img src={giftOffer.imageUrl} alt={giftOffer.name} className="h-full w-full object-cover" /></div> : null}
+              {giftOffer.imageUrl ? <div className="h-24 w-24 shrink-0 overflow-hidden border border-black/10 bg-white"><img src={giftOffer.imageUrl} alt={giftOffer.name} className="h-full w-full object-cover" /></div> : null}
               <div>
                 <p className="font-[family-name:var(--font-family-primary)] text-[14px] font-semibold text-black">{giftOffer.name}</p>
                 <p className={`mt-1 font-[family-name:var(--font-family-secondary)] text-[12px] ${giftOffer.unlocked ? 'text-[#16804b]' : 'text-black/75'}`}>
@@ -62,14 +62,15 @@ export default function CheckoutSummary({ summary, couponValue = '', onCouponCha
           </>
         )}
       </div> : null}
-      <h2 className="font-[family-name:var(--font-family-primary)] text-[22px] font-semibold text-black">Order Summary</h2>
+      <h2 className="font-[family-name:var(--font-family-primary)] text-[22px] font-normal text-black">Order Summary</h2>
       <button type="button" onClick={() => setItemsOpen((open) => !open)} className="mt-5 flex h-11 w-full items-center justify-between border border-black/10 bg-white px-3 font-[family-name:var(--font-family-secondary)] text-[13px] text-black">
         <span>{summary.items.reduce((count, item) => count + item.quantity, 0)} items</span><span className="flex items-center gap-3"><strong>{format(subtotal)}</strong><ChevronDown size={14} className={itemsOpen ? 'rotate-180' : ''} /></span>
       </button>
-      {itemsOpen ? <div className="mt-3 grid grid-cols-4 gap-2 border-b border-black/10 pb-4">
+      {itemsOpen ? <div className="mt-3 grid grid-cols-3 gap-3 border-b border-black/10 pb-4">
         {summary.items.map((item) => <div key={`${item.slug}-${item.metal || ''}-${item.sizeOrFit || ''}`} className="group relative aspect-square overflow-hidden border border-black/10 bg-white" title={`${item.name} x ${item.quantity}`}><img src={item.imageUrl || ''} alt={item.name} className="h-full w-full object-cover" /><span className="absolute bottom-1 right-1 bg-white/90 px-1.5 py-0.5 font-[family-name:var(--font-family-secondary)] text-[9px] text-black">{item.quantity}</span></div>)}
+        {summary.gift ? <div className="relative aspect-square overflow-hidden border border-black/10 bg-white" title={summary.gift.name}><img src={summary.gift.imageUrl || ''} alt={summary.gift.name} className="h-full w-full object-cover" /><span className="absolute left-1 top-1 bg-[#eaf7ee] px-1.5 py-0.5 font-[family-name:var(--font-family-secondary)] text-[9px] font-medium uppercase text-[#16804b]">Free</span></div> : null}
       </div> : null}
-      {itemsOpen ? <div className="divide-y divide-black/10">{summary.items.map((item) => <div key={`detail-${item.slug}-${item.metal || ''}-${item.sizeOrFit || ''}`} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 py-3 font-[family-name:var(--font-family-secondary)]"><div><p className="text-[14px] font-semibold text-black">{item.name}</p>{selectionLabel(item) ? <p className="mt-1 text-[13px] leading-4 text-black/85">{selectionLabel(item)}</p> : null}<p className="mt-1 text-[13px] text-black/80">Qty {item.quantity}</p></div><span className="text-[14px] font-semibold text-black">{format(item.priceFrom * item.quantity)}</span></div>)}</div> : null}
+      {itemsOpen ? <div className="divide-y divide-black/10">{summary.items.map((item) => <div key={`detail-${item.slug}-${item.metal || ''}-${item.sizeOrFit || ''}`} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 py-3 font-[family-name:var(--font-family-secondary)]"><div><p className="text-[15px] font-semibold text-black">{item.name}</p>{selectionLabel(item) ? <p className="mt-1 text-[14px] leading-5 text-black">{selectionLabel(item)}</p> : null}<p className="mt-1 text-[14px] text-black">Qty {item.quantity}</p></div><span className="text-[15px] font-semibold text-black">{format(item.priceFrom * item.quantity)}</span></div>)}{summary.gift ? <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 py-3 font-[family-name:var(--font-family-secondary)]"><div><p className="text-[15px] font-semibold text-black">{summary.gift.name}</p><span className="mt-1 inline-flex border border-[#b7ddc5] bg-[#eaf7ee] px-1.5 py-0.5 text-[10px] font-medium uppercase text-[#16804b]">Free</span></div><span className="text-[15px] font-semibold text-black">{format(0)}</span></div> : null}</div> : null}
       <div className="border-b border-black/10 py-4"><button type="button" onClick={() => setPromoOpen((open) => !open)} aria-expanded={promoOpen} className="flex w-full items-center justify-between border-0 bg-transparent p-0 font-[family-name:var(--font-family-secondary)] text-[13px] text-black"><span>{couponApplied ? <><span>Promo code </span><span className="border border-[#b7ddc5] bg-[#eaf7ee] px-2 py-1 text-[#16804b]">{summary.couponCode}</span></> : 'Add Promo Code'}</span><ChevronDown size={14} className={`transition-transform ${promoOpen ? 'rotate-180' : ''}`} /></button>{promoOpen ? <div className="mt-3 flex h-10"><input value={couponValue} onChange={(event) => onCouponChange?.(event.target.value.toUpperCase())} disabled={couponApplied} placeholder="Enter code" className="min-w-0 flex-1 border border-r-0 border-black/20 bg-white px-3 text-[13px] outline-none"/><button type="button" onClick={onCouponAction} disabled={couponLoading} className="border border-black bg-black px-4 text-[11px] font-semibold uppercase text-white">{couponApplied ? 'Remove' : couponLoading ? 'Checking' : 'Apply'}</button></div> : null}</div>
       <div className="mt-5 space-y-3 font-[family-name:var(--font-family-secondary)] text-[14px] text-black/90"><div className="flex justify-between"><span>Subtotal</span><strong className="text-black">{format(subtotal)}</strong></div>{couponDiscount > 0 ? <div className="flex justify-between"><span>Savings</span><strong className="text-[#16804b]">-{format(couponDiscount)}</strong></div> : null}<div className="flex justify-between"><span>Shipping</span><span>Complimentary</span></div><div className="flex justify-between"><span>Tax</span><span>{format(gstAmount)}</span></div><div className="mt-4 flex justify-between border-t border-black/10 pt-4 font-[family-name:var(--font-family-primary)] text-[18px] font-semibold text-black"><span>Total</span><span>{format(total)}</span></div>{summary.chargeQuote ? <p className="border-t border-black/10 pt-4 text-[13px] leading-4 text-black/80">You will be charged {formatMoney(summary.chargeQuote.totalCharged, summary.chargeQuote.chargeCurrency)} at checkout.</p> : null}</div>
       {belowSummary}

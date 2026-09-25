@@ -13,3 +13,12 @@ export function createSupabaseServerClient() {
     auth: { persistSession: false, autoRefreshToken: false },
   })
 }
+
+export function createSupabaseServiceRoleClient() {
+  if (!supabaseUrl || !supabaseServiceRoleKey) {
+    throw new Error('Server-side database writes are not configured.')
+  }
+  return createClient(supabaseUrl, supabaseServiceRoleKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  })
+}

@@ -247,7 +247,7 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
               currentSlide.subtitle.trim() ||
               (currentSlide.button_text.trim() && currentSlide.button_link.trim())) ? (
               <>
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-full bg-gradient-to-t from-black/75 via-black/35 to-transparent" />
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-full bg-gradient-to-t from-black/5 via-black/5 to-transparent" />
                 <div className="pointer-events-none absolute inset-0 z-20 flex items-end justify-start px-[var(--space-4)] pb-[var(--space-10)] text-left sm:items-end sm:justify-start sm:px-[var(--space-8)] sm:pb-[var(--space-10)] lg:px-[var(--space-12)] xl:px-[var(--space-16)]">
                   <div className="relative mx-auto w-full max-w-[calc(100vw-2rem)] py-[var(--space-6)] sm:mx-0 sm:max-w-[42rem] sm:py-[var(--space-10)]">
                     {currentSlide.headline.trim() ? (

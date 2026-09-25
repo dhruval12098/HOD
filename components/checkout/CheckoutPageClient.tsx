@@ -8,6 +8,7 @@ import CheckoutInformationStep from '@/components/checkout/CheckoutInformationSt
 import CheckoutConfirmationStep from '@/components/checkout/CheckoutConfirmationStep';
 import CheckoutSummary from '@/components/checkout/CheckoutSummary';
 import CheckoutDeliveryPreview from '@/components/checkout/CheckoutDeliveryPreview';
+import AdditionalSummaryDetails from '@/components/common/AdditionalSummaryDetails';
 import type { CheckoutChargeQuote, CheckoutDisplayItem, CheckoutPostalAreaOption, CheckoutPostalLookupState, CheckoutProfileForm } from '@/components/checkout/types';
 import { useCurrency } from '@/context/CurrencyContext';
 import { getCollectionHref } from '@/lib/browse-context';
@@ -1327,6 +1328,7 @@ export default function CheckoutPageClient() {
                       },
                     } : null}
               />
+              <AdditionalSummaryDetails />
             </div>
           </div>
         </div>

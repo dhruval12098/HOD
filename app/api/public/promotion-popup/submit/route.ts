@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createSupabaseServerClient } from '@/lib/server-supabase'
+import { createSupabaseServiceRoleClient } from '@/lib/server-supabase'
 import { enforceRateLimit } from '@/lib/rate-limit'
 import { isValidEmail } from '@/lib/validation'
 
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
   const submittedAnswers = body?.answers && typeof body.answers === 'object' && !Array.isArray(body.answers) ? body.answers as Record<string, unknown> : {}
   if (typeof body?.email === 'string' && !submittedAnswers.email) submittedAnswers.email = body.email
 
-  const supabase = createSupabaseServerClient()
+  const supabase = createSupabaseServiceRoleClient()
   const { data: promotion, error: promotionError } = await supabase.from('promotion_popup').select('id, cta_action, cta_link, selected_coupon_id, is_active').eq('section_key', 'global_promotion_popup').maybeSingle()
   if (promotionError || !promotion?.is_active) return NextResponse.json({ error: 'This promotion is no longer available.' }, { status: 410 })
 

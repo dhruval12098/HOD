@@ -13,7 +13,7 @@ export function BlogPageHero({ hero }: { hero: BlogPageHeroData }) {
           <Image src={hero.desktopImageUrl || hero.mobileImageUrl} alt={hero.desktopImageAlt || hero.mobileImageAlt} fill priority sizes="(max-width: 1536px) 94vw, 1400px" className="object-cover" />
         </picture>
       ) : null}
-      <div className="absolute inset-0 bg-black/35" />
+      <div className="absolute inset-0 bg-black/5" />
       <div className="relative z-10 flex min-h-[360px] max-w-[600px] flex-col justify-center px-6 py-12 text-white sm:min-h-[390px] sm:px-10 lg:min-h-full lg:px-14">
         <h1 id="blog-hero-heading" className="font-primary-display text-[clamp(30px,4vw,52px)] font-medium leading-[1.05] text-white">{hero.heading}</h1>
         {hero.paragraph ? <p className="mt-4 max-w-[520px] font-secondary text-[13px] leading-6 text-white/90 sm:text-[14px]">{hero.paragraph}</p> : null}

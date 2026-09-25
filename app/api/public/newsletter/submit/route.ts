@@ -1,16 +1,15 @@
 import { NextResponse } from 'next/server'
-import { createSupabaseServerClient } from '@/lib/server-supabase'
+import { createSupabaseServiceRoleClient } from '@/lib/server-supabase'
 import { enforceRateLimit } from '@/lib/rate-limit'
 import { isValidEmail } from '@/lib/validation'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 function isMissingRelationError(error: { code?: string; message?: string } | null) {
   return error?.code === 'PGRST205' || error?.message?.includes('schema cache') || error?.message?.includes('does not exist')
 }
 
 export async function POST(request: Request) {
-  if (!supabaseUrl) {
-    return NextResponse.json({ error: 'Missing Supabase env vars.' }, { status: 500 })
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return NextResponse.json({ error: 'Newsletter signup is temporarily unavailable.' }, { status: 503 })
   }
 
   const rateLimit = await enforceRateLimit(request, { key: 'public-newsletter-submit', limit: 6, windowSeconds: 60 })
@@ -26,7 +25,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Enter a valid email address.' }, { status: 400 })
   }
 
-  const supabase = createSupabaseServerClient()
+  const supabase = createSupabaseServiceRoleClient()
   const { error } = await supabase.from('newsletter_submissions').insert({
     email,
     source: 'homepage_newsletter',
@@ -37,7 +36,8 @@ export async function POST(request: Request) {
     if (isMissingRelationError(error)) {
       return NextResponse.json({ error: 'Newsletter storage is not enabled yet.' }, { status: 503 })
     }
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('Newsletter submission failed:', error)
+    return NextResponse.json({ error: 'Unable to subscribe right now.' }, { status: 500 })
   }
 
   return NextResponse.json({ ok: true })
