@@ -15,7 +15,7 @@ import { useCurrency } from '@/context/CurrencyContext';
  * @param {boolean} [props.wishlisted] - Whether this product is saved
  * @param {function} [props.onWishlist] - Toggles the saved state
  * @param {'both'|'checkout_only'|'enquire_only'} [props.ctaMode] - Controls which CTAs are visible
- * @param {string|null} [props.ctaLabel] - Optional CTA label override from material rules
+ * @param {string|null|undefined} [props.ctaLabel] - Optional CTA label override from material rules
  */
 function WishlistButton({ wishlisted, onWishlist }) {
   if (!onWishlist) return null;
@@ -35,7 +35,7 @@ function WishlistButton({ wishlisted, onWishlist }) {
   );
 }
 
-export default function ProductCTAs({ product, ctaMode = 'both', ctaLabel = null, onEnquire, checkoutHref, onAddToCart, onCheckout, wishlisted = false, onWishlist }) {
+export default function ProductCTAs({ product, ctaMode = 'both', ctaLabel, onEnquire, checkoutHref, onAddToCart, onCheckout, wishlisted = false, onWishlist }) {
   const { format } = useCurrency();
   const [whatsappNumber, setWhatsappNumber] = useState('919328536178');
   useEffect(() => {
