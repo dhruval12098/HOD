@@ -95,6 +95,20 @@ export default function CheckoutSuccessClient() {
   const [payload, setPayload] = useState<Payload | null>(() => readOrderPreview(requestedOrder))
   const [state, setState] = useState<ResultState | 'loading'>(() => readOrderPreview(requestedOrder)?.state ?? 'loading')
   const [guestOrder, setGuestOrder] = useState(false)
+  const [estimatedDeliveryText, setEstimatedDeliveryText] = useState('Approximately 3 to 4 weeks')
+
+  useEffect(() => {
+    let active = true
+    fetch('/api/public/settings', { cache: 'no-store' })
+      .then((response) => response.json())
+      .then((result) => {
+        if (active && typeof result?.item?.estimated_delivery_text === 'string' && result.item.estimated_delivery_text.trim()) {
+          setEstimatedDeliveryText(result.item.estimated_delivery_text.trim())
+        }
+      })
+      .catch(() => {})
+    return () => { active = false }
+  }, [])
 
   useEffect(() => {
     let active = true
@@ -146,7 +160,7 @@ export default function CheckoutSuccessClient() {
       <article className="border border-black/15 p-6 sm:p-8">
         <h2 className="font-[family-name:var(--font-family-secondary)] text-sm uppercase tracking-[0.16em]">Order details</h2>
         <div className="mt-6 grid gap-6 sm:grid-cols-3">
-          <div><CalendarDays size={19}/><p className="mt-3 text-[10px] uppercase tracking-[0.14em] text-neutral-500">Estimated delivery</p><p className="mt-1 text-sm">Approximately 3 to 4 weeks</p></div>
+          <div><CalendarDays size={19}/><p className="mt-3 text-[10px] uppercase tracking-[0.14em] text-neutral-500">Estimated delivery</p><p className="mt-1 text-sm">{estimatedDeliveryText}</p></div>
           <div><MapPin size={19}/><p className="mt-3 text-[10px] uppercase tracking-[0.14em] text-neutral-500">Shipping to</p><p className="mt-1 text-sm leading-6">{[order.customer_first_name, order.customer_last_name].filter(Boolean).join(' ')}<br/>{address}</p></div>
           <div><CreditCard size={19}/><p className="mt-3 text-[10px] uppercase tracking-[0.14em] text-neutral-500">Payment method</p><p className="mt-1 text-sm capitalize">{order.razorpay_payment_method || order.payment_gateway || 'Online payment'}</p></div>
           {order.customer_birth_date || order.customer_anniversary_date ? <div><CalendarDays size={19}/><p className="mt-3 text-[10px] uppercase tracking-[0.14em] text-neutral-500">Customer dates</p><p className="mt-1 text-sm leading-6">{order.customer_birth_date ? <>Birth date: {date(order.customer_birth_date)}<br/></> : null}{order.customer_anniversary_date ? <>Anniversary: {date(order.customer_anniversary_date)}</> : null}</p></div> : null}

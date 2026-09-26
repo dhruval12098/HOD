@@ -6,7 +6,6 @@ import ConfiguratorPillGroup from './ConfiguratorPillGroup';
 import ConfiguratorEngravingInput from './ConfiguratorEngravingInput';
 import ConfiguratorMaterialButtons from './ConfiguratorMaterialButtons';
 import SizeChartDrawer from './SizeChartDrawer';
-import { useCurrency } from '@/context/CurrencyContext';
 import { METAL_META } from '@/lib/data/product-config';
 import { Select } from '@/components/ui/select';
 import {
@@ -83,13 +82,11 @@ export default function ProductConfigurator({
   onEngravingModeChange,
   onEngravingTextChange,
   onRingCategoryChange,
-  priceFrom,
   metalComposition,
   metalCompositionColor,
   customSelections = {},
   onCustomSelectionChange,
 }) {
-  const { format } = useCurrency();
   const combinedVariants = product.metalPurityVariants || [];
   const showCombinedVariants = combinedVariants.length > 0;
   const selectedCombinedVariant = combinedVariants.find((entry) => entry.id === variantId) || combinedVariants[0] || null;
@@ -97,7 +94,12 @@ export default function ProductConfigurator({
   const showMetal = !showCombinedVariants && product.metals.length > 0;
   const showPrimaryFit = product.chainLengthOptions.length > 0 || product.fitOptions.length > 0;
   const showRingSelector = Boolean(product.ringEnabled && product.ringSizeNames.length > 0);
-  const showGemstoneSelector = product.gemstoneValues.length > 1;
+  const gemstoneOptions = product.gemstoneValues.length > 0
+    ? product.gemstoneValues
+    : product.gemstoneValue
+      ? [product.gemstoneValue]
+      : [];
+  const showGemstoneSelector = gemstoneOptions.length > 0;
   const showShapeSelector = Boolean(product.shapesEnabled && (product.shapeOptions || []).length > 0);
   const showHiphopCaratSelector = product.hiphopCaratValues.length > 0;
   const sizeOptions = product.chainLengthOptions.length > 0
@@ -165,15 +167,9 @@ export default function ProductConfigurator({
   }, [showRingModal]);
   return (
     <div className="mb-5 mt-5 border-y border-[rgba(10,22,40,0.14)] bg-white py-5">
-      <div className="mb-4 flex items-center gap-[10px] text-[18px] font-semibold tracking-normal text-[var(--color-brand-primary,#000000)]" style={{ fontFamily: 'var(--font-plus-jakarta), Arial, Helvetica, sans-serif' }}>
-        <span className="h-[6px] w-[6px] flex-shrink-0 rounded-full bg-[var(--color-brand-primary,#000000)]" />
-        Configure Your Piece
-      </div>
-
       {showCombinedVariants ? (
         <ConfiguratorMaterialButtons
-          label="Material"
-          selectedLabel={selectedCombinedVariant?.label || ''}
+          label="Metal"
           options={combinedVariants.map((entry) => ({
             value: entry.id,
             label: entry.label,
@@ -190,18 +186,12 @@ export default function ProductConfigurator({
       {showGemstoneSelector ? (
         <ConfiguratorPillGroup
           label={product.gemstoneLabel || 'Stone Type'}
-          selectedLabel={gemstoneValue}
-          options={product.gemstoneValues}
-          active={gemstoneValue}
+          selectedLabel={gemstoneValue || gemstoneOptions[0]}
+          options={gemstoneOptions}
+          active={gemstoneValue || gemstoneOptions[0]}
           onChange={onGemstoneValueChange}
+          hideSelectedLabel
         />
-      ) : product.gemstoneValue ? (
-        <div className="mb-5 px-1 py-2">
-          <div className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--color-brand-primary,#000000)]">
-            {product.gemstoneLabel || 'Stone Type'}
-          </div>
-          <div className="mt-2 font-sans text-[15px] font-medium text-[var(--color-brand-primary,#000000)]">{gemstoneValue || product.gemstoneValue}</div>
-        </div>
       ) : null}
 
       {showShapeSelector ? (
@@ -214,6 +204,7 @@ export default function ProductConfigurator({
             const match = (product.shapeOptions || []).find((entry) => entry.name === value)
             if (match) onShapeChange?.(match.slug)
           }}
+          hideSelectedLabel
         />
       ) : null}
 
@@ -243,7 +234,7 @@ export default function ProductConfigurator({
         <>
           <div className="mb-5">
             <div className="mb-[10px] flex items-baseline justify-between">
-              <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--color-brand-primary,#000000)]">
+              <span className="font-sans text-[14px] font-semibold text-[var(--color-brand-primary,#000000)]">
                 {activeRingCategory?.name || 'Ring Size'}
               </span>
               <button type="button" onClick={() => setShowSizeChart(true)} className="font-sans text-[13px] font-medium tracking-[0.01em] text-[var(--color-brand-primary,#000000)] underline-offset-4 hover:underline">
@@ -267,38 +258,17 @@ export default function ProductConfigurator({
               })}
             </div>
           </div>
-          {product.ringCategoryOptions?.length > 1 ? (
-            <button
-              ref={ringModalTriggerRef}
-              type="button"
-              onClick={() => setShowRingModal(true)}
-              className="mb-5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-brand-primary,#000000)] underline underline-offset-4"
-            >
-              Show Ring Sizes
-            </button>
-          ) : null}
+          {/* The secondary ring-category chooser is intentionally hidden. */}
         </>
       ) : null}
 
       {(product.customDropdowns || []).map((group) => <div key={group.id} className="mb-5">
-        <div className="mb-[10px] flex items-baseline justify-between"><span className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--color-brand-primary,#000000)]">{group.label}{group.isRequired ? ' *' : ''}</span></div>
+        <div className="mb-[10px] flex items-baseline justify-between"><span className="font-sans text-[14px] font-semibold text-[var(--color-brand-primary,#000000)]">{group.label}{group.isRequired ? ' *' : ''}</span></div>
         <ShadcnSelect value={customSelections[group.id] || undefined} onValueChange={(value) => onCustomSelectionChange?.(group.id, value)}>
           <ShadcnSelectTrigger aria-label={group.label} className="h-12 rounded-none border-[var(--color-brand-primary,#000000)] bg-white font-[family-name:var(--font-family-secondary)] text-[var(--color-brand-primary,#000000)] shadow-none focus:border-[var(--color-brand-primary,#000000)]"><ShadcnSelectValue placeholder={`Select ${group.label}`} /></ShadcnSelectTrigger>
           <ShadcnSelectContent>{group.options.map((option) => <ShadcnSelectItem key={option.id} value={option.id}>{option.label}</ShadcnSelectItem>)}</ShadcnSelectContent>
         </ShadcnSelect>
       </div>)}
-
-      {typeof priceFrom === 'number' ? (
-        <div className="mb-6 mt-1 text-center">
-          <div className="font-sans text-[17px] font-light tracking-[0.01em] text-[#8B94A5]">Total Price</div>
-          <div className="mt-1 text-[30px] font-bold leading-none tracking-[-0.03em] text-[var(--color-brand-primary,#000000)]" style={{ fontFamily: 'var(--font-plus-jakarta), Arial, Helvetica, sans-serif' }}>
-            {format(priceFrom)}
-          </div>
-          <div className="mx-auto mt-4 inline-flex items-center rounded-none border border-black/10 bg-white px-4 py-2 font-sans text-[12px] font-medium text-[var(--color-brand-primary,#000000)]">
-            Ships in 3-4 weeks
-          </div>
-        </div>
-      ) : null}
 
       {product.engravingEnabled ? (
         <ConfiguratorEngravingInput

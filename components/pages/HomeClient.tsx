@@ -29,6 +29,8 @@ import type {
   HomeTrustedPartnersData,
 } from '@/lib/home-data';
 import type { ShopByCategoryData } from '@/lib/shop-by-category';
+import FreeGiftOfferBanner from '@/components/home/FreeGiftOfferBanner';
+import type { StorefrontPromotion } from '@/components/commerce/PromotionBanner';
 
 const HipHopShowcase = dynamic(() => import('@/components/home/HipHopShowcase'), { loading: () => null });
 const DiscoverShapes = dynamic(() => import('@/components/home/DiscoverShapes'), { loading: () => null });
@@ -83,6 +85,7 @@ export default function HomeClient({
   trustedPartnersData,
   bestSellerSection,
   bestSellerProducts = [],
+  giftPromotion,
 }: {
   heroContent?: HeroContent
   shopByCategory: ShopByCategoryData | null
@@ -98,6 +101,7 @@ export default function HomeClient({
   trustedPartnersData?: HomeTrustedPartnersData
   bestSellerSection: HomeBestSellerSection
   bestSellerProducts?: HomeBestSellerProduct[]
+  giftPromotion: StorefrontPromotion | null
 }) {
   const router = useRouter();
   const [isEnquireOpen, setIsEnquireOpen] = useState(false);
@@ -172,15 +176,16 @@ export default function HomeClient({
             <BespokeShowcase section={bespokeShowcaseSection} onEnquireClick={() => setIsBespokeEnquireOpen(true)} />
           ) : null}
           <InstagramReels data={instagramReels} />
+          <FreeGiftOfferBanner promotion={giftPromotion} />
           {/* <TrustedPartnersMarquee data={trustedPartnersData} /> */}
           {/* <TestimonialMarquee initialData={marqueeData} /> */}
           {/* <Certifications /> */}
           {showDeferredSections ? (
-            <section aria-labelledby="home-blogs-heading" className="bg-[var(--color-brand-accent,#fff)] px-[var(--space-2)] py-[var(--space-4)] sm:px-[var(--space-3)] lg:px-[var(--space-4)] lg:py-[var(--space-4)]">
+            <section aria-labelledby="home-blogs-heading" className="section-rhythm bg-[var(--color-brand-accent,#fff)] px-[var(--space-2)] sm:px-[var(--space-3)] lg:px-[var(--space-4)]">
               <div className="w-full">
-                <div className="mb-[var(--space-6)] flex flex-wrap items-end justify-between gap-[var(--space-4)]">
+                <div className="mb-[var(--space-6)] flex flex-wrap items-end justify-between gap-[var(--space-4)] max-md:justify-center">
                   <h2 id="home-blogs-heading" className="section-title text-[clamp(1.7rem,2.4vw,2.4rem)] leading-[1.12] text-[var(--theme-heading)]">Blogs</h2>
-                  <Link href="/blog" className="flex items-center gap-3 border-b border-[var(--theme-ink)] pb-1 font-[family-name:var(--font-family-primary)] text-[clamp(0.7rem,0.85vw,0.9rem)] font-semibold uppercase tracking-[0.08em] text-[var(--theme-ink)] no-underline transition-[gap] duration-300 hover:gap-5">View All Blogs →</Link>
+                  <Link href="/blog" className="hidden items-center gap-3 border-b border-[var(--theme-ink)] pb-1 font-[family-name:var(--font-family-primary)] text-[clamp(0.7rem,0.85vw,0.9rem)] font-semibold uppercase tracking-[0.08em] text-[var(--theme-ink)] no-underline transition-[gap] duration-300 hover:gap-5 md:flex">View All Blogs →</Link>
                 </div>
                 <DeferredBlogGrid posts={blogPosts} maxPosts={4} compactGrid simplifiedCards onPostClick={(id) => {
                   const target = blogPosts.find((post) => post.id === id)

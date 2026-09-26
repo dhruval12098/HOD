@@ -64,12 +64,11 @@ export function MaterialIcon({ label, color, id }) {
   );
 }
 
-export default function ConfiguratorMaterialButtons({ label = 'Material', selectedLabel, options, active, onChange }) {
+export default function ConfiguratorMaterialButtons({ label = 'Metal', options, active, onChange }) {
   return (
     <div className="mb-5">
       <div className="mb-3 text-[14px] text-[var(--color-brand-primary,#000000)]">
-        <b className="font-semibold">{label}:</b>{' '}
-        <span className="text-[#777]">{selectedLabel}</span>
+        <b className="font-semibold">{label}</b>
       </div>
 
       <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">

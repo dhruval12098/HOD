@@ -306,7 +306,7 @@ export default function BespokePortfolio({
 
   return (
     <>
-      <section className="py-[90px] px-[52px] max-w-[1400px] mx-auto max-lg:px-7 max-md:px-5 max-md:py-[60px]">
+      <section className="section-rhythm px-[52px] max-w-[1400px] mx-auto max-lg:px-7 max-md:px-5">
         <div className="text-center mb-8">
           <RevealDiv className="flex justify-center">
             <div className="text-[10px] font-normal tracking-[0.32em] text-[#0A1628] uppercase mb-[18px] inline-flex items-center gap-3 before:content-[''] before:w-6 before:h-px before:bg-[#0A1628]">

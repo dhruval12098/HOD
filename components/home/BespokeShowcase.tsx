@@ -56,19 +56,19 @@ export default function BespokeShowcase({
 
           <div className="absolute inset-0 bg-gradient-to-r from-black/72 via-black/36 to-transparent" aria-hidden="true" />
 
-          <div className="absolute inset-0 z-10 flex items-center px-[var(--space-4)] sm:px-[var(--space-8)] lg:px-[var(--space-12)] xl:px-[var(--space-16)]">
+          <div className="absolute inset-0 z-10 flex items-center justify-center px-[var(--space-4)] text-center md:justify-start md:px-[var(--space-8)] md:text-left lg:px-[var(--space-12)] xl:px-[var(--space-16)]">
             <div className="max-w-[44rem] text-[var(--color-brand-accent,#fff)]">
               <h2
-                className={`${cinzelFont.variable} max-w-[40rem] text-wrap-balance text-[clamp(2rem,4.3vw,3.75rem)] !font-medium leading-[1.08] tracking-[0.01em]`}
+                className={`${cinzelFont.variable} max-w-[40rem] text-wrap-balance text-[clamp(1.5rem,7vw,2rem)] !font-medium leading-[1.08] tracking-[0.01em] md:text-[clamp(2rem,4.3vw,3.75rem)]`}
               >
                 {section.heading || 'Create Something One of One'}
               </h2>
 
-              <p className="mt-[var(--space-5)] max-w-[28rem] font-[family-name:var(--font-family-secondary)] text-sm font-normal leading-[1.7] tracking-[0.01em] text-white/90 sm:text-[15px] md:text-base">
+              <p className="mx-auto mt-3 max-w-[20rem] font-[family-name:var(--font-family-secondary)] text-[12px] font-normal leading-[1.55] tracking-[0.01em] text-white/90 md:mx-0 md:mt-[var(--space-5)] md:max-w-[28rem] md:text-[15px] md:leading-[1.7]">
                 {section.subtitle || 'Begin a bespoke commission with House of Diams, from first sketch to final setting.'}
               </p>
 
-              <BrandButton onClick={onEnquireClick} className="banner-light-button mt-[var(--space-8)]">
+              <BrandButton onClick={onEnquireClick} className="banner-light-button mx-auto mt-5 md:mx-0 md:mt-[var(--space-8)]">
                 {section.ctaLabel || 'Start Bespoke Enquiry'}
               </BrandButton>
             </div>

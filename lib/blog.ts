@@ -1,6 +1,6 @@
 import { mapBlogPostRecord, posts as fallbackPosts, type BlogPost } from '@/lib/data/blog-posts'
 import { createSupabaseServerClient } from '@/lib/server-supabase'
-import { getStorefrontProducts } from '@/lib/catalog-products'
+import { getStorefrontProductsByIds } from '@/lib/catalog-products'
 
 type BlogTagRow = { tag: string; sort_order: number | null }
 type BlogContentBlockRow = {
@@ -135,7 +135,9 @@ export async function getPublishedBlogPosts() {
   const mappedPosts = mapRows(rows)
   if (!rows?.length) return mappedPosts
 
-  const storefrontProducts = await getStorefrontProducts()
+  const storefrontProducts = await getStorefrontProductsByIds(
+    rows.flatMap((row) => (row.blog_post_products ?? []).map((entry) => entry.product_id))
+  )
   const productMap = new Map(storefrontProducts.map((product) => [product.dbId, product]))
 
   return mappedPosts.map((post) => {

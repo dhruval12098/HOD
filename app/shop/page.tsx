@@ -1,9 +1,8 @@
 import type { Metadata } from 'next';
 
 export const dynamic = 'force-dynamic'
-import { unstable_noStore as noStore } from 'next/cache';
 import ShopClient from '@/components/pages/ShopClient';
-import { filterStorefrontProducts, getStorefrontProducts, toStorefrontProductCard } from '@/lib/catalog-products';
+import { getStorefrontFilterGroups, getStorefrontProductCardPage, type StorefrontProductSort } from '@/lib/catalog-products';
 import { createPageMetadata } from '@/lib/seo';
 import JsonLd from '@/components/seo/JsonLd';
 import { createBreadcrumbSchema } from '@/lib/structured-data';
@@ -42,25 +41,34 @@ export default async function ShopPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
-  noStore()
   const params = await searchParams
-  const products = await getStorefrontProducts('standard')
-  const filteredProducts = filterStorefrontProducts(products, {
-    productLane: 'standard',
+  const requestedSort = typeof params.sort === 'string' ? params.sort : 'best-matches'
+  const sort: StorefrontProductSort = ['best-matches', 'price-low', 'price-high', 'best-sellers'].includes(requestedSort)
+    ? requestedSort as StorefrontProductSort
+    : 'best-matches'
+  const page = typeof params.page === 'string' ? Math.max(1, Number.parseInt(params.page, 10) || 1) : 1
+  const filters = {
+    categorySlug: typeof params.category === 'string' ? params.category : null,
     subcategorySlug: typeof params.subcategory === 'string' ? params.subcategory : null,
     optionSlug: typeof params.option === 'string' ? params.option : null,
     shapeSlug: typeof params.shape === 'string' ? params.shape : null,
     styleSlug: typeof params.style === 'string' ? params.style : null,
     metalSlug: typeof params.metal === 'string' ? params.metal : null,
     certificate: typeof params.certificate === 'string' ? params.certificate : null,
-  })
+  }
+  const [productPage, filterGroups] = await Promise.all([
+    getStorefrontProductCardPage({ productLane: 'standard', filters, sort, page }),
+    getStorefrontFilterGroups('standard'),
+  ])
 
   return (
     <>
       <JsonLd data={createBreadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Shop', path: '/shop' }])} />
       <ShopClient
-        products={filteredProducts.map(toStorefrontProductCard)}
-        sourceProducts={products.filter((product) => product.productLane === 'standard').map(toStorefrontProductCard)}
+        products={productPage.products}
+        filterGroups={filterGroups}
+        totalCount={productPage.totalCount}
+        serverPaginated
         heroTitle="Our Collection"
         heroSubtitle="Browse our curated selection of fine jewellery, engagement rings, and wedding bands."
         initialFilters={{
@@ -70,6 +78,7 @@ export default async function ShopPage({
           ...(typeof params.metal === 'string' ? { metal: [params.metal] } : {}),
           ...(typeof params.certificate === 'string' ? { certificate: [params.certificate] } : {}),
         }}
+        initialPage={productPage.page}
       />
     </>
   );

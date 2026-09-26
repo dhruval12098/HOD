@@ -51,7 +51,7 @@ export default function HipHopShowcase({ initialSection }: { initialSection?: Ho
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_22%,rgba(255,255,255,0.16),transparent_36%),linear-gradient(135deg,#0b1018_0%,#1f2937_42%,#0a1628_100%)]" />
       )}
 
-      <div className="relative z-10 flex h-full items-end px-5 py-12 md:px-8 md:py-16 lg:px-12 lg:py-20">
+      <div className="relative z-10 flex h-full items-end justify-center px-5 py-12 text-center md:justify-start md:px-8 md:py-16 md:text-left lg:px-12 lg:py-20">
         <div className="max-w-[620px]">
           <h2
             className={`${cinzelFont.variable} font-primary-display font-light leading-[0.96] tracking-[0.01em] text-white`}
@@ -66,7 +66,7 @@ export default function HipHopShowcase({ initialSection }: { initialSection?: Ho
 
           <Link
             href={section.cta_link || "/hiphop"}
-            className="mt-8 inline-flex items-center gap-3 rounded-full border border-white/18 bg-white/14 px-7 py-3.5 font-[family-name:var(--font-family-button)] text-[10px] uppercase tracking-[0.28em] text-white backdrop-blur-sm transition hover:bg-white hover:text-[#0A1628]"
+            className="mx-auto mt-8 inline-flex items-center gap-3 rounded-full border border-white/18 bg-white/14 px-7 py-3.5 font-[family-name:var(--font-family-button)] text-[10px] uppercase tracking-[0.28em] text-white backdrop-blur-sm transition hover:bg-white hover:text-[#0A1628] md:mx-0"
           >
             {section.cta_label || "Shop Iced Pieces"}
             <span className="text-sm">→</span>

@@ -38,23 +38,18 @@ type SearchProduct = {
   } | null
 }
 
-const CACHE_TTL_MS = 5 * 60 * 1000
-let catalogCache: { at: number; promise: Promise<SearchProduct[]> } | null = null
-
-function loadCatalog(): Promise<SearchProduct[]> {
-  if (catalogCache && Date.now() - catalogCache.at < CACHE_TTL_MS) return catalogCache.promise
-  const promise = fetch('/api/public/products')
+function loadWishlistProducts(keys: string[]): Promise<SearchProduct[]> {
+  return fetch('/api/public/products', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ keys }),
+  })
     .then(async (response) => {
       const payload = await response.json().catch(() => null)
       if (!response.ok || !Array.isArray(payload?.items)) throw new Error('catalog')
       return payload.items as SearchProduct[]
     })
-    .catch(() => {
-      catalogCache = null
-      throw new Error('Unable to load products.')
-    })
-  catalogCache = { at: Date.now(), promise }
-  return promise
+    .catch(() => { throw new Error('Unable to load products.') })
 }
 
 function WishlistSkeletonCard() {
@@ -70,11 +65,14 @@ function WishlistSkeletonCard() {
 export default function WishlistClient({ embedded = false }: { embedded?: boolean }) {
   const { wishlist, toggle, ready } = useWishlistStore()
   const [products, setProducts] = useState<SearchProduct[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
+    if (!ready) return
+    if (!wishlist.length) return
     let ignore = false
-    loadCatalog()
+    setIsLoading(true)
+    loadWishlistProducts(wishlist)
       .then((items) => {
         if (!ignore) setProducts(items)
       })
@@ -85,7 +83,7 @@ export default function WishlistClient({ embedded = false }: { embedded?: boolea
     return () => {
       ignore = true
     }
-  }, [])
+  }, [ready, wishlist])
 
   const items = useMemo(() => products.filter((product) => wishlist.includes(getProductKey(product))), [products, wishlist])
 

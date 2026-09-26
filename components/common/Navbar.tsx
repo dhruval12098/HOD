@@ -29,29 +29,16 @@ type SearchItem = {
   priceFrom: number
 };
 
-let cachedSearchItems: SearchItem[] | null = null;
-let searchItemsRequest: Promise<SearchItem[]> | null = null;
-
-function preloadSearchItems(): Promise<SearchItem[]> {
-  if (cachedSearchItems) return Promise.resolve(cachedSearchItems);
-  if (searchItemsRequest) return searchItemsRequest;
-
-  const request = fetch('/api/public/products/search')
-    .then(async (response) => {
-      const payload = await response.json().catch(() => null);
-      if (!response.ok || !Array.isArray(payload?.items)) {
-        throw new Error(payload?.error || 'Unable to load product search.');
-      }
-      const items = payload.items as SearchItem[];
-      cachedSearchItems = items;
-      return items;
-    })
-    .finally(() => {
-      searchItemsRequest = null;
-    });
-
-  searchItemsRequest = request;
-  return request;
+async function loadSearchItems(query: string, signal?: AbortSignal): Promise<SearchItem[]> {
+  const response = await fetch(`/api/public/products/search?q=${encodeURIComponent(query.trim())}`, {
+    cache: 'no-store',
+    signal,
+  });
+  const payload = await response.json().catch(() => null);
+  if (!response.ok || !Array.isArray(payload?.items)) {
+    throw new Error(payload?.error || 'Unable to load product search.');
+  }
+  return payload.items as SearchItem[];
 }
 
 function SmartNavLink({ href, ...props }: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) {
@@ -173,8 +160,8 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSearchIndex, setActiveSearchIndex] = useState(-1);
-  const [searchItems, setSearchItems] = useState<SearchItem[]>(() => cachedSearchItems ?? []);
-  const [searchLoadState, setSearchLoadState] = useState<'idle' | 'loading' | 'ready' | 'error'>(() => cachedSearchItems ? 'ready' : 'idle');
+  const [searchItems, setSearchItems] = useState<SearchItem[]>([]);
+  const [searchLoadState, setSearchLoadState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [announcementItems, setAnnouncementItems] = useState<Array<{
     message: string;
     linkUrl: string;
@@ -252,36 +239,31 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
   }, [menuOpen, searchOpen]);
 
   useEffect(() => {
-    if (cachedSearchItems) return;
-    let ignore = false;
-    let idleId: number | null = null;
-
-    const loadProducts = () => {
+    if (!searchOpen) return;
+    const controller = new AbortController();
+    const query = searchQuery.trim();
+    const delay = query ? 225 : 0;
+    const timer = window.setTimeout(() => {
       setSearchLoadState('loading');
-      void preloadSearchItems()
+      void loadSearchItems(query, controller.signal)
         .then((items) => {
-          if (ignore) return;
+          if (controller.signal.aborted) return;
           setSearchItems(items);
           setSearchLoadState('ready');
+          setActiveSearchIndex(-1);
         })
-        .catch(() => {
-          if (!ignore) setSearchLoadState('error');
+        .catch((error) => {
+          if (error instanceof DOMException && error.name === 'AbortError') return;
+          setSearchItems([]);
+          setSearchLoadState('error');
         });
-    };
-
-    if (typeof window.requestIdleCallback === 'function') {
-      idleId = window.requestIdleCallback(loadProducts, { timeout: 1200 });
-    } else {
-      idleId = setTimeout(loadProducts, 250) as unknown as number;
-    }
+    }, delay);
 
     return () => {
-      ignore = true;
-      if (idleId === null) return;
-      if (typeof window.cancelIdleCallback === 'function') window.cancelIdleCallback(idleId);
-      else clearTimeout(idleId);
+      window.clearTimeout(timer);
+      controller.abort();
     };
-  }, []);
+  }, [searchOpen, searchQuery]);
 
   useEffect(() => {
     if (!searchOpen) return;
@@ -446,42 +428,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
     router.refresh();
   };
 
-  const filteredSearchItems = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-    if (!query) {
-      // Spread the initial selection across product families when the catalog permits it.
-      const groups = new Map<string, typeof searchItems>();
-      for (const item of searchItems) {
-        const family = item.shortMeta?.split(/[·|,]/)[0]?.trim().toLowerCase() || 'jewellery';
-        groups.set(family, [...(groups.get(family) || []), item]);
-      }
-      const suggestions: typeof searchItems = [];
-      const families = [...groups.values()];
-      while (suggestions.length < 10 && families.some((group) => group.length)) {
-        for (const group of families) {
-          const next = group.shift();
-          if (next) suggestions.push(next);
-          if (suggestions.length === 10) break;
-        }
-      }
-      return suggestions;
-    }
-    const queryTokens = query.split(/\s+/).filter(Boolean);
-    return searchItems
-      .filter((item) => {
-        const haystack = [
-          item.name,
-          item.shortMeta,
-          item.slug,
-        ]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase();
-
-        return queryTokens.every((token) => haystack.includes(token));
-      })
-      .slice(0, 12);
-  }, [searchItems, searchQuery]);
+  const filteredSearchItems = useMemo(() => searchItems.slice(0, 12), [searchItems]);
 
   useEffect(() => {
     if (activeSearchIndex < 0) return;
@@ -496,20 +443,6 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
 
   const openSearch = () => {
     setSearchOpen(true);
-    if (cachedSearchItems) {
-      setSearchItems(cachedSearchItems);
-      setSearchLoadState('ready');
-      return;
-    }
-    if (searchLoadState === 'loading') return;
-
-    setSearchLoadState('loading');
-    void preloadSearchItems()
-      .then((items) => {
-        setSearchItems(items);
-        setSearchLoadState('ready');
-      })
-      .catch(() => setSearchLoadState('error'));
   };
 
   const handleSearchKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
@@ -555,7 +488,8 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
         :root {
           --hod-announcement-height: 35px;
           --hod-announcement-current-height: var(--hod-announcement-height);
-          --hod-navbar-height: 83px;
+          /* Mobile row contains a 34px control inside 14px vertical padding: 62px exactly. */
+          --hod-navbar-height: 62px;
           --hod-navbar-visible-height: var(--hod-navbar-height);
           --hod-site-header-height: calc(var(--hod-announcement-current-height) + var(--hod-navbar-height));
           --hod-nav-hide-transform: translateY(-120%);
@@ -673,13 +607,13 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
         <div
           className="nav-desktop-row relative h-[var(--hod-navbar-height)] py-0 lg:pb-[34px] lg:pt-0"
         >
-          <div className="relative flex items-center justify-center border-b border-black/[0.06] bg-white px-4 py-[14px] lg:hidden">
-          <div className="absolute left-3 top-1/2 flex -translate-y-1/2 items-center gap-1.5 min-[375px]:left-4 min-[375px]:gap-2.5 sm:gap-3">
+          <div className="relative flex h-full items-center border-b border-black/[0.06] bg-white px-3 lg:hidden">
+          <div className="order-2 ml-auto flex items-center gap-2" aria-label="Header actions">
             <button
               type="button"
               onClick={openSearch}
               aria-label="Search"
-              className="group relative flex h-[34px] w-[34px] items-center justify-center border-0 bg-transparent transition-opacity duration-300 hover:opacity-75"
+              className="group relative flex h-9 w-9 items-center justify-center border-0 bg-transparent transition-opacity duration-300 hover:opacity-75"
             >
               <img src="/Navbar svgs/search-01-stroke-rounded (1).svg" alt="" aria-hidden="true" className="h-[20px] w-[20px] object-contain opacity-75 transition-opacity group-hover:opacity-100" />
             </button>
@@ -687,13 +621,11 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
               type="button"
               onClick={openCart}
               aria-label="Cart"
-              className="group relative flex h-[34px] w-[34px] items-center justify-center border-0 bg-transparent transition-opacity duration-300 hover:opacity-75"
+              className="group relative flex h-9 w-9 items-center justify-center border-0 bg-transparent transition-opacity duration-300 hover:opacity-75"
             >
               <img src="/Navbar svgs/handbag-simple.svg" alt="" aria-hidden="true" className="h-[20px] w-[20px] object-contain opacity-75 transition-opacity group-hover:opacity-100" />
               {cartCount ? <span className="absolute -right-1 -top-1 inline-flex min-w-[18px] items-center justify-center rounded-full bg-[#0A1628] px-1 text-[10px] text-white">{cartCount}</span> : null}
             </button>
-          </div>
-          <div className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1.5 min-[375px]:right-4 min-[375px]:gap-2.5">
             <button
               onClick={() => {
                 if (menuOpen) closeMenu();
@@ -701,7 +633,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
               }}
               aria-label="Menu"
               aria-expanded={menuOpen}
-              className="flex w-7 cursor-pointer flex-col gap-[5px] border-none bg-transparent p-1"
+              className="flex h-9 w-9 cursor-pointer flex-col justify-center gap-[5px] border-none bg-transparent p-1"
             >
               <span
                 className="block h-[1.5px] w-full origin-center rounded-sm bg-[#0A1628] transition-transform duration-350"
@@ -719,10 +651,10 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
           </div>
           <Link
             href="/"
-            className="flex items-center no-underline cursor-pointer"
+            className="order-1 flex min-w-0 items-center no-underline cursor-pointer"
           >
             <span
-              className="text-[11px] min-[360px]:text-[13px] min-[390px]:text-[15px] sm:text-[20px] font-bold tracking-[0.1em] min-[360px]:tracking-[0.12em] min-[390px]:tracking-[0.14em] uppercase"
+              className="whitespace-nowrap text-[13px] min-[360px]:text-[14px] min-[390px]:text-[15px] sm:text-[20px] font-bold tracking-[0.1em] min-[360px]:tracking-[0.12em] min-[390px]:tracking-[0.14em] "
               style={{ color: 'var(--color-brand-primary, #000000)', fontFamily: 'var(--font-family-logo1, Cinzel, serif)', fontWeight: 600, fontVariationSettings: '"wght" 600', fontSynthesis: 'none' }}
             >
               House of Diams
@@ -1139,8 +1071,6 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
     </>
   );
 }
-
-
 
 
 

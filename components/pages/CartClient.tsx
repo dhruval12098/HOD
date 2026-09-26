@@ -7,7 +7,8 @@ import { Minus, Plus } from 'lucide-react'
 import { useCart } from '@/lib/hooks/useCart'
 import { useCurrency } from '@/context/CurrencyContext'
 import { getProductKey, type CartItemSelection, type CartProductSnapshot } from '@/lib/product-keys'
-import { PromotionBanner, type StorefrontPromotion } from '@/components/commerce/PromotionBanner'
+import type { StorefrontPromotion } from '@/components/commerce/PromotionBanner'
+import { GiftOfferBanner } from '@/components/commerce/GiftOfferBanner'
 import CheckoutSummary from '@/components/checkout/CheckoutSummary'
 
 const APPLIED_COUPON_KEY = 'hod_applied_coupon'
@@ -50,6 +51,7 @@ export default function CartClient({ summaryInfo }: { summaryInfo?: ReactNode })
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null)
   const [couponMessage, setCouponMessage] = useState('')
   const [couponLoading, setCouponLoading] = useState(false)
+  const [requestedGiftPromotionId, setRequestedGiftPromotionId] = useState<number | null>(null)
   const legacyLookupKey = useMemo(
     () => JSON.stringify(items.filter((item) => !item.snapshot).map((item) => [item.productKey, item.productSlug]).sort()),
     [items]
@@ -74,16 +76,18 @@ export default function CartClient({ summaryInfo }: { summaryInfo?: ReactNode })
   useEffect(() => {
     if (!isHydrated) return
     let ignore = false
-    void fetch('/api/public/products/search')
+    void fetch('/api/public/products/recommendations', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        slugs: items.map((item) => item.productSlug).filter(Boolean),
+        ids: items.map((item) => item.productKey).filter(Boolean),
+      }),
+    })
       .then((response) => response.json())
       .then((payload) => {
         if (ignore || !Array.isArray(payload?.items)) return
-        const cartKeys = new Set(items.map((item) => item.productKey || item.productSlug))
-        const cartSlugs = new Set(items.map((item) => item.productSlug).filter(Boolean))
-        const cartCategories = new Set((payload.items as SearchProduct[]).filter((product) => cartSlugs.has(product.slug)).map((product) => product.mainCategorySlug).filter(Boolean))
-        const candidates = (payload.items as SearchProduct[]).filter((product) => !cartKeys.has(getProductKey(product)))
-        candidates.sort((a, b) => Number(cartCategories.has(b.mainCategorySlug)) - Number(cartCategories.has(a.mainCategorySlug)))
-        setRecommendations(candidates.slice(0, 4))
+        setRecommendations((payload.items as SearchProduct[]).slice(0, 4))
       })
       .catch(() => {})
     return () => { ignore = true }
@@ -140,36 +144,41 @@ export default function CartClient({ summaryInfo }: { summaryInfo?: ReactNode })
         <div className="grid items-start gap-8 pt-12 lg:grid-cols-[minmax(0,1fr)_400px] xl:gap-12 xl:grid-cols-[minmax(0,1fr)_450px]">
           <section aria-label="Bag items" className="min-w-0">
             <div className="rounded-md border border-black/10 bg-white p-3 sm:p-4">
-              <div className="divide-y divide-black/10">
+              <div>
               {resolvedItems.map(({ item, product }) => {
                 const unitPrice = Number(item.selection.resolvedPrice ?? product.priceFrom ?? 0)
                 const details = selectedDetails(item.selection)
                 const imageUrl = item.selection.resolvedImageUrl || product.imageUrl
+                const quantityControl = (
+                  <div className="grid h-9 grid-cols-[34px_38px_34px] border border-black/25" aria-label={`Quantity for ${product.name}`}>
+                    <button type="button" onClick={() => updateQuantity(item.key, item.quantity - 1)} aria-label="Decrease quantity" className="flex items-center justify-center border-0 bg-white text-black transition hover:bg-black hover:text-white"><Minus size={13} strokeWidth={1.5}/></button>
+                    <span className="flex items-center justify-center border-x border-black/15 font-[family-name:var(--font-family-secondary)] text-[12px]">{item.quantity}</span>
+                    <button type="button" onClick={() => updateQuantity(item.key, item.quantity + 1)} aria-label="Increase quantity" className="flex items-center justify-center border-0 bg-white text-black transition hover:bg-black hover:text-white"><Plus size={13} strokeWidth={1.5}/></button>
+                  </div>
+                )
                 return (
-                  <article key={item.key} className="grid grid-cols-[96px_minmax(0,1fr)] gap-4 border-b border-black/10 bg-white px-4 py-6 first:rounded-t-sm last:border-b-0 sm:grid-cols-[124px_minmax(0,1fr)_auto] sm:gap-6 lg:grid-cols-[142px_minmax(0,1fr)_auto] lg:py-7">
-                    <Link href={`/shop/${product.slug}`} className="row-span-2 sm:row-span-1 relative block aspect-square w-[96px] overflow-hidden rounded-sm border border-black/10 bg-[var(--color-brand-secondary,#f9f9f9)] sm:w-full">
+                  <article key={item.key} className="grid grid-cols-[96px_minmax(0,1fr)] gap-4 bg-white px-4 py-6 first:rounded-t-sm sm:grid-cols-[124px_minmax(0,1fr)_auto] sm:gap-6 lg:grid-cols-[142px_minmax(0,1fr)_auto] lg:py-7">
+                    <Link href={`/shop/${product.slug}`} className="row-span-2 sm:row-span-1 relative block aspect-[4/5] w-[96px] overflow-hidden rounded-sm border border-black/10 bg-[var(--color-brand-secondary,#f9f9f9)] sm:w-full">
                       {imageUrl ? <img src={imageUrl} alt={product.name} className="absolute inset-0 h-full w-full object-cover" /> : null}
                     </Link>
 
                     <div className="flex min-w-0 flex-col">
-                      <p className="font-[family-name:var(--font-family-secondary)] text-[12px] uppercase tracking-[0.1em] text-black/70">{product.shortMeta}</p>
-                      <Link href={`/shop/${product.slug}`} className="mt-2 font-[family-name:var(--font-family-primary)] text-[16px] font-semibold leading-[1.4] text-black no-underline sm:text-[18px]">{product.name}</Link>
+                      <Link href={`/shop/${product.slug}`} className="font-[family-name:var(--font-family-primary)] text-[16px] font-semibold leading-[1.4] text-black no-underline sm:text-[18px]">{product.name}</Link>
                       {details ? <p className="mt-2 font-[family-name:var(--font-family-secondary)] text-[13px] leading-5 text-black/75">{details}</p> : null}
                       <p className="mt-1 font-[family-name:var(--font-family-secondary)] text-[12px] leading-5 text-black/70">{item.selection.loveLetter?.wantsLetter ? `Love letter included${item.selection.loveLetter.recipientName ? ` for ${item.selection.loveLetter.recipientName}` : ''}` : 'No love letter'}</p>
 
                       <div className="mt-auto flex flex-wrap items-end gap-x-6 gap-y-3 pt-5">
-                        <div className="grid h-9 grid-cols-[34px_38px_34px] border border-black/25" aria-label={`Quantity for ${product.name}`}>
-                          <button type="button" onClick={() => updateQuantity(item.key, item.quantity - 1)} aria-label="Decrease quantity" className="flex items-center justify-center border-0 bg-white text-black transition hover:bg-black hover:text-white"><Minus size={13} strokeWidth={1.5}/></button>
-                          <span className="flex items-center justify-center border-x border-black/15 font-[family-name:var(--font-family-secondary)] text-[12px]">{item.quantity}</span>
-                          <button type="button" onClick={() => updateQuantity(item.key, item.quantity + 1)} aria-label="Increase quantity" className="flex items-center justify-center border-0 bg-white text-black transition hover:bg-black hover:text-white"><Plus size={13} strokeWidth={1.5}/></button>
-                        </div>
+                        <Link href={`/shop/${product.slug}`} className="mb-2 font-[family-name:var(--font-family-secondary)] text-[12px] text-black/70 underline underline-offset-4 transition hover:text-black">Edit</Link>
                         <button type="button" onClick={() => removeItem(item.key)} className="mb-2 border-0 bg-transparent p-0 font-[family-name:var(--font-family-secondary)] text-[12px] text-black/70 underline underline-offset-4 transition hover:text-black">Remove</button>
                       </div>
                     </div>
 
-                    <div className="flex items-start justify-between gap-4 sm:block sm:min-w-[110px] sm:text-right">
-                      <span className="font-[family-name:var(--font-family-secondary)] text-[13px] font-semibold text-black sm:text-[14px]">{format(unitPrice * item.quantity)}</span>
-                      {item.quantity > 1 ? <span className="mt-1 block font-[family-name:var(--font-family-secondary)] text-[12px] text-black/70">{format(unitPrice)} each</span> : null}
+                    <div className="col-start-2 row-start-2 mt-4 flex items-end justify-between gap-4 sm:col-auto sm:row-auto sm:mt-0 sm:flex sm:min-w-[110px] sm:flex-col sm:items-end sm:text-right">
+                      <div>
+                        <span className="font-[family-name:var(--font-family-secondary)] text-[13px] font-semibold text-black sm:text-[14px]">{format(unitPrice * item.quantity)}</span>
+                        {item.quantity > 1 ? <span className="mt-1 block font-[family-name:var(--font-family-secondary)] text-[12px] text-black/70">{format(unitPrice)} each</span> : null}
+                      </div>
+                      <div className="sm:mt-auto">{quantityControl}</div>
                     </div>
                   </article>
                 )
@@ -177,9 +186,9 @@ export default function CartClient({ summaryInfo }: { summaryInfo?: ReactNode })
 
               {isLoading && items.filter((item) => !item.snapshot).map((item) => <div key={`legacy-${item.key}`} className="grid grid-cols-[124px_1fr] gap-5 py-6" aria-label="Refreshing saved cart item"><div className="aspect-[4/5] animate-pulse bg-[var(--color-brand-secondary,#f9f9f9)]"/><div className="space-y-3 py-2"><div className="h-3 w-24 animate-pulse bg-black/5"/><div className="h-5 w-1/2 animate-pulse bg-black/5"/><div className="h-4 w-28 animate-pulse bg-black/5"/></div></div>)}
               {appliedCoupon?.rewardType === 'free_gift' && appliedCoupon.gift && total >= Number(appliedCoupon.minimumOrderAmount ?? 0) ? <article className="grid grid-cols-[96px_minmax(0,1fr)] gap-4 rounded-b-sm bg-white px-4 py-6 sm:grid-cols-[124px_minmax(0,1fr)_auto] sm:gap-6 lg:grid-cols-[142px_minmax(0,1fr)_auto] lg:py-7">
-                <div className="row-span-2 sm:row-span-1 relative aspect-square w-[96px] overflow-hidden rounded-sm border border-black/10 bg-white sm:w-full">{appliedCoupon.gift.imageUrl ? <img src={appliedCoupon.gift.imageUrl} alt={appliedCoupon.gift.name} className="h-full w-full object-cover" /> : null}</div>
+                <div className="row-span-2 sm:row-span-1 relative aspect-[4/5] w-[96px] overflow-hidden rounded-sm border border-black/10 bg-white sm:w-full">{appliedCoupon.gift.imageUrl ? <img src={appliedCoupon.gift.imageUrl} alt={appliedCoupon.gift.name} className="h-full w-full object-cover" /> : null}</div>
                 <div><span className="inline-flex border border-[#b7ddc5] bg-[#eaf7ee] px-2 py-1 font-[family-name:var(--font-family-secondary)] text-[10px] font-medium uppercase tracking-[0.08em] text-[#16804b]">Gift</span><p className="mt-2 font-[family-name:var(--font-family-primary)] text-[16px] font-semibold leading-[1.4] text-black sm:text-[18px]">{appliedCoupon.gift.name}</p><p className="mt-1 font-[family-name:var(--font-family-secondary)] text-[12px] text-black/70">Gift with your order</p></div>
-                <span className="sm:order-2 font-[family-name:var(--font-family-secondary)] text-[13px] font-semibold text-black sm:text-[14px]">{format(0)}</span>
+                <span className="flex items-center gap-2 sm:order-2 sm:justify-self-end font-[family-name:var(--font-family-secondary)] text-[13px] font-semibold text-black sm:text-[14px]"><span>{format(0)}</span>{Number(appliedCoupon.gift.originalUnitPrice ?? 0) > 0 ? <span className="text-black/55 line-through">{format(Number(appliedCoupon.gift.originalUnitPrice))}</span> : null}</span>
               </article> : null}
               </div>
               {recommendations[0] ? <article className="mt-4 grid grid-cols-[120px_minmax(0,1fr)] w-full gap-4 rounded-xl border border-black/10 bg-[#f8f8fa] p-4 sm:grid-cols-[220px_minmax(0,1fr)] sm:gap-6 sm:p-6"><Link href={`/shop/${recommendations[0].slug}`} className="row-span-2 sm:row-span-1 aspect-square overflow-hidden rounded-lg border border-black/10 bg-white p-2 sm:p-3">{recommendations[0].imageUrl ? <img src={recommendations[0].imageUrl} alt={recommendations[0].name} className="h-full w-full object-contain" /> : null}</Link><div className="flex min-w-0 flex-col justify-center py-1"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="font-[family-name:var(--font-family-inter)] text-[12px] text-black/60 sm:text-[14px]">{recommendations[0].mainCategoryName || recommendations[0].shortMeta}</p><Link href={`/shop/${recommendations[0].slug}`} className="mt-1 block max-w-2xl font-[family-name:var(--font-family-inter)] text-[16px] font-semibold leading-6 text-black no-underline sm:text-[21px] sm:leading-7">{recommendations[0].name}</Link></div><p className="shrink-0 pt-1 font-[family-name:var(--font-family-inter)] text-[13px] font-semibold text-black sm:text-[16px]">{format(recommendations[0].priceFrom)}</p></div><button type="button" onClick={() => addItem(recommendations[0], {})} className="mt-4 min-h-10 w-full max-w-[180px] self-start border border-black bg-black px-4 font-[family-name:var(--font-family-button)] text-[10px] font-semibold uppercase tracking-[0.1em] text-white transition hover:bg-white hover:text-black sm:mt-5 sm:min-h-12 sm:px-6 sm:text-[12px]">Add to cart</button></div></article> : null}
@@ -187,6 +196,7 @@ export default function CartClient({ summaryInfo }: { summaryInfo?: ReactNode })
           </section>
 
           <aside className="h-fit lg:sticky lg:top-28">
+            {featuredPromotion?.rewardType === 'free_gift' && featuredPromotion.gift ? <GiftOfferBanner promotion={featuredPromotion} amount={total} checked={requestedGiftPromotionId === featuredPromotion.id || (appliedCoupon?.rewardType === 'free_gift' && appliedCoupon.code === featuredPromotion.code)} included={appliedCoupon?.rewardType === 'free_gift' && appliedCoupon.code === featuredPromotion.code} borderless onToggle={() => { setRequestedGiftPromotionId(featuredPromotion.id); if (total >= featuredPromotion.minimumOrderAmount) { setCouponCode(featuredPromotion.code); void applyCoupon(featuredPromotion.code) } }} /> : null}
             <CheckoutSummary
               summary={{
                 items: resolvedItems.map(({ item, product }) => ({
@@ -210,42 +220,13 @@ export default function CartClient({ summaryInfo }: { summaryInfo?: ReactNode })
                   originalUnitPrice: Number(appliedCoupon.gift.originalUnitPrice ?? 0),
                 } : null,
               }}
+              shippingLabel="Free"
               couponValue={couponCode}
               onCouponChange={setCouponCode}
               onCouponAction={() => { if (appliedCoupon) { setAppliedCoupon(null); setCouponCode(''); setCouponMessage(''); localStorage.removeItem(APPLIED_COUPON_KEY) } else void applyCoupon() }}
               couponApplied={Boolean(appliedCoupon)}
               couponLoading={couponLoading}
               couponMessage={couponMessage}
-              giftOffer={appliedCoupon
-                ? appliedCoupon.rewardType === 'free_gift' && appliedCoupon.gift
-                  ? {
-                      name: appliedCoupon.gift.name,
-                      imageUrl: appliedCoupon.gift.imageUrl,
-                      minimumOrderAmount: Number(appliedCoupon.minimumOrderAmount ?? 0),
-                      remainingAmount: 0,
-                      unlocked: true,
-                      added: true,
-                      appliedCouponCode: appliedCoupon.code,
-                    }
-                  : {
-                      name: 'Discount applied',
-                      minimumOrderAmount: Number(appliedCoupon.minimumOrderAmount ?? 0),
-                      remainingAmount: 0,
-                      unlocked: true,
-                      isDiscount: true,
-                      appliedCouponCode: appliedCoupon.code,
-                      appliedDiscountAmount: Number(appliedCoupon.discountAmount ?? 0),
-                    }
-                : featuredPromotion?.rewardType === 'free_gift' && featuredPromotion.gift
-                  ? {
-                      name: featuredPromotion.gift.name,
-                      imageUrl: featuredPromotion.gift.imageUrl,
-                      minimumOrderAmount: featuredPromotion.minimumOrderAmount,
-                      remainingAmount: Math.max(0, featuredPromotion.minimumOrderAmount - total),
-                      unlocked: total >= featuredPromotion.minimumOrderAmount,
-                      onAction: () => { if (total >= featuredPromotion.minimumOrderAmount) { setCouponCode(featuredPromotion.code); void applyCoupon(featuredPromotion.code) } },
-                    }
-                  : null}
               belowSummary={<>
                 <Link href="/checkout?mode=cart" className="mt-5 flex min-h-12 w-full items-center justify-center border border-black bg-black px-6 font-[family-name:var(--font-family-button)] text-[12px] font-semibold uppercase tracking-[0.1em] text-white no-underline transition hover:bg-white hover:text-black">Checkout</Link>
               </>}

@@ -134,8 +134,8 @@ export default function BestSellers({
   if (!products.length) return null
 
   return (
-    <section className="w-full bg-white px-[var(--space-2)] py-[var(--space-4)] sm:px-[var(--space-3)] sm:py-[var(--space-6)] lg:px-[var(--space-4)] lg:py-[var(--space-8)]">
-      <RevealDiv className="mb-[var(--space-6)] flex flex-wrap items-end justify-between gap-[var(--space-4)] px-[var(--space-1)] sm:mb-[var(--space-8)] lg:mb-[var(--space-12)]">
+    <section className="section-rhythm w-full bg-white px-[var(--space-2)] sm:px-[var(--space-3)] lg:px-[var(--space-4)]">
+      <RevealDiv className="mb-[var(--space-6)] flex flex-wrap items-end justify-between gap-[var(--space-4)] px-[var(--space-1)] max-md:justify-center sm:mb-[var(--space-8)] lg:mb-[var(--space-12)]">
         <div>
           <h2
             className={`${cinzelFont.variable} font-primary-display section-title font-light leading-[1.08] tracking-[0.01em] text-[var(--theme-heading)] max-md:text-[28px]`}
@@ -152,7 +152,7 @@ export default function BestSellers({
 
         <Link
           href={section.cta_href}
-          className="flex items-center gap-3 border-b border-[var(--theme-ink)] pb-1 font-[family-name:var(--font-family-primary)] text-[clamp(0.7rem,0.85vw,0.9rem)] font-semibold uppercase tracking-[0.08em] text-[var(--theme-ink)] no-underline transition-[gap] duration-300 hover:gap-5"
+          className="hidden items-center gap-3 border-b border-[var(--theme-ink)] pb-1 font-[family-name:var(--font-family-primary)] text-[clamp(0.7rem,0.85vw,0.9rem)] font-semibold uppercase tracking-[0.08em] text-[var(--theme-ink)] no-underline transition-[gap] duration-300 hover:gap-5 md:flex"
         >
           {section.cta_label} →
         </Link>

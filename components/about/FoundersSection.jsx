@@ -44,18 +44,16 @@ export default function FoundersSection({ initialItems = [] }) {
   const goToNext = () => setActiveIndex((current) => (current + 1) % items.length);
 
   return (
-    <section style={{ padding: "130px 52px", maxWidth: "1600px", margin: "0 auto" }} className="founders-section">
+    <section style={{ maxWidth: "1600px", margin: "0 auto" }} className="section-rhythm founders-section px-5 max-lg:px-7 lg:px-[52px]">
       <style>{`
         @keyframes founderFade {
           from { opacity: 0; transform: translateX(24px); }
           to { opacity: 1; transform: translateX(0); }
         }
         @media (max-width: 1024px) {
-          .founders-section { padding: 80px 28px !important; }
           .founder-slide { grid-template-columns: 1fr !important; gap: 32px !important; }
         }
         @media (max-width: 640px) {
-          .founders-section { padding: 60px 20px !important; }
         }
       `}</style>
       <div className="mb-8 text-left sm:mb-10">

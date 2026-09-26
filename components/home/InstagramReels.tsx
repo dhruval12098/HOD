@@ -70,17 +70,17 @@ export default function InstagramReels({ data }: { data: HomeInstagramReelsData 
   if (!data.isEnabled || data.items.length === 0) return null
 
   return (
-    <section aria-labelledby="instagram-reels-heading" className="overflow-hidden bg-white px-[var(--space-2)] py-[var(--space-4)] text-[#111b2b] sm:px-[var(--space-3)] lg:px-[var(--space-4)] lg:py-[var(--space-4)]">
-      <div className="mb-3 flex items-end justify-between gap-4">
+    <section aria-labelledby="instagram-reels-heading" className="section-rhythm overflow-hidden bg-white px-[var(--space-2)] text-[#111b2b] sm:px-[var(--space-3)] lg:px-[var(--space-4)]">
+      <div className="mb-3 flex items-end justify-between gap-4 max-md:justify-center">
         <h2 id="instagram-reels-heading" className="section-title font-primary-display font-light leading-[1.08] tracking-[0.01em] text-[#0A1628] max-md:text-[28px]" style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}>
           {data.heading || 'Instagram'}
         </h2>
         {hasOverflow ? (
           <div className="flex shrink-0 items-center gap-2" aria-label="Instagram reel navigation">
-            <button type="button" onClick={() => scrollReels(-1)} disabled={!canGoPrevious} aria-label="Show previous Instagram reels" className="grid size-9 place-items-center border border-black/20 bg-white text-black transition hover:border-black disabled:cursor-not-allowed disabled:opacity-35 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black">
+            <button type="button" onClick={() => scrollReels(-1)} disabled={!canGoPrevious} aria-label="Show previous Instagram reels" className="hidden grid size-9 place-items-center border border-black/20 bg-white text-black transition hover:border-black disabled:cursor-not-allowed disabled:opacity-35 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black md:grid">
               <ChevronLeft size={18} strokeWidth={1.5} aria-hidden="true" />
             </button>
-            <button type="button" onClick={() => scrollReels(1)} disabled={!canGoNext} aria-label="Show next Instagram reels" className="grid size-9 place-items-center border border-black/20 bg-white text-black transition hover:border-black disabled:cursor-not-allowed disabled:opacity-35 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black">
+            <button type="button" onClick={() => scrollReels(1)} disabled={!canGoNext} aria-label="Show next Instagram reels" className="hidden grid size-9 place-items-center border border-black/20 bg-white text-black transition hover:border-black disabled:cursor-not-allowed disabled:opacity-35 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black md:grid">
               <ChevronRight size={18} strokeWidth={1.5} aria-hidden="true" />
             </button>
           </div>

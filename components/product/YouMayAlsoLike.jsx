@@ -24,7 +24,7 @@ export default function YouMayAlsoLike({ products, wishlist = [], onWishlist, on
   };
 
   return (
-    <section aria-labelledby="you-may-also-like-heading" className="mt-[clamp(48px,6vw,88px)] bg-[var(--color-brand-tertiary,#fff)] px-[var(--space-2)] py-[var(--space-8)] sm:px-[var(--space-3)] sm:py-[var(--space-10)] xl:py-[var(--space-12)]">
+    <section aria-labelledby="you-may-also-like-heading" className="section-rhythm bg-[var(--color-brand-tertiary,#fff)] px-[var(--space-2)] sm:px-[var(--space-3)]">
       <div className="mb-[var(--space-6)] flex items-end justify-between gap-4 px-1 sm:mb-[var(--space-8)] xl:mb-[var(--space-12)]">
         <h2 id="you-may-also-like-heading" className="section-title text-[clamp(1.35rem,2.2vw,2rem)] font-medium uppercase leading-none tracking-[0.025em] text-[var(--color-brand-primary,#000)]">You May Also Like</h2>
         <div className="flex shrink-0 items-center gap-2">

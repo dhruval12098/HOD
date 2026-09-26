@@ -301,6 +301,7 @@ export type StorefrontProduct = Product & {
   dbId: string
   productLane: 'standard' | 'hiphop' | 'collection'
   detailTemplate: 'standard' | 'hiphop'
+  mainCategoryId: string
   mainCategoryCode: string
   mainCategoryName: string
   mainCategorySlug: string
@@ -578,14 +579,23 @@ function resolveMetalMediaDefaults(
   return { fallbackMedia, source }
 }
 
-async function fetchAllProductVariantMediaItems(supabase: ReturnType<typeof createSupabaseServerClient>) {
+async function fetchAllProductVariantMediaItems(
+  supabase: ReturnType<typeof createSupabaseServerClient>,
+  productIds?: string[]
+) {
   const pageSize = 1000
   const rows: ProductVariantMediaItemRow[] = []
 
+  if (productIds && productIds.length < 1) return { data: rows, error: null }
+
   for (let from = 0; ; from += pageSize) {
-    const result = await supabase
+    let query = supabase
       .from('product_variant_media_items')
       .select('*')
+
+    if (productIds) query = query.in('product_id', productIds)
+
+    const result = await query
       .order('sort_order', { ascending: true })
       .order('id', { ascending: true })
       .range(from, from + pageSize - 1)
@@ -600,7 +610,117 @@ async function fetchAllProductVariantMediaItems(supabase: ReturnType<typeof crea
   }
 }
 
+async function fetchAllProductMetalSelections(
+  supabase: ReturnType<typeof createSupabaseServerClient>,
+  productIds?: string[]
+) {
+  const pageSize = 1000
+  const rows: ProductMetalSelectionRow[] = []
+
+  if (productIds && productIds.length < 1) return { data: rows, error: null }
+
+  for (let from = 0; ; from += pageSize) {
+    let query = supabase
+      .from('product_metal_selections')
+      .select('product_id, metal_id, sort_order')
+
+    if (productIds) query = query.in('product_id', productIds)
+
+    const result = await query
+      .order('sort_order', { ascending: true })
+      .order('id', { ascending: true })
+      .range(from, from + pageSize - 1)
+
+    if (result.error) return result
+
+    const page = (result.data || []) as ProductMetalSelectionRow[]
+    rows.push(...page)
+    if (page.length < pageSize) return { data: rows, error: null }
+  }
+}
+
+async function fetchAllProductMetalVariants(
+  supabase: ReturnType<typeof createSupabaseServerClient>,
+  productIds?: string[]
+) {
+  const pageSize = 1000
+  const rows: ProductMetalVariantRow[] = []
+
+  if (productIds && productIds.length < 1) return { data: rows, error: null }
+
+  for (let from = 0; ; from += pageSize) {
+    let query = supabase
+      .from('product_metal_variants')
+      .select('*')
+
+    if (productIds) query = query.in('product_id', productIds)
+
+    const result = await query
+      .order('sort_order', { ascending: true })
+      .order('id', { ascending: true })
+      .range(from, from + pageSize - 1)
+
+    if (result.error) return result
+
+    const page = (result.data || []) as ProductMetalVariantRow[]
+    rows.push(...page)
+    if (page.length < pageSize) return { data: rows, error: null }
+  }
+}
+
+async function fetchAllProductMetalMedia(
+  supabase: ReturnType<typeof createSupabaseServerClient>,
+  productIds?: string[]
+) {
+  const pageSize = 1000
+  const rows: ProductMetalMediaRow[] = []
+
+  if (productIds && productIds.length < 1) return { data: rows, error: null }
+
+  for (let from = 0; ; from += pageSize) {
+    let query = supabase
+      .from('product_metal_media')
+      .select('*')
+
+    if (productIds) query = query.in('product_id', productIds)
+
+    const result = await query
+      .order('id', { ascending: true })
+      .range(from, from + pageSize - 1)
+
+    if (result.error) return result
+
+    const page = (result.data || []) as ProductMetalMediaRow[]
+    rows.push(...page)
+    if (page.length < pageSize) return { data: rows, error: null }
+  }
+}
+
 export type StorefrontProductLane = 'standard' | 'hiphop' | 'collection'
+
+export type StorefrontProductPageFilters = {
+  categorySlug?: string | null
+  subcategorySlug?: string | null
+  optionSlug?: string | null
+  shapeSlug?: string | null
+  styleSlug?: string | null
+  metalSlug?: string | null
+  certificate?: string | null
+}
+
+export type StorefrontProductSort = 'best-matches' | 'price-low' | 'price-high' | 'best-sellers'
+
+type StorefrontProductFetchScope = {
+  slug?: string
+  slugs?: string[]
+  productIds?: string[]
+  mainCategoryId?: string
+  mainCategoryIds?: string[]
+  excludeProductId?: string
+  excludeProductIds?: string[]
+  searchTokens?: string[]
+  limit?: number
+}
 
 function groupRowsBy<T>(rows: T[], getKey: (row: T) => string | null | undefined) {
   const grouped = new Map<string, T[]>()
@@ -614,14 +734,41 @@ function groupRowsBy<T>(rows: T[], getKey: (row: T) => string | null | undefined
   return grouped
 }
 
-const fetchStorefrontProducts = async (productLane?: StorefrontProductLane) => {
+const fetchStorefrontProducts = async (
+  productLane?: StorefrontProductLane,
+  scope?: StorefrontProductFetchScope
+) => {
   const supabase = createSupabaseServerClient()
   let productsQuery = supabase.from('products').select('*').eq('status', 'active')
   if (productLane) productsQuery = productsQuery.eq('product_lane', productLane)
+  if (scope?.slug) productsQuery = productsQuery.eq('slug', scope.slug)
+  if (scope?.slugs) productsQuery = productsQuery.in('slug', scope.slugs)
+  if (scope?.productIds) productsQuery = productsQuery.in('id', scope.productIds)
+  if (scope?.mainCategoryId) productsQuery = productsQuery.eq('main_category_id', scope.mainCategoryId)
+  if (scope?.mainCategoryIds) productsQuery = productsQuery.in('main_category_id', scope.mainCategoryIds)
+  if (scope?.excludeProductId) productsQuery = productsQuery.neq('id', scope.excludeProductId)
+  if (scope?.excludeProductIds) {
+    productsQuery = productsQuery.not('id', 'in', `(${scope.excludeProductIds.join(',')})`)
+  }
+  for (const token of scope?.searchTokens ?? []) {
+    productsQuery = productsQuery.or(`name.ilike.%${token}%,slug.ilike.%${token}%`)
+  }
+  if (scope?.limit) productsQuery = productsQuery.limit(scope.limit)
 
-  const [productsResult, categoriesResult, subcategoriesResult, optionsResult, metalsResult, materialValuesResult, certificatesResult, stylesResult, ringCategoriesResult, ringCategorySizesResult, productContentRulesResult, metalSelectionsResult, materialValueSelectionsResult, shapeSelectionsResult, gstSlabsResult, purityPricesResult, metalMediaResult, metalCompositionPartsResult, subcategoryLinksResult, optionLinksResult, metalVariantsResult, variantMediaItemsResult, productFaqResult, customDropdownResult, customDropdownOptionResult] =
+  const productsResult = await productsQuery.order('created_at', { ascending: false })
+  if (productsResult.error) throw new Error(productsResult.error.message)
+
+  const productIds = (productsResult.data || []).map((product) => product.id)
+  // Supabase query builders retain table-specific result generics. This helper
+  // only applies the shared product_id boundary without changing their payload.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const scopedProductRows = (query: any) => {
+    if (!scope) return query
+    return productIds.length > 0 ? query.in('product_id', productIds) : query.limit(0)
+  }
+
+  const [categoriesResult, subcategoriesResult, optionsResult, metalsResult, materialValuesResult, certificatesResult, stylesResult, ringCategoriesResult, ringCategorySizesResult, productContentRulesResult, metalSelectionsResult, materialValueSelectionsResult, shapeSelectionsResult, gstSlabsResult, purityPricesResult, metalMediaResult, metalCompositionPartsResult, subcategoryLinksResult, optionLinksResult, metalVariantsResult, variantMediaItemsResult, productFaqResult, customDropdownResult] =
     await Promise.all([
-      productsQuery.order('created_at', { ascending: false }),
       supabase.from('catalog_categories').select('id, code, name, slug, category_lane'),
       supabase.from('catalog_subcategories').select('id, category_id, name, slug'),
       supabase.from('catalog_options').select('id, subcategory_id, name, slug'),
@@ -632,21 +779,30 @@ const fetchStorefrontProducts = async (productLane?: StorefrontProductLane) => {
       supabase.from('catalog_ring_categories').select('id, name, slug, description').eq('status', 'active').order('display_order', { ascending: true }),
       supabase.from('catalog_ring_category_sizes').select('id, ring_category_id, size_label, size_value').eq('status', 'active').order('display_order', { ascending: true }),
       supabase.from('product_content_rules').select('id, kind, name, slug, title, body').eq('status', 'active'),
-      supabase.from('product_metal_selections').select('product_id, metal_id, sort_order').order('sort_order', { ascending: true }),
-      supabase.from('product_material_value_selections').select('product_id, material_value_id, sort_order').order('sort_order', { ascending: true }),
-      supabase.from('product_stone_shapes').select('product_id, shape_id, shape:catalog_stone_shapes(id, name, slug, svg_asset_url)'),
+      fetchAllProductMetalSelections(supabase, scope ? productIds : undefined),
+      scopedProductRows(supabase.from('product_material_value_selections').select('product_id, material_value_id, sort_order')).order('sort_order', { ascending: true }),
+      scopedProductRows(supabase.from('product_stone_shapes').select('product_id, shape_id, shape:catalog_stone_shapes(id, name, slug, svg_asset_url)')),
       supabase.from('catalog_gst_slabs').select('id, name, code, percentage').neq('status', 'hidden'),
-      supabase.from('product_purity_prices').select('*').order('sort_order', { ascending: true }),
-      supabase.from('product_metal_media').select('*'),
+      scopedProductRows(supabase.from('product_purity_prices').select('*')).order('sort_order', { ascending: true }),
+      fetchAllProductMetalMedia(supabase, scope ? productIds : undefined),
       supabase.from('metal_composition_parts').select('*').order('sort_order', { ascending: true }),
-      supabase.from('product_subcategory_links').select('product_id, subcategory_id, is_primary, sort_order').order('sort_order', { ascending: true }),
-      supabase.from('product_option_links').select('product_id, option_id, is_primary, sort_order').order('sort_order', { ascending: true }),
-      supabase.from('product_metal_variants').select('*').order('sort_order', { ascending: true }),
-      fetchAllProductVariantMediaItems(supabase),
-      supabase.from('product_faq_items').select('id, product_id, question, answer, sort_order, is_active').eq('is_active', true).order('sort_order', { ascending: true }),
-      supabase.from('product_custom_dropdowns').select('id, product_id, name, label, is_required, display_order').eq('is_enabled', true).order('display_order', { ascending: true }),
-      supabase.from('product_custom_dropdown_options').select('id, dropdown_id, label, value, display_order').eq('is_enabled', true).order('display_order', { ascending: true }),
+      scopedProductRows(supabase.from('product_subcategory_links').select('product_id, subcategory_id, is_primary, sort_order')).order('sort_order', { ascending: true }),
+      scopedProductRows(supabase.from('product_option_links').select('product_id, option_id, is_primary, sort_order')).order('sort_order', { ascending: true }),
+      fetchAllProductMetalVariants(supabase, scope ? productIds : undefined),
+      fetchAllProductVariantMediaItems(supabase, scope ? productIds : undefined),
+      scopedProductRows(supabase.from('product_faq_items').select('id, product_id, question, answer, sort_order, is_active')).eq('is_active', true).order('sort_order', { ascending: true }),
+      scopedProductRows(supabase.from('product_custom_dropdowns').select('id, product_id, name, label, is_required, display_order')).eq('is_enabled', true).order('display_order', { ascending: true }),
     ])
+
+  const customDropdownIds = ((customDropdownResult.data || []) as ProductCustomDropdownRow[]).map((entry) => entry.id)
+  const customDropdownOptionResult = customDropdownIds.length > 0
+    ? await supabase
+        .from('product_custom_dropdown_options')
+        .select('id, dropdown_id, label, value, display_order')
+        .in('dropdown_id', customDropdownIds)
+        .eq('is_enabled', true)
+        .order('display_order', { ascending: true })
+    : { data: [], error: null }
 
   const error =
     productsResult.error ||
@@ -935,6 +1091,7 @@ const fetchStorefrontProducts = async (productLane?: StorefrontProductLane) => {
       imageAlts: visibleImageAlts,
       videoUrl: visibleVideoUrl,
       model3dUrl: product.model_3d_url ?? undefined,
+      mainCategoryId: product.main_category_id || '',
       mainCategoryCode: category?.code || '',
       mainCategoryName: category?.name || '',
       mainCategorySlug: category?.slug || '',
@@ -1080,15 +1237,457 @@ export async function getStorefrontProductCards(productLane?: StorefrontProductL
   return getCachedStorefrontProductCards(productLane)
 }
 
-export async function getStorefrontProductBySlug(slug: string) {
-  const products = await getRequestStorefrontProducts()
-  const exactMatch = products.find((entry) => entry.slug === slug)
-  if (exactMatch) return exactMatch
+const getRequestStorefrontProductBySlug = cache(async (slug: string) => {
+  const exactMatches = await fetchStorefrontProducts(undefined, { slug, limit: 1 })
+  if (exactMatches[0]) return exactMatches[0]
 
   const legacySlug = slug.replace(/-\d+$/, '')
-  return legacySlug !== slug
-    ? products.find((entry) => entry.slug === legacySlug) || null
-    : null
+  if (legacySlug === slug) return null
+
+  const legacyMatches = await fetchStorefrontProducts(undefined, { slug: legacySlug, limit: 1 })
+  return legacyMatches[0] || null
+})
+
+export async function getStorefrontProductBySlug(slug: string) {
+  return getRequestStorefrontProductBySlug(slug)
+}
+
+const getRequestRelatedStorefrontProducts = cache(
+  async (
+    productId: string,
+    productLane: StorefrontProductLane,
+    mainCategoryId: string,
+    limit: number
+  ) => {
+    if (!productId || !mainCategoryId || limit < 1) return []
+
+    return fetchStorefrontProducts(productLane, {
+      mainCategoryId,
+      excludeProductId: productId,
+      limit,
+    })
+  }
+)
+
+export async function getRelatedStorefrontProducts(product: StorefrontProduct, limit = 7) {
+  return getRequestRelatedStorefrontProducts(
+    product.dbId,
+    product.productLane,
+    product.mainCategoryId,
+    limit
+  )
+}
+
+function uniqueNonEmptyValues(values: string[], limit: number) {
+  return [...new Set(values.map((value) => value.trim()).filter(Boolean))].slice(0, limit)
+}
+
+export async function getStorefrontProductsByIdentifiers({
+  slugs,
+  ids,
+  limit = 50,
+}: {
+  slugs: string[]
+  ids: string[]
+  limit?: number
+}) {
+  const safeLimit = Math.max(1, Math.min(50, Math.floor(limit)))
+  const uniqueSlugs = uniqueNonEmptyValues(slugs, safeLimit)
+  const uniqueIds = uniqueNonEmptyValues(ids, safeLimit).filter((value) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+  )
+
+  const [byId, bySlug] = await Promise.all([
+    uniqueIds.length > 0
+      ? fetchStorefrontProducts(undefined, { productIds: uniqueIds, limit: safeLimit })
+      : Promise.resolve([]),
+    uniqueSlugs.length > 0
+      ? fetchStorefrontProducts(undefined, { slugs: uniqueSlugs, limit: safeLimit })
+      : Promise.resolve([]),
+  ])
+
+  return [...new Map([...byId, ...bySlug].map((product) => [product.dbId, product])).values()]
+    .slice(0, safeLimit)
+}
+
+export async function getStorefrontProductsByIds(ids: string[]) {
+  const uniqueIds = uniqueNonEmptyValues(ids, 5000).filter((value) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+  )
+  const products: StorefrontProduct[] = []
+
+  for (let index = 0; index < uniqueIds.length; index += 50) {
+    products.push(...await fetchStorefrontProducts(undefined, {
+      productIds: uniqueIds.slice(index, index + 50),
+      limit: 50,
+    }))
+  }
+
+  return products
+}
+
+export async function getStorefrontProductDiscoveryRows() {
+  const supabase = createSupabaseServerClient()
+  const rows: Array<{
+    slug: string
+    name: string
+    description: string | null
+    tag_line: string | null
+    updated_at: string | null
+  }> = []
+  const pageSize = 1000
+
+  for (let from = 0; ; from += pageSize) {
+    const result = await supabase
+      .from('products')
+      .select('slug, name, description, tag_line, updated_at')
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .range(from, from + pageSize - 1)
+
+    if (result.error) throw new Error(result.error.message)
+    const page = result.data ?? []
+    rows.push(...page)
+    if (page.length < pageSize) return rows
+  }
+}
+
+function normalizeSlug(value: string) {
+  return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-')
+}
+
+export async function getStorefrontProductCardPage({
+  productLane,
+  filters = {},
+  sort = 'best-matches',
+  page = 1,
+  pageSize = 24,
+}: {
+  productLane?: StorefrontProductLane
+  filters?: StorefrontProductPageFilters
+  sort?: StorefrontProductSort
+  page?: number
+  pageSize?: number
+}) {
+  const supabase = createSupabaseServerClient()
+  const safePage = Math.max(1, Math.floor(page))
+  const safePageSize = Math.max(1, Math.min(48, Math.floor(pageSize)))
+
+  const [categoriesResult, subcategoriesResult, optionsResult, shapesResult, metalsResult, stylesResult, certificatesResult] = await Promise.all([
+    supabase.from('catalog_categories').select('id, slug').eq('status', 'active'),
+    supabase.from('catalog_subcategories').select('id, category_id, slug').eq('status', 'active'),
+    supabase.from('catalog_options').select('id, subcategory_id, slug').eq('status', 'active'),
+    supabase.from('catalog_stone_shapes').select('id, slug').eq('status', 'active'),
+    supabase.from('catalog_metals').select('id, slug').eq('status', 'active'),
+    supabase.from('catalog_styles').select('id, slug').eq('status', 'active'),
+    supabase.from('catalog_certificates').select('id, name, code'),
+  ])
+
+  const category = categoriesResult.data?.find((entry) => entry.slug === filters.categorySlug)
+  const categorySubcategoryIds = new Set(
+    (subcategoriesResult.data ?? [])
+      .filter((entry) => !category || entry.category_id === category.id)
+      .map((entry) => entry.id)
+  )
+  const subcategory = subcategoriesResult.data?.find((entry) =>
+    entry.slug === filters.subcategorySlug && categorySubcategoryIds.has(entry.id)
+  )
+  const option = optionsResult.data?.find((entry) =>
+    entry.slug === filters.optionSlug &&
+    (!subcategory || entry.subcategory_id === subcategory.id) &&
+    categorySubcategoryIds.has(entry.subcategory_id)
+  )
+  const shape = shapesResult.data?.find((entry) => entry.slug === filters.shapeSlug)
+  const metal = metalsResult.data?.find((entry) => entry.slug === filters.metalSlug)
+  const style = stylesResult.data?.find((entry) => entry.slug === filters.styleSlug)
+  const certificate = certificatesResult.data?.find((entry) =>
+    normalizeSlug(entry.name) === normalizeSlug(filters.certificate ?? '') ||
+    normalizeSlug(entry.code ?? '') === normalizeSlug(filters.certificate ?? '')
+  )
+
+  const missingRequestedFilter = Boolean(
+    (filters.categorySlug && !category) ||
+    (filters.subcategorySlug && !subcategory) ||
+    (filters.optionSlug && !option) ||
+    (filters.shapeSlug && !shape) ||
+    (filters.metalSlug && !metal) ||
+    (filters.styleSlug && !style) ||
+    (filters.certificate && !certificate)
+  )
+  if (missingRequestedFilter) return { products: [] as StorefrontProductCard[], totalCount: 0, page: safePage, pageSize: safePageSize }
+
+  const joins = [
+    'id',
+    ...(subcategory ? ['subcategory_match:product_subcategory_links!inner(subcategory_id)'] : []),
+    ...(option ? ['option_match:product_option_links!inner(option_id)'] : []),
+    ...(shape ? ['shape_match:product_stone_shapes!inner(shape_id)'] : []),
+    ...(metal ? ['metal_match:product_metal_selections!inner(metal_id)'] : []),
+  ].join(', ')
+
+  let indexQuery = supabase
+    .from('products')
+    .select(joins, { count: 'exact' })
+    .eq('status', 'active')
+  if (productLane) indexQuery = indexQuery.eq('product_lane', productLane)
+  if (category) indexQuery = indexQuery.eq('main_category_id', category.id)
+  if (subcategory) indexQuery = indexQuery.eq('subcategory_match.subcategory_id', subcategory.id)
+  if (option) indexQuery = indexQuery.eq('option_match.option_id', option.id)
+  if (shape) indexQuery = indexQuery.eq('shape_match.shape_id', shape.id)
+  if (metal) indexQuery = indexQuery.eq('metal_match.metal_id', metal.id)
+  if (style) indexQuery = indexQuery.eq('style_id', style.id)
+  if (certificate) indexQuery = indexQuery.contains('certificate_ids', [certificate.id])
+
+  if (sort === 'price-low') indexQuery = indexQuery.order('base_price', { ascending: true })
+  else if (sort === 'price-high') indexQuery = indexQuery.order('base_price', { ascending: false })
+  else if (sort === 'best-sellers') indexQuery = indexQuery.order('featured', { ascending: false }).order('created_at', { ascending: false })
+  else indexQuery = indexQuery.order('created_at', { ascending: false })
+
+  const from = (safePage - 1) * safePageSize
+  const indexResult = await indexQuery.range(from, from + safePageSize - 1)
+  if (indexResult.error) throw new Error(indexResult.error.message)
+
+  const orderedIds = ((indexResult.data ?? []) as unknown as Array<{ id: string }>).map((entry) => entry.id)
+  const pageProducts = orderedIds.length
+    ? await fetchStorefrontProducts(productLane, { productIds: orderedIds, limit: safePageSize })
+    : []
+  const productMap = new Map(pageProducts.map((product) => [product.dbId, product]))
+
+  return {
+    products: orderedIds.map((id) => productMap.get(id)).filter((product): product is StorefrontProduct => Boolean(product)).map(toStorefrontProductCard),
+    totalCount: indexResult.count ?? 0,
+    page: safePage,
+    pageSize: safePageSize,
+  }
+}
+
+export async function getStorefrontFilterGroups(productLane?: StorefrontProductLane, categoryId?: string) {
+  const supabase = createSupabaseServerClient()
+  const [categories, subcategories, options, shapes, metals, styles, certificates] = await Promise.all([
+    supabase.from('catalog_categories').select('id, name, slug, category_lane').eq('status', 'active').order('display_order'),
+    supabase.from('catalog_subcategories').select('id, category_id, name, slug').eq('status', 'active').order('display_order'),
+    supabase.from('catalog_options').select('id, subcategory_id, name, slug').eq('status', 'active').order('display_order'),
+    supabase.from('catalog_stone_shapes').select('name, slug, svg_asset_url, display_order').eq('status', 'active').order('display_order'),
+    supabase.from('catalog_metals').select('name, slug, display_label, color_hex').eq('status', 'active').order('display_order'),
+    supabase.from('catalog_styles').select('name, slug').eq('status', 'active').order('display_order'),
+    supabase.from('catalog_certificates').select('name').order('display_order'),
+  ])
+  const visibleCategories = (categories.data ?? []).filter((entry) => !productLane || entry.category_lane === productLane)
+  const visibleCategoryIds = new Set(categoryId ? [categoryId] : visibleCategories.map((entry) => entry.id))
+  const visibleSubcategories = (subcategories.data ?? []).filter((entry) => visibleCategoryIds.has(entry.category_id))
+  const visibleSubcategoryIds = new Set(visibleSubcategories.map((entry) => entry.id))
+
+  return [
+    ...(!categoryId ? [{ id: 'category', title: 'Category', options: visibleCategories.map((entry) => ({ value: entry.slug, label: entry.name })) }] : []),
+    { id: 'subcategory', title: 'Type', options: visibleSubcategories.map((entry) => ({ value: entry.slug, label: entry.name })) },
+    { id: 'option', title: 'Style', options: (options.data ?? []).filter((entry) => visibleSubcategoryIds.has(entry.subcategory_id)).map((entry) => ({ value: entry.slug, label: entry.name })) },
+    { id: 'shape', title: 'Shape', options: (shapes.data ?? []).map((entry) => ({ value: entry.slug, label: entry.name, iconUrl: entry.svg_asset_url })) },
+    { id: 'metal', title: 'Metal', options: (metals.data ?? []).map((entry) => ({ value: entry.slug, label: entry.display_label || entry.name, color: entry.color_hex })) },
+    { id: 'certificate', title: 'Certificate', options: (certificates.data ?? []).map((entry) => ({ value: entry.name, label: entry.name })) },
+    { id: 'style', title: 'Design Style', options: (styles.data ?? []).map((entry) => ({ value: entry.slug, label: entry.name })) },
+  ].filter((group) => group.options.length > 0)
+}
+
+function normalizeSearchTokens(query: string) {
+  return query
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 6)
+}
+
+const getCachedProductSearchReferences = unstable_cache(
+  async () => {
+    const supabase = createSupabaseServerClient()
+    const [categories, subcategories, options, metals, shapes, styles, certificates] = await Promise.all([
+      supabase.from('catalog_categories').select('id, name, slug').eq('status', 'active'),
+      supabase.from('catalog_subcategories').select('id, name, slug').eq('status', 'active'),
+      supabase.from('catalog_options').select('id, name, slug').eq('status', 'active'),
+      supabase.from('catalog_metals').select('id, name, slug, display_label, purity_label, base_metal_name').eq('status', 'active'),
+      supabase.from('catalog_stone_shapes').select('id, name, slug').eq('status', 'active'),
+      supabase.from('catalog_styles').select('id, name, slug').eq('status', 'active'),
+      supabase.from('catalog_certificates').select('id, name, code'),
+    ])
+
+    return {
+      categories: categories.data ?? [],
+      subcategories: subcategories.data ?? [],
+      options: options.data ?? [],
+      metals: metals.data ?? [],
+      shapes: shapes.data ?? [],
+      styles: styles.data ?? [],
+      certificates: certificates.data ?? [],
+    }
+  },
+  ['storefront-product-search-references-v1'],
+  { revalidate: 300, tags: ['storefront-products'] }
+)
+
+function searchTokensForValue(tokens: string[], values: Array<string | null | undefined>) {
+  const searchable = values.filter(Boolean).join(' ').toLowerCase()
+  return tokens.filter((token) => searchable.includes(token))
+}
+
+export async function getStorefrontProductSearchItems(query: string, limit = 12) {
+  const safeLimit = Math.max(1, Math.min(24, Math.floor(limit)))
+  const tokens = normalizeSearchTokens(query)
+  const supabase = createSupabaseServerClient()
+  const productSelect = 'id, slug, name, base_price, image_1_path, show_image_1, main_category_id, subcategory_id, option_id, style_id, certificate_ids'
+
+  if (!tokens.length) {
+    const result = await supabase
+      .from('products')
+      .select(productSelect)
+      .eq('status', 'active')
+      .order('featured', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(safeLimit)
+    if (result.error) throw new Error(result.error.message)
+
+    const references = await getCachedProductSearchReferences()
+    return (result.data ?? []).map((product) => {
+      const category = references.categories.find((entry) => entry.id === product.main_category_id)
+      const subcategory = references.subcategories.find((entry) => entry.id === product.subcategory_id)
+      return {
+        dbId: product.id,
+        slug: product.slug,
+        name: product.name,
+        shortMeta: [subcategory?.name, category?.name].filter(Boolean).join(' · '),
+        imageUrl: product.show_image_1 === false ? '' : toPublicUrl(product.image_1_path) || '',
+        priceFrom: Number(product.base_price ?? 0),
+        mainCategorySlug: category?.slug || '',
+        mainCategoryName: category?.name || '',
+      }
+    })
+  }
+
+  const references = await getCachedProductSearchReferences()
+  const referenceMatches = <T extends { id: string }>(entries: T[], getValues: (entry: T) => Array<string | null | undefined>) =>
+    entries
+      .map((entry) => ({ entry, tokens: searchTokensForValue(tokens, getValues(entry)) }))
+      .filter((match) => match.tokens.length > 0)
+
+  const categoryMatches = referenceMatches(references.categories, (entry) => [entry.name, entry.slug])
+  const subcategoryMatches = referenceMatches(references.subcategories, (entry) => [entry.name, entry.slug])
+  const optionMatches = referenceMatches(references.options, (entry) => [entry.name, entry.slug])
+  const metalMatches = referenceMatches(references.metals, (entry) => [entry.name, entry.slug, entry.display_label, entry.purity_label, entry.base_metal_name])
+  const shapeMatches = referenceMatches(references.shapes, (entry) => [entry.name, entry.slug])
+  const styleMatches = referenceMatches(references.styles, (entry) => [entry.name, entry.slug])
+  const certificateMatches = referenceMatches(references.certificates, (entry) => [entry.name, entry.code])
+  const ids = <T extends { entry: { id: string } }>(matches: T[]) => matches.map((match) => match.entry.id)
+  const matchTokensByReferenceId = new Map<string, string[]>(
+    [...categoryMatches, ...subcategoryMatches, ...optionMatches, ...metalMatches, ...shapeMatches, ...styleMatches, ...certificateMatches]
+      .map((match) => [match.entry.id, match.tokens] as const)
+  )
+  const emptyResult = Promise.resolve({ data: [] as Array<Record<string, string>>, error: null })
+  const nameConditions = tokens.flatMap((token) => [`name.ilike.%${token}%`, `slug.ilike.%${token}%`])
+  const directConditions = [
+    ids(categoryMatches).length ? `main_category_id.in.(${ids(categoryMatches).join(',')})` : '',
+    ids(subcategoryMatches).length ? `subcategory_id.in.(${ids(subcategoryMatches).join(',')})` : '',
+    ids(optionMatches).length ? `option_id.in.(${ids(optionMatches).join(',')})` : '',
+    ids(styleMatches).length ? `style_id.in.(${ids(styleMatches).join(',')})` : '',
+  ].filter(Boolean)
+
+  const [nameResult, directResult, certificateResult, metalResult, shapeResult, subcategoryLinkResult, optionLinkResult] = await Promise.all([
+    supabase.from('products').select('id, name, slug').eq('status', 'active').or(nameConditions.join(',')).limit(80),
+    directConditions.length
+      ? supabase.from('products').select('id, main_category_id, subcategory_id, option_id, style_id').eq('status', 'active').or(directConditions.join(',')).limit(80)
+      : emptyResult,
+    ids(certificateMatches).length
+      ? supabase.from('products').select('id, certificate_ids').eq('status', 'active').overlaps('certificate_ids', ids(certificateMatches)).limit(80)
+      : emptyResult,
+    ids(metalMatches).length
+      ? supabase.from('product_metal_selections').select('product_id, metal_id').in('metal_id', ids(metalMatches)).limit(80)
+      : emptyResult,
+    ids(shapeMatches).length
+      ? supabase.from('product_stone_shapes').select('product_id, shape_id').in('shape_id', ids(shapeMatches)).limit(80)
+      : emptyResult,
+    ids(subcategoryMatches).length
+      ? supabase.from('product_subcategory_links').select('product_id, subcategory_id').in('subcategory_id', ids(subcategoryMatches)).limit(80)
+      : emptyResult,
+    ids(optionMatches).length
+      ? supabase.from('product_option_links').select('product_id, option_id').in('option_id', ids(optionMatches)).limit(80)
+      : emptyResult,
+  ])
+
+  const firstError = [nameResult, directResult, certificateResult, metalResult, shapeResult, subcategoryLinkResult, optionLinkResult].find((result) => result.error)?.error
+  if (firstError) throw new Error(firstError.message)
+
+  const matchedTokensByProductId = new Map<string, Set<string>>()
+  const addTokens = (productId: string, matchedTokens: string[]) => {
+    const productTokens = matchedTokensByProductId.get(productId) ?? new Set<string>()
+    matchedTokens.forEach((token) => productTokens.add(token))
+    matchedTokensByProductId.set(productId, productTokens)
+  }
+  for (const product of (nameResult.data ?? []) as Array<{ id: string; name: string; slug: string }>) addTokens(product.id, searchTokensForValue(tokens, [product.name, product.slug]))
+  for (const product of (directResult.data ?? []) as Array<{ id: string; main_category_id: string | null; subcategory_id: string | null; option_id: string | null; style_id: string | null }>) {
+    ;[product.main_category_id, product.subcategory_id, product.option_id, product.style_id]
+      .filter((value): value is string => Boolean(value))
+      .forEach((referenceId) => addTokens(product.id, matchTokensByReferenceId.get(referenceId) ?? []))
+  }
+  for (const product of (certificateResult.data ?? []) as Array<{ id: string; certificate_ids: string[] | null }>) {
+    ;(product.certificate_ids ?? []).forEach((referenceId: string) => addTokens(product.id, matchTokensByReferenceId.get(referenceId) ?? []))
+  }
+  for (const row of (metalResult.data ?? []) as Array<{ product_id: string; metal_id: string }>) addTokens(row.product_id, matchTokensByReferenceId.get(row.metal_id) ?? [])
+  for (const row of (shapeResult.data ?? []) as Array<{ product_id: string; shape_id: string }>) addTokens(row.product_id, matchTokensByReferenceId.get(row.shape_id) ?? [])
+  for (const row of (subcategoryLinkResult.data ?? []) as Array<{ product_id: string; subcategory_id: string }>) addTokens(row.product_id, matchTokensByReferenceId.get(row.subcategory_id) ?? [])
+  for (const row of (optionLinkResult.data ?? []) as Array<{ product_id: string; option_id: string }>) addTokens(row.product_id, matchTokensByReferenceId.get(row.option_id) ?? [])
+
+  const matchingProductIds = [...matchedTokensByProductId]
+    .filter(([, matchedTokens]) => tokens.every((token) => matchedTokens.has(token)))
+    .map(([productId]) => productId)
+    .slice(0, 120)
+  if (!matchingProductIds.length) return []
+
+  const productsResult = await supabase
+    .from('products')
+    .select(productSelect)
+    .in('id', matchingProductIds)
+    .eq('status', 'active')
+    .order('featured', { ascending: false })
+    .order('created_at', { ascending: false })
+    .limit(safeLimit)
+  if (productsResult.error) throw new Error(productsResult.error.message)
+
+  return (productsResult.data ?? []).map((product) => {
+    const category = references.categories.find((entry) => entry.id === product.main_category_id)
+    const subcategory = references.subcategories.find((entry) => entry.id === product.subcategory_id)
+    const option = references.options.find((entry) => entry.id === product.option_id)
+    return {
+      dbId: product.id,
+      slug: product.slug,
+      name: product.name,
+      shortMeta: [option?.name, subcategory?.name, category?.name].filter(Boolean).join(' · '),
+      imageUrl: product.show_image_1 === false ? '' : toPublicUrl(product.image_1_path) || '',
+      priceFrom: Number(product.base_price ?? 0),
+      mainCategorySlug: category?.slug || '',
+      mainCategoryName: category?.name || '',
+    }
+  })
+}
+
+export async function getStorefrontCartRecommendations({
+  slugs,
+  ids,
+  limit = 4,
+}: {
+  slugs: string[]
+  ids: string[]
+  limit?: number
+}) {
+  const safeLimit = Math.max(1, Math.min(12, Math.floor(limit)))
+  const cartProducts = await getStorefrontProductsByIdentifiers({ slugs, ids, limit: 50 })
+  const cartProductIds = cartProducts.map((product) => product.dbId)
+  const categoryIds = [...new Set(cartProducts.map((product) => product.mainCategoryId).filter(Boolean))]
+
+  const products = await fetchStorefrontProducts(undefined, {
+    ...(categoryIds.length > 0 ? { mainCategoryIds: categoryIds } : {}),
+    ...(cartProductIds.length > 0 ? { excludeProductIds: cartProductIds } : {}),
+    limit: safeLimit,
+  })
+
+  return products.map(toStorefrontProductCard)
 }
 
 export function filterStorefrontProducts<T extends StorefrontProductCard>(

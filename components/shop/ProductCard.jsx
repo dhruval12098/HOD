@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useCurrency } from "@/context/CurrencyContext";
 import { METAL_META } from "@/lib/data/product-config";
@@ -191,13 +191,14 @@ function getMetalImages(product, metalSwatch) {
   ].filter(Boolean);
 }
 
-export default function ProductCard({ product, wishlisted, onWishlist, onEnquire: _onEnquire, forceLight = false, selectedMetalSlug = "" }) {
+export default function ProductCard({ product, wishlisted, onWishlist, onEnquire: _onEnquire, forceLight = false, selectedMetalSlug = "", mobileImageCarousel = false }) {
   const { format } = useCurrency();
   const isDark = !forceLight && product.category === "hiphop";
   const gemSize = LARGE_GEM_STYLES.includes(product.gemStyle) ? 140 : 110;
   const metalSwatches = getMetalSwatches(product);
   const [failedImageUrl, setFailedImageUrl] = useState("");
   const [failedHoverImageUrl, setFailedHoverImageUrl] = useState("");
+  const [mobileImageIndex, setMobileImageIndex] = useState(0);
 
   const selectedMetal = selectedMetalSlug ? metalSwatches.find((metal) => metal.slug === selectedMetalSlug) : null;
   const activeMetal = selectedMetal || metalSwatches[0] || null;
@@ -208,6 +209,12 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
   const hoverImageUrl = resolvedImages.find((url) => url !== activeImageUrl) || "";
   const visibleImageUrl = activeImageUrl && activeImageUrl !== failedImageUrl ? activeImageUrl : "";
   const visibleHoverImageUrl = hoverImageUrl && hoverImageUrl !== failedHoverImageUrl ? hoverImageUrl : "";
+  const hasMobileImageCarousel = mobileImageCarousel && Boolean(visibleHoverImageUrl);
+
+  useEffect(() => {
+    setMobileImageIndex(0);
+  }, [activeImageUrl, visibleHoverImageUrl]);
+
   const materialLabel = activeMetal?.displayLabel || activeMetal?.name || product.shortMeta || "";
   const ink = isDark ? "#FFFFFF" : "#111111";
   const muted = isDark ? "rgba(255,255,255,.68)" : "#707070";
@@ -279,7 +286,7 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
               fill
               sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
               onError={() => setFailedImageUrl(visibleImageUrl)}
-              className={visibleHoverImageUrl ? "shop-product-card-primary-image" : undefined}
+              className={visibleHoverImageUrl ? `shop-product-card-primary-image${mobileImageIndex === 0 ? " shop-product-card-mobile-active" : ""}` : undefined}
               style={{ objectFit: "cover", objectPosition: "center center" }}
             />
             {visibleHoverImageUrl ? (
@@ -291,9 +298,27 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
                 fill
                 sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                 onError={() => setFailedHoverImageUrl(visibleHoverImageUrl)}
-                className="shop-product-card-hover-image"
+                className={`shop-product-card-hover-image${mobileImageIndex === 1 ? " shop-product-card-mobile-active" : ""}`}
                 style={{ objectFit: "cover", objectPosition: "center center" }}
               />
+            ) : null}
+            {hasMobileImageCarousel ? (
+              <div className="shop-product-card-mobile-dots" aria-label="Choose product image">
+                {[0, 1].map((index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    aria-label={`Show product image ${index + 1}`}
+                    aria-pressed={mobileImageIndex === index}
+                    className={mobileImageIndex === index ? "is-active" : ""}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      setMobileImageIndex(index);
+                    }}
+                  />
+                ))}
+              </div>
             ) : null}
           </>
         ) : selectedMetalSlug ? (

@@ -71,7 +71,7 @@ export default function ContactBody({ onSuccess }: ContactBodyProps) {
   };
 
   return (
-    <section id="contact-form" className="max-w-[1200px] mx-auto py-20 px-[52px] grid grid-cols-[1fr_1.4fr] gap-[70px] items-start max-lg:grid-cols-1 max-lg:gap-10 max-lg:px-7 max-md:px-5 max-md:py-10">
+    <section id="contact-form" className="section-rhythm max-w-[1200px] mx-auto px-[52px] grid grid-cols-[1fr_1.4fr] gap-[70px] items-start max-lg:grid-cols-1 max-lg:gap-10 max-lg:px-7 max-md:px-5">
       <RevealDiv>
         <h2 className={`${cinzelFont.variable} font-primary-display text-[32px] font-normal text-[var(--theme-ink)] mb-8 tracking-[0.02em]`}>Reach Us</h2>
         {contactRows.map((row, i) => (

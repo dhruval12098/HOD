@@ -268,12 +268,14 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
                     ) : null}
 
                     {currentSlide.button_text.trim() && currentSlide.button_link.trim() ? (
-                      <BrandButton
-                        href={currentSlide.button_link}
-                        className="banner-light-button pointer-events-auto mx-auto mt-[var(--space-3)] sm:mx-0"
-                      >
-                        {currentSlide.button_text}
-                      </BrandButton>
+                      <div className="pointer-events-auto flex justify-center md:justify-start">
+                        <BrandButton
+                          href={currentSlide.button_link}
+                          className="banner-light-button mt-[var(--space-3)]"
+                        >
+                          {currentSlide.button_text}
+                        </BrandButton>
+                      </div>
                     ) : null}
                   </div>
                 </div>

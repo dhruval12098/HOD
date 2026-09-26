@@ -23,7 +23,7 @@ export default function ServiceBannerSection({ data }: { data: ServiceBannerData
   if (!data?.imageUrl || data.blocks.length === 0) return null;
 
   return (
-    <section className="bg-white px-5 py-16 text-[var(--color-brand-primary,#000000)] sm:px-8 sm:py-20 lg:px-[52px] lg:py-24">
+    <section className="bg-white px-5 py-3 text-[var(--color-brand-primary,#000000)] sm:px-8 sm:py-4 lg:px-[52px] xl:py-6">
       <div className="mx-auto grid max-w-[1600px] items-stretch gap-10 lg:grid-cols-2 lg:gap-[60px]">
         <div className="flex min-w-0 items-center">
           <div className="w-full border-t border-[color:var(--theme-border-strong,rgba(0,0,0,0.2))]">

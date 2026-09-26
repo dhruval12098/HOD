@@ -22,7 +22,7 @@ export default function MoreToExplore({ categories }: { categories: MoreToExplor
   }
 
   return (
-    <section aria-labelledby="more-to-explore-heading" className="border-t border-[#e4e4e4] bg-(--color-white) px-4 py-14 sm:px-7 sm:py-20">
+    <section aria-labelledby="more-to-explore-heading" className="section-rhythm border-t border-[#e4e4e4] bg-(--color-white) px-4 sm:px-7">
       <div className="mx-auto max-w-6xl">
         <div className="mb-8 flex items-end justify-between gap-4">
           <h2

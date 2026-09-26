@@ -5,7 +5,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import ShopClient from '@/components/pages/ShopClient'
 import { buildNavbarRenderItems } from '@/lib/navbar'
 import { createSupabaseServerClient } from '@/lib/server-supabase'
-import { filterStorefrontProducts, getStorefrontProductCards } from '@/lib/catalog-products'
+import { getStorefrontFilterGroups, getStorefrontProductCardPage, type StorefrontProductSort } from '@/lib/catalog-products'
 import JsonLd from '@/components/seo/JsonLd'
 import { createBreadcrumbSchema, createFaqSchema } from '@/lib/structured-data'
 import { buildCategoryPath, buildOptionPath, buildSubcategoryPath } from '@/lib/catalog-paths'
@@ -106,48 +106,14 @@ function uniqueBrowseSections<T extends { id: string; title: string; href?: stri
 function resolveMasterFilterHref(args: {
   href: string
   currentCategorySlug: string
-  categoryProducts: Awaited<ReturnType<typeof getStorefrontProductCards>>
-  allProducts: Awaited<ReturnType<typeof getStorefrontProductCards>>
 }) {
-  const { href, currentCategorySlug, categoryProducts, allProducts } = args
+  const { href, currentCategorySlug } = args
 
   if (!href.startsWith('/shop?')) return href
 
   const search = href.split('?')[1] ?? ''
   const params = new URLSearchParams(search)
-  const optionSlug = params.get('option')
-  const shapeSlug = params.get('shape')
-  const styleSlug = params.get('style')
-  const metalSlug = params.get('metal')
-  const certificate = params.get('certificate')
-
-  const currentMatches = filterStorefrontProducts(categoryProducts, {
-    categorySlug: currentCategorySlug,
-    optionSlug,
-    shapeSlug,
-    styleSlug,
-    metalSlug,
-    certificate,
-  })
-
-  if (currentMatches.length > 0) {
-    return `/${currentCategorySlug}?${params.toString()}`
-  }
-
-  const globalMatches = filterStorefrontProducts(allProducts, {
-    optionSlug,
-    shapeSlug,
-    styleSlug,
-    metalSlug,
-    certificate,
-  })
-
-  const nextCategorySlug = globalMatches[0]?.mainCategorySlug
-  if (nextCategorySlug) {
-    return `/${nextCategorySlug}?${params.toString()}`
-  }
-
-  return href
+  return `/${currentCategorySlug}?${params.toString()}`
 }
 
 function deriveSectionFilterHref(
@@ -189,8 +155,27 @@ export async function CategoryCollectionPageContent({
 
   const query = await searchParams
   const resolvedProductLane = category.category_lane ?? 'standard'
-  const [products, referenceData, categoryFaqResult] = await Promise.all([
-    getStorefrontProductCards(resolvedProductLane),
+  const requestedSort = typeof query.sort === 'string' ? query.sort : 'best-matches'
+  const sort: StorefrontProductSort = ['best-matches', 'price-low', 'price-high', 'best-sellers'].includes(requestedSort)
+    ? requestedSort as StorefrontProductSort
+    : 'best-matches'
+  const productFilters = {
+    categorySlug,
+    subcategorySlug: taxonomy?.subcategory.slug ?? (typeof query.subcategory === 'string' ? query.subcategory : null),
+    optionSlug: taxonomy?.option?.slug ?? (typeof query.option === 'string' ? query.option : null),
+    shapeSlug: typeof query.shape === 'string' ? query.shape : null,
+    styleSlug: typeof query.style === 'string' ? query.style : null,
+    metalSlug: typeof query.metal === 'string' ? query.metal : null,
+    certificate: typeof query.certificate === 'string' ? query.certificate : null,
+  }
+  const [productPage, filterGroups, referenceData, categoryFaqResult] = await Promise.all([
+    getStorefrontProductCardPage({
+      productLane: resolvedProductLane,
+      filters: productFilters,
+      sort,
+      page: typeof query.page === 'string' ? Math.max(1, Number.parseInt(query.page, 10) || 1) : 1,
+    }),
+    getStorefrontFilterGroups(resolvedProductLane, category.id),
     getCategoryReferenceData(),
     createSupabaseServerClient()
       .from('support_faq_items')
@@ -200,10 +185,6 @@ export async function CategoryCollectionPageContent({
       .order('sort_order', { ascending: true }),
   ])
   const categoryFaqItems = categoryFaqResult.error ? [] : categoryFaqResult.data ?? []
-  const categoryProducts = filterStorefrontProducts(products, {
-    productLane: resolvedProductLane,
-    categorySlug,
-  })
   const [
     navbarItemsResult,
     navbarSectionsResult,
@@ -257,8 +238,6 @@ export async function CategoryCollectionPageContent({
           href: resolveMasterFilterHref({
             href: metal.href,
             currentCategorySlug: categorySlug,
-            categoryProducts,
-            allProducts: products,
           }),
           type: 'swatch' as const,
           colorHex: metal.colorHex ?? null,
@@ -270,8 +249,6 @@ export async function CategoryCollectionPageContent({
             href: resolveMasterFilterHref({
               href: link.href,
               currentCategorySlug: categorySlug,
-              categoryProducts,
-              allProducts: products,
             }),
             type: link.type ?? 'default',
             iconUrl: link.iconUrl ?? null,
@@ -350,7 +327,10 @@ export async function CategoryCollectionPageContent({
       />
       {categoryFaqItems.length ? <JsonLd data={createFaqSchema(categoryFaqItems.map(({ question, answer }) => ({ question, answer })))} /> : null}
       <ShopClient
-        products={categoryProducts}
+        products={productPage.products}
+        filterGroups={filterGroups}
+        totalCount={productPage.totalCount}
+        serverPaginated
         categoryName={category.name}
         categoryFaqItems={categoryFaqItems}
         moreToExploreCategories={moreToExploreCategories}
@@ -381,9 +361,8 @@ export async function CategoryCollectionPageContent({
           ...(typeof query.metal === 'string' ? { metal: [query.metal] } : {}),
           ...(certificateFilterValue ? { certificate: [certificateFilterValue] } : {}),
         }}
-        initialPage={typeof query.page === 'string' ? Math.max(1, Number.parseInt(query.page, 10) || 1) : 1}
+        initialPage={productPage.page}
       />
     </>
   )
 }
-

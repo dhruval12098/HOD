@@ -1,33 +1,12 @@
 import { NextResponse } from 'next/server'
-import { unstable_cache } from 'next/cache'
-import { getStorefrontProductCards } from '@/lib/catalog-products'
+import { getStorefrontProductSearchItems } from '@/lib/catalog-products'
 
-export const revalidate = 300
-export const dynamic = 'force-static'
-
-const getSearchItems = unstable_cache(
-  async () => {
-    const products = await getStorefrontProductCards()
-    return products.map((product) => ({
-      dbId: product.dbId,
-      slug: product.slug,
-      name: product.name,
-      shortMeta: product.shortMeta,
-      imageUrl: product.imageUrl || '',
-      priceFrom: product.priceFrom,
-      mainCategorySlug: product.mainCategorySlug,
-      mainCategoryName: product.mainCategoryName,
-    }))
-  },
-  ['navbar-product-search-items'],
-  { revalidate: 300 }
-)
-
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const query = new URL(request.url).searchParams.get('q')?.trim().slice(0, 80) ?? ''
     return NextResponse.json(
-      { items: await getSearchItems() },
-      { headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' } }
+      { items: await getStorefrontProductSearchItems(query, query ? 12 : 10) },
+      { headers: { 'Cache-Control': 'private, no-store' } }
     )
   } catch (error) {
     return NextResponse.json(

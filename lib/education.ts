@@ -1,7 +1,7 @@
 import { mapBlogPostRecord, getStorageImageUrl, type BlogPost } from '@/lib/data/blog-posts'
 import type { BlogPageHero } from '@/lib/blog'
 import { createSupabaseServerClient } from '@/lib/server-supabase'
-import { getStorefrontProducts } from '@/lib/catalog-products'
+import { getStorefrontProductsByIds } from '@/lib/catalog-products'
 
 type EducationPostRow = {
   id: number
@@ -63,7 +63,9 @@ export async function getPublishedEducationPosts(): Promise<BlogPost[]> {
   const rows = (result.data ?? []) as unknown as EducationPostRow[]
   if (!rows.length) return []
 
-  const products = await getStorefrontProducts()
+  const products = await getStorefrontProductsByIds(
+    rows.flatMap((row) => (row.education_post_products ?? []).map((entry) => entry.product_id))
+  )
   const productMap = new Map(products.map((product) => [product.dbId, product]))
 
   return rows.map((row) => {

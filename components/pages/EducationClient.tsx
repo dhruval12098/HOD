@@ -51,7 +51,7 @@ export default function EducationClient({ posts, hero }: { posts: BlogPost[]; he
     <main className="min-h-screen bg-white text-[#111]">
       <div className="mx-auto w-full max-w-[1440px] px-4 pb-20 pt-6 sm:px-7 sm:pt-8 lg:px-10 lg:pb-28">
         {hero ? <BlogPageHero hero={hero} /> : <div className="border-b border-[#d9d9d9] py-14"><h1 className="font-primary-display text-[clamp(34px,5vw,58px)] font-medium">Education</h1></div>}
-        <section className="mt-14 sm:mt-16" aria-label="Education articles">
+        <section className="section-rhythm" aria-label="Education articles">
           <div className="sticky top-[calc(var(--hod-announcement-current-height,35px)+38px)] z-30 flex flex-col gap-3 border-y border-[#d8d8d8] bg-white/95 py-4 backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">
             <div className="w-full sm:min-w-[230px] sm:max-w-[280px]"><Select value={category} onValueChange={setCategory} options={[{ value: 'all', label: 'All Categories' }, ...categories.map((item) => ({ value: item.slug, label: item.name }))]} validationLabel="Filter education by category" triggerLabel="Filter By" showItemIndicator={false} triggerClassName={selectClasses} contentClassName={contentClasses} itemClassName={itemClasses} /></div>
             <div className="w-full sm:min-w-[190px] sm:max-w-[230px]"><Select value={sort} onValueChange={setSort} options={[{ value: 'featured', label: 'Featured' }, { value: 'newest', label: 'Newest' }, { value: 'title', label: 'Title A-Z' }]} validationLabel="Sort education articles" triggerLabel="Sort By" showItemIndicator={false} contentAlign="end" triggerClassName={selectClasses} contentClassName={contentClasses} itemClassName={itemClasses} /></div>

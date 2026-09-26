@@ -5,10 +5,11 @@ import { notFound, redirect } from 'next/navigation';
 import ProductClient from '@/components/pages/ProductClient';
 import type { ServiceBannerData } from '@/components/common/ServiceBannerSection';
 import { createSupabaseServerClient } from '@/lib/server-supabase';
-import { getStorefrontProductBySlug, getStorefrontProducts } from '@/lib/catalog-products';
+import { getRelatedStorefrontProducts, getStorefrontProductBySlug } from '@/lib/catalog-products';
 import { createPageMetadata } from '@/lib/seo';
 import JsonLd from '@/components/seo/JsonLd';
 import { createBreadcrumbSchema, createProductSchema } from '@/lib/structured-data';
+import type { StorefrontPromotion } from '@/components/commerce/PromotionBanner';
 
 export const revalidate = 60;
 
@@ -30,6 +31,46 @@ async function getServiceBanner(): Promise<ServiceBannerData | null> {
     .getPublicUrl(section.image_path).data.publicUrl;
 
   return { imageUrl, imageAlt: section.image_alt ?? '', blocks };
+}
+
+async function getFeaturedGiftPromotion(): Promise<StorefrontPromotion | null> {
+  const supabase = createSupabaseServerClient();
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from('coupons')
+    .select('id, code, title, reward_type, discount_value, minimum_order_amount, gift_variant_data, gift_banner_image_url, banner_title, banner_description, ends_at, usage_limit, usage_count, gift_product:products!coupons_gift_product_id_fkey(id, name, slug, sku, status, stock_quantity, image_1_path)')
+    .eq('is_active', true)
+    .eq('banner_enabled', true)
+    .eq('reward_type', 'free_gift')
+    .or(`starts_at.is.null,starts_at.lte.${now}`)
+    .or(`ends_at.is.null,ends_at.gt.${now}`)
+    .order('featured_priority', { ascending: false })
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !data || (data.usage_limit != null && Number(data.usage_count ?? 0) >= Number(data.usage_limit))) return null;
+  const product = Array.isArray(data.gift_product) ? data.gift_product[0] : data.gift_product;
+  if (!product || product.status !== 'active' || Number(product.stock_quantity ?? 0) < 1) return null;
+  const variant = data.gift_variant_data && typeof data.gift_variant_data === 'object' ? data.gift_variant_data as Record<string, unknown> : {};
+  const bucket = process.env.NEXT_PUBLIC_SUPABASE_COLLECTION_BUCKET || 'hod';
+  const toPublicUrl = (path: unknown) => typeof path === 'string' && path
+    ? (/^https?:\/\//.test(path) ? path : supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl)
+    : '';
+
+  return {
+    id: data.id,
+    code: data.code,
+    title: data.title,
+    rewardType: 'free_gift',
+    discountValue: Number(data.discount_value ?? 0),
+    minimumOrderAmount: Number(data.minimum_order_amount ?? 0),
+    bannerTitle: data.banner_title,
+    bannerDescription: data.banner_description,
+    bannerImageUrl: toPublicUrl(data.gift_banner_image_url || variant.image_url || product.image_1_path),
+    gift: { name: product.name, slug: product.slug, sku: product.sku, imageUrl: toPublicUrl(variant.image_url || product.image_1_path), variantLabel: typeof variant.label === 'string' ? variant.label : '' },
+    endsAt: data.ends_at,
+  };
 }
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
@@ -63,14 +104,11 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
     redirect(`/shop/${product.slug}`);
   }
 
-  const [productsInLane, serviceBanner] = await Promise.all([
-    getStorefrontProducts(product.productLane),
+  const [relatedProducts, serviceBanner, giftPromotion] = await Promise.all([
+    getRelatedStorefrontProducts(product, 7),
     getServiceBanner(),
+    getFeaturedGiftPromotion(),
   ]);
-
-  const relatedProducts = productsInLane
-    .filter((item) => item.slug !== slug && item.mainCategorySlug === product.mainCategorySlug && item.productLane === product.productLane)
-    .slice(0, 7);
 
   return (
     <>
@@ -84,7 +122,7 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
           ]),
         ]}
       />
-      <ProductClient product={product} relatedProducts={relatedProducts} serviceBanner={serviceBanner} />
+      <ProductClient product={product} relatedProducts={relatedProducts} serviceBanner={serviceBanner} giftPromotion={giftPromotion} />
     </>
   );
 }

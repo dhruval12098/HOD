@@ -1,5 +1,5 @@
 import { getPublishedBlogPosts } from '@/lib/blog'
-import { getStorefrontProducts } from '@/lib/catalog-products'
+import { getStorefrontProductDiscoveryRows } from '@/lib/catalog-products'
 import { getPublishedEducationPosts } from '@/lib/education'
 import { getCanonicalUrl } from '@/lib/site-url'
 
@@ -30,7 +30,7 @@ const corePages = [
 
 export async function buildLlmsText(full = false) {
   const [products, blogPosts, educationPosts] = await Promise.all([
-    getStorefrontProducts(),
+    getStorefrontProductDiscoveryRows(),
     getPublishedBlogPosts(),
     getPublishedEducationPosts(),
   ])
@@ -53,8 +53,8 @@ export async function buildLlmsText(full = false) {
         `/shop/${product.slug}`,
         product.name,
         full
-          ? [product.shortMeta, product.descriptionText, product.tagLineText].filter(Boolean).join(' — ')
-          : product.shortMeta
+          ? [product.description, product.tag_line].filter(Boolean).join(' — ')
+          : product.tag_line
       )
     ),
     '',

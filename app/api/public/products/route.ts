@@ -1,12 +1,24 @@
 import { NextResponse } from 'next/server'
-import { getStorefrontProducts } from '@/lib/catalog-products'
+import { getStorefrontProductsByIdentifiers } from '@/lib/catalog-products'
 
-export const revalidate = 300
-export const dynamic = 'force-static'
+const asStringArray = (value: unknown) =>
+  Array.isArray(value)
+    ? value.filter((entry): entry is string => typeof entry === 'string').slice(0, 100)
+    : []
 
-export async function GET() {
+export async function POST(request: Request) {
   try {
-    const products = await getStorefrontProducts()
+    const body = await request.json().catch(() => ({}))
+    const keys = asStringArray(body?.keys)
+    const ids = keys.filter((value) =>
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+    )
+    const slugs = keys.filter((value) => !ids.includes(value))
+    const products = await getStorefrontProductsByIdentifiers({
+      ids,
+      slugs,
+      limit: 50,
+    })
     return NextResponse.json({
       items: products.map((product) => ({
         id: product.id,
@@ -27,7 +39,7 @@ export async function GET() {
         mainCategoryName: product.mainCategoryName,
         mainCategorySlug: product.mainCategorySlug,
       })),
-    }, { headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' } })
+    }, { headers: { 'Cache-Control': 'private, no-store' } })
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : 'Unable to load products.' }, { status: 500 })
   }

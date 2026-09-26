@@ -26,7 +26,7 @@ export default function BlogClient({ blogPosts = posts, hero, categories: liveCa
       <div className="mx-auto w-full max-w-[1440px] px-4 pb-20 pt-6 sm:px-7 sm:pt-8 lg:px-10 lg:pb-28">
         {hero ? <BlogPageHero hero={hero} /> : <div className="border-b border-[#d9d9d9] py-14"><h1 className="font-primary-display text-[clamp(34px,5vw,58px)] font-medium">Journal</h1></div>}
 
-        <section className="mt-14 sm:mt-16" aria-label="Blog articles">
+        <section className="section-rhythm" aria-label="Blog articles">
           <div className="sticky top-[calc(var(--hod-announcement-current-height,35px)+38px)] z-30 flex flex-col gap-3 border-y border-[#d8d8d8] bg-white/95 py-4 backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">
             <div className="w-full sm:min-w-[230px] sm:max-w-[280px]">
               <Select

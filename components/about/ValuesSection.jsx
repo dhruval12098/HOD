@@ -53,10 +53,10 @@ export default function ValuesSection({ initialItems = [] }) {
     return () => { active = false; };
   }, [initialItems]);
 
-  if (loading) return <section className="bg-white px-5 py-20 text-center font-[family-name:var(--font-family-secondary)] text-sm text-black/55">Loading values...</section>;
+  if (loading) return <section className="section-rhythm bg-white px-5 text-center font-[family-name:var(--font-family-secondary)] text-sm text-black/55">Loading values...</section>;
   if (!items.length) return null;
 
-  return <section className="bg-white px-5 py-20 sm:px-7 sm:py-24 lg:px-[52px] lg:py-28" aria-labelledby="about-values-heading">
+  return <section className="section-rhythm bg-white px-5 sm:px-7 lg:px-[52px]" aria-labelledby="about-values-heading">
     <div className="mx-auto max-w-[1400px]">
       <div className="mb-8 text-left sm:mb-10">
         <h2 id="about-values-heading" className="section-title font-[family-name:var(--font-family-primary)] text-[clamp(1.35rem,2.2vw,2rem)] font-medium uppercase leading-none tracking-[0.025em] text-black">Our Values</h2>

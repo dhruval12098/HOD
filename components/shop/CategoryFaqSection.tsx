@@ -13,7 +13,7 @@ export default function CategoryFaqSection({ categoryName, items }: { categoryNa
   if (!items.length) return null
 
   return (
-    <section className="border-t border-[#e4e4e4] bg-(--color-white) px-4 py-14 sm:px-7 sm:py-20" aria-labelledby="category-faq-heading">
+    <section className="section-rhythm border-t border-[#e4e4e4] bg-(--color-white) px-4 sm:px-7" aria-labelledby="category-faq-heading">
       <div className="mx-auto grid max-w-6xl gap-8 border border-[#e4e4e4] bg-(--color-white) px-6 py-8 sm:px-10 sm:py-10 lg:grid-cols-[0.3fr_0.7fr]">
         <h2 id="category-faq-heading" className="font-[family-name:var(--font-family-primary)] text-[16px] font-bold uppercase leading-[1.4] tracking-[0.06em] text-[#222222]">
           {categoryName} FAQ

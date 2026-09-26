@@ -60,7 +60,7 @@ export default function ProcessSteps({ initialItems = [] }: { initialItems?: { i
   if (!items.length) return null;
 
   return (
-    <section className="py-[90px] px-[52px] max-w-[1400px] mx-auto grid grid-cols-4 gap-[30px] max-lg:grid-cols-2 max-md:grid-cols-1 max-lg:px-7 max-md:px-5 max-md:py-[60px]">
+    <section className="section-rhythm px-[52px] max-w-[1400px] mx-auto grid grid-cols-4 gap-[30px] max-lg:grid-cols-2 max-md:grid-cols-1 max-lg:px-7 max-md:px-5">
       {items.map((step, i) => (
         <RevealDiv key={step.id ?? step.sort_order} delay={i * 100}>
           <div className="bg-white px-8 py-11 border border-[rgba(10,22,40,0.10)] relative transition-all duration-500 ease-[cubic-bezier(0.2,0.7,0.3,1)] hover:-translate-y-1.5 hover:border-[rgba(10,22,40,0.25)] hover:shadow-[0_24px_60px_rgba(10,22,40,0.12)] h-full">

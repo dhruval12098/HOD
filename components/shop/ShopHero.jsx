@@ -204,14 +204,21 @@ export default function ShopHero({
   };
 
   return (
-    <section className="border-b border-black/10 bg-white pb-7 pt-[calc(118px+var(--space-7))] sm:pb-9 sm:pt-[calc(118px+var(--space-8))] lg:pt-[calc(146px+var(--space-8))]" aria-labelledby="shop-collection-heading">
+    <section className="border-b border-black/10 bg-white pb-7 pt-[var(--space-7)] sm:pb-9 sm:pt-[var(--space-8)] lg:pt-[calc(146px+var(--space-8))]" aria-labelledby="shop-collection-heading">
       <div className={`flex flex-col gap-5 px-4 sm:px-7 lg:flex-row lg:items-end lg:justify-between ${wideGutter ? 'lg:px-[50px]' : 'lg:px-[52px]'}`}>
-        <h1
-          id="shop-collection-heading"
-          className="section-title text-left text-[clamp(1.35rem,2.2vw,2rem)] font-medium uppercase leading-none tracking-[0.025em] text-[var(--color-brand-primary,#000)]"
-        >
-          Explore {title} Collection
-        </h1>
+        <div>
+          <nav aria-label="Breadcrumb" className="mb-6 flex items-center gap-3 text-[12px] font-normal tracking-[0.01em] text-[#526071] md:hidden">
+            <Link href="/" className="no-underline hover:text-[#0A1628]">Home</Link>
+            <span aria-hidden="true">/</span>
+            <span>{title}</span>
+          </nav>
+          <h1
+            id="shop-collection-heading"
+            className="section-title text-left text-[clamp(1.35rem,2.2vw,2rem)] font-medium uppercase leading-none tracking-[0.025em] text-[var(--color-brand-primary,#000)]"
+          >
+            Explore {title} Collection
+          </h1>
+        </div>
 
         {browseSections.length > 0 ? (
           <nav aria-label="Browse collection sections" className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] sm:-mx-7 sm:px-7 lg:mx-0 lg:max-w-[62%] lg:px-0 [&::-webkit-scrollbar]:hidden">
@@ -236,15 +243,15 @@ export default function ShopHero({
         ) : null}
       </div>
 
-      <div className="relative mt-6 px-[60px]">
+      <div className="relative mt-6 px-1.5 sm:px-5 lg:px-[60px]">
         <div
           ref={railRef}
-          className="flex snap-x snap-mandatory gap-[3px] overflow-x-auto py-[10px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex snap-x snap-mandatory gap-2 overflow-x-auto py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           aria-label={(activeSection?.title || title) + ' visual options'}
         >
         <Link
           href={bannerHref}
-          className="group relative h-[70vw] max-h-[320px] w-[92vw] max-w-[540px] shrink-0 snap-start overflow-hidden bg-[#F2F1EE] text-white no-underline sm:h-[320px] sm:w-[540px]"
+          className="group relative aspect-[2/3] h-auto w-[36vw] min-w-[140px] max-w-[256px] shrink-0 snap-start overflow-hidden bg-[#F2F1EE] text-white no-underline sm:h-[320px] sm:w-[540px] sm:aspect-auto"
         >
           {bannerImage ? (
             <picture>
@@ -271,7 +278,7 @@ export default function ShopHero({
               key={option.id}
               href={option.href}
               aria-current={isActive ? 'page' : undefined}
-              className={'group relative aspect-[4/5] h-[70vw] max-h-[320px] w-[56vw] max-w-[256px] shrink-0 snap-start overflow-hidden border bg-[#F6F6F4] no-underline transition-[border-color,opacity] sm:h-[320px] sm:w-[256px] ' + (isActive || isPending ? 'border-[#0A1628]' : 'border-transparent')}
+            className={'group relative aspect-[2/3] h-auto w-[36vw] min-w-[140px] max-w-[256px] shrink-0 snap-start overflow-hidden border bg-[#F6F6F4] no-underline transition-[border-color,opacity] sm:h-[320px] sm:w-[256px] sm:aspect-auto ' + (isActive || isPending ? 'border-[#0A1628]' : 'border-transparent')}
               style={{ opacity: hasPendingNavigation && !isPending ? 0.58 : 1 }}
               onClick={(event) => handleBrowseClick(event, null, option.href)}
             >
@@ -298,7 +305,7 @@ export default function ShopHero({
             type="button"
             aria-label="Scroll collection options backward"
             onClick={scrollRailBackward}
-            className={`absolute left-[60px] top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center border border-black/15 bg-white text-[#0A1628] shadow-[0_8px_24px_rgba(10,22,40,0.14)] transition-colors hover:bg-[#0A1628] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A1628] ${wideGutter ? 'lg:left-[60px]' : ''}`}
+            className={`absolute left-2 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center border border-black/15 bg-white text-[#0A1628] shadow-[0_8px_24px_rgba(10,22,40,0.14)] transition-colors hover:bg-[#0A1628] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A1628] sm:flex ${wideGutter ? 'lg:left-[60px]' : ''}`}
           >
             <ChevronLeft size={20} strokeWidth={1.75} aria-hidden="true" />
           </button>
@@ -309,7 +316,7 @@ export default function ShopHero({
             type="button"
             aria-label="Scroll collection options forward"
             onClick={scrollRailForward}
-            className={`absolute right-[60px] top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center border border-black/15 bg-white text-[#0A1628] shadow-[0_8px_24px_rgba(10,22,40,0.14)] transition-colors hover:bg-[#0A1628] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A1628] ${wideGutter ? 'lg:right-[60px]' : ''}`}
+            className={`absolute right-2 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center border border-black/15 bg-white text-[#0A1628] shadow-[0_8px_24px_rgba(10,22,40,0.14)] transition-colors hover:bg-[#0A1628] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0A1628] sm:flex ${wideGutter ? 'lg:right-[60px]' : ''}`}
           >
             <ChevronRight size={20} strokeWidth={1.75} aria-hidden="true" />
           </button>

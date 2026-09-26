@@ -25,7 +25,7 @@ export default function ProductFaqSection({ items = [] }: ProductFaqSectionProps
   return (
     <section
       aria-labelledby="product-faq-heading"
-      className="border-y border-[color:var(--theme-border,rgba(0,0,0,0.09))] bg-white px-5 py-20 sm:px-7 sm:py-24 lg:px-[52px] lg:py-28"
+      className="section-rhythm border-y border-[color:var(--theme-border,rgba(0,0,0,0.09))] bg-white px-5 sm:px-7 lg:px-[52px]"
     >
       <div className="mx-auto max-w-[920px]">
         <header className="mx-auto mb-10 max-w-[680px] text-center sm:mb-12">

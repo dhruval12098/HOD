@@ -425,19 +425,19 @@ export default function RingGuide() {
         
       >
         <span className="flex items-center gap-4">
-          <span className="inline-flex h-14 w-14 items-center justify-center rounded-none border border-[rgba(0,0,0,0.10)] bg-white text-[var(--color-brand-primary,#000000)] shadow-[0_10px_24px_rgba(0,0,0,0.06)]">
+          <span className="inline-flex h-14 w-14 items-center justify-center rounded-none border border-[rgba(0,0,0,0.10)] bg-white text-black shadow-[0_10px_24px_rgba(0,0,0,0.06)]">
             <Ruler size={22} />
           </span>
           <span>
-            <span className="block text-[19px] leading-[1.1] text-[var(--color-brand-primary,#000000)] font-display-title">
-              Find your <em className="font-normal italic">ring size</em>
+            <span className="block font-display-title text-[19px] leading-[1.1] text-black">
+              Find your ring size
             </span>
             <span className="mt-1 block text-[12px] tracking-[0.04em] text-[var(--theme-muted,#6a6a6a)]">
               Quick guided sizing — 4 methods
             </span>
           </span>
         </span>
-        <ArrowRight size={22} className="text-[var(--theme-muted,#6a6a6a)]" />
+        <ArrowRight size={22} className="text-black" />
       </button>
 
       {isOpen ? (
@@ -458,8 +458,8 @@ export default function RingGuide() {
           <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[var(--color-brand-primary,#000000)]" >
             Ring Guide
           </div>
-          <h2 className="mt-2 text-[32px] leading-[0.98] text-[var(--color-brand-primary,#000000)] font-display-title">
-            Quick help, <em className="font-normal italic">without the long scroll</em>
+          <h2 className="mt-2 font-display-title text-[32px] leading-[0.98] text-black">
+            Quick help, without the long scroll
           </h2>
         </div>
         <div className="flex flex-wrap gap-2">

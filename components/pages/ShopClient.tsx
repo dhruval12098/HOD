@@ -56,6 +56,8 @@ export default function ShopClient({
   initialPage = 1,
   filterGroups,
   masterShapeOptions,
+  totalCount,
+  serverPaginated = false,
   headerBrowseSections,
   categoryName,
   categoryFaqItems = [],
@@ -75,6 +77,8 @@ export default function ShopClient({
   initialPage?: number
   filterGroups?: { id: string; title: string; options: { value: string; label: string }[] }[]
   masterShapeOptions?: { value: string; label: string; iconUrl?: string | null; displayOrder: number }[]
+  totalCount?: number
+  serverPaginated?: boolean
   categoryName?: string
   categoryFaqItems?: CategoryFaqItem[]
   moreToExploreCategories?: MoreToExploreCategory[]
@@ -92,8 +96,11 @@ export default function ShopClient({
   const clientProducts = sourceProducts ?? products;
   const [activeFilters, setActiveFilters] = useState(initialFilters ?? {});
   const [activePage, setActivePage] = useState(initialPage);
+  const resolvedFilters = serverPaginated ? (initialFilters ?? {}) : activeFilters
+  const resolvedPage = serverPaginated ? initialPage : activePage
 
   const applyClientBrowseHref = useCallback((href: string) => {
+    if (serverPaginated) return false
     const { target, filters, page } = filtersFromHref(href, clientProducts)
     const currentCategory = window.location.pathname.split('/').filter(Boolean)[0]
     const targetCategory = target.pathname.split('/').filter(Boolean)[0]
@@ -103,7 +110,7 @@ export default function ShopClient({
     setActivePage(page)
     window.history.pushState(null, '', `${target.pathname}${target.search}${target.hash}`)
     return true
-  }, [clientProducts])
+  }, [clientProducts, serverPaginated])
 
   useEffect(() => {
     const handlePopState = () => {
@@ -122,7 +129,7 @@ export default function ShopClient({
   };
 
   return (
-    <div className="min-h-screen bg-(--bg) text-(--ink) -mt-[118px] lg:-mt-[146px]">
+    <div className="min-h-screen bg-(--bg) text-(--ink) mt-0 lg:-mt-[146px]">
       <ShopHero
         title={heroTitle}
         subtitle={heroSubtitle}
@@ -133,18 +140,20 @@ export default function ShopClient({
         ctaHref={heroCtaHref}
         bannerEnabled={heroBannerEnabled}
         browseSections={headerBrowseSections}
-        activeFilters={activeFilters}
+        activeFilters={resolvedFilters}
         onBrowseNavigate={applyClientBrowseHref}
         wideGutter={Boolean(categoryName)}
       />
       <ProductGrid
-        key={`${JSON.stringify(activeFilters)}:${activePage}`}
-        products={clientProducts}
+        key={`${JSON.stringify(resolvedFilters)}:${resolvedPage}`}
+        products={serverPaginated ? products : clientProducts}
         sourceProducts={clientProducts}
-        initialFilters={activeFilters}
-        initialPage={activePage}
+        initialFilters={resolvedFilters}
+        initialPage={resolvedPage}
         filterGroups={filterGroups}
         masterShapeOptions={masterShapeOptions}
+        totalCount={totalCount}
+        serverPaginated={serverPaginated}
         onEnquire={handleEnquire}
         wideGutter={Boolean(categoryName)}
       />
@@ -154,4 +163,3 @@ export default function ShopClient({
     </div>
   );
 }
-

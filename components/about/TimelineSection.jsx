@@ -46,9 +46,8 @@ export default function TimelineSection({ initialItems = [] }) {
 
   if (loading) {
     return (
-      <section
+      <section className="section-rhythm px-5 max-lg:px-7 lg:px-[52px]"
         style={{
-          padding: "110px 52px",
           maxWidth: "1400px",
           margin: "0 auto",
         }}
@@ -60,9 +59,8 @@ export default function TimelineSection({ initialItems = [] }) {
 
   if (!items.length) {
     return (
-      <section
+      <section className="section-rhythm px-5 max-lg:px-7 lg:px-[52px]"
         style={{
-          padding: "110px 52px",
           maxWidth: "1400px",
           margin: "0 auto",
         }}
@@ -75,16 +73,9 @@ export default function TimelineSection({ initialItems = [] }) {
   }
 
   return (
-    <section
-      style={{
-        padding: "110px 52px",
-        maxWidth: "1400px",
-        margin: "0 auto",
-      }}
-    >
+    <section className="section-rhythm px-5 max-lg:px-7 lg:px-[52px]">
       <style>{`
         @media (max-width: 1024px) {
-          .timeline-section { padding: 70px 28px !important; }
           .timeline-row {
             flex-direction: column !important;
             gap: 28px !important;
@@ -112,25 +103,25 @@ export default function TimelineSection({ initialItems = [] }) {
           .timeline-label { max-width: 220px !important; line-height: 1.5 !important; }
         }
         @media (max-width: 640px) {
-          .timeline-section { padding: 60px 20px !important; }
         }
       `}</style>
 
-      <div className="mb-8 text-left sm:mb-10">
-        <h2 className="section-title font-[family-name:var(--font-family-primary)] text-[clamp(1.35rem,2.2vw,2rem)] font-medium uppercase leading-none tracking-[0.025em] text-black">
-          Milestones
-        </h2>
-      </div>
-      {/* Timeline row */}
-      <div
-        className="timeline-row"
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          position: "relative",
-          padding: "0 20px",
-        }}
-      >
+      <div className="mx-auto max-w-[1400px]">
+        <div className="mb-8 text-left sm:mb-10">
+          <h2 className="section-title font-[family-name:var(--font-family-primary)] text-[clamp(1.35rem,2.2vw,2rem)] font-medium uppercase leading-none tracking-[0.025em] text-black">
+            Milestones
+          </h2>
+        </div>
+        {/* Timeline row */}
+        <div
+          className="timeline-row"
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            position: "relative",
+            padding: "0 20px",
+          }}
+        >
         {/* Horizontal connector line */}
         <div
           className="timeline-connector"
@@ -174,7 +165,7 @@ export default function TimelineSection({ initialItems = [] }) {
                 style={{
                   fontFamily: "var(--font-family-montserrat), Montserrat, Arial, sans-serif",
                   fontSize: "26px",
-                  fontWeight: 700,
+                  fontWeight: 400,
                   color: "#0A1628",
                   marginBottom: "4px",
                 }}
@@ -189,8 +180,9 @@ export default function TimelineSection({ initialItems = [] }) {
                   fontFamily: "var(--font-family-inter), Inter, Arial, sans-serif",
                   fontSize: "10px",
                   fontWeight: 400,
-                  letterSpacing: ".14em",
+                  letterSpacing: "normal",
                   color: "#6A6A6A",
+                  textTransform: "none",
                 }}
               >
                 {m.label}
@@ -198,6 +190,7 @@ export default function TimelineSection({ initialItems = [] }) {
             </div>
           </div>
         ))}
+        </div>
       </div>
     </section>
   );

@@ -86,6 +86,31 @@ function ColTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
+function FooterAccordion({ title, children }: { title: string; children: React.ReactNode }) {
+  const [isMobile, setIsMobile] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
+
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 767px)');
+    const sync = () => {
+      setIsMobile(media.matches);
+      setIsOpen(!media.matches);
+    };
+    sync();
+    media.addEventListener('change', sync);
+    return () => media.removeEventListener('change', sync);
+  }, []);
+
+  return (
+    <details className="footer-accordion group" open={isMobile ? isOpen : true} onToggle={(event) => { if (isMobile) setIsOpen((event.currentTarget as HTMLDetailsElement).open); }}>
+      <summary className="list-none cursor-pointer [&::-webkit-details-marker]:hidden">
+        <span className="footer-accordion-title"><ColTitle>{title}</ColTitle><ChevronDown className="footer-accordion-chevron" size={16} strokeWidth={1.5} /></span>
+      </summary>
+      <div className="footer-accordion-content">{children}</div>
+    </details>
+  );
+}
+
 function CurrencySelector() {
   const { currencies, selected, changeCurrency, isLoadingRate } = useCurrency();
 
@@ -241,9 +266,8 @@ export default function Footer({ navItems = [] }: { navItems?: NavbarRenderItem[
       style={{ backgroundColor: 'var(--color-brand-primary)', fontFamily: 'var(--font-family-secondary)' }}
     >
       <div className="mx-auto grid max-w-[1600px] grid-cols-1 gap-y-[var(--space-10)] pb-[var(--space-10)] lg:grid-cols-[minmax(0,3fr)_minmax(170px,0.8fr)_minmax(260px,1.2fr)] lg:gap-x-[var(--space-10)]">
-        <div className="grid grid-cols-1 gap-y-[var(--space-8)] sm:grid-cols-3 sm:gap-x-[var(--space-8)] lg:max-w-[860px]">
-          <div>
-            <ColTitle>NAVIGATE</ColTitle>
+        <div className="grid grid-cols-1 gap-y-[var(--space-4)] sm:grid-cols-3 sm:gap-x-[var(--space-8)] lg:max-w-[860px]">
+          <FooterAccordion title="NAVIGATE">
             <ColLink href="/">Home</ColLink>
             {showCollectionLink ? <ColLink href={collectionHref}>{collectionLabel}</ColLink> : null}
             <ColLink href="/about">About Us</ColLink>
@@ -251,25 +275,23 @@ export default function Footer({ navItems = [] }: { navItems?: NavbarRenderItem[
             <ColLink href="/blog">Blog</ColLink>
             <ColLink href="/education">Education</ColLink>
             <ColLink href="/contact">Contact</ColLink>
-          </div>
+          </FooterAccordion>
 
-          <div>
-            <ColTitle>JEWELLERY</ColTitle>
+          <FooterAccordion title="JEWELLERY">
             {visibleServiceCategories.map((category) => (
               <ColLink key={category.id} href={`/${encodeURIComponent(category.slug)}`}>
                 {category.name}
               </ColLink>
             ))}
-          </div>
+          </FooterAccordion>
 
-          <div>
-            <ColTitle>SUPPORT</ColTitle>
+          <FooterAccordion title="SUPPORT">
             <ColLink href="/faq">FAQ</ColLink>
             <ColLink href="/shipping">Shipping</ColLink>
             <ColLink href="/returns">Returns</ColLink>
             <ColLink href="/terms">Terms &amp; Conditions</ColLink>
             <ColLink href="/privacy-policy">Privacy Policy</ColLink>
-          </div>
+          </FooterAccordion>
         </div>
 
         <div className="flex flex-col items-start lg:pl-[var(--space-4)]">

@@ -364,8 +364,8 @@ export default function BlogSection() {
         className="py-[120px] px-[52px] max-w-[1400px] mx-auto max-[700px]:py-[80px] max-[700px]:px-5"
       >
         {/* Header */}
-        <div className="flex justify-between items-end mb-14 flex-wrap gap-5">
-          <div>
+        <div className="flex justify-between items-end mb-14 flex-wrap gap-5 max-md:justify-center">
+          <div className="max-md:text-center">
             <div className="text-[10px] font-medium tracking-[0.32em] uppercase text-[#0A1628] mb-[14px]
                             inline-flex items-center gap-3
                             before:content-[''] before:w-6 before:h-px before:bg-[#0A1628]">
@@ -380,10 +380,10 @@ export default function BlogSection() {
           </div>
           <a
             href="#"
-            className="font-[family-name:var(--font-family-button)] text-[10px] font-medium tracking-[0.28em] uppercase text-[#0A1628] no-underline cursor-pointer
+            className="hidden font-[family-name:var(--font-family-button)] text-[10px] font-medium tracking-[0.28em] uppercase text-[#0A1628] no-underline cursor-pointer
                        inline-flex items-center gap-[10px] pb-1 border-b border-[#0A1628]
                        transition-[color,border-color,gap] duration-300
-                       hover:text-[#0A1628] hover:border-[#0A1628] hover:gap-4"
+                       hover:text-[#0A1628] hover:border-[#0A1628] hover:gap-4 md:inline-flex"
           >
             View All Articles →
           </a>

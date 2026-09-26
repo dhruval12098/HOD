@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import ProductCard from "./ProductCard";
 import ShopToolbar from "./ShopToolbar";
 import CategoryQuickFilters from "./CategoryQuickFilters";
@@ -21,17 +21,20 @@ import { getProductKey } from "@/lib/product-keys";
  *   initialPage?: number
  *   filterGroups?: ProductGridFilterGroup[]
  *   masterShapeOptions?: { value: string; label: string; iconUrl?: string | null; displayOrder: number }[]
+ *   totalCount?: number
+ *   serverPaginated?: boolean
  *   onEnquire: (name?: string) => void
  *   wideGutter?: boolean
  * }} props
  */
-export default function ProductGrid({ products, sourceProducts = products, initialFilters = {}, initialPage = 1, filterGroups: externalFilterGroups = [], masterShapeOptions = [], onEnquire, wideGutter = false }) {
+export default function ProductGrid({ products, sourceProducts = products, initialFilters = {}, initialPage = 1, filterGroups: externalFilterGroups = [], masterShapeOptions = [], totalCount, serverPaginated = false, onEnquire, wideGutter = false }) {
   const { wishlist, toggle } = useWishlistStore();
   const pathname = usePathname();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [filters, setFilters] = useState(initialFilters);
   const [page, setPage] = useState(initialPage);
-  const [sort, setSort] = useState("best-matches");
+  const [sort, setSort] = useState(searchParams?.get("sort") || "best-matches");
 
   const pageSize = 24;
 
@@ -44,23 +47,33 @@ export default function ProductGrid({ products, sourceProducts = products, initi
   };
 
   const changePage = (nextPage) => {
+    if (serverPaginated) {
+      router.push(pageHref(nextPage), { scroll: false });
+      document.querySelector(".shop-grid-layout")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
     setPage(nextPage);
     window.history.pushState(null, "", pageHref(nextPage));
     document.querySelector(".shop-grid-layout")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const handleFiltersChange = (nextFilters) => {
-    setFilters(nextFilters);
-    setPage(1);
     const params = new URLSearchParams(window.location.search);
     params.delete("page");
-    ["metal", "shape"].forEach((key) => {
+    ["category", "subcategory", "option", "shape", "style", "metal", "certificate"].forEach((key) => {
       const value = nextFilters[key]?.[0];
       if (value) params.set(key, value);
       else params.delete(key);
     });
     const query = params.toString();
-    window.history.pushState(null, "", query ? `${pathname}?${query}` : pathname);
+    const href = query ? `${pathname}?${query}` : pathname;
+    if (serverPaginated) {
+      router.push(href, { scroll: false });
+      return;
+    }
+    setFilters(nextFilters);
+    setPage(1);
+    window.history.pushState(null, "", href);
   };
 
   const handleQuickFilterChange = (key, value) => {
@@ -83,9 +96,19 @@ export default function ProductGrid({ products, sourceProducts = products, initi
   };
 
   const handleSortChange = (value) => {
+    const params = new URLSearchParams(window.location.search);
+    params.delete("page");
+    if (value === "best-matches") params.delete("sort");
+    else params.set("sort", value);
+    const query = params.toString();
+    const href = query ? `${pathname}?${query}` : pathname;
+    if (serverPaginated) {
+      router.push(href, { scroll: false });
+      return;
+    }
     setSort(value);
     setPage(1);
-    window.history.replaceState(null, "", pageHref(1));
+    window.history.replaceState(null, "", href);
   };
 
   const baseFilterGroups = useMemo(() => {
@@ -150,6 +173,7 @@ export default function ProductGrid({ products, sourceProducts = products, initi
   }, [externalFilterGroups, baseFilterGroups]);
 
   const filtered = useMemo(() => {
+    if (serverPaginated) return [...products];
       const list = products.filter((product) => {
       const productCategoryValue = product.mainCategorySlug || product.category;
       if (filters.category?.length && !filters.category.includes(productCategoryValue)) return false;
@@ -186,21 +210,22 @@ export default function ProductGrid({ products, sourceProducts = products, initi
     });
 
     return list;
-  }, [filters, sort, products]);
+  }, [filters, sort, products, serverPaginated]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const resolvedTotalCount = serverPaginated ? Number(totalCount || 0) : filtered.length;
+  const totalPages = Math.max(1, Math.ceil(resolvedTotalCount / pageSize));
   const resolvedPage = Math.min(page, totalPages);
-  const paginatedProducts = filtered.slice((resolvedPage - 1) * pageSize, resolvedPage * pageSize);
+  const paginatedProducts = serverPaginated ? filtered : filtered.slice((resolvedPage - 1) * pageSize, resolvedPage * pageSize);
 
   const metalOptions = filterGroups.find((group) => group.id === "metal")?.options.map((option) => {
     const metal = sourceProducts.flatMap((product) => product.metalsFull || []).find((entry) => entry.slug === option.value);
-    return { ...option, color: metal?.colorHex || null };
+    return { ...option, color: option.color || metal?.colorHex || null };
   }) || [];
   const availableShapeSlugs = new Set(sourceProducts.flatMap((product) => product.shapeOptions?.map((shape) => shape.slug) || []));
   const shapeOptions = (masterShapeOptions.length > 0
     ? masterShapeOptions
     : filterGroups.find((group) => group.id === "shape")?.options || [])
-    .filter((option) => availableShapeSlugs.has(option.value))
+    .filter((option) => serverPaginated || availableShapeSlugs.has(option.value))
     .sort((left, right) => Number(left.displayOrder || 0) - Number(right.displayOrder || 0));
 
   return (
@@ -248,6 +273,32 @@ export default function ProductGrid({ products, sourceProducts = products, initi
         }
         .shop-product-card-hover-image {
           opacity: 0;
+        }
+        .shop-product-card-mobile-dots {
+          position: absolute;
+          right: 9px;
+          bottom: 9px;
+          z-index: 3;
+          display: none;
+          align-items: center;
+          gap: 4px;
+          pointer-events: none;
+        }
+        .shop-product-card-mobile-dots button {
+          display: block;
+          width: 5px;
+          height: 5px;
+          padding: 0;
+          border: 0;
+          border-radius: 999px;
+          background: rgba(0, 0, 0, .45);
+          box-shadow: 0 0 2px rgba(255, 255, 255, .7);
+          cursor: pointer;
+          transition: width 220ms ease, background-color 220ms ease;
+        }
+        .shop-product-card-mobile-dots button.is-active {
+          width: 10px;
+          background: #000;
         }
         @media (hover: hover) and (pointer: fine) {
           .shop-product-card:hover .shop-product-card-primary-image {
@@ -297,6 +348,17 @@ export default function ProductGrid({ products, sourceProducts = products, initi
           .shop-product-card-material {
             font-size: 10px !important;
           }
+          .shop-product-card-mobile-dots {
+            display: flex;
+          }
+          .shop-product-card-primary-image,
+          .shop-product-card-hover-image {
+            opacity: 0;
+          }
+          .shop-product-card-primary-image.shop-product-card-mobile-active,
+          .shop-product-card-hover-image.shop-product-card-mobile-active {
+            opacity: 1;
+          }
         }
       `}</style>
 
@@ -304,14 +366,14 @@ export default function ProductGrid({ products, sourceProducts = products, initi
         <div>
           <div className="shop-grid-toolbar">
             <ShopToolbar
-              count={filtered.length}
+              count={resolvedTotalCount}
               sort={sort}
               onSortChange={handleSortChange}
               quickFilters={<CategoryQuickFilters metalOptions={metalOptions} shapeOptions={shapeOptions} selectedMetal={filters.metal?.[0] || ""} selectedShape={filters.shape?.[0] || ""} onChange={handleQuickFilterChange} />}
             />
           </div>
 
-          {filtered.length === 0 ? (
+          {resolvedTotalCount === 0 ? (
             <div style={{ gridColumn: "1 / -1", textAlign: "center", padding: "80px 20px" }}>
               <h3 style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: "28px", color: "#0A1628", marginBottom: "14px", fontWeight: 400 }}>
                 No pieces match your filters
@@ -358,13 +420,14 @@ export default function ProductGrid({ products, sourceProducts = products, initi
                   onWishlist={handleWishlist}
                   onEnquire={onEnquire}
                   selectedMetalSlug={filters.metal?.[0] || ""}
+                  mobileImageCarousel
                 />
               ))}
             </div>
           )}
 
-          {filtered.length > pageSize ? (
-            <nav aria-label="Product pagination" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", padding: "0 0 72px" }}>
+          {resolvedTotalCount > pageSize ? (
+            <nav aria-label="Product pagination" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", padding: "0 0 24px" }}>
               {resolvedPage > 1 ? (
                 <Link
                   href={pageHref(resolvedPage - 1)}

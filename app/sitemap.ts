@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { getPublishedBlogPosts } from '@/lib/blog'
 import { getPublishedEducationPosts } from '@/lib/education'
-import { getStorefrontProducts } from '@/lib/catalog-products'
+import { getStorefrontProductDiscoveryRows } from '@/lib/catalog-products'
 import { createSupabaseServerClient } from '@/lib/server-supabase'
 import { getCanonicalUrl } from '@/lib/site-url'
 import { buildCategoryPath, buildOptionPath, buildSubcategoryPath } from '@/lib/catalog-paths'
@@ -27,7 +27,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = createSupabaseServerClient()
 
   const [products, categoriesResult, subcategoriesResult, optionsResult, blogPosts, educationPosts] = await Promise.all([
-    getStorefrontProducts(),
+    getStorefrontProductDiscoveryRows(),
     supabase
       .from('catalog_categories')
       .select('*')
@@ -92,6 +92,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .filter((product) => product.slug)
     .map((product) => ({
       url: getCanonicalUrl(`/shop/${product.slug}`).toString(),
+      lastModified: product.updated_at ? new Date(product.updated_at) : undefined,
       changeFrequency: 'daily' as const,
       priority: 0.9,
     }))

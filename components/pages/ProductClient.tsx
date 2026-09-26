@@ -25,14 +25,17 @@ import { useCart } from '@/lib/hooks/useCart';
 import { getProductKey } from '@/lib/product-keys';
 import { saveLoveLetterDraft, type LoveLetterDraft } from '@/lib/love-letter';
 import { useCurrency } from '@/context/CurrencyContext';
+import { GiftOfferBanner } from '@/components/commerce/GiftOfferBanner';
+import type { StorefrontPromotion } from '@/components/commerce/PromotionBanner';
 
 interface ProductClientProps {
   product: StorefrontProduct;
   relatedProducts: StorefrontProduct[];
   serviceBanner: ServiceBannerData | null;
+  giftPromotion: StorefrontPromotion | null;
 }
 
-export default function ProductClient({ product, relatedProducts, serviceBanner }: ProductClientProps) {
+export default function ProductClient({ product, relatedProducts, serviceBanner, giftPromotion }: ProductClientProps) {
   const router = useRouter();
   const storefrontProduct = product as StorefrontProduct & {
     hiphopCaratLabel: string;
@@ -64,6 +67,7 @@ export default function ProductClient({ product, relatedProducts, serviceBanner 
   const [toastMessage, setToastMessage] = useState('');
   const [toastVisible, setToastVisible] = useState(false);
   const [showStickyCartBar, setShowStickyCartBar] = useState(false);
+  const [selectedGiftPromotionId, setSelectedGiftPromotionId] = useState<number | null>(null);
   const ctaAnchorRef = useRef<HTMLDivElement | null>(null);
   const pageTopRef = useRef<HTMLDivElement | null>(null);
 
@@ -137,6 +141,7 @@ export default function ProductClient({ product, relatedProducts, serviceBanner 
     selectedMetalMedia?.video_path ||
     storefrontProduct.videoUrl;
   const activePrice = Number(selectedCombinedVariant?.price ?? defaultPurityPriceRow?.price ?? storefrontProduct.priceFrom ?? 0);
+  const isGiftSelected = Boolean(giftPromotion && selectedGiftPromotionId === giftPromotion.id && activePrice >= giftPromotion.minimumOrderAmount);
   const activeProduct = useMemo(
     () => ({
       ...storefrontProduct,
@@ -177,6 +182,10 @@ export default function ProductClient({ product, relatedProducts, serviceBanner 
       setSelectedRingSize(nextDefaultRingSize);
     }
   }, [activeRingCategory, selectedRingSize, storefrontProduct.ringSizeNames]);
+
+  useEffect(() => {
+    if (giftPromotion && activePrice < giftPromotion.minimumOrderAmount) setSelectedGiftPromotionId(null);
+  }, [activePrice, giftPromotion]);
 
   useEffect(() => {
     const ctaNode = ctaAnchorRef.current;
@@ -352,6 +361,12 @@ export default function ProductClient({ product, relatedProducts, serviceBanner 
         .hod-product-detail .font-numeric {
           font-size: 14px !important;
         }
+
+        @media (min-width: 1101px) {
+          .hod-product-title-axis {
+            padding-top: 44px;
+          }
+        }
       `}</style>
       <div
         className={`fixed left-0 right-0 top-[calc(var(--hod-announcement-current-height,35px)+var(--hod-navbar-visible-height,96px))] z-[45] border-b border-[color:var(--theme-border,rgba(0,0,0,0.09))] bg-white/95 backdrop-blur-md transition-[top,transform] duration-300 ${
@@ -380,35 +395,36 @@ export default function ProductClient({ product, relatedProducts, serviceBanner 
         </div>
       </div>
 
-        <section ref={pageTopRef} className="mx-auto -mt-14 w-full px-3 pb-[100px] pt-4 max-[1100px]:-mt-10 max-[1100px]:px-3 max-[700px]:-mt-6 max-[700px]:px-2 max-[700px]:pb-[130px] max-[700px]:pt-3">
-        <ProductBreadcrumb
-          productName={product.name}
-          collectionHref={collectionHref}
-          collectionLabel={collectionLabel}
-          inWishlist={inWishlist}
-          onWishlist={() => handleWishlistToggle(product)}
-        />
-
+        <section ref={pageTopRef} className="mx-auto mt-0 w-full px-3 pb-4 pt-4 sm:pb-6 xl:pb-8 max-[1100px]:px-3 max-[700px]:px-2 max-[700px]:pt-3">
         <ProductLayout
-              gallery={(
-            <ProductGallery
-              gemStyle={storefrontProduct.gemStyle}
-              gemColor={storefrontProduct.gemColor}
-              dark={isDark}
-              imageUrl={activeProduct.imageUrl}
-              galleryUrls={activeProduct.galleryUrls}
-              imageAlts={activeProduct.imageAlts}
-              videoUrl={activeProduct.videoUrl}
-              model3dUrl={activeProduct.model3dUrl}
-            />
+          gallery={(
+            <div className="relative z-[1] min-w-0">
+              <ProductBreadcrumb
+                productName={product.name}
+                collectionHref={collectionHref}
+                collectionLabel={collectionLabel}
+              />
+              <ProductGallery
+                gemStyle={storefrontProduct.gemStyle}
+                gemColor={storefrontProduct.gemColor}
+                dark={isDark}
+                imageUrl={activeProduct.imageUrl}
+                galleryUrls={activeProduct.galleryUrls}
+                imageAlts={activeProduct.imageAlts}
+                videoUrl={activeProduct.videoUrl}
+                model3dUrl={activeProduct.model3dUrl}
+              />
+            </div>
           )}
           info={(
-            <div>
-              <h1 className="font-display-title mb-[10px] text-[clamp(25px,2.8vw,34px)] font-normal leading-[1.12] tracking-[0.01em] text-[var(--color-brand-primary,#000000)]">
+            <div className="hod-product-title-axis">
+              <h1 className="font-display-title mb-[10px] text-[clamp(23px,2.6vw,32px)] font-normal leading-[1.12] tracking-[0.01em] text-[var(--color-brand-primary,#000000)]">
                 {storefrontProduct.h1Title || product.name}
               </h1>
 
               <ProductPriceBlock priceFrom={activePrice} compact />
+
+              {giftPromotion ? <GiftOfferBanner promotion={giftPromotion} amount={activePrice} checked={selectedGiftPromotionId === giftPromotion.id} included={isGiftSelected} onToggle={() => setSelectedGiftPromotionId(giftPromotion.id)} /> : null}
 
               <ProductConfigurator
                 product={configuredProduct}
@@ -440,10 +456,8 @@ export default function ProductClient({ product, relatedProducts, serviceBanner 
                 onCustomSelectionChange={(groupId: string, optionId: string) => setCustomSelections((current) => ({ ...current, [groupId]: optionId }))}
               />
 
-              <p className="mb-3 px-4 py-3 text-center font-sans text-[15px] leading-6 text-[var(--color-brand-primary,#000000)]">
-                Crafted to order with complimentary insured shipping
-                <br />
-                and lifetime care.
+              <p className="mb-4 px-3 py-4 text-center font-sans text-[20px] leading-[1.35] text-[var(--color-brand-primary,#000000)] sm:px-5 sm:text-[22px]">
+                “Get Your Personalized craftsmanship product video. That you know how your product was crafted for you.”
               </p>
 
               <div ref={ctaAnchorRef}>
@@ -451,6 +465,8 @@ export default function ProductClient({ product, relatedProducts, serviceBanner 
                   product={activeProduct}
                   ctaMode={selectedMaterialValueMeta?.ctaMode || 'both'}
                   ctaLabel={selectedMaterialValueMeta?.ctaLabel || null}
+                  wishlisted={inWishlist}
+                  onWishlist={() => handleWishlistToggle(product)}
                   onEnquire={() => setIsEnquireOpen(true)}
                   onAddToCart={handleAddToCart}
                   onCheckout={() => {
@@ -472,7 +488,7 @@ export default function ProductClient({ product, relatedProducts, serviceBanner 
                 compact
               />
 
-              <div className="mb-8">
+              <div className="section-rhythm">
                 <h2 className="mb-5 font-display-title text-[28px] font-normal leading-[1.1] tracking-[0.01em] text-[var(--color-brand-primary,#000000)]">
                   Know Your Setting
                 </h2>
