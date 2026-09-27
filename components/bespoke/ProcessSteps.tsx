@@ -60,22 +60,28 @@ export default function ProcessSteps({ initialItems = [] }: { initialItems?: { i
   if (!items.length) return null;
 
   return (
-    <section className="section-rhythm px-[52px] max-w-[1400px] mx-auto grid grid-cols-4 gap-[30px] max-lg:grid-cols-2 max-md:grid-cols-1 max-lg:px-7 max-md:px-5">
+    <section className="section-rhythm border-t border-black/10 bg-white">
+      <div className="mb-6 px-4 sm:px-7 lg:px-[50px]">
+        <p className="mb-3 font-[family-name:var(--font-family-primary)] text-[11px] font-medium uppercase tracking-[0.1em] text-black/60">The Atelier</p>
+        <h2 className="section-title text-left text-[clamp(1.35rem,2.2vw,2rem)] font-medium uppercase leading-none tracking-[0.025em] text-[var(--color-brand-primary,#000)]">How Bespoke Works</h2>
+      </div>
+      <div className="grid grid-cols-2 gap-[13px] px-4 sm:px-7 md:grid-cols-4 lg:px-[50px]">
       {items.map((step, i) => (
         <RevealDiv key={step.id ?? step.sort_order} delay={i * 100}>
-          <div className="bg-white px-8 py-11 border border-[rgba(10,22,40,0.10)] relative transition-all duration-500 ease-[cubic-bezier(0.2,0.7,0.3,1)] hover:-translate-y-1.5 hover:border-[rgba(10,22,40,0.25)] hover:shadow-[0_24px_60px_rgba(10,22,40,0.12)] h-full">
-            <div className="text-[9px] font-normal tracking-[0.3em] text-[#0A1628] uppercase mb-3.5">
+          <div className="h-full border border-black/10 bg-white px-5 py-6 transition-colors duration-300 hover:border-black/30 sm:px-6 sm:py-7">
+            <div className="mb-3.5 text-[9px] font-normal uppercase tracking-[0.3em] text-black">
               {step.eyebrow}
             </div>
-            <div className="font-serif text-[28px] font-normal text-[#0A1628] mb-3.5 tracking-[0.02em]">
+            <div className="mb-3.5 font-[family-name:var(--font-family-primary)] text-[15px] font-semibold uppercase leading-[1.35] tracking-[0.06em] text-black">
               {step.title}
             </div>
-            <p className="text-[12px] font-light leading-[1.9] text-[#292727] tracking-[0.02em]">
+            <p className="font-[family-name:var(--font-family-secondary)] text-[12px] leading-[1.7] text-black/60">
               {step.description}
             </p>
           </div>
         </RevealDiv>
       ))}
+      </div>
     </section>
   );
 }

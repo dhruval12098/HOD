@@ -580,17 +580,12 @@ const loadHomePageData = unstable_cache(
       heroResult,
       blogResult,
       collectionResult,
-      materialResult,
       discoverShapesResult,
       discoverStoneShapesResult,
       hiphopResult,
       collectionPageConfigResult,
       bespokeShowcaseResult,
-      diamondInfoResult,
-      diamondInfoConfigResult,
       testimonialsSectionResult,
-      marqueeSectionResult,
-      trustedPartnersSectionResult,
       bestSellerSectionResult,
       bestSellerProductSelectionsResult,
     ] = await Promise.all([
@@ -608,10 +603,6 @@ const loadHomePageData = unstable_cache(
       supabase
         .from('collection_items')
         .select('sort_order, label, title, description, image_path, link')
-        .order('sort_order', { ascending: true }),
-      supabase
-        .from('material_strip_items')
-        .select('sort_order, title, description, icon_path')
         .order('sort_order', { ascending: true }),
       supabase
         .from('discover_shapes_items')
@@ -639,30 +630,9 @@ const loadHomePageData = unstable_cache(
         .eq('section_key', 'home_bespoke_showcase')
         .maybeSingle(),
       supabase
-        .from('diamond_info_feature_items')
-        .select('id, sort_order, icon_svg, title, description, is_active')
-        .eq('section_key', 'home_diamond_info')
-        .eq('is_active', true)
-        .order('sort_order', { ascending: true }),
-      supabase
-        .from('diamond_info_config')
-        .select('video_enabled, video_path, video_poster_path, layout_mode, eyebrow, section_heading, section_subtext, cta_label, cta_link')
-        .eq('section_key', 'home_diamond_info')
-        .maybeSingle(),
-      supabase
         .from('testimonials_section')
         .select('id, eyebrow, heading')
         .eq('section_key', 'home_testimonials')
-        .maybeSingle(),
-      supabase
-        .from('testimonial_marquee')
-        .select('id, title')
-        .eq('section_key', 'home_testimonial_marquee')
-        .maybeSingle(),
-      supabase
-        .from('home_trusted_partners_section')
-        .select('id, heading, is_enabled')
-        .eq('section_key', 'home_trusted_partners')
         .maybeSingle(),
       supabase
         .from('cms_home_bestsellers')
@@ -694,34 +664,6 @@ const loadHomePageData = unstable_cache(
         .eq('section_id', testimonialsSectionResult.data.id)
         .order('sort_order', { ascending: true });
       testimonialsItems = data ?? [];
-    }
-
-    let marqueeItems: HomeMarqueeData['items'] = [];
-    if (marqueeSectionResult.data?.id) {
-      const { data } = await supabase
-        .from('testimonial_marquee_items')
-        .select('sort_order, quote, author')
-        .eq('marquee_id', marqueeSectionResult.data.id)
-        .order('sort_order', { ascending: true });
-      marqueeItems = data ?? [];
-    }
-
-    let trustedPartnerLogos: HomeTrustedPartnersData['logos'] = [];
-    if (trustedPartnersSectionResult.data?.id && trustedPartnersSectionResult.data.is_enabled) {
-      const { data } = await supabase
-        .from('home_trusted_partner_logos')
-        .select('id, name, logo_path, logo_alt, link_url, display_order')
-        .eq('section_id', trustedPartnersSectionResult.data.id)
-        .eq('status', 'active')
-        .order('display_order', { ascending: true });
-      trustedPartnerLogos = (data ?? []).map((logo) => ({
-        id: logo.id,
-        name: logo.name,
-        logoUrl: toPublicUrl(logo.logo_path) || logo.logo_path,
-        logoAlt: logo.logo_alt,
-        linkUrl: logo.link_url,
-        displayOrder: logo.display_order ?? 0,
-      }));
     }
 
     let bestSellerProducts: HomeBestSellerProduct[] = [];
@@ -899,16 +841,8 @@ const loadHomePageData = unstable_cache(
       }
     }
 
-    const diamondInfoConfigError = diamondInfoConfigResult.error
-    const diamondInfoFeatureError = diamondInfoResult.error
     const collectionPageConfigError = collectionPageConfigResult.error
     const bespokeShowcaseError = bespokeShowcaseResult.error
-    const isMissingDiamondInfoConfigTable =
-      diamondInfoConfigError?.code === 'PGRST205' ||
-      diamondInfoConfigError?.message?.includes("Could not find the table 'public.diamond_info_config'")
-    const isMissingDiamondInfoFeatureTable =
-      diamondInfoFeatureError?.code === 'PGRST205' ||
-      diamondInfoFeatureError?.message?.includes("Could not find the table 'public.diamond_info_feature_items'")
     const isMissingCollectionPageConfigTable =
       collectionPageConfigError?.code === 'PGRST205' ||
       collectionPageConfigError?.message?.includes("Could not find the table 'public.collection_page_config'")
@@ -916,12 +850,6 @@ const loadHomePageData = unstable_cache(
       bespokeShowcaseError?.code === 'PGRST205' ||
       bespokeShowcaseError?.message?.includes("Could not find the table 'public.home_bespoke_showcase_section'")
 
-    if (diamondInfoFeatureError && !isMissingDiamondInfoFeatureTable) {
-      throw diamondInfoFeatureError
-    }
-    if (diamondInfoConfigError && !isMissingDiamondInfoConfigTable) {
-      throw diamondInfoConfigError
-    }
     if (collectionPageConfigError && !isMissingCollectionPageConfigTable) {
       throw collectionPageConfigError
     }
@@ -933,7 +861,6 @@ const loadHomePageData = unstable_cache(
       heroContent: heroData ? { ...heroData, slider_items: sliderItems ?? [] } : undefined,
       blogRows: blogResult.data ?? [],
       collectionItems: collectionResult.data ?? [],
-      materialItems: materialResult.data ?? [],
       discoverShapesItems: (discoverShapesResult.data ?? []).map((item) => ({
         ...item,
         image_path: toPublicUrl(item.image_path) || item.image_path,
@@ -973,40 +900,10 @@ const loadHomePageData = unstable_cache(
         mobileImageUrl: toPublicUrl(bespokeShowcaseResult.data?.mobile_image_path),
         imageAlt: bespokeShowcaseResult.data?.image_alt ?? 'House of Diams bespoke jewellery showcase',
       },
-      diamondInfoItems: isMissingDiamondInfoFeatureTable
-        ? []
-        : (diamondInfoResult.data ?? []).map((item) => ({
-            id: item.id,
-            sort_order: item.sort_order,
-            iconSvg: item.icon_svg ?? '',
-            title: item.title ?? '',
-            description: item.description ?? '',
-            is_active: item.is_active ?? true,
-          })),
-      diamondInfoConfig: {
-        videoEnabled: isMissingDiamondInfoConfigTable ? false : (diamondInfoConfigResult.data?.video_enabled ?? false),
-        videoUrl: isMissingDiamondInfoConfigTable ? undefined : toPublicUrl(diamondInfoConfigResult.data?.video_path),
-        videoPosterUrl: isMissingDiamondInfoConfigTable ? undefined : toPublicUrl(diamondInfoConfigResult.data?.video_poster_path),
-        layoutMode: isMissingDiamondInfoConfigTable ? 'split_video_text' : (diamondInfoConfigResult.data?.layout_mode ?? 'split_video_text'),
-        eyebrow: isMissingDiamondInfoConfigTable ? '' : (diamondInfoConfigResult.data?.eyebrow ?? ''),
-        sectionHeading: isMissingDiamondInfoConfigTable ? '' : (diamondInfoConfigResult.data?.section_heading ?? ''),
-        sectionSubtext: isMissingDiamondInfoConfigTable ? '' : (diamondInfoConfigResult.data?.section_subtext ?? ''),
-        ctaLabel: isMissingDiamondInfoConfigTable ? '' : (diamondInfoConfigResult.data?.cta_label ?? ''),
-        ctaLink: isMissingDiamondInfoConfigTable ? '' : (diamondInfoConfigResult.data?.cta_link ?? ''),
-      },
       testimonialsData: {
         eyebrow: testimonialsSectionResult.data?.eyebrow ?? 'Client Stories',
         heading: testimonialsSectionResult.data?.heading ?? 'What Our Clients Say',
         items: testimonialsItems,
-      },
-      marqueeData: {
-        title: marqueeSectionResult.data?.title ?? 'Loved by Clients Worldwide',
-        items: marqueeItems,
-      },
-      trustedPartnersData: {
-        heading: trustedPartnersSectionResult.data?.heading ?? 'Trusted Partners',
-        isEnabled: trustedPartnersSectionResult.data?.is_enabled ?? true,
-        logos: trustedPartnerLogos,
       },
       bestSellerSection: {
         eyebrow: bestSellerSectionResult.data?.eyebrow ?? 'House of Diams',

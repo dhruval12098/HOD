@@ -6,6 +6,7 @@ type PortfolioCategory = {
   id: string;
   name: string;
   slug: string;
+  image_path?: string | null;
 };
 
 type PortfolioItem = {
@@ -161,11 +162,11 @@ function VideoModal({ item, onClose }: { item: PortfolioItem | null; onClose: ()
       style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="relative mx-auto flex max-h-[78vh] w-full max-w-[440px] flex-col overflow-hidden rounded-[22px] bg-white shadow-2xl md:max-h-[88vh] md:max-w-5xl md:rounded-3xl" onClick={(e) => e.stopPropagation()}>
+      <div className="relative mx-auto flex max-h-[86vh] w-full max-w-[440px] flex-col overflow-hidden border border-black/15 bg-white shadow-[0_24px_80px_rgba(0,0,0,0.22)] md:max-h-[88vh] md:max-w-5xl md:flex-row" onClick={(e) => e.stopPropagation()}>
         <button
           onClick={onClose}
           aria-label="Close"
-          className="absolute right-3 top-3 z-20 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/92 text-[#0A1628] shadow-[0_10px_25px_rgba(10,22,40,0.16)] transition hover:bg-white"
+          className="absolute right-0 top-0 z-20 inline-flex h-11 w-11 items-center justify-center border-b border-l border-black/15 bg-white text-black transition hover:bg-black hover:text-white"
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor">
             <path d="M1 1L13 13M13 1L1 13" strokeWidth="1.5" strokeLinecap="round" />
@@ -173,41 +174,41 @@ function VideoModal({ item, onClose }: { item: PortfolioItem | null; onClose: ()
         </button>
 
         <div className="flex min-h-0 flex-1 flex-col md:grid md:grid-cols-[1.15fr_0.85fr]">
-          <div className={`min-h-[220px] shrink-0 flex items-center justify-center overflow-hidden md:min-h-[420px] ${item.dark_theme ? 'bg-gradient-to-br from-[#0A1628] to-[#111F34]' : 'bg-[#f5f1ea]'}`}>
+          <div className={`min-h-[220px] shrink-0 flex items-center justify-center overflow-hidden border-b border-black/10 md:min-h-[420px] md:border-b-0 md:border-r ${item.dark_theme ? 'bg-neutral-900' : 'bg-neutral-100'}`}>
             {item.media_type === 'video' ? (
               item.media_url ? (
                 <video src={item.media_url} className="!h-full w-full object-cover" controls playsInline preload="metadata" />
               ) : (
-                <div className="flex h-full w-full items-center justify-center">
+                <div className="flex h-full w-full items-center justify-center bg-neutral-100">
                   <GemSVG style={item.gem_style ?? 'round'} size={180} color={item.gem_color ?? '#20304A'} />
                 </div>
               )
             ) : item.media_url ? (
               <img src={item.media_url} alt={item.title} className="h-full w-full object-cover" />
             ) : (
-              <div className="flex h-full w-full items-center justify-center">
+              <div className="flex h-full w-full items-center justify-center bg-neutral-100">
                 <GemSVG style={item.gem_style ?? 'round'} size={180} color={item.gem_color ?? '#20304A'} />
               </div>
             )}
           </div>
 
           <div
-            className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 pr-3 touch-pan-y md:max-h-none md:overflow-visible md:p-8"
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-white p-5 pr-3 text-black touch-pan-y md:max-h-none md:overflow-visible md:p-10"
             style={{ WebkitOverflowScrolling: 'touch' }}
           >
-            <div className="mb-3 pr-8 text-[9px] uppercase tracking-[0.24em] text-[#0A1628] md:text-[10px] md:tracking-[0.3em]">
+            <div className="mb-3 pr-8 text-[9px] uppercase tracking-[0.24em] text-black/55 md:text-[10px] md:tracking-[0.3em]">
               {item.category?.name || 'Bespoke Portfolio'} · {item.media_type === 'video' ? 'Video Showcase' : 'Bespoke Creation'}
             </div>
-            <h3 className="mb-3 font-serif text-[26px] leading-none text-[#0A1628] md:mb-4 md:text-3xl">{item.title}</h3>
-            <div className="mb-4 inline-flex items-center gap-2 border border-black/8 bg-[#fafafa] px-3 py-2 text-[9px] uppercase tracking-[0.22em] text-[#0A1628]">
-              <span className="h-1 w-1 rounded-full bg-[#0A1628]" />
+            <h3 className="mb-3 font-serif text-[26px] leading-none text-black md:mb-4 md:text-3xl">{item.title}</h3>
+            <div className="mb-4 inline-flex items-center gap-2 border border-black/15 bg-white px-3 py-2 text-[9px] uppercase tracking-[0.22em] text-black">
+              <span className="h-1 w-1 bg-black" />
               {item.tag}
             </div>
             <p className="mb-4 text-[12px] leading-6 text-[#555] md:mb-6 md:text-sm md:leading-8">
               {item.short_description || 'A bespoke creation from the House of Diams atelier.'}
             </p>
-            <div className="border border-black/8 bg-[#fafafa] px-4 py-4">
-              <div className="font-serif text-[16px] text-[#0A1628]">{item.category?.name || 'House of Diams'}</div>
+            <div className="border border-black/15 bg-white px-4 py-4">
+              <div className="font-serif text-[16px] text-black">{item.category?.name || 'House of Diams'}</div>
               <div className="mt-1 text-[9px] uppercase tracking-[0.2em] text-[#999]">
                 {item.media_type === 'video' ? 'Craftsmanship Story' : 'Design Details'}
               </div>
@@ -269,7 +270,7 @@ export default function BespokePortfolio({
   const [visibleCount, setVisibleCount] = useState(9);
 
   useEffect(() => {
-    if (initialCategories.length || initialItems.length) return;
+    if (initialItems.length) return;
     let active = true;
     (async () => {
       try {
@@ -289,11 +290,6 @@ export default function BespokePortfolio({
     };
   }, [initialCategories, initialItems]);
 
-  const filters = [
-    { key: 'all', label: 'All' },
-    ...categories.filter((category) => category.slug !== 'all').map((category) => ({ key: category.slug, label: category.name })),
-  ];
-
   const filtered = activeFilter === 'all' ? items : items.filter((item) => item.category?.slug === activeFilter);
   const visibleItems = filtered.slice(0, visibleCount);
 
@@ -302,46 +298,25 @@ export default function BespokePortfolio({
     setVisibleCount(9);
   };
 
-  if (!items.length && !categories.length) return null;
+  useEffect(() => {
+    const onRailFilter = (event: Event) => {
+      const key = (event as CustomEvent<string>).detail;
+      setActiveFilter(key || 'all');
+      setVisibleCount(9);
+      document.getElementById('bespoke-portfolio')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    window.addEventListener('bespoke-filter', onRailFilter);
+    return () => window.removeEventListener('bespoke-filter', onRailFilter);
+  }, []);
+
+  // Categories without live pieces are not a customer-facing section.
+  if (!items.length) return null;
 
   return (
     <>
-      <section className="section-rhythm px-[52px] max-w-[1400px] mx-auto max-lg:px-7 max-md:px-5">
-        <div className="text-center mb-8">
-          <RevealDiv className="flex justify-center">
-            <div className="text-[10px] font-normal tracking-[0.32em] text-[#0A1628] uppercase mb-[18px] inline-flex items-center gap-3 before:content-[''] before:w-6 before:h-px before:bg-[#0A1628]">
-              Past Creations
-            </div>
-          </RevealDiv>
-          <RevealDiv delay={100}>
-            <h2 className="font-serif font-light tracking-[0.02em] text-[#0A1628] leading-[1.05] mb-[18px]" style={{ fontSize: 'clamp(40px, 5.5vw, 72px)' }}>
-              Bespoke <em className="not-italic text-[#0A1628] font-normal">Portfolio</em>
-            </h2>
-          </RevealDiv>
-          <RevealDiv delay={200}>
-            <p className="text-[12px] font-light tracking-[0.12em] text-[#292727] leading-[1.9] max-w-[560px] mx-auto mt-4">
-              A selection of pieces we&apos;ve crafted for clients across 40+ countries. Click any piece to view the story and craftsmanship video.
-            </p>
-          </RevealDiv>
-        </div>
-
-        <RevealDiv className="flex gap-2.5 justify-center flex-wrap mb-12">
-          {filters.map((filter) => (
-            <button
-              key={filter.key}
-              onClick={() => changeFilter(filter.key)}
-              className={`px-[22px] py-2.5 text-[10px] font-normal tracking-[0.24em] uppercase border cursor-pointer transition-all duration-300 ${
-                activeFilter === filter.key
-                  ? 'bg-[#0A1628] text-[#FAFBFD] border-[#0A1628]'
-                  : 'bg-transparent text-[#292727] border-[rgba(10,22,40,0.10)] hover:text-[#0A1628] hover:border-[#253246]'
-              }`}
-            >
-              {filter.label}
-            </button>
-          ))}
-        </RevealDiv>
-
-        <div className="grid grid-cols-3 gap-6 max-lg:grid-cols-2 max-md:grid-cols-1">
+      <section id="bespoke-portfolio" className="section-rhythm border-t border-black/10 bg-white">
+        <div className="px-4 sm:px-7 lg:px-[50px]">
+        {visibleItems.length ? <div className="mt-6 grid grid-cols-2 gap-[13px] md:grid-cols-3 lg:grid-cols-4">
           {visibleItems.map((item, i) => (
             <RevealDiv key={item.id} delay={i * 60}>
               <div
@@ -373,7 +348,7 @@ export default function BespokePortfolio({
               </div>
             </RevealDiv>
           ))}
-        </div>
+        </div> : null}
 
         {filtered.length > visibleItems.length ? (
           <RevealDiv className="mt-10 flex justify-center">
@@ -387,11 +362,7 @@ export default function BespokePortfolio({
           </RevealDiv>
         ) : null}
 
-        <RevealDiv className="text-center mt-12">
-          <p className="text-[12px] text-[#292727] tracking-[0.06em] leading-[1.9] max-w-[520px] mx-auto">
-            Have a piece in mind? Every creation begins with a conversation. Share your vision below and we&apos;ll bring it to life.
-          </p>
-        </RevealDiv>
+        </div>
       </section>
 
       <VideoModal item={activeItem} onClose={() => setActiveItem(null)} />

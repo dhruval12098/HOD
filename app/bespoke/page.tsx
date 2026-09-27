@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import BespokeClient from '@/components/pages/BespokeClient';
 import { createClient } from '@supabase/supabase-js';
 import { createPageMetadata } from '@/lib/seo';
+import { buildCategoryPath } from '@/lib/catalog-paths';
 
 export const metadata: Metadata = createPageMetadata({
   title: 'Bespoke',
@@ -9,7 +10,8 @@ export const metadata: Metadata = createPageMetadata({
   path: '/bespoke',
 });
 
-export const revalidate = 300;
+// This content is administered in real time; do not serve a five-minute-old form.
+export const dynamic = 'force-dynamic';
 
 export default async function BespokePage() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -26,11 +28,11 @@ export default async function BespokePage() {
       ? path
       : `${supabaseUrl}/storage/v1/object/public/${bucket}/${path}`;
 
-  const [heroResult, slidesResult, processResult, categoriesResult, portfolioItemsResult, settingsResult, guaranteesResult, pieceTypesResult, stoneOptionsResult, caratOptionsResult, metalOptionsResult] = await Promise.all([
+  const [heroResult, slidesResult, processResult, categoriesResult, portfolioItemsResult, settingsResult, guaranteesResult, pieceTypesResult, stoneOptionsResult, caratOptionsResult, metalOptionsResult, exploreCategoriesResult] = await Promise.all([
     supabase.from('bespoke_hero_content').select('badge_text, eyebrow, heading_line_1, heading_line_2, subtitle, primary_cta_label, secondary_cta_label, secondary_cta_action, slider_enabled').eq('status', 'active').order('updated_at', { ascending: false }).limit(1).maybeSingle(),
     supabase.from('bespoke_hero_slider_items').select('sort_order, image_path, mobile_image_path, button_text, button_link').order('sort_order', { ascending: true }),
     supabase.from('bespoke_process_cards').select('id, sort_order, eyebrow, title, description').order('sort_order', { ascending: true }),
-    supabase.from('bespoke_portfolio_categories').select('id, name, slug, display_order').eq('status', 'active').order('display_order', { ascending: true }),
+    supabase.from('bespoke_portfolio_categories').select('id, name, slug, image_path, display_order').eq('status', 'active').order('display_order', { ascending: true }),
     supabase.from('bespoke_portfolio_items').select('id, title, tag, category_id, media_type, media_path, thumbnail_path, gem_style, gem_color, dark_theme, short_description, display_order').eq('status', 'active').order('display_order', { ascending: true }),
     supabase.from('bespoke_form_settings').select('*').eq('status', 'active').order('updated_at', { ascending: false }).limit(1).maybeSingle(),
     supabase.from('bespoke_form_guarantees').select('id, label, display_order').eq('status', 'active').order('display_order', { ascending: true }),
@@ -38,18 +40,19 @@ export default async function BespokePage() {
     supabase.from('bespoke_form_stone_options').select('id, label, display_order').eq('status', 'active').order('display_order', { ascending: true }),
     supabase.from('bespoke_form_carat_options').select('id, label, display_order').eq('status', 'active').order('display_order', { ascending: true }),
     supabase.from('bespoke_form_metal_options').select('id, label, display_order').eq('status', 'active').order('display_order', { ascending: true }),
+    supabase.from('catalog_categories').select('id, name, slug, banner_desktop_image_path, banner_mobile_image_path, banner_desktop_image_alt, banner_mobile_image_alt').eq('status', 'active').order('display_order', { ascending: true }).limit(8),
   ]);
 
   const portfolioCategories = categoriesResult.data ?? [];
   const categoryMap = new Map(portfolioCategories.map((category) => [category.id, category]));
   const portfolioItems = (portfolioItemsResult.data ?? [])
-    .map((item: any) => ({
+    .map((item) => ({
       ...item,
       category: categoryMap.get(item.category_id) ?? null,
       media_url: buildPublicUrl(item.media_path),
       thumbnail_url: buildPublicUrl(item.thumbnail_path),
     }))
-    .filter((item: any) => item.category);
+    .filter((item) => item.category);
 
   const formConfig = {
     settings: {
@@ -63,15 +66,24 @@ export default async function BespokePage() {
     caratOptions: caratOptionsResult.data ?? [],
     metalOptions: metalOptionsResult.data ?? [],
   };
+  const moreToExploreCategories = (exploreCategoriesResult.data ?? [])
+    .filter((category) => category.banner_desktop_image_path || category.banner_mobile_image_path)
+    .map((category) => ({
+      name: category.name,
+      href: buildCategoryPath(category),
+      imageUrl: buildPublicUrl(category.banner_desktop_image_path ?? category.banner_mobile_image_path),
+      imageAlt: category.banner_desktop_image_alt || category.banner_mobile_image_alt || category.name,
+    }));
 
   return (
     <BespokeClient
       hero={heroResult.data ?? null}
       slides={slidesResult.data ?? []}
-      processItems={processResult.data ?? []}
       portfolioCategories={portfolioCategories}
+      processItems={processResult.data ?? []}
       portfolioItems={portfolioItems}
       formConfig={formConfig}
+      moreToExploreCategories={moreToExploreCategories}
     />
   );
 }

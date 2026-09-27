@@ -45,6 +45,7 @@ interface BespokeHeroProps {
   onEnquireClick?: () => void;
   initialHero?: HeroContent | null;
   initialSlides?: HeroSlide[];
+  initialCategories?: PortfolioCategory[];
 }
 
 type HeroContent = {
@@ -67,6 +68,22 @@ type HeroSlide = {
   button_link: string;
 };
 
+type PortfolioCategory = {
+  id: string;
+  name: string;
+  slug: string;
+  image_path?: string | null;
+};
+
+type RailCard = {
+  id: string;
+  imagePath?: string;
+  mobileImagePath?: string | null;
+  label: string;
+  filterKey?: string;
+  href?: string;
+};
+
 const fallbackHero: Required<HeroContent> = {
   badge_text: 'Est. 2014 · Surat, India',
   eyebrow: 'Bespoke Atelier',
@@ -80,7 +97,7 @@ const fallbackHero: Required<HeroContent> = {
   slider_enabled: false,
 };
 
-export default function BespokeHero({ onEnquireClick, initialHero = null, initialSlides = [] }: BespokeHeroProps) {
+export default function BespokeHero({ onEnquireClick, initialHero = null, initialSlides = [], initialCategories = [] }: BespokeHeroProps) {
   const [hero, setHero] = useState<Required<HeroContent> & { slider_enabled: boolean }>({
     badge_text: initialHero?.badge_text ?? fallbackHero.badge_text,
     eyebrow: initialHero?.eyebrow ?? fallbackHero.eyebrow,
@@ -93,7 +110,8 @@ export default function BespokeHero({ onEnquireClick, initialHero = null, initia
     slider_enabled: Boolean(initialHero?.slider_enabled ?? false),
   });
   const [slides, setSlides] = useState<HeroSlide[]>(initialSlides);
-  const [activeSlide, setActiveSlide] = useState(0);
+  const [categories, setCategories] = useState<PortfolioCategory[]>(initialCategories);
+  const railRef = useRef<HTMLDivElement>(null);
   const secondaryHref = hero.secondary_cta_action || '#bespoke-form';
 
   const getPublicImageUrl = (path: string) => {
@@ -133,86 +151,95 @@ export default function BespokeHero({ onEnquireClick, initialHero = null, initia
     };
   }, [initialHero]);
 
+  useEffect(() => {
+    if (initialCategories.length) return;
+    let active = true;
+    (async () => {
+      try {
+        const response = await fetch('/api/public/bespoke/portfolio');
+        const payload = await response.json();
+        if (active) setCategories(Array.isArray(payload?.categories) ? payload.categories : []);
+      } catch {
+        if (active) setCategories([]);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [initialCategories]);
+
   const sortedSlides = useMemo(
     () => slides.filter((item) => item.image_path?.trim()).sort((a, b) => a.sort_order - b.sort_order),
     [slides]
   );
 
-  useEffect(() => {
-    if (!hero.slider_enabled || sortedSlides.length <= 1) return;
-    const intervalId = window.setInterval(() => {
-      setActiveSlide((current) => (current + 1) % sortedSlides.length);
-    }, 4500);
-    return () => window.clearInterval(intervalId);
-  }, [hero.slider_enabled, sortedSlides]);
+  const categoryCards = useMemo<RailCard[]>(
+    () => categories
+      .map((category) => ({
+        id: category.id,
+        imagePath: category.image_path?.trim() || undefined,
+        label: category.name,
+        filterKey: category.slug,
+        href: '#bespoke-portfolio',
+      })),
+    [categories]
+  );
 
-  const currentSlide = sortedSlides[activeSlide] ?? sortedSlides[0];
-  const hasImageHero = Boolean(hero.slider_enabled && currentSlide);
-  const currentSlideLink = currentSlide?.button_link?.trim() || '';
+  // Bespoke now deliberately shares the collection-page shell. The CMS slide
+  // setting remains intact, but slides are rendered as collection options
+  // instead of a standalone full-width campaign banner.
+  const hasImageHero = true;
+  const heroCards = sortedSlides.length ? sortedSlides.map((slide) => ({
+    id: `${slide.sort_order}-${slide.image_path}`,
+    imagePath: slide.image_path,
+    mobileImagePath: slide.mobile_image_path,
+    label: slide.button_text || hero.primary_cta_label,
+    href: slide.button_link,
+  })) : [{
+    id: 'bespoke-fallback',
+    imagePath: '',
+    mobileImagePath: '',
+    label: hero.primary_cta_label,
+  }];
+  const railCards = categoryCards.length ? categoryCards : heroCards;
+  const scrollRail = (direction: number) => {
+    railRef.current?.scrollBy({ left: direction * Math.max(railRef.current.clientWidth * 0.65, 280), behavior: 'smooth' });
+  };
 
   return (
     <section
-      className={hasImageHero ? 'relative flex min-h-0 items-center justify-center overflow-hidden px-0 py-0' : 'pt-[100px] pb-[80px] px-[52px] text-center relative max-lg:px-7 max-md:px-5 max-md:pt-[70px] max-md:pb-[60px]'}
-      style={{
-        background: hasImageHero ? 'var(--theme-base)' : 'linear-gradient(180deg, #FAFBFD 0%, #F5F7FC 100%)',
-      }}
+      className={hasImageHero ? 'border-b border-black/10 bg-white pb-7 pt-[var(--space-7)] sm:pb-9 sm:pt-[var(--space-8)] lg:pt-[calc(146px+var(--space-8))]' : 'pt-[100px] pb-[80px] px-[52px] text-center relative max-lg:px-7 max-md:px-5 max-md:pt-[70px] max-md:pb-[60px]'}
+      style={{ background: '#ffffff' }}
     >
-      {hasImageHero && currentSlide ? (
-        <div className="relative z-[2] w-full">
-          <div className="relative overflow-hidden rounded-none border-0 bg-transparent shadow-none backdrop-blur-0">
-            <div className="absolute inset-0 z-10 bg-gradient-to-t from-[rgba(10,22,40,0.42)] via-[rgba(10,22,40,0.1)] to-transparent" />
-            <div className="relative h-[360px] sm:hidden">
-              <Image
-                key={`${currentSlide.sort_order}-${currentSlide.mobile_image_path || currentSlide.image_path}-mobile`}
-                src={getPublicImageUrl(currentSlide.mobile_image_path || currentSlide.image_path)}
-                alt={currentSlide.button_text || `Bespoke slide ${activeSlide + 1}`}
-                fill
-                priority={activeSlide === 0}
-                sizes="100vw"
-                className="h-full w-full object-cover"
-              />
-            </div>
-            <div className="relative hidden sm:block aspect-[1920/620]">
-              <Image
-                key={`${currentSlide.sort_order}-${currentSlide.image_path}-desktop`}
-                src={getPublicImageUrl(currentSlide.image_path)}
-                alt={currentSlide.button_text || `Bespoke slide ${activeSlide + 1}`}
-                fill
-                priority={activeSlide === 0}
-                sizes="100vw"
-                className="h-full w-full object-cover"
-              />
-            </div>
-            <div className="absolute inset-x-0 bottom-0 z-20 flex items-end justify-between gap-6 px-4 pb-4 sm:px-6 sm:pb-6 lg:px-8 lg:pb-8">
-              <div className="flex min-h-[48px] items-end">
-                {sortedSlides.length > 1 ? (
-                  <div className="flex items-center gap-2">
-                    {sortedSlides.map((slide, index) => (
-                      <button key={`${slide.sort_order}-dot`} type="button" onClick={() => setActiveSlide(index)} className={`h-2.5 rounded-full transition-all ${index === activeSlide ? 'w-10 bg-white' : 'w-2.5 bg-white/45'}`} />
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-              <div className="flex min-h-[48px] items-end justify-end">
-                {currentSlideLink ? (
-                  <Link
-                    href={currentSlideLink}
-                    className="inline-flex items-center justify-center gap-2.5 bg-[var(--theme-ink)] px-[24px] py-3 text-[9px] uppercase tracking-[0.22em] text-white no-underline transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#20304a] sm:px-[28px] sm:py-4 sm:text-[10px] sm:tracking-[0.28em]"
-                  >
-                    {currentSlide.button_text || hero.primary_cta_label}
-                  </Link>
-                ) : (
-                  <button
-                    onClick={onEnquireClick}
-                    className="inline-flex items-center justify-center gap-2.5 bg-[var(--theme-ink)] px-[24px] py-3 text-[9px] uppercase tracking-[0.22em] text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#20304a] sm:px-[28px] sm:py-4 sm:text-[10px] sm:tracking-[0.28em]"
-                  >
-                    {currentSlide.button_text || hero.primary_cta_label}
-                  </button>
-                )}
-              </div>
+      {hasImageHero ? (
+        <>
+          <div className="px-4 sm:px-7 lg:px-[52px]">
+            <div>
+              <nav aria-label="Breadcrumb" className="mb-6 flex items-center gap-3 text-[12px] font-normal tracking-[0.01em] text-black/60 md:hidden">
+                <Link href="/" className="no-underline hover:text-black">Home</Link><span aria-hidden="true">/</span><span>Bespoke</span>
+              </nav>
+              <h1 className="section-title text-left text-[clamp(1.35rem,2.2vw,2rem)] font-medium uppercase leading-none tracking-[0.025em] text-[var(--color-brand-primary,#000)]">
+                Explore Bespoke Collection
+              </h1>
             </div>
           </div>
-        </div>
+          <div className="relative mt-6 px-1.5 sm:px-5 lg:px-[60px]">
+            <div ref={railRef} className="flex snap-x snap-mandatory gap-2 overflow-x-auto py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Bespoke collection inspiration">
+              {railCards.map((slide, index) => {
+                const image = slide.imagePath ? getPublicImageUrl(slide.imagePath) : '';
+                const mobileImage = slide.mobileImagePath ? getPublicImageUrl(slide.mobileImagePath) : image;
+                const initials = slide.label.split(/\s+/).filter(Boolean).slice(0, 2).map((word) => word[0]).join('').toUpperCase();
+                const card = <>{image ? <picture><source media="(max-width: 640px)" srcSet={mobileImage} /><Image src={image} alt={slide.label || `Bespoke inspiration ${index + 1}`} fill priority={index === 0} sizes="(max-width: 640px) 36vw, 256px" className="object-cover object-center transition-transform duration-500 group-hover:scale-[1.025]" /></picture> : <span className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-neutral-100 via-neutral-200 to-neutral-300"><span className="font-[family-name:var(--font-family-primary)] text-3xl font-medium tracking-[0.18em] text-black/35">{initials || 'B'}</span></span>}<span className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/5 to-transparent" /><span className="absolute inset-x-0 bottom-0 p-4 text-left font-[family-name:var(--font-family-primary)] text-[12px] font-medium uppercase leading-[1.3] tracking-[0.07em] text-white [text-shadow:0_1px_4px_rgba(0,0,0,0.8)]">{slide.label}</span></>;
+                const className = "group relative aspect-[2/3] h-auto w-[36vw] min-w-[140px] max-w-[256px] shrink-0 snap-start overflow-hidden bg-[#F2F1EE] text-white no-underline sm:h-[320px] sm:w-[256px] sm:aspect-auto";
+                if (slide.filterKey) {
+                  return <button key={slide.id} type="button" onClick={() => { window.dispatchEvent(new CustomEvent('bespoke-filter', { detail: slide.filterKey })); }} className={`${className} cursor-pointer border-0 p-0 text-left`}>{card}</button>;
+                }
+                return slide.href?.trim() ? <Link key={slide.id} href={slide.href} className={className}>{card}</Link> : <button key={slide.id} type="button" onClick={onEnquireClick} className={`${className} border-0 p-0 text-left cursor-pointer`}>{card}</button>;
+              })}
+            </div>
+            {railCards.length > 1 ? <><button type="button" aria-label="Scroll bespoke inspiration backward" onClick={() => scrollRail(-1)} className="absolute left-2 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center border border-black/15 bg-white text-black shadow-[0_8px_24px_rgba(0,0,0,0.14)] sm:flex">←</button><button type="button" aria-label="Scroll bespoke inspiration forward" onClick={() => scrollRail(1)} className="absolute right-2 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center border border-black/15 bg-white text-black shadow-[0_8px_24px_rgba(0,0,0,0.14)] sm:flex">→</button></> : null}
+          </div>
+        </>
       ) : (
         <>
           <RevealDiv className="flex justify-center">

@@ -654,7 +654,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
             className="order-1 flex min-w-0 items-center no-underline cursor-pointer"
           >
             <span
-              className="whitespace-nowrap text-[13px] min-[360px]:text-[14px] min-[390px]:text-[15px] sm:text-[20px] font-bold tracking-[0.1em] min-[360px]:tracking-[0.12em] min-[390px]:tracking-[0.14em] "
+              className="whitespace-nowrap text-[17px] min-[360px]:text-[19px] min-[390px]:text-[20px] sm:text-[27px] font-bold"
               style={{ color: 'var(--color-brand-primary, #000000)', fontFamily: 'var(--font-family-logo1, Cinzel, serif)', fontWeight: 600, fontVariationSettings: '"wght" 600', fontSynthesis: 'none' }}
             >
               House of Diams

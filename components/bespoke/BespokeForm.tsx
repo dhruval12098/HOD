@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/shadcn-select';
+import CheckoutField from '@/components/checkout/CheckoutField';
 
 function RevealDiv({
   children,
@@ -114,8 +115,8 @@ const fallbackConfig: FormConfigState = {
   ],
 };
 
-const inputClasses =
-  'w-full px-4 py-3.5 font-sans text-[13px] font-light text-[#0A1628] bg-[#FAFBFD] border border-[rgba(10,22,40,0.10)] transition-all duration-300 focus:outline-none focus:border-[#0A1628] focus:bg-white';
+const selectClasses =
+  'h-[64px] rounded-none border-[#858585] bg-white px-[22px] font-[family-name:var(--font-family-montserrat)] text-[18px] font-normal text-[#111111] data-[placeholder]:text-[#707070] focus:ring-0';
 
 interface BespokeFormProps {
   onSuccess?: () => void;
@@ -136,16 +137,17 @@ export default function BespokeForm({ onSuccess, initialConfig }: BespokeFormPro
     message: '',
   });
 
-  const set = (field: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+  const set = (field: keyof typeof form) => (value: string) =>
+    setForm((prev) => ({ ...prev, [field]: value }));
+  const setTextArea = (field: keyof typeof form) => (event: React.ChangeEvent<HTMLTextAreaElement>) =>
+    setForm((prev) => ({ ...prev, [field]: event.target.value }));
   const setDropdown = (field: keyof typeof form) => (value: string) => setForm((prev) => ({ ...prev, [field]: value }));
 
   useEffect(() => {
-    if (initialConfig) return;
     let active = true;
     (async () => {
       try {
-        const response = await fetch('/api/public/bespoke/form-config');
+        const response = await fetch('/api/public/bespoke/form-config', { cache: 'no-store' });
         const payload = await response.json();
         if (!active) return;
         setConfig({
@@ -161,13 +163,14 @@ export default function BespokeForm({ onSuccess, initialConfig }: BespokeFormPro
           metalOptions: Array.isArray(payload?.metalOptions) && payload.metalOptions.length ? payload.metalOptions : fallbackConfig.metalOptions,
         });
       } catch {
-        if (active) setConfig(fallbackConfig);
+        // Keep the server-provided configuration (or the local fallback) visible
+        // if a transient client refresh fails.
       }
     })();
     return () => {
       active = false;
     };
-  }, [initialConfig]);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -218,26 +221,24 @@ export default function BespokeForm({ onSuccess, initialConfig }: BespokeFormPro
   return (
     <section
       id="bespoke-form"
-      className="section-rhythm px-[52px] max-lg:px-7 max-md:px-5"
-      style={{ background: 'linear-gradient(180deg, #FAFBFD 0%, #F5F7FC 100%)' }}
+      className="section-rhythm border-t border-black/10 bg-white px-4 sm:px-7 lg:px-[50px]"
     >
-      <div className="max-w-[1400px] mx-auto grid grid-cols-[1fr_1.3fr] gap-20 items-start max-lg:grid-cols-1 max-lg:gap-10">
-        <RevealDiv>
-          <div className="mb-6 h-px w-[60px] bg-[#0A1628]" />
-          <div className="mb-3.5 inline-flex items-center gap-3 text-[10px] font-normal uppercase tracking-[0.32em] text-[#0A1628] before:h-px before:w-6 before:bg-[#0A1628] before:content-['']">
+      <div className="mx-auto grid max-w-6xl grid-cols-[0.7fr_1.3fr] items-start gap-10 lg:gap-16 max-lg:grid-cols-1">
+        <RevealDiv className="border border-black/10 bg-white p-5 sm:p-6">
+          <div className="mb-3 font-[family-name:var(--font-family-primary)] text-[11px] font-medium uppercase tracking-[0.1em] text-black/60">
             Start Your Piece
           </div>
-          <h2 className="mb-5 font-serif text-[#0A1628]" style={{ fontSize: '48px', fontWeight: 300, letterSpacing: '0.02em', lineHeight: 1.1 }}>
+          <h2 className="section-title mb-5 text-left text-[clamp(1.35rem,2.2vw,2rem)] font-medium uppercase leading-none tracking-[0.025em] text-[var(--color-brand-primary,#000)]">
             {config.settings.intro_heading || 'Configure Your Bespoke Order'}
           </h2>
-          <p className="mb-8 text-[12px] font-light leading-[2] tracking-[0.04em] text-[#292727]">
+          <p className="mb-8 font-[family-name:var(--font-family-secondary)] text-[13px] leading-[1.75] text-black/60">
             {config.settings.intro_subtitle}
           </p>
 
           <div className="flex flex-col gap-3.5">
             {config.guarantees.map((item, i) => (
-              <div key={item.id ?? i} className="flex items-start gap-3.5 text-[11px] font-light leading-[1.6] tracking-[0.04em] text-[#292727]">
-                <span className="mt-[7px] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#0A1628]" />
+              <div key={item.id ?? i} className="flex items-start gap-3.5 font-[family-name:var(--font-family-secondary)] text-[12px] leading-[1.6] text-black/60">
+                <span className="mt-[7px] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-black" />
                 {item.label}
               </div>
             ))}
@@ -245,48 +246,22 @@ export default function BespokeForm({ onSuccess, initialConfig }: BespokeFormPro
         </RevealDiv>
 
         <RevealDiv delay={100}>
-          <div className="border border-[rgba(10,22,40,0.10)] bg-white px-11 py-11 max-md:px-[22px] max-md:py-7">
+          <div className="border border-black/10 bg-white p-5 sm:p-6">
             <form onSubmit={handleSubmit}>
-              <div className="grid grid-cols-2 gap-5 max-md:grid-cols-1">
-                <div>
-                  <label className="mb-2 block text-[9px] font-normal uppercase tracking-[0.28em] text-[#292727]" htmlFor="b-name">
-                    Full Name
-                  </label>
-                  <input id="b-name" type="text" required value={form.name} onChange={set('name')} className={inputClasses} />
-                </div>
+              <div className="grid grid-cols-2 gap-3 max-md:grid-cols-1">
+                <CheckoutField label="Full Name" required value={form.name} onChange={set('name')} />
+                <CheckoutField label="Email" type="email" required value={form.email} onChange={set('email')} />
+                <CheckoutField label="Phone / WhatsApp" value={form.phone} onChange={set('phone')} />
+                <CheckoutField label="Country" required value={form.country} onChange={set('country')} />
 
                 <div>
-                  <label className="mb-2 block text-[9px] font-normal uppercase tracking-[0.28em] text-[#292727]" htmlFor="b-email">
-                    Email
-                  </label>
-                  <input id="b-email" type="email" required value={form.email} onChange={set('email')} className={inputClasses} />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-[9px] font-normal uppercase tracking-[0.28em] text-[#292727]" htmlFor="b-phone">
-                    Phone / WhatsApp
-                  </label>
-                  <input id="b-phone" type="tel" value={form.phone} onChange={set('phone')} className={inputClasses} />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-[9px] font-normal uppercase tracking-[0.28em] text-[#292727]" htmlFor="b-country">
-                    Country
-                  </label>
-                  <input id="b-country" type="text" required value={form.country} onChange={set('country')} className={inputClasses} />
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-[9px] font-normal uppercase tracking-[0.28em] text-[#292727]" htmlFor="b-piece">
-                    Piece Type
-                  </label>
                   <input tabIndex={-1} readOnly required aria-label="Piece type" value={form.piece} className="pointer-events-none absolute h-px w-px opacity-0" />
                   <Select
                     value={form.piece}
                     onValueChange={setDropdown('piece')}
                   >
-                    <SelectTrigger className="rounded-none bg-[#FCFCFA] font-sans text-[13px] font-light tracking-[0.02em] text-[#0A1628]">
-                      <SelectValue placeholder="Select piece..." />
+                    <SelectTrigger className={selectClasses}>
+                      <SelectValue placeholder="Piece Type *" />
                     </SelectTrigger>
                     <SelectContent>
                       {config.pieceTypes.map((item) => (
@@ -299,15 +274,12 @@ export default function BespokeForm({ onSuccess, initialConfig }: BespokeFormPro
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-[9px] font-normal uppercase tracking-[0.28em] text-[#292727]" htmlFor="b-stone">
-                    Preferred Stone
-                  </label>
                   <Select
                     value={form.stone}
                     onValueChange={setDropdown('stone')}
                   >
-                    <SelectTrigger className="rounded-none bg-[#FCFCFA] font-sans text-[13px] font-light tracking-[0.02em] text-[#0A1628]">
-                      <SelectValue placeholder="Stone preference..." />
+                    <SelectTrigger className={selectClasses}>
+                      <SelectValue placeholder="Preferred Stone" />
                     </SelectTrigger>
                     <SelectContent>
                       {config.stoneOptions.map((item) => (
@@ -320,15 +292,12 @@ export default function BespokeForm({ onSuccess, initialConfig }: BespokeFormPro
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-[9px] font-normal uppercase tracking-[0.28em] text-[#292727]" htmlFor="b-carat">
-                    Approx. Carat
-                  </label>
                   <Select
                     value={form.carat}
                     onValueChange={setDropdown('carat')}
                   >
-                    <SelectTrigger className="rounded-none bg-[#FCFCFA] font-sans text-[13px] font-light tracking-[0.02em] text-[#0A1628]">
-                      <SelectValue placeholder="Select size..." />
+                    <SelectTrigger className={selectClasses}>
+                      <SelectValue placeholder="Approx. Carat" />
                     </SelectTrigger>
                     <SelectContent>
                       {config.caratOptions.map((item) => (
@@ -341,15 +310,12 @@ export default function BespokeForm({ onSuccess, initialConfig }: BespokeFormPro
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-[9px] font-normal uppercase tracking-[0.28em] text-[#292727]" htmlFor="b-metal">
-                    Preferred Metal
-                  </label>
                   <Select
                     value={form.metal}
                     onValueChange={setDropdown('metal')}
                   >
-                    <SelectTrigger className="rounded-none bg-[#FCFCFA] font-sans text-[13px] font-light tracking-[0.02em] text-[#0A1628]">
-                      <SelectValue placeholder="Select metal..." />
+                    <SelectTrigger className={selectClasses}>
+                      <SelectValue placeholder="Preferred Metal" />
                     </SelectTrigger>
                     <SelectContent>
                       {config.metalOptions.map((item) => (
@@ -362,32 +328,28 @@ export default function BespokeForm({ onSuccess, initialConfig }: BespokeFormPro
                 </div>
 
                 <div className="col-span-2 max-md:col-span-1">
-                  <label className="mb-2 block text-[9px] font-normal uppercase tracking-[0.28em] text-[#292727]" htmlFor="b-message">
-                    Describe Your Vision
-                  </label>
                   <textarea
                     id="b-message"
                     rows={4}
                     required
                     value={form.message}
-                    onChange={set('message')}
-                    placeholder="Design ideas, inspiration, occasion, budget range, timeline..."
-                    className="min-h-[100px] w-full resize-y border border-[rgba(10,22,40,0.10)] bg-[#FAFBFD] px-4 py-3.5 font-sans text-[13px] font-light tracking-[0.02em] text-[#0A1628] transition-all duration-300 focus:border-[#0A1628] focus:bg-white focus:outline-none"
+                    onChange={setTextArea('message')}
+                    placeholder="Describe Your Vision *"
+                    className="min-h-[128px] w-full resize-y border border-[#858585] bg-white px-[22px] py-5 font-[family-name:var(--font-family-montserrat)] text-[18px] font-normal text-[#111111] outline-none placeholder:font-medium placeholder:text-[#707070] focus:border-black"
                   />
                 </div>
               </div>
 
-              <div className="mt-5 flex flex-wrap items-center justify-between gap-4 border-t border-[rgba(10,22,40,0.10)] pt-6">
-                <p className="text-[10px] tracking-[0.04em] text-[#292727]">
+              <div className="mt-5 flex flex-wrap items-center justify-between gap-4 border-t border-black/10 pt-6">
+                <p className="text-[13px] text-black/60">
                   {config.settings.footer_note}
                 </p>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="group relative inline-flex cursor-pointer items-center gap-2.5 overflow-hidden border-none bg-[#0A1628] px-[34px] py-4 text-[10px] font-normal uppercase tracking-[0.28em] text-[#FAFBFD] transition-all duration-400 hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(10,22,40,0.18)]"
+                  className="inline-flex h-12 cursor-pointer items-center justify-center border-0 bg-black px-6 text-sm font-medium text-white transition hover:bg-black/80 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  <span className="absolute inset-0 z-0 translate-y-full bg-[#0A1628] transition-transform duration-[450ms] ease-[cubic-bezier(0.77,0,0.18,1)] group-hover:translate-y-0" />
-                  <span className="relative z-10">{submitting ? 'Submitting...' : 'Submit Enquiry'}</span>
+                  {submitting ? 'Submitting...' : 'Submit Enquiry'}
                 </button>
               </div>
             </form>

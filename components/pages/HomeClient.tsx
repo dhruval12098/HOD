@@ -7,9 +7,6 @@ import Link from 'next/link';
 import Hero from '@/components/home/Hero';
 import HomeTrustStripe from '@/components/home/HomeTrustStripe';
 import ShopByCategory from '@/components/home/ShopByCategory';
-import TestimonialMarquee from '@/components/home/TestimonialMarquee';
-import TrustedPartnersMarquee from '@/components/home/TrustedPartnersMarquee';
-import Certifications from '@/components/home/Certifications';
 import ViewportDeferred from '@/components/home/ViewportDeferred';
 import { posts } from '@/lib/data/blog-posts';
 import type { BlogPost } from '@/lib/data/blog-posts';
@@ -21,12 +18,8 @@ import type {
   HomeBestSellerSection,
   HomeBespokeShowcaseSection,
   HomeDiscoverItem,
-  HomeDiamondInfoConfig,
-  HomeDiamondInfoItem,
   HomeHipHopSection,
   HomeInstagramReelsData,
-  HomeMarqueeData,
-  HomeTrustedPartnersData,
 } from '@/lib/home-data';
 import type { ShopByCategoryData } from '@/lib/shop-by-category';
 import FreeGiftOfferBanner from '@/components/home/FreeGiftOfferBanner';
@@ -38,7 +31,6 @@ const BestSellers = dynamic(() => import('@/components/home/BestSellers'), { loa
 const CollectionShowcase = dynamic(() => import('@/components/home/CollectionShowcase'), { loading: () => null });
 const BespokeShowcase = dynamic(() => import('@/components/home/BespokeShowcase'), { loading: () => null });
 const InstagramReels = dynamic(() => import('@/components/home/InstagramReels'), { loading: () => null });
-const DiamondInfoSequence = dynamic(() => import('@/components/home/DiamondInfoSequence'), { loading: () => null });
 const Newsletter = dynamic(() => import('@/components/home/Newsletter'), { loading: () => null });
 const DeferredBlogGrid = dynamic(() => import('@/components/blog/BlogGrid'), { loading: () => null });
 
@@ -79,10 +71,6 @@ export default function HomeClient({
   collectionPageConfig,
   bespokeShowcaseSection,
   instagramReels,
-  diamondInfoItems = [],
-  diamondInfoConfig,
-  marqueeData,
-  trustedPartnersData,
   bestSellerSection,
   bestSellerProducts = [],
   giftPromotion,
@@ -95,10 +83,6 @@ export default function HomeClient({
   collectionPageConfig: CollectionPageConfig
   bespokeShowcaseSection: HomeBespokeShowcaseSection
   instagramReels: HomeInstagramReelsData
-  diamondInfoItems?: HomeDiamondInfoItem[]
-  diamondInfoConfig?: HomeDiamondInfoConfig
-  marqueeData: HomeMarqueeData
-  trustedPartnersData?: HomeTrustedPartnersData
   bestSellerSection: HomeBestSellerSection
   bestSellerProducts?: HomeBestSellerProduct[]
   giftPromotion: StorefrontPromotion | null
@@ -177,9 +161,6 @@ export default function HomeClient({
           ) : null}
           <InstagramReels data={instagramReels} />
           <FreeGiftOfferBanner promotion={giftPromotion} />
-          {/* <TrustedPartnersMarquee data={trustedPartnersData} /> */}
-          {/* <TestimonialMarquee initialData={marqueeData} /> */}
-          {/* <Certifications /> */}
           {showDeferredSections ? (
             <section aria-labelledby="home-blogs-heading" className="section-rhythm bg-[var(--color-brand-accent,#fff)] px-[var(--space-2)] sm:px-[var(--space-3)] lg:px-[var(--space-4)]">
               <div className="w-full">
@@ -196,11 +177,6 @@ export default function HomeClient({
           ) : null}
       </>
       {/* {hiphopSection.is_enabled ? <HipHopShowcase initialSection={hiphopSection} /> : null} */}
-      {/* About Us video-led section; uncomment to restore:
-          <ViewportDeferred minHeight={520}>
-            <DiamondInfoSequence items={diamondInfoItems} config={diamondInfoConfig} />
-          </ViewportDeferred>
-      */}
       {/* <Newsletter onToast={handleToast} /> */}
 
       {isEnquireOpen && <EnquireModal open={isEnquireOpen} piece={enquireGemName} onClose={handleEnquireClose} />}

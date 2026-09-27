@@ -8,6 +8,29 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 const bucket = process.env.NEXT_PUBLIC_SUPABASE_COLLECTION_BUCKET ?? 'hod'
 
+type PortfolioCategory = {
+  id: string
+  name: string
+  slug: string
+  image_path: string | null
+  display_order: number
+}
+
+type PortfolioItem = {
+  id: string
+  title: string
+  tag: string
+  category_id: string
+  media_type: 'image' | 'video'
+  media_path: string | null
+  thumbnail_path: string | null
+  gem_style: string | null
+  gem_color: string | null
+  dark_theme: boolean
+  short_description: string | null
+  display_order: number
+}
+
 function buildPublicUrl(path: string | null) {
   if (!path || !supabaseUrl) return ''
   if (path.startsWith('http://') || path.startsWith('https://')) return path
@@ -23,7 +46,7 @@ export async function GET() {
   const [categoriesResult, itemsResult] = await Promise.all([
     supabase
       .from('bespoke_portfolio_categories')
-      .select('id, name, slug, display_order')
+      .select('id, name, slug, image_path, display_order')
       .eq('status', 'active')
       .order('display_order', { ascending: true }),
     supabase
@@ -41,16 +64,16 @@ export async function GET() {
     return NextResponse.json({ error: itemsResult.error.message }, { status: 500 })
   }
 
-  const categories = categoriesResult.data ?? []
+  const categories = (categoriesResult.data ?? []) as PortfolioCategory[]
   const categoryMap = new Map(categories.map((category) => [category.id, category]))
-  const items = (itemsResult.data ?? [])
-    .map((item: any) => ({
+  const items = ((itemsResult.data ?? []) as PortfolioItem[])
+    .map((item) => ({
       ...item,
       category: categoryMap.get(item.category_id) ?? null,
       media_url: buildPublicUrl(item.media_path),
       thumbnail_url: buildPublicUrl(item.thumbnail_path),
     }))
-    .filter((item: any) => item.category)
+    .filter((item) => item.category)
 
   return NextResponse.json({
     categories,

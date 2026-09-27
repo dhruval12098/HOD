@@ -89,10 +89,6 @@ export default async function Home() {
     collectionPageConfig,
     bespokeShowcaseSection,
     instagramReels,
-    diamondInfoItems,
-    diamondInfoConfig,
-    marqueeData,
-    trustedPartnersData,
     bestSellerSection,
     bestSellerProducts,
   } = await getHomePageData();
@@ -121,10 +117,6 @@ export default async function Home() {
       collectionPageConfig={collectionPageConfig}
       bespokeShowcaseSection={bespokeShowcaseSection}
       instagramReels={instagramReels}
-      diamondInfoItems={diamondInfoItems}
-      diamondInfoConfig={diamondInfoConfig}
-      marqueeData={marqueeData}
-      trustedPartnersData={trustedPartnersData}
       bestSellerSection={bestSellerSection}
       bestSellerProducts={bestSellerProducts}
       giftPromotion={giftPromotion}

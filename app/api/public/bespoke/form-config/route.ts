@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-export const dynamic = 'force-static'
-export const revalidate = 300
+export const dynamic = 'force-dynamic'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -44,5 +43,5 @@ export async function GET() {
     stoneOptions: lists[2].data ?? [],
     caratOptions: lists[3].data ?? [],
     metalOptions: lists[4].data ?? [],
-  })
+  }, { headers: { 'Cache-Control': 'no-store, max-age=0' } })
 }
