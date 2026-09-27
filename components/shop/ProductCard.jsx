@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useCurrency } from "@/context/CurrencyContext";
 import { METAL_META } from "@/lib/data/product-config";
@@ -199,6 +199,7 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
   const [failedImageUrl, setFailedImageUrl] = useState("");
   const [failedHoverImageUrl, setFailedHoverImageUrl] = useState("");
   const [mobileImageIndex, setMobileImageIndex] = useState(0);
+  const touchStartRef = useRef({ x: 0, y: 0 });
 
   const selectedMetal = selectedMetalSlug ? metalSwatches.find((metal) => metal.slug === selectedMetalSlug) : null;
   const activeMetal = selectedMetal || metalSwatches[0] || null;
@@ -244,6 +245,19 @@ export default function ProductCard({ product, wishlisted, onWishlist, onEnquire
           justifyContent: "center",
           overflow: "hidden",
           background: isDark ? "linear-gradient(135deg, #0A1628 0%, #111F34 100%)" : "#F7F7F7",
+        }}
+        onTouchStart={(event) => {
+          if (!hasMobileImageCarousel) return;
+          const touch = event.touches[0];
+          touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+        }}
+        onTouchEnd={(event) => {
+          if (!hasMobileImageCarousel) return;
+          const touch = event.changedTouches[0];
+          const deltaX = touch.clientX - touchStartRef.current.x;
+          const deltaY = touch.clientY - touchStartRef.current.y;
+          if (Math.abs(deltaX) < 24 || Math.abs(deltaX) < Math.abs(deltaY)) return;
+          setMobileImageIndex(deltaX < 0 ? 1 : 0);
         }}
       >
         <button

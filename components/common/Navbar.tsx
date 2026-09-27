@@ -633,20 +633,10 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
               }}
               aria-label="Menu"
               aria-expanded={menuOpen}
-              className="flex h-9 w-9 cursor-pointer flex-col justify-center gap-[5px] border-none bg-transparent p-1"
+              className="flex h-9 w-9 cursor-pointer flex-col items-center justify-center gap-[5px] border-none bg-transparent p-1"
             >
-              <span
-                className="block h-[1.5px] w-full origin-center rounded-sm bg-[#0A1628] transition-transform duration-350"
-                style={{ transform: menuOpen ? 'translateY(6.5px) rotate(45deg)' : 'none' }}
-              />
-              <span
-                className="ml-auto block h-[1.5px] rounded-sm bg-[#0A1628] transition-opacity duration-350"
-                style={{ width: '70%', opacity: menuOpen ? 0 : 1 }}
-              />
-              <span
-                className="block h-[1.5px] origin-center rounded-sm bg-[#0A1628] transition-transform duration-350"
-                style={{ transform: menuOpen ? 'translateY(-6.5px) rotate(-45deg)' : 'none', width: '100%' }}
-              />
+              <span className="block h-[1.5px] w-full rounded-sm bg-[#0A1628]" />
+              <span className="block h-[1.5px] w-full rounded-sm bg-[#0A1628]" />
             </button>
           </div>
           <Link

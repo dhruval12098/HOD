@@ -46,7 +46,7 @@ export default function BespokeShowcase({
     <section className="relative flex min-h-0 items-center justify-center overflow-hidden bg-[var(--color-brand-accent,#fff)] px-0 py-0">
       <div className="relative z-[2] w-full">
         <div className="relative overflow-hidden rounded-none border-0 bg-[var(--color-brand-primary,#000)] shadow-none backdrop-blur-0">
-          <div className="relative h-[360px] sm:hidden">
+          <div className="relative h-[520px] sm:hidden">
             {mobileMediaUrl ? renderMedia(mobileMediaUrl, isMobileVideo) : null}
           </div>
           <div className="relative hidden aspect-[5/2] sm:block">

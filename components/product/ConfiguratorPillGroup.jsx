@@ -12,25 +12,17 @@
  */
 export default function ConfiguratorPillGroup({
   label,
-  selectedLabel,
   options,
   active,
   onChange,
   goldActive = false,
-  hideSelectedLabel = false,
 }) {
   return (
     <div className="mb-5">
-      {/* Row heading */}
-      <div className="flex justify-between items-baseline mb-[10px]">
+      <div className="mb-[10px]">
         <span className="font-sans text-[14px] font-semibold text-[var(--color-brand-primary,#000000)]">
           {label}
         </span>
-        {!hideSelectedLabel ? (
-          <span className="font-sans text-[13px] font-medium text-[var(--color-brand-primary,#000000)] tracking-[0.01em]">
-            {selectedLabel}
-          </span>
-        ) : null}
       </div>
 
       {/* Pills */}

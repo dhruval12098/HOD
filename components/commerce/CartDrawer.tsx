@@ -166,7 +166,7 @@ export default function CartDrawer() {
             </div>
           ) : resolvedItems.length ? (
             <>
-              <div className="border-b border-black/10 px-4 py-3 text-[11px] text-black/65 sm:px-5">Delivery</div>
+              <div className="px-4 py-3 text-[11px] text-black/65 sm:px-5">Delivery</div>
               <div className="divide-y divide-black/10 px-4 sm:px-5">
                 {resolvedItems.map(({ item, product }) => {
                   const imageUrl = item.selection.resolvedImageUrl || product.imageUrl

@@ -353,11 +353,24 @@ export default function ProductGrid({ products, sourceProducts = products, initi
           }
           .shop-product-card-primary-image,
           .shop-product-card-hover-image {
-            opacity: 0;
+            opacity: 1;
+            transition: transform 360ms ease;
+          }
+          .shop-product-card-primary-image {
+            transform: translateX(-100%);
+          }
+          .shop-product-card-hover-image {
+            transform: translateX(100%);
           }
           .shop-product-card-primary-image.shop-product-card-mobile-active,
           .shop-product-card-hover-image.shop-product-card-mobile-active {
-            opacity: 1;
+            transform: translateX(0);
+          }
+          @media (prefers-reduced-motion: reduce) {
+            .shop-product-card-primary-image,
+            .shop-product-card-hover-image {
+              transition: none;
+            }
           }
         }
       `}</style>

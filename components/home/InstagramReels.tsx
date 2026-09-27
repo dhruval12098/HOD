@@ -22,6 +22,7 @@ function ReelCard({ item }: { item: HomeInstagramReelsData['items'][number] }) {
         scrolling="no"
         className="instagram-reel-frame absolute left-1/2 top-0 border-0 bg-black"
       />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-12 bg-black sm:hidden" />
     </article>
   )
 }

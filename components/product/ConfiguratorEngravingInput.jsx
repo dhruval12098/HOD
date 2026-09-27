@@ -10,26 +10,11 @@ export default function ConfiguratorEngravingInput({ label = 'Free Engraving', m
   const inputId = useId();
   const counterId = `${inputId}-counter`;
 
-  const selectedLabel =
-    mode === 'custom' && text.trim()
-      ? `"${text}"`
-      : mode === 'custom'
-        ? 'Custom text'
-        : 'None';
-
   return (
     <div className="mb-5">
-      <div className="mb-[10px] flex items-baseline justify-between">
+      <div className="mb-[10px]">
         <span className="font-sans text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--color-brand-primary,#000000)]">
           {label}
-        </span>
-        <span className="font-sans text-[13px] font-medium tracking-[0.01em] text-[var(--color-brand-primary,#000000)]">
-          {selectedLabel}
-          {mode === 'none' && (
-            <span className="ml-2 font-sans text-[10px] font-normal tracking-[0.08em] text-[#7F8898]">
-              Complimentary
-            </span>
-          )}
         </span>
       </div>
 

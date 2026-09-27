@@ -71,7 +71,7 @@ export default function ConfiguratorMaterialButtons({ label = 'Metal', options, 
         <b className="font-semibold">{label}</b>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
+      <div className="grid grid-cols-3 gap-2">
         {options.map((option, index) => {
           const optionLabel = option.label || option.name || option.value;
           const { baseName } = getMaterialParts(optionLabel, option.color);
@@ -85,7 +85,7 @@ export default function ConfiguratorMaterialButtons({ label = 'Metal', options, 
                 if (!isActive) onChange(option.value);
               }}
               className={[
-                'flex h-14 w-full cursor-pointer flex-row items-center justify-center gap-2 rounded-none bg-white px-3 py-2 text-[#000] transition-colors sm:h-14 sm:min-w-[150px] sm:flex-1',
+                'flex h-14 w-full cursor-pointer flex-row items-center justify-center gap-2 rounded-none bg-white px-3 py-2 text-[#000] transition-colors',
                 isActive
                   ? 'border-2 border-[#000]'
                   : 'border border-[#D1D1D1] hover:bg-[#F5F5F5]',

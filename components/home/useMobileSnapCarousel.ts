@@ -7,25 +7,43 @@ const AUTOPLAY_DELAY = 5000
 export function useMobileSnapCarousel() {
   const scrollerRef = useRef<HTMLDivElement>(null)
   const lastInteractionRef = useRef(0)
+  const isVisibleRef = useRef(false)
+  const hasInteractedRef = useRef(false)
   const dragRef = useRef({ active: false, moved: false, startX: 0, startLeft: 0 })
 
   const pauseAutoplay = useCallback(() => {
+    hasInteractedRef.current = true
     lastInteractionRef.current = Date.now()
   }, [])
 
   useEffect(() => {
     lastInteractionRef.current = Date.now()
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const scroller = scrollerRef.current
+    if (!scroller) return
+
+    const observer = new IntersectionObserver(([entry]) => {
+      isVisibleRef.current = entry.isIntersecting
+    }, { rootMargin: '160px 0px', threshold: 0.01 })
+    observer.observe(scroller)
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return () => observer.disconnect()
+    }
+
     const timer = window.setInterval(() => {
-      const scroller = scrollerRef.current
-      if (!scroller || dragRef.current.active || Date.now() - lastInteractionRef.current < AUTOPLAY_DELAY) return
-      const cards = Array.from(scroller.children) as HTMLElement[]
+      const currentScroller = scrollerRef.current
+      if (!currentScroller || !isVisibleRef.current || hasInteractedRef.current || dragRef.current.active || Date.now() - lastInteractionRef.current < AUTOPLAY_DELAY) return
+      const cards = Array.from(currentScroller.children) as HTMLElement[]
       if (cards.length < 2) return
-      const nextCard = cards.find((card) => card.offsetLeft > scroller.scrollLeft + 8)
-      scroller.scrollTo({ left: nextCard?.offsetLeft ?? 0, behavior: 'smooth' })
+      const nextCard = cards.find((card) => card.offsetLeft > currentScroller.scrollLeft + 8)
+      currentScroller.scrollTo({ left: nextCard?.offsetLeft ?? 0, behavior: 'smooth' })
       lastInteractionRef.current = Date.now()
     }, 250)
-    return () => window.clearInterval(timer)
+
+    return () => {
+      observer.disconnect()
+      window.clearInterval(timer)
+    }
   }, [])
 
   const onPointerDown = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {

@@ -334,7 +334,7 @@ export default function Footer({ navItems = [] }: { navItems?: NavbarRenderItem[
         <div className="flex min-w-0 flex-col">
           <Link
             href="/"
-            className="inline-block text-[clamp(28px,9vw,88px)] font-bold leading-none tracking-[0.06em] text-white no-underline transition-opacity hover:opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+            className="inline-block text-[clamp(20px,6.3vw,62px)] font-bold leading-none tracking-[0.06em] text-white no-underline transition-opacity hover:opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
             style={{ fontFamily: 'var(--font-family-logo1, Cinzel, serif)', fontWeight: 600, fontVariationSettings: '"wght" 600', fontSynthesis: 'none' }}
           >
             House of Diams

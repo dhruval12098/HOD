@@ -251,7 +251,7 @@ export default function ShopHero({
         >
         <Link
           href={bannerHref}
-          className="group relative aspect-[2/3] h-auto w-[36vw] min-w-[140px] max-w-[256px] shrink-0 snap-start overflow-hidden bg-[#F2F1EE] text-white no-underline sm:h-[320px] sm:w-[540px] sm:aspect-auto"
+          className="group relative aspect-[2/3] h-auto w-[36vw] min-w-[140px] max-w-[256px] shrink-0 snap-start overflow-hidden bg-[#F2F1EE] text-white no-underline lg:h-[320px] lg:w-[378px] lg:max-w-none lg:aspect-auto"
         >
           {bannerImage ? (
             <picture>
@@ -262,7 +262,7 @@ export default function ShopHero({
             <div className="h-full w-full bg-[linear-gradient(145deg,#172238,#0A1628)]" aria-hidden="true" />
           )}
           <span className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/5 to-transparent" aria-hidden="true" />
-          <span className="absolute inset-x-0 bottom-0 p-5 text-left font-[family-name:var(--font-family-primary)] text-[15px] font-semibold uppercase tracking-[0.08em] [text-shadow:0_1px_4px_rgba(0,0,0,0.8)]">
+          <span className="absolute inset-x-0 bottom-0 p-5 text-left font-[family-name:var(--font-family-primary)] text-[15px] font-semibold uppercase tracking-[0.08em] [text-shadow:0_1px_4px_rgba(0,0,0,0.8)] lg:text-[12px] lg:font-medium">
             {bannerLabel}
           </span>
         </Link>

@@ -175,7 +175,7 @@ export default function ProductTabs({
                           <div className="space-y-3">
                             {accordionDetailsRows.map((row, index) => (
                               <div key={`${row.label}-${index}`} className="grid grid-cols-[minmax(120px,0.9fr)_minmax(0,1.2fr)] gap-5 font-sans text-[13px] leading-[1.35]">
-                <div className="text-[#40444b]">{row.label}</div>
+                                <div className="text-[#40444b]">{row.label}</div>
                                 <div className="font-medium text-[#292727]">{row.value}</div>
                               </div>
                             ))}

@@ -129,7 +129,7 @@ export default function CartClient({ summaryInfo }: { summaryInfo?: ReactNode })
 
   return (
     <main className="min-h-screen bg-white px-5 pb-20 pt-10 text-[var(--color-brand-primary,#000000)] sm:px-8 sm:pt-14 lg:px-[10vw] 2xl:px-[200px]">
-      <header className="relative flex justify-center border-b border-black/15 pb-6 text-center">
+      <header className="relative flex justify-center pb-6 text-center">
         <div className="flex flex-wrap items-baseline justify-center gap-x-3 gap-y-1">
           <h1 className="font-[family-name:var(--font-family-primary)] text-[clamp(1.75rem,3vw,2.75rem)] font-medium leading-none">My Bag</h1>
           <span className="font-[family-name:var(--font-family-secondary)] text-[14px] text-black/55">({totalItems} {totalItems === 1 ? 'item' : 'items'})</span>

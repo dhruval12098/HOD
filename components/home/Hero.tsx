@@ -56,6 +56,11 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
   const [activeSlide, setActiveSlide] = useState(0);
   const [contentResolved, setContentResolved] = useState(Boolean(initialContent));
   const hasSignaledPrimaryVisualRef = useRef(false);
+  const heroRef = useRef<HTMLElement>(null);
+  const isHeroVisibleRef = useRef(false);
+  const hasInteractedRef = useRef(false);
+  const pointerStartXRef = useRef<number | null>(null);
+  const pointerMovedRef = useRef(false);
 
   const signalPrimaryVisualReady = () => {
     if (hasSignaledPrimaryVisualRef.current) return;
@@ -118,12 +123,43 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
   useEffect(() => {
     if (!content.slider_enabled || slides.length <= 1) return;
 
+    const hero = heroRef.current;
+    if (!hero) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      isHeroVisibleRef.current = entry.isIntersecting;
+    }, { rootMargin: '160px 0px', threshold: 0.01 });
+    observer.observe(hero);
+
     const intervalId = window.setInterval(() => {
+      if (!isHeroVisibleRef.current || hasInteractedRef.current) return;
       setActiveSlide((current) => (current + 1) % slides.length);
     }, 4500);
 
-    return () => window.clearInterval(intervalId);
+    return () => {
+      observer.disconnect();
+      window.clearInterval(intervalId);
+    };
   }, [content.slider_enabled, slides]);
+
+  const handleHeroPointerDown = (event: React.PointerEvent<HTMLElement>) => {
+    hasInteractedRef.current = true;
+    pointerStartXRef.current = event.clientX;
+    pointerMovedRef.current = false;
+  };
+
+  const handleHeroPointerMove = (event: React.PointerEvent<HTMLElement>) => {
+    if (pointerStartXRef.current === null) return;
+    if (Math.abs(event.clientX - pointerStartXRef.current) > 12) pointerMovedRef.current = true;
+  };
+
+  const handleHeroPointerUp = (event: React.PointerEvent<HTMLElement>) => {
+    if (pointerStartXRef.current !== null && pointerMovedRef.current && slides.length > 1) {
+      const distance = event.clientX - pointerStartXRef.current;
+      setActiveSlide((current) => distance < 0 ? (current + 1) % slides.length : (current - 1 + slides.length) % slides.length);
+    }
+    pointerStartXRef.current = null;
+    pointerMovedRef.current = false;
+  };
 
   const [line1, ...rest] = content.headline.split(' ');
   const line2 = rest.join(' ');
@@ -138,6 +174,11 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
 
   return (
     <section
+      ref={heroRef}
+      onPointerDown={handleHeroPointerDown}
+      onPointerMove={handleHeroPointerMove}
+      onPointerUp={handleHeroPointerUp}
+      onPointerCancel={handleHeroPointerUp}
       className={[
         'relative flex items-center justify-center overflow-hidden',
         hasImageHero
@@ -260,7 +301,7 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
 
                     {currentSlide.subtitle.trim() ? (
                       <p
-                        className="mx-auto mt-[var(--space-2)] max-w-[calc(100vw-2rem)] text-[clamp(0.75rem,2.8vw,0.95rem)] leading-[1.55] text-white/90 sm:mx-0 sm:max-w-[38rem] sm:text-[clamp(0.9rem,1.15vw,1.1rem)]"
+                        className="mx-auto mt-[var(--space-2)] max-w-[calc(100vw-2rem)] text-center text-[clamp(0.75rem,2.8vw,0.95rem)] leading-[1.55] text-white/90 sm:mx-0 sm:max-w-[38rem] sm:text-left sm:text-[clamp(0.9rem,1.15vw,1.1rem)]"
                         style={{ fontFamily: 'var(--font-family-secondary)' }}
                       >
                         {currentSlide.subtitle}
