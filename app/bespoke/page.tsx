@@ -45,14 +45,17 @@ export default async function BespokePage() {
 
   const portfolioCategories = categoriesResult.data ?? [];
   const categoryMap = new Map(portfolioCategories.map((category) => [category.id, category]));
-  const portfolioItems = (portfolioItemsResult.data ?? [])
-    .map((item) => ({
+  const portfolioItems = (portfolioItemsResult.data ?? []).flatMap((item) => {
+    const category = categoryMap.get(item.category_id);
+    if (!category) return [];
+
+    return [{
       ...item,
-      category: categoryMap.get(item.category_id) ?? null,
+      category,
       media_url: buildPublicUrl(item.media_path),
       thumbnail_url: buildPublicUrl(item.thumbnail_path),
-    }))
-    .filter((item) => item.category);
+    }];
+  });
 
   const formConfig = {
     settings: {

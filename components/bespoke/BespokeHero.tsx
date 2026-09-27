@@ -189,17 +189,18 @@ export default function BespokeHero({ onEnquireClick, initialHero = null, initia
   // setting remains intact, but slides are rendered as collection options
   // instead of a standalone full-width campaign banner.
   const hasImageHero = true;
-  const heroCards = sortedSlides.length ? sortedSlides.map((slide) => ({
+  const primaryCtaLabel = hero.primary_cta_label || 'Start Your Commission';
+  const heroCards: RailCard[] = sortedSlides.length ? sortedSlides.map((slide) => ({
     id: `${slide.sort_order}-${slide.image_path}`,
     imagePath: slide.image_path,
     mobileImagePath: slide.mobile_image_path,
-    label: slide.button_text || hero.primary_cta_label,
+    label: slide.button_text || primaryCtaLabel,
     href: slide.button_link,
   })) : [{
     id: 'bespoke-fallback',
     imagePath: '',
     mobileImagePath: '',
-    label: hero.primary_cta_label,
+    label: primaryCtaLabel,
   }];
   const railCards = categoryCards.length ? categoryCards : heroCards;
   const scrollRail = (direction: number) => {
