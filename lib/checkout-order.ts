@@ -417,13 +417,18 @@ export async function prepareCheckoutPayload({
     return { error: 'Anniversary date must be a valid date.', status: 400 as const }
   }
 
-  const chargeQuote = await buildCheckoutChargeQuote({
-    subtotalUsd: subtotalAmount,
-    gstUsd: gstAmount,
-    couponDiscountUsd: couponDiscountAmount,
-    country: resolvedCustomer.country,
-    currencyCode: payload?.currencyCode || null,
-  })
+  let chargeQuote: Awaited<ReturnType<typeof buildCheckoutChargeQuote>>
+  try {
+    chargeQuote = await buildCheckoutChargeQuote({
+      subtotalUsd: subtotalAmount,
+      gstUsd: gstAmount,
+      couponDiscountUsd: couponDiscountAmount,
+      country: resolvedCustomer.country,
+      currencyCode: payload?.currencyCode || null,
+    })
+  } catch {
+    return { error: 'Live exchange pricing is temporarily unavailable. Please try again shortly.', status: 503 as const }
+  }
 
   return {
     data: {
@@ -624,7 +629,7 @@ export async function markOrderPaymentFailed({
   const { data: order, error: orderError } = await query.maybeSingle()
   if (orderError || !order) return null
 
-  await adminClient
+  const { data: failedOrder, error: failureUpdateError } = await adminClient
     .from('orders')
     .update({
       payment_status: 'failed',
@@ -646,6 +651,11 @@ export async function markOrderPaymentFailed({
       },
     })
     .eq('id', order.id)
+    .eq('payment_status', 'pending')
+    .select('id')
+    .maybeSingle()
+
+  if (failureUpdateError || !failedOrder) return order.id as string
 
   // TODO(sql-audit): Review release_order_inventory_reservation for ambiguous column references in its SQL definition.
   const { error: releaseError } = await adminClient

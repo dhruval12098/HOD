@@ -4,6 +4,7 @@ import { enforceRateLimit } from '@/lib/rate-limit'
 import { getGuestCheckoutTokenHash } from '@/lib/guest-checkout'
 import { finalizePaidOrder } from '@/lib/checkout-order'
 import { ensureRazorpayPaymentCaptured, findCapturedOrAuthorizedPayment } from '@/lib/razorpay'
+import { toRazorpayAmountInSubunits } from '@/lib/payment-subunits'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -63,7 +64,7 @@ export async function GET(request: Request) {
         const payment = await ensureRazorpayPaymentCaptured({
           paymentId: candidate.id,
           orderId: order.razorpay_order_id,
-          amountInSubunits: Math.round(Number(order.payment_amount || 0) * 100),
+          amountInSubunits: toRazorpayAmountInSubunits(Number(order.payment_amount || 0), String(order.payment_currency || '')),
           currency: String(order.payment_currency || '').toUpperCase(),
         })
         const finalized = await finalizePaidOrder({

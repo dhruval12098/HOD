@@ -173,7 +173,8 @@ export async function CategoryCollectionPageContent({
       productLane: resolvedProductLane,
       filters: productFilters,
       sort,
-      page: typeof query.page === 'string' ? Math.max(1, Number.parseInt(query.page, 10) || 1) : 1,
+      page: 1,
+      pageSize: 24,
     }),
     getStorefrontFilterGroups(resolvedProductLane, category.id),
     getCategoryReferenceData(),
@@ -331,6 +332,7 @@ export async function CategoryCollectionPageContent({
         filterGroups={filterGroups}
         totalCount={productPage.totalCount}
         serverPaginated
+        categoryLoadMore
         categoryName={category.name}
         categoryFaqItems={categoryFaqItems}
         moreToExploreCategories={moreToExploreCategories}

@@ -11,12 +11,25 @@ function buildWhatsappHref(number: string) {
 
 export default function FloatingWidgets() {
   const [showBackTop, setShowBackTop] = useState(false);
+  const [isScrolling, setIsScrolling] = useState(false);
   const [whatsappHref, setWhatsappHref] = useState(buildWhatsappHref(fallbackWhatsappNumber));
 
   useEffect(() => {
-    const onScroll = () => setShowBackTop(window.scrollY > 400);
+    let scrollEndTimer: ReturnType<typeof setTimeout> | undefined;
+
+    const onScroll = () => {
+      setShowBackTop(window.scrollY > 400);
+      setIsScrolling(true);
+
+      if (scrollEndTimer) clearTimeout(scrollEndTimer);
+      scrollEndTimer = setTimeout(() => setIsScrolling(false), 2000);
+    };
+
     window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      if (scrollEndTimer) clearTimeout(scrollEndTimer);
+    };
   }, []);
 
   useEffect(() => {
@@ -55,7 +68,7 @@ export default function FloatingWidgets() {
         style={{
           position: 'fixed',
           right: '24px',
-          bottom: '90px',
+          bottom: 'calc(148px + env(safe-area-inset-bottom))',
           width: '52px',
           height: '52px',
           borderRadius: 999,
@@ -64,8 +77,9 @@ export default function FloatingWidgets() {
           justifyContent: 'center',
           cursor: 'pointer',
           zIndex: 100,
-          opacity: showBackTop ? 1 : 0,
-          visibility: showBackTop ? 'visible' : 'hidden',
+          opacity: showBackTop && !isScrolling ? 1 : 0,
+          visibility: showBackTop && !isScrolling ? 'visible' : 'hidden',
+          pointerEvents: showBackTop && !isScrolling ? 'auto' : 'none',
           transition: 'all 0.4s',
           background: '#FFFFFF',
           color: '#000000',
@@ -103,7 +117,7 @@ export default function FloatingWidgets() {
         aria-label="Chat with us"
         style={{
           position: 'fixed',
-          bottom: '24px',
+          bottom: 'calc(72px + env(safe-area-inset-bottom))',
           right: '24px',
           width: '70px',
           height: '50px',
@@ -116,6 +130,9 @@ export default function FloatingWidgets() {
           cursor: 'pointer',
           zIndex: 100,
           textDecoration: 'none',
+          opacity: isScrolling ? 0 : 1,
+          visibility: isScrolling ? 'hidden' : 'visible',
+          pointerEvents: isScrolling ? 'none' : 'auto',
           boxShadow: '0 12px 30px rgba(0,0,0,0.28)',
           transition: 'all 0.3s',
         }}

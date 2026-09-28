@@ -4,6 +4,7 @@ import {
   normalizeCurrency,
   type SupportedCurrency,
 } from '@/lib/currency'
+import { roundChargeAmount } from '@/lib/payment-subunits'
 
 type ExchangeRateResult = {
   baseCurrency: 'USD'
@@ -19,6 +20,7 @@ type CachedExchangeRateResult = ExchangeRateResult & {
 
 const LIVE_CACHE_TTL_MS = 30 * 60 * 1000
 const FALLBACK_CACHE_TTL_MS = 60 * 1000
+const FIXER_REQUEST_TIMEOUT_MS = 8_000
 const FIXER_API_KEY = process.env.APILAYER_FIXER_API_KEY || process.env.FIXER_API_KEY
 const rateCache = new Map<string, CachedExchangeRateResult>()
 const reportedFallbackReasons = new Set<string>()
@@ -88,6 +90,7 @@ async function fetchFixerRates(targetCurrencies: SupportedCurrency[]) {
     `https://data.fixer.io/api/latest?access_key=${encodeURIComponent(FIXER_API_KEY)}&symbols=${encodeURIComponent(symbols.join(','))}`,
     {
       cache: 'no-store',
+      signal: AbortSignal.timeout(FIXER_REQUEST_TIMEOUT_MS),
       headers: {
         accept: 'application/json',
       },
@@ -231,12 +234,15 @@ export async function buildCheckoutChargeQuote(input: {
     currencyCode: input.currencyCode,
   })
   const exchange = await getUsdExchangeRate(currency)
+  if (currency !== 'USD' && exchange.source !== 'fixer') {
+    throw new Error('A live exchange rate is required before checkout can be charged in this currency.')
+  }
 
   const subtotalCharged = Number((input.subtotalUsd * exchange.rate).toFixed(2))
   const gstCharged = Number((input.gstUsd * exchange.rate).toFixed(2))
   const shippingCharged = Number(((input.shippingUsd || 0) * exchange.rate).toFixed(2))
   const couponDiscountCharged = Number(((input.couponDiscountUsd || 0) * exchange.rate).toFixed(2))
-  const totalCharged = Number((subtotalCharged + gstCharged + shippingCharged - couponDiscountCharged).toFixed(2))
+  const totalCharged = roundChargeAmount(subtotalCharged + gstCharged + shippingCharged - couponDiscountCharged, currency)
 
   return {
     baseCurrency: 'USD' as const,

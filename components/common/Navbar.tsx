@@ -31,7 +31,7 @@ type SearchItem = {
 
 async function loadSearchItems(query: string, signal?: AbortSignal): Promise<SearchItem[]> {
   const response = await fetch(`/api/public/products/search?q=${encodeURIComponent(query.trim())}`, {
-    cache: 'no-store',
+    cache: query.trim() ? 'no-store' : 'force-cache',
     signal,
   });
   const payload = await response.json().catch(() => null);
@@ -180,6 +180,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
   const searchRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchOptionRefs = useRef<Array<HTMLAnchorElement | null>>([]);
+  const defaultSearchItemsRef = useRef<SearchItem[] | null>(null);
   const megaCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prefetchedNavRoutesRef = useRef(new Set<string>());
 
@@ -242,12 +243,18 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
     if (!searchOpen) return;
     const controller = new AbortController();
     const query = searchQuery.trim();
+    if (!query && defaultSearchItemsRef.current) {
+      setSearchItems(defaultSearchItemsRef.current);
+      setSearchLoadState('ready');
+      return () => controller.abort();
+    }
     const delay = query ? 225 : 0;
     const timer = window.setTimeout(() => {
       setSearchLoadState('loading');
       void loadSearchItems(query, controller.signal)
         .then((items) => {
           if (controller.signal.aborted) return;
+          if (!query) defaultSearchItemsRef.current = items;
           setSearchItems(items);
           setSearchLoadState('ready');
           setActiveSearchIndex(-1);
@@ -264,6 +271,22 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
       controller.abort();
     };
   }, [searchOpen, searchQuery]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      void loadSearchItems('', controller.signal)
+        .then((items) => {
+          if (!controller.signal.aborted) defaultSearchItemsRef.current = items;
+        })
+        .catch(() => {});
+    }, 800);
+
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, []);
 
   useEffect(() => {
     if (!searchOpen) return;
@@ -428,7 +451,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
     router.refresh();
   };
 
-  const filteredSearchItems = useMemo(() => searchItems.slice(0, 12), [searchItems]);
+  const filteredSearchItems = useMemo(() => searchItems.slice(0, searchQuery.trim() ? 12 : 20), [searchItems, searchQuery]);
 
   useEffect(() => {
     if (activeSearchIndex < 0) return;
@@ -635,8 +658,8 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
               aria-expanded={menuOpen}
               className="flex h-9 w-9 cursor-pointer flex-col items-center justify-center gap-[5px] border-none bg-transparent p-1"
             >
-              <span className="block h-[1.5px] w-full rounded-sm bg-[#0A1628]" />
-              <span className="block h-[1.5px] w-full rounded-sm bg-[#0A1628]" />
+              <span className="block h-[2px] w-[18px] bg-[#0A1628]" />
+              <span className="block h-[2px] w-[18px] bg-[#0A1628]" />
             </button>
           </div>
           <Link
@@ -853,7 +876,18 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
                   />
                   {searchQuery ? <button type="button" onClick={() => { setSearchQuery(''); setActiveSearchIndex(-1); searchInputRef.current?.focus(); }} aria-label="Clear search" className="shrink-0 text-xl text-black/55 hover:text-black">×</button> : null}
                 </div>
-                <button type="button" onClick={closeSearch} className="shrink-0 text-[12px] text-[var(--color-brand-primary)] underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 sm:text-[13px]">Cancel</button>
+                <button
+                  type="button"
+                  onClick={closeSearch}
+                  aria-label="Back to browsing"
+                  className="inline-flex h-11 shrink-0 items-center gap-1.5 px-1 text-[12px] font-medium text-[var(--color-brand-primary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 lg:hidden"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M15 4L7 12L15 20" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  <span>Back</span>
+                </button>
+                <button type="button" onClick={closeSearch} className="hidden shrink-0 text-[13px] text-[var(--color-brand-primary)] underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 lg:inline-flex">Cancel</button>
               </div>
               <div className="mt-[var(--space-4)] flex items-center justify-between border-b border-black/10 pb-[var(--space-3)] text-[10px] font-semibold uppercase tracking-[0.18em] text-black/70 sm:text-[11px]">
                 <span>{searchQuery.trim() ? 'Products' : 'Explore jewellery'}</span>
@@ -866,7 +900,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
                 <div id="navbar-search-results" role="listbox" aria-label="Product search results" className="grid grid-cols-3 gap-x-3 gap-y-[var(--space-5)] py-[var(--space-5)] sm:grid-cols-4 sm:gap-x-5 lg:grid-cols-8">
                   {filteredSearchItems.map((item, index) => (
                     <Link key={item.dbId || item.slug} ref={(node) => { searchOptionRefs.current[index] = node; }} id={`navbar-search-option-${index}`} role="option" aria-selected={activeSearchIndex === index} href={`/shop/${item.slug}`} onMouseEnter={() => setActiveSearchIndex(index)} onClick={closeSearch} className="group min-w-0 rounded-sm text-center outline-none focus-visible:ring-2 focus-visible:ring-black/70">
-                      <span className="relative mx-auto flex aspect-square w-full max-w-[112px] items-center justify-center overflow-hidden rounded-full border border-black/5 bg-[var(--color-brand-secondary,#F9F9F9)] text-[32px] text-black/15 transition-transform duration-200 group-hover:scale-[1.04]">◇{item.imageUrl ? <img src={item.imageUrl} alt="" loading="lazy" onError={(event) => { event.currentTarget.style.display = 'none'; }} className="absolute inset-0 h-full w-full object-cover" /> : null}</span>
+                      <span className="relative mx-auto flex aspect-square w-full max-w-[112px] items-center justify-center overflow-hidden rounded-full border border-black/5 bg-[var(--color-brand-secondary,#F9F9F9)] text-[32px] text-black/15 transition-transform duration-200 group-hover:scale-[1.04]">◇{item.imageUrl ? <img src={item.imageUrl} alt="" loading={index < 3 ? 'eager' : 'lazy'} fetchPriority={index < 3 ? 'high' : 'auto'} decoding="async" onError={(event) => { event.currentTarget.style.display = 'none'; }} className="absolute inset-0 h-full w-full object-cover" /> : null}</span>
                       <span className="mt-3 block truncate text-[11px] font-medium text-[var(--color-brand-primary)] sm:text-[12px]" title={item.name}>{item.name}</span>
                     </Link>
                   ))}

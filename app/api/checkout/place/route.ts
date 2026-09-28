@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createPendingOrder, type CheckoutPayload, prepareCheckoutPayload } from '@/lib/checkout-order'
 import { getRazorpayClient, getRazorpayKeyId, isRazorpayConfigured } from '@/lib/razorpay'
+import { toRazorpayAmountInSubunits } from '@/lib/payment-subunits'
 import { enforceRateLimit } from '@/lib/rate-limit'
 import { getGuestCheckoutTokenHash } from '@/lib/guest-checkout'
 
@@ -90,7 +91,7 @@ export async function POST(request: Request) {
           razorpay: {
             keyId: getRazorpayKeyId(),
             orderId: existingAttempt.razorpay_order_id,
-            amount: Math.round(Number(existingOrder.payment_amount || 0) * 100),
+            amount: toRazorpayAmountInSubunits(Number(existingOrder.payment_amount || 0), String(existingOrder.payment_currency || '')),
             currency: existingOrder.payment_currency,
             name: 'House of Diams',
             description: 'Secure jewellery checkout',
@@ -120,7 +121,7 @@ export async function POST(request: Request) {
 
   try {
     const razorpay = getRazorpayClient()
-    const amountInSubunits = Math.round(prepared.chargeQuote.totalCharged * 100)
+    const amountInSubunits = toRazorpayAmountInSubunits(prepared.chargeQuote.totalCharged, prepared.chargeQuote.chargeCurrency)
 
     const razorpayOrder = await razorpay.orders.create({
       amount: amountInSubunits,

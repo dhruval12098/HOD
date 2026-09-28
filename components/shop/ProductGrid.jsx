@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import ProductCard from "./ProductCard";
@@ -23,11 +23,12 @@ import { getProductKey } from "@/lib/product-keys";
  *   masterShapeOptions?: { value: string; label: string; iconUrl?: string | null; displayOrder: number }[]
  *   totalCount?: number
  *   serverPaginated?: boolean
+ *   categoryLoadMore?: boolean
  *   onEnquire: (name?: string) => void
  *   wideGutter?: boolean
  * }} props
  */
-export default function ProductGrid({ products, sourceProducts = products, initialFilters = {}, initialPage = 1, filterGroups: externalFilterGroups = [], masterShapeOptions = [], totalCount, serverPaginated = false, onEnquire, wideGutter = false }) {
+export default function ProductGrid({ products, sourceProducts = products, initialFilters = {}, initialPage = 1, filterGroups: externalFilterGroups = [], masterShapeOptions = [], totalCount, serverPaginated = false, categoryLoadMore = false, onEnquire, wideGutter = false }) {
   const { wishlist, toggle } = useWishlistStore();
   const pathname = usePathname();
   const router = useRouter();
@@ -35,6 +36,13 @@ export default function ProductGrid({ products, sourceProducts = products, initi
   const [filters, setFilters] = useState(initialFilters);
   const [page, setPage] = useState(initialPage);
   const [sort, setSort] = useState(searchParams?.get("sort") || "best-matches");
+  const [loadedProducts, setLoadedProducts] = useState(products);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [loadMoreError, setLoadMoreError] = useState("");
+
+  useEffect(() => {
+    if (categoryLoadMore) setLoadedProducts(products);
+  }, [categoryLoadMore, products]);
 
   const pageSize = 24;
 
@@ -55,6 +63,44 @@ export default function ProductGrid({ products, sourceProducts = products, initi
     setPage(nextPage);
     window.history.pushState(null, "", pageHref(nextPage));
     document.querySelector(".shop-grid-layout")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const loadMoreProducts = async () => {
+    if (isLoadingMore || loadedProducts.length >= Number(totalCount || 0)) return;
+
+    setIsLoadingMore(true);
+    setLoadMoreError("");
+    try {
+      const params = new URLSearchParams(searchParams?.toString());
+      params.set("category", pathname.split("/").filter(Boolean)[0] || "");
+      ["subcategory", "option", "shape", "style", "metal", "certificate"].forEach((key) => {
+        const value = filters[key]?.[0];
+        if (value) params.set(key, value);
+        else params.delete(key);
+      });
+      params.set("page", String(Math.floor(loadedProducts.length / pageSize) + 1));
+      const response = await fetch(`/api/public/products/category?${params.toString()}`, { cache: "no-store" });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || !Array.isArray(payload?.products)) {
+        throw new Error(payload?.error || "Unable to load more products.");
+      }
+      setLoadedProducts((current) => {
+        const existingKeys = new Set(current.map((product) => product.dbId || product.slug));
+        return [
+          ...current,
+          ...payload.products.filter((product) => {
+            const key = product.dbId || product.slug;
+            if (!key || existingKeys.has(key)) return false;
+            existingKeys.add(key);
+            return true;
+          }),
+        ];
+      });
+    } catch (error) {
+      setLoadMoreError(error instanceof Error ? error.message : "Unable to load more products.");
+    } finally {
+      setIsLoadingMore(false);
+    }
   };
 
   const handleFiltersChange = (nextFilters) => {
@@ -173,7 +219,7 @@ export default function ProductGrid({ products, sourceProducts = products, initi
   }, [externalFilterGroups, baseFilterGroups]);
 
   const filtered = useMemo(() => {
-    if (serverPaginated) return [...products];
+    if (serverPaginated) return [...(categoryLoadMore ? loadedProducts : products)];
       const list = products.filter((product) => {
       const productCategoryValue = product.mainCategorySlug || product.category;
       if (filters.category?.length && !filters.category.includes(productCategoryValue)) return false;
@@ -210,12 +256,13 @@ export default function ProductGrid({ products, sourceProducts = products, initi
     });
 
     return list;
-  }, [filters, sort, products, serverPaginated]);
+  }, [categoryLoadMore, filters, loadedProducts, sort, products, serverPaginated]);
 
   const resolvedTotalCount = serverPaginated ? Number(totalCount || 0) : filtered.length;
   const totalPages = Math.max(1, Math.ceil(resolvedTotalCount / pageSize));
   const resolvedPage = Math.min(page, totalPages);
   const paginatedProducts = serverPaginated ? filtered : filtered.slice((resolvedPage - 1) * pageSize, resolvedPage * pageSize);
+  const remainingProductCount = Math.max(0, resolvedTotalCount - loadedProducts.length);
 
   const metalOptions = filterGroups.find((group) => group.id === "metal")?.options.map((option) => {
     const metal = sourceProducts.flatMap((product) => product.metalsFull || []).find((entry) => entry.slug === option.value);
@@ -427,7 +474,7 @@ export default function ProductGrid({ products, sourceProducts = products, initi
             <div className="product-grid">
               {paginatedProducts.map((product) => (
                 <ProductCard
-                  key={product.id}
+                  key={product.dbId || product.slug}
                   product={product}
                   wishlisted={wishlist.includes(getProductKey(product))}
                   onWishlist={handleWishlist}
@@ -439,7 +486,30 @@ export default function ProductGrid({ products, sourceProducts = products, initi
             </div>
           )}
 
-          {resolvedTotalCount > pageSize ? (
+          {categoryLoadMore && loadedProducts.length < resolvedTotalCount ? (
+            <div style={{ display: "grid", justifyItems: "center", gap: "12px", padding: "0 0 24px" }}>
+              <button
+                type="button"
+                onClick={loadMoreProducts}
+                disabled={isLoadingMore}
+                style={{
+                  border: "1px solid #000",
+                  borderRadius: 0,
+                  padding: "14px 28px",
+                  background: "#000",
+                  color: "#fff",
+                  cursor: isLoadingMore ? "wait" : "pointer",
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  letterSpacing: ".08em",
+                  opacity: isLoadingMore ? .7 : 1,
+                }}
+              >
+                {isLoadingMore ? "Loading products…" : `Load more (${remainingProductCount}) products`}
+              </button>
+              {loadMoreError ? <p role="alert" style={{ color: "#a11", fontSize: "12px", margin: 0 }}>{loadMoreError}</p> : null}
+            </div>
+          ) : !categoryLoadMore && resolvedTotalCount > pageSize ? (
             <nav aria-label="Product pagination" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", padding: "0 0 24px" }}>
               {resolvedPage > 1 ? (
                 <Link

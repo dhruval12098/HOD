@@ -48,7 +48,7 @@ function ProductVideo({ src }: { src: string }) {
     <div className="absolute inset-0 flex items-center justify-center overflow-hidden bg-white">
       {!hasError ? (
         <video
-          src={src}
+          src={`${src}#t=0.1`}
           className="absolute inset-0 h-full w-full bg-white object-contain object-center"
           autoPlay
           loop
@@ -131,30 +131,38 @@ export default function ProductGallery({
     return [...images.slice(0, 2), video, ...images.slice(2), ...models];
   }, [assets]);
 
+  // On mobile, surface the video first so shoppers see it before scrolling through images.
+  const mobileAssets = useMemo(() => {
+    const video = assets.find((asset) => asset.type === 'video');
+    if (!video) return assets;
+
+    return [video, ...assets.filter((asset) => asset.type !== 'video')];
+  }, [assets]);
+
   const [activeIndex, setActiveIndex] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
-  const visibleActiveIndex = assets.length > 0 ? Math.min(activeIndex, assets.length - 1) : 0;
+  const visibleActiveIndex = mobileAssets.length > 0 ? Math.min(activeIndex, mobileAssets.length - 1) : 0;
   const visibleLightboxIndex = lightboxIndex !== null && slideAssets.length > 0
     ? Math.min(lightboxIndex, slideAssets.length - 1)
     : null;
   const isLightboxOpen = visibleLightboxIndex !== null;
-  const activeAsset = assets[visibleActiveIndex] ?? null;
+  const activeAsset = mobileAssets[visibleActiveIndex] ?? null;
   const activeLightboxAsset = visibleLightboxIndex === null ? null : slideAssets[visibleLightboxIndex] ?? null;
 
   const thumbnailSlots = useMemo<ThumbnailSlot[]>(() => {
     const minSlots = 5;
-    const placeholdersNeeded = Math.max(0, minSlots - assets.length);
+    const placeholdersNeeded = Math.max(0, minSlots - mobileAssets.length);
     return [
-      ...assets,
+      ...mobileAssets,
       ...Array.from({ length: placeholdersNeeded }, (_, index) => ({
         type: 'placeholder' as const,
         key: `placeholder-${index}`,
       })),
     ];
-  }, [assets]);
+  }, [mobileAssets]);
 
   const closeLightbox = useCallback(() => setLightboxIndex(null), []);
 
@@ -174,6 +182,121 @@ export default function ProductGallery({
     }
     setLightboxIndex(nextIndex);
   }, [slideAssets]);
+
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const mainGalleryRef = useRef<HTMLDivElement>(null);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [isSwipeSettling, setIsSwipeSettling] = useState(false);
+  const swipeSettleTimeoutRef = useRef<number | null>(null);
+  const swipeAnimationFrameRef = useRef<number | null>(null);
+  const suppressMainImageClickRef = useRef(false);
+  const suppressMainImageClickTimeoutRef = useRef<number | null>(null);
+
+  const handleMainTouchStart = useCallback((event: React.TouchEvent) => {
+    const touch = event.touches[0];
+    if (swipeSettleTimeoutRef.current !== null) {
+      window.clearTimeout(swipeSettleTimeoutRef.current);
+      swipeSettleTimeoutRef.current = null;
+    }
+    if (swipeAnimationFrameRef.current !== null) {
+      window.cancelAnimationFrame(swipeAnimationFrameRef.current);
+      swipeAnimationFrameRef.current = null;
+    }
+    setIsSwipeSettling(false);
+    setSwipeOffset(0);
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  }, []);
+
+  const handleMainTouchMove = useCallback((event: React.TouchEvent) => {
+    const start = touchStartRef.current;
+    if (!start || mobileAssets.length < 2) return;
+
+    const touch = event.touches[0];
+    const deltaX = touch.clientX - start.x;
+    const deltaY = touch.clientY - start.y;
+    if (Math.abs(deltaX) <= Math.abs(deltaY)) return;
+
+    event.preventDefault();
+    const width = mainGalleryRef.current?.clientWidth || window.innerWidth;
+    setSwipeOffset(Math.max(-width, Math.min(width, deltaX)));
+  }, [mobileAssets.length]);
+
+  const handleMainTouchEnd = useCallback((event: React.TouchEvent) => {
+    const start = touchStartRef.current;
+    touchStartRef.current = null;
+    if (!start || mobileAssets.length < 2) {
+      setSwipeOffset(0);
+      return;
+    }
+
+    const touch = event.changedTouches[0];
+    const deltaX = touch.clientX - start.x;
+    const deltaY = touch.clientY - start.y;
+    const swipeThreshold = 40;
+
+    if (Math.abs(deltaX) < swipeThreshold || Math.abs(deltaX) <= Math.abs(deltaY)) {
+      setIsSwipeSettling(false);
+      setSwipeOffset(0);
+      return;
+    }
+
+    // Touch browsers can dispatch a click after touchend. Consume that click so a
+    // horizontal swipe changes the slide without opening the image viewer.
+    suppressMainImageClickRef.current = true;
+    if (suppressMainImageClickTimeoutRef.current !== null) {
+      window.clearTimeout(suppressMainImageClickTimeoutRef.current);
+    }
+    suppressMainImageClickTimeoutRef.current = window.setTimeout(() => {
+      suppressMainImageClickRef.current = false;
+      suppressMainImageClickTimeoutRef.current = null;
+    }, 500);
+
+    const direction = deltaX < 0 ? 1 : -1;
+    const width = mainGalleryRef.current?.clientWidth || window.innerWidth;
+    setIsSwipeSettling(true);
+    // Switch immediately, then animate the incoming asset from the swipe direction
+    // into place instead of waiting for the outgoing asset to finish moving away.
+    setActiveIndex((current) => {
+      const currentVisible = Math.min(current, mobileAssets.length - 1);
+      return (currentVisible + direction + mobileAssets.length) % mobileAssets.length;
+    });
+    setSwipeOffset(direction * width);
+    swipeAnimationFrameRef.current = window.requestAnimationFrame(() => {
+      setSwipeOffset(0);
+      swipeAnimationFrameRef.current = null;
+    });
+    swipeSettleTimeoutRef.current = window.setTimeout(() => {
+      setIsSwipeSettling(false);
+      swipeSettleTimeoutRef.current = null;
+    }, 220);
+  }, [mobileAssets.length]);
+
+  const handleMainImageClick = useCallback((event: React.MouseEvent<HTMLButtonElement>, asset: ImageAsset) => {
+    if (suppressMainImageClickRef.current) {
+      event.preventDefault();
+      event.stopPropagation();
+      suppressMainImageClickRef.current = false;
+      if (suppressMainImageClickTimeoutRef.current !== null) {
+        window.clearTimeout(suppressMainImageClickTimeoutRef.current);
+        suppressMainImageClickTimeoutRef.current = null;
+      }
+      return;
+    }
+
+    openLightbox(asset);
+  }, [openLightbox]);
+
+  useEffect(() => () => {
+    if (swipeSettleTimeoutRef.current !== null) {
+      window.clearTimeout(swipeSettleTimeoutRef.current);
+    }
+    if (swipeAnimationFrameRef.current !== null) {
+      window.cancelAnimationFrame(swipeAnimationFrameRef.current);
+    }
+    if (suppressMainImageClickTimeoutRef.current !== null) {
+      window.clearTimeout(suppressMainImageClickTimeoutRef.current);
+    }
+  }, []);
 
   useEffect(() => {
     if (!isLightboxOpen || typeof document === 'undefined') return;
@@ -236,7 +359,7 @@ export default function ProductGallery({
   const mainMediaClass =
     'absolute left-1/2 top-1/2 h-full w-full min-h-full min-w-full -translate-x-1/2 -translate-y-1/2 object-cover object-center';
   const thumbMediaClass =
-    'absolute left-1/2 top-1/2 h-full w-full max-h-[88%] max-w-[88%] -translate-x-1/2 -translate-y-1/2 object-contain object-center';
+    'h-full w-full object-contain object-center p-1';
 
   const lightbox = visibleLightboxIndex !== null && activeLightboxAsset && typeof document !== 'undefined'
     ? createPortal(
@@ -271,7 +394,7 @@ export default function ProductGallery({
               <div className="aspect-square h-[min(78dvh,88vw)] max-h-[900px] max-w-[900px] overflow-hidden bg-white">
                 {activeLightboxAsset.type === 'video' ? (
                   <video
-                    src={activeLightboxAsset.url}
+                    src={`${activeLightboxAsset.url}#t=0.1`}
                     className="h-full w-full bg-white object-contain object-center"
                     autoPlay
                     loop
@@ -320,7 +443,7 @@ export default function ProductGallery({
                     key={`${asset.type}-${asset.url}-${index}`}
                     type="button"
                     onClick={() => setLightboxIndex(index)}
-                    className={`relative h-[62px] w-[62px] flex-none overflow-hidden rounded-[14px] border bg-white p-1 transition sm:h-[74px] sm:w-[74px] ${
+                    className={`relative h-[62px] w-[62px] flex-none overflow-hidden border bg-white p-1 transition sm:h-[74px] sm:w-[74px] ${
                       isSelected
                         ? 'border-[#0A1628] shadow-[0_0_0_1px_#0A1628]'
                         : 'border-[#0A1628]/10 opacity-65 hover:border-[#0A1628]/40 hover:opacity-100'
@@ -331,14 +454,14 @@ export default function ProductGallery({
                     {asset.type === 'video' ? (
                       <video
                         src={`${asset.url}#t=0.1`}
-                        className="pointer-events-none h-full w-full rounded-[10px] bg-white object-contain object-center"
+                        className="pointer-events-none h-full w-full bg-white object-contain object-center"
                         muted
                         playsInline
                         preload="metadata"
                         aria-hidden="true"
                       />
                     ) : (
-                      <img src={asset.url} alt="" className="h-full w-full rounded-[10px] object-cover object-center" loading="lazy" />
+                      <img src={asset.url} alt="" className="h-full w-full object-contain object-center" loading="lazy" />
                     )}
                   </button>
                 );
@@ -396,9 +519,20 @@ export default function ProductGallery({
       </div>
 
       <div className="lg:hidden">
-        <div className={`relative mb-3 flex aspect-square w-full items-center justify-center overflow-hidden rounded-none border ${bgMain} group`}>
+        <div
+          ref={mainGalleryRef}
+          className={`relative mb-3 flex aspect-square w-full touch-pan-y items-center justify-center overflow-hidden rounded-none border ${bgMain} group`}
+          onTouchStart={handleMainTouchStart}
+          onTouchMove={handleMainTouchMove}
+          onTouchEnd={handleMainTouchEnd}
+          onTouchCancel={handleMainTouchEnd}
+        >
           <div className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(circle_at_50%_50%,rgba(10,22,40,0.1),transparent_70%)]" />
-          <div key={activeKey} className="absolute inset-0 animate-[fadeUp_0.45s_ease]">
+          <div
+            key={activeKey}
+            className={`absolute inset-0 ${isSwipeSettling ? 'transition-transform duration-[220ms] ease-out' : ''}`}
+            style={{ transform: `translate3d(${swipeOffset}px, 0, 0)` }}
+          >
             {activeAsset?.type === 'model' ? (
               <div className="absolute inset-0 overflow-hidden"><ModelViewer src={activeAsset.url} /></div>
             ) : activeAsset?.type === 'video' ? (
@@ -408,7 +542,7 @@ export default function ProductGallery({
             ) : activeAsset?.type === 'image' ? (
               <button
                 type="button"
-                onClick={() => openLightbox(activeAsset)}
+                onClick={(event) => handleMainImageClick(event, activeAsset)}
                 className="absolute inset-0 cursor-zoom-in overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0A1628]"
                 aria-label={`Open ${activeAsset.alt || 'product image'} in image viewer`}
               >
@@ -429,7 +563,7 @@ export default function ProductGallery({
                 return (
                   <div
                     key={thumb.key}
-                    className={`aspect-square w-[62px] flex-none rounded-[18px] border border-[rgba(10,22,40,0.08)] ${bgThumb} opacity-35 sm:w-[72px] md:w-[82px]`}
+                    className={`aspect-square w-[62px] flex-none border border-[rgba(10,22,40,0.08)] ${bgThumb} opacity-35 sm:w-[72px] md:w-[82px]`}
                     aria-hidden="true"
                   />
                 );
@@ -441,7 +575,7 @@ export default function ProductGallery({
                   type="button"
                   key={`${thumb.type}-${thumb.url}-${index}`}
                   onClick={() => setActiveIndex(index)}
-                  className={`aspect-square w-[62px] flex-none ${bgThumb} flex cursor-pointer items-center justify-center overflow-hidden rounded-[18px] border p-1.5 transition-all duration-300 sm:w-[72px] md:w-[82px] ${
+                  className={`aspect-square w-[62px] flex-none ${bgThumb} flex cursor-pointer items-center justify-center overflow-hidden border p-1.5 transition-all duration-300 sm:w-[72px] md:w-[82px] ${
                     isActive
                       ? 'border-[#0A1628] shadow-[0_0_0_1px_#0A1628_inset]'
                       : 'border-[rgba(10,22,40,0.10)] hover:border-[#0A1628]'
@@ -450,14 +584,24 @@ export default function ProductGallery({
                   aria-current={isActive ? 'true' : undefined}
                 >
                   {thumb.type === 'model' ? (
-                    <div className="flex h-full w-full items-center justify-center rounded-[14px] bg-[#0A1628] text-[10px] font-semibold uppercase tracking-[0.18em] text-white">3D</div>
+                    <div className="flex h-full w-full items-center justify-center bg-[#0A1628] text-[10px] font-semibold uppercase tracking-[0.18em] text-white">3D</div>
                   ) : thumb.type === 'video' ? (
-                    <div className="flex h-full w-full items-center justify-center rounded-[14px] bg-white text-[#0A1628]">
-                      <Film className="h-5 w-5" strokeWidth={1.6} aria-hidden="true" />
+                    <div className="relative flex h-full w-full items-center justify-center overflow-hidden">
+                      <video
+                        src={`${thumb.url}#t=0.1`}
+                        className={thumbMediaClass}
+                        muted
+                        playsInline
+                        preload="metadata"
+                        aria-hidden="true"
+                      />
+                      <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/10">
+                        <Film className="h-4 w-4 text-white drop-shadow-sm" strokeWidth={1.8} aria-hidden="true" />
+                      </span>
                       <span className="sr-only">Video</span>
                     </div>
                   ) : (
-                    <div className="relative h-full w-full overflow-hidden">
+                    <div className="relative flex h-full w-full items-center justify-center overflow-hidden">
                       <img src={thumb.url} alt={thumb.alt || `Product view ${index + 1}`} className={thumbMediaClass} loading="lazy" />
                     </div>
                   )}

@@ -28,11 +28,11 @@ const TRUST_ITEMS = [
  */
 export default function ProductTrustRow() {
   return (
-    <div className="mb-4 grid grid-cols-2 gap-x-4 gap-y-7 bg-white py-[26px] sm:mb-5 sm:grid-cols-4 sm:gap-6">
+    <div className="mb-4 grid grid-cols-4 gap-x-1.5 gap-y-4 bg-white py-[26px] sm:mb-5 sm:gap-6">
       {TRUST_ITEMS.map(({ title, iconPath }) => (
         <div key={title} className="text-center">
           <div className="flex justify-center">
-            <img src={iconPath} alt={title} className="h-[94px] w-[94px] object-contain sm:h-[110px] sm:w-[110px]" />
+            <img src={iconPath} alt={title} className="h-auto w-full max-w-[104px] object-contain sm:h-[110px] sm:w-[110px]" />
           </div>
         </div>
       ))}

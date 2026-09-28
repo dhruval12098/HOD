@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { finalizePaidOrder, markOrderPaymentFailed } from '@/lib/checkout-order'
 import { ensureRazorpayPaymentCaptured, verifyRazorpayPaymentSignature } from '@/lib/razorpay'
+import { toRazorpayAmountInSubunits } from '@/lib/payment-subunits'
 import { enforceRateLimit } from '@/lib/rate-limit'
 import { REFUNDABLE_FINALIZATION_ERRORS, recoverCapturedPayment } from '@/lib/payment-recovery'
 import { getGuestCheckoutTokenHash } from '@/lib/guest-checkout'
@@ -81,7 +82,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const expectedAmountInSubunits = Math.round(Number(ownedOrder.payment_amount || 0) * 100)
+    const expectedAmountInSubunits = toRazorpayAmountInSubunits(Number(ownedOrder.payment_amount || 0), String(ownedOrder.payment_currency || ''))
     const expectedCurrency = String(ownedOrder.payment_currency || '').toUpperCase()
     const payment = await ensureRazorpayPaymentCaptured({
       paymentId: payload.razorpay_payment_id,

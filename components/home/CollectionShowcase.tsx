@@ -8,7 +8,7 @@ export default function CollectionShowcase({ config }: { config: CollectionPageC
   const mobileImage = config.showcaseMobileImageUrl || desktopImage;
 
   return (
-    <section className="relative w-full overflow-hidden bg-black" aria-labelledby="collection-showcase-heading">
+    <section className="relative mt-[var(--space-section-block)] w-full overflow-hidden bg-black" aria-labelledby="collection-showcase-heading">
       <picture className="block h-[520px] w-full sm:aspect-[5/2] sm:h-auto">
         {mobileImage ? <source media="(max-width: 639px)" srcSet={mobileImage} /> : null}
         {desktopImage ? <img src={desktopImage} alt={config.showcaseHeading || 'Collection showcase'} className="block size-full object-cover object-center" loading="lazy" /> : <span className="block size-full bg-black" />}

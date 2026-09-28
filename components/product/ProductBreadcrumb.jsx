@@ -17,7 +17,7 @@ export default function ProductBreadcrumb({
   return (
     <div className="mb-3 flex min-h-8 items-center justify-between gap-4 bg-white">
       <nav
-        className="flex min-w-0 flex-wrap items-center font-sans text-[12px] font-normal tracking-[0.01em] text-[#292727] max-[700px]:text-[11px]"
+        className="flex min-w-0 flex-wrap items-center font-sans text-[12px] font-normal tracking-[0.01em] text-[#292727] max-[700px]:text-[10px]"
         aria-label="Breadcrumb"
       >
         <Link
@@ -26,14 +26,14 @@ export default function ProductBreadcrumb({
         >
           Home
         </Link>
-        <span className="mx-[10px] text-[#7F8898]">/</span>
+        <span className="mx-[10px] text-[#7F8898] max-[700px]:mx-[6px]">/</span>
         <Link
           href={collectionHref}
           className="text-[#292727] no-underline hover:text-[#0A1628] transition-colors duration-300"
         >
           {collectionLabel}
         </Link>
-        <span className="mx-[10px] text-[#7F8898]">/</span>
+        <span className="mx-[10px] text-[#7F8898] max-[700px]:mx-[6px]">/</span>
         <span className="text-[#0A1628]">{productName}</span>
       </nav>
     </div>

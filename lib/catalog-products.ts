@@ -1529,7 +1529,31 @@ function searchTokensForValue(tokens: string[], values: Array<string | null | un
   return tokens.filter((token) => searchable.includes(token))
 }
 
-export async function getStorefrontProductSearchItems(query: string, limit = 12) {
+function isUsablePublicImageUrl(value: string | null | undefined): value is string {
+  if (!value) return false
+  try {
+    const parsed = new URL(value)
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
+async function getCanonicalSearchImageUrls(productIds: string[]) {
+  if (!productIds.length) return new Map<string, string>()
+  const products = await fetchStorefrontProducts(undefined, {
+    productIds,
+    limit: productIds.length,
+  })
+  return new Map(
+    products.map((product) => [
+      product.dbId,
+      isUsablePublicImageUrl(product.imageUrl) ? product.imageUrl : '',
+    ])
+  )
+}
+
+async function getStorefrontProductSearchItemsUncached(query: string, limit = 12) {
   const safeLimit = Math.max(1, Math.min(24, Math.floor(limit)))
   const tokens = normalizeSearchTokens(query)
   const supabase = createSupabaseServerClient()
@@ -1546,6 +1570,7 @@ export async function getStorefrontProductSearchItems(query: string, limit = 12)
     if (result.error) throw new Error(result.error.message)
 
     const references = await getCachedProductSearchReferences()
+    const imageUrls = await getCanonicalSearchImageUrls((result.data ?? []).map((product) => product.id))
     return (result.data ?? []).map((product) => {
       const category = references.categories.find((entry) => entry.id === product.main_category_id)
       const subcategory = references.subcategories.find((entry) => entry.id === product.subcategory_id)
@@ -1554,7 +1579,7 @@ export async function getStorefrontProductSearchItems(query: string, limit = 12)
         slug: product.slug,
         name: product.name,
         shortMeta: [subcategory?.name, category?.name].filter(Boolean).join(' · '),
-        imageUrl: product.show_image_1 === false ? '' : toPublicUrl(product.image_1_path) || '',
+        imageUrl: product.show_image_1 === false ? '' : imageUrls.get(product.id) || '',
         priceFrom: Number(product.base_price ?? 0),
         mainCategorySlug: category?.slug || '',
         mainCategoryName: category?.name || '',
@@ -1650,6 +1675,7 @@ export async function getStorefrontProductSearchItems(query: string, limit = 12)
     .limit(safeLimit)
   if (productsResult.error) throw new Error(productsResult.error.message)
 
+  const imageUrls = await getCanonicalSearchImageUrls((productsResult.data ?? []).map((product) => product.id))
   return (productsResult.data ?? []).map((product) => {
     const category = references.categories.find((entry) => entry.id === product.main_category_id)
     const subcategory = references.subcategories.find((entry) => entry.id === product.subcategory_id)
@@ -1659,12 +1685,26 @@ export async function getStorefrontProductSearchItems(query: string, limit = 12)
       slug: product.slug,
       name: product.name,
       shortMeta: [option?.name, subcategory?.name, category?.name].filter(Boolean).join(' · '),
-      imageUrl: product.show_image_1 === false ? '' : toPublicUrl(product.image_1_path) || '',
+      imageUrl: product.show_image_1 === false ? '' : imageUrls.get(product.id) || '',
       priceFrom: Number(product.base_price ?? 0),
       mainCategorySlug: category?.slug || '',
       mainCategoryName: category?.name || '',
     }
   })
+}
+
+const getCachedDefaultProductSearchItems = unstable_cache(
+  () => getStorefrontProductSearchItemsUncached('', 20),
+  ['storefront-default-product-search-items-v1'],
+  { revalidate: 300, tags: ['storefront-products'] }
+)
+
+export async function getStorefrontProductSearchItems(query: string, limit = 12) {
+  const safeQuery = query.trim()
+  const safeLimit = Math.max(1, Math.min(24, Math.floor(limit)))
+  return !safeQuery && safeLimit === 20
+    ? getCachedDefaultProductSearchItems()
+    : getStorefrontProductSearchItemsUncached(safeQuery, safeLimit)
 }
 
 export async function getStorefrontCartRecommendations({

@@ -41,13 +41,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: pricingResult.error }, { status: pricingResult.status })
   }
   const pricing = pricingResult.data
-  const quote = await buildCheckoutChargeQuote({
-    subtotalUsd: pricing.subtotalAmount,
-    gstUsd: pricing.gstAmount,
-    couponDiscountUsd: pricing.couponDiscountAmount,
-    country: payload?.country || null,
-    currencyCode: payload?.currencyCode || null,
-  })
+  let quote: Awaited<ReturnType<typeof buildCheckoutChargeQuote>>
+  try {
+    quote = await buildCheckoutChargeQuote({
+      subtotalUsd: pricing.subtotalAmount,
+      gstUsd: pricing.gstAmount,
+      couponDiscountUsd: pricing.couponDiscountAmount,
+      country: payload?.country || null,
+      currencyCode: payload?.currencyCode || null,
+    })
+  } catch {
+    return NextResponse.json({ error: 'Live exchange pricing is temporarily unavailable. Please try again shortly.' }, { status: 503 })
+  }
 
   return NextResponse.json({
     quote,

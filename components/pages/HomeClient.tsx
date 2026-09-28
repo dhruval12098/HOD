@@ -148,6 +148,7 @@ export default function HomeClient({
       <Hero initialContent={heroContent} />
       <HomeTrustStripe />
       <ShopByCategory data={shopByCategory} />
+      <FreeGiftOfferBanner promotion={giftPromotion} />
       <>
           {collectionPageConfig.pageEnabled && collectionPageConfig.showHomeShowcase ? <CollectionShowcase config={collectionPageConfig} /> : null}
           <ViewportDeferred minHeight={620}>
@@ -160,7 +161,6 @@ export default function HomeClient({
             <BespokeShowcase section={bespokeShowcaseSection} onEnquireClick={() => setIsBespokeEnquireOpen(true)} />
           ) : null}
           <InstagramReels data={instagramReels} />
-          <FreeGiftOfferBanner promotion={giftPromotion} />
           {showDeferredSections ? (
             <section aria-labelledby="home-blogs-heading" className="section-rhythm bg-[var(--color-brand-accent,#fff)] px-[var(--space-2)] sm:px-[var(--space-3)] lg:px-[var(--space-4)]">
               <div className="w-full">

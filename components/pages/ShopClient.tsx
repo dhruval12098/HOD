@@ -58,6 +58,7 @@ export default function ShopClient({
   masterShapeOptions,
   totalCount,
   serverPaginated = false,
+  categoryLoadMore = false,
   headerBrowseSections,
   categoryName,
   categoryFaqItems = [],
@@ -79,6 +80,7 @@ export default function ShopClient({
   masterShapeOptions?: { value: string; label: string; iconUrl?: string | null; displayOrder: number }[]
   totalCount?: number
   serverPaginated?: boolean
+  categoryLoadMore?: boolean
   categoryName?: string
   categoryFaqItems?: CategoryFaqItem[]
   moreToExploreCategories?: MoreToExploreCategory[]
@@ -154,6 +156,7 @@ export default function ShopClient({
         masterShapeOptions={masterShapeOptions}
         totalCount={totalCount}
         serverPaginated={serverPaginated}
+        categoryLoadMore={categoryLoadMore}
         onEnquire={handleEnquire}
         wideGutter={Boolean(categoryName)}
       />
