@@ -6,11 +6,11 @@ import { getStorefrontFilterGroups, getStorefrontProductCardPage, type Storefron
 import { createPageMetadata } from '@/lib/seo';
 import JsonLd from '@/components/seo/JsonLd';
 import { createBreadcrumbSchema } from '@/lib/structured-data';
+import { getCatalogCanonicalPath, hasCatalogFilterQuery, parseCatalogPage } from '@/lib/catalog-metadata';
+import { notFound } from 'next/navigation';
 
-const filterQueryKeys = ['category', 'subcategory', 'option', 'shape', 'style', 'metal', 'certificate', 'sort', 'page'] as const
-
-function hasFilterQuery(params: Record<string, string | string[] | undefined>) {
-  return filterQueryKeys.some((key) => typeof params[key] === 'string' && Boolean(params[key]))
+function hasShopFilterQuery(params: Record<string, string | string[] | undefined>) {
+  return hasCatalogFilterQuery(params) || (typeof params.category === 'string' && Boolean(params.category))
 }
 
 export async function generateMetadata({
@@ -19,13 +19,14 @@ export async function generateMetadata({
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }): Promise<Metadata> {
   const params = await searchParams
+  const isFiltered = hasShopFilterQuery(params)
   const metadata = createPageMetadata({
     title: 'Shop',
     description: 'Browse our collection of fine jewellery and hip hop jewellery with certified lab-grown diamonds.',
-    path: '/shop',
+    path: isFiltered ? '/shop' : getCatalogCanonicalPath('/shop', params),
   })
 
-  if (!hasFilterQuery(params)) return metadata
+  if (!isFiltered) return metadata
 
   return {
     ...metadata,
@@ -42,11 +43,12 @@ export default async function ShopPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
   const params = await searchParams
+  const page = parseCatalogPage(params.page)
+  if (page === null) notFound()
   const requestedSort = typeof params.sort === 'string' ? params.sort : 'best-matches'
   const sort: StorefrontProductSort = ['best-matches', 'price-low', 'price-high', 'best-sellers'].includes(requestedSort)
     ? requestedSort as StorefrontProductSort
     : 'best-matches'
-  const page = typeof params.page === 'string' ? Math.max(1, Number.parseInt(params.page, 10) || 1) : 1
   const filters = {
     categorySlug: typeof params.category === 'string' ? params.category : null,
     subcategorySlug: typeof params.subcategory === 'string' ? params.subcategory : null,
@@ -60,6 +62,8 @@ export default async function ShopPage({
     getStorefrontProductCardPage({ productLane: 'standard', filters, sort, page }),
     getStorefrontFilterGroups('standard'),
   ])
+  const totalPages = Math.ceil(productPage.totalCount / productPage.pageSize)
+  if (page > 1 && (totalPages === 0 || page > totalPages)) notFound()
 
   return (
     <>

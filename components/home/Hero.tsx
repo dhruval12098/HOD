@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import Image from 'next/image';
+import Image, { getImageProps } from 'next/image';
 import Link from 'next/link';
+import { preload } from 'react-dom';
 import { supabase } from '@/lib/supabase';
 import BrandButton from '@/components/ui/BrandButton';
 
@@ -165,6 +166,27 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
   const line2 = rest.join(' ');
   const currentSlide = slides[activeSlide] ?? slides[0];
   const hasImageHero = Boolean(content.slider_enabled && currentSlide);
+  const primarySlide = slides[0];
+  if (primarySlide) {
+    const desktopImageUrl = getPublicImageUrl(primarySlide.image_path);
+    const mobileImageUrl = getPublicImageUrl(primarySlide.mobile_image_path || primarySlide.image_path);
+    const preloadImage = (src: string, media?: string) => {
+      const { props } = getImageProps({ src, alt: '', fill: true, sizes: '100vw' });
+      preload(String(props.src), {
+        as: 'image',
+        fetchPriority: 'high',
+        imageSrcSet: props.srcSet,
+        imageSizes: props.sizes,
+        media,
+      });
+    };
+
+    if (mobileImageUrl === desktopImageUrl) preloadImage(desktopImageUrl);
+    else {
+      preloadImage(mobileImageUrl, '(max-width: 639px)');
+      preloadImage(desktopImageUrl, '(min-width: 640px)');
+    }
+  }
   useEffect(() => {
     if (!contentResolved) return;
     if (!hasImageHero) {
@@ -243,7 +265,6 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
                       src={mobileImageUrl}
                       alt={slide.button_text || `Hero slide ${index + 1}`}
                       fill
-                      priority={index === 0}
                       sizes="100vw"
                       className="h-full w-full object-cover"
                       onLoad={() => {
@@ -269,7 +290,6 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
                       src={desktopImageUrl}
                       alt={slide.button_text || `Hero slide ${index + 1}`}
                       fill
-                      priority={index === 0}
                       sizes="100vw"
                       className="h-full w-full object-cover"
                       onLoad={() => {
@@ -382,4 +402,3 @@ export default function Hero({ initialContent, onPrimaryVisualReady }: HeroProps
     </section>
   );
 }
-
