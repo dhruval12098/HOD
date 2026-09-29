@@ -12,7 +12,7 @@ const NAV_LINKS = [
   { label: 'Home', href: '/' },
   { label: 'Rings', href: '/rings' },
   { label: 'Fine Jewellery', href: '/shop' },
-  { label: 'Hip Hop', href: '/hiphop' },
+  { label: 'Hip Hop', href: '/shop' },
   { label: 'Bespoke', href: '/bespoke' },
   { label: 'About Us', href: '/about' },
   { label: 'Contact Us', href: '/contact' },

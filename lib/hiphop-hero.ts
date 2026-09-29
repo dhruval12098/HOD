@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from '@/lib/server-supabase'
+import { resolveLegacyHipHopHref } from '@/lib/legacy-hiphop'
 
 export type HipHopHeroSlide = {
   sort_order: number
@@ -94,7 +95,7 @@ export async function getHipHopHeroData() {
             image_path: legacySection.image_path,
             mobile_image_path: legacySection.image_path,
             button_text: legacySection.cta_label ?? 'Explore',
-            button_link: legacySection.cta_link ?? '/hiphop',
+            button_link: resolveLegacyHipHopHref(legacySection.cta_link),
           },
         ] satisfies HipHopHeroSlide[],
       }

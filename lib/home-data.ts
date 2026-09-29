@@ -2,6 +2,7 @@ import { unstable_cache } from 'next/cache';
 import { createClient } from '@supabase/supabase-js';
 import { formatUsd } from '@/lib/money';
 import { buildOptionPath, buildSubcategoryPath } from '@/lib/catalog-paths';
+import { resolveLegacyHipHopHref } from '@/lib/legacy-hiphop';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -873,7 +874,7 @@ const loadHomePageData = unstable_cache(
         heading_line_2: hiphopResult.data?.heading_line_2 ?? 'Speaks',
         heading_emphasis: hiphopResult.data?.heading_emphasis ?? 'Louder.',
         cta_label: hiphopResult.data?.cta_label ?? 'Shop Iced Pieces',
-        cta_link: hiphopResult.data?.cta_link ?? '/hiphop',
+        cta_link: resolveLegacyHipHopHref(hiphopResult.data?.cta_link),
         image_path: hiphopResult.data?.image_path ?? '',
         image_alt: hiphopResult.data?.image_alt ?? 'House of Diams Hip Hop Collection',
       },

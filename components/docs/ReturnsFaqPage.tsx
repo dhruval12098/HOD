@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ChevronDown, Search } from 'lucide-react';
+import { getSafeContactHref } from '@/lib/contact-links';
 
 export type ReturnsContactRow = {
   id: number | string;
@@ -95,8 +96,9 @@ export default function ReturnsFaqPage({
               Have More Questions?
             </h2>
             <div className="mt-4 divide-y divide-[#e4e4e4]">
-              {contactRows.map((row) => (
-                <div key={row.id} className="space-y-1 py-5 text-center">
+              {contactRows.map((row) => {
+                const href = getSafeContactHref(row.href)
+                return <div key={row.id} className="space-y-1 py-5 text-center">
                   {row.icon_path ? (
                     <img
                       src={`${storageBase}/${row.icon_path}`}
@@ -105,8 +107,8 @@ export default function ReturnsFaqPage({
                     />
                   ) : null}
                   <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[#222222]">{row.label}</p>
-                  {row.href ? (
-                    <a href={row.href} className="block text-[13px] text-[#222222] underline underline-offset-4">
+                  {href ? (
+                    <a href={href} className="block text-[13px] text-[#222222] underline underline-offset-4">
                       {row.value}
                     </a>
                   ) : (
@@ -114,7 +116,7 @@ export default function ReturnsFaqPage({
                   )}
                   {row.note ? <p className="text-[12px] leading-[1.6] text-[#292727]">{row.note}</p> : null}
                 </div>
-              ))}
+              })}
             </div>
           </div>
         </div>

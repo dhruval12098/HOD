@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic'
 import { createPageMetadata } from '@/lib/seo'
 import { buildCategoryPath } from '@/lib/catalog-paths'
 import { createSupabaseServerClient } from '@/lib/server-supabase'
-import { hasCatalogFilterQuery } from '@/lib/catalog-metadata'
+import { getCatalogCanonicalPath, hasCatalogFilterQuery } from '@/lib/catalog-metadata'
 import { CategoryCollectionPageContent } from './CategoryCollectionPageContent'
 
 function toPublicUrl(path: string | null | undefined) {
@@ -50,7 +50,7 @@ export async function generateMetadata({
   const metadata = createPageMetadata({
     title: category.name,
     description: category.banner_subtitle || `Browse ${category.name} from the live catalog.`,
-    path: buildCategoryPath(category),
+    path: getCatalogCanonicalPath(buildCategoryPath(category), query),
     image: toPublicUrl(category.banner_desktop_image_path),
   })
 

@@ -10,6 +10,7 @@ import JsonLd from '@/components/seo/JsonLd'
 import { createBreadcrumbSchema, createFaqSchema } from '@/lib/structured-data'
 import { buildCategoryPath, buildOptionPath, buildSubcategoryPath } from '@/lib/catalog-paths'
 import type { ResolvedCatalogTaxonomy } from '@/lib/catalog-taxonomy'
+import { parseCatalogPage } from '@/lib/catalog-metadata'
 
 function slugifyValue(value: string) {
   return value
@@ -154,6 +155,8 @@ export async function CategoryCollectionPageContent({
   }
 
   const query = await searchParams
+  const requestedPage = parseCatalogPage(query.page)
+  if (!requestedPage) notFound()
   const resolvedProductLane = category.category_lane ?? 'standard'
   const requestedSort = typeof query.sort === 'string' ? query.sort : 'best-matches'
   const sort: StorefrontProductSort = ['best-matches', 'price-low', 'price-high', 'best-sellers'].includes(requestedSort)
@@ -173,7 +176,7 @@ export async function CategoryCollectionPageContent({
       productLane: resolvedProductLane,
       filters: productFilters,
       sort,
-      page: 1,
+      page: requestedPage,
       pageSize: 24,
     }),
     getStorefrontFilterGroups(resolvedProductLane, category.id),
@@ -185,6 +188,10 @@ export async function CategoryCollectionPageContent({
       .eq('is_active', true)
       .order('sort_order', { ascending: true }),
   ])
+  const totalPages = Math.ceil(productPage.totalCount / productPage.pageSize)
+  if (requestedPage > 1 && (totalPages === 0 || requestedPage > totalPages)) {
+    notFound()
+  }
   const categoryFaqItems = categoryFaqResult.error ? [] : categoryFaqResult.data ?? []
   const [
     navbarItemsResult,

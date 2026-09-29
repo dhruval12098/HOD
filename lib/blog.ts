@@ -34,6 +34,7 @@ type BlogPostRow = {
   is_published: boolean
   sort_order: number | null
   created_at: string | null
+  updated_at: string | null
   catalog_category_id: string | null
   catalog_category: { id: string; name: string; slug: string } | { id: string; name: string; slug: string }[] | null
   blog_post_tags: BlogTagRow[] | null
@@ -42,10 +43,10 @@ type BlogPostRow = {
 }
 
 const blogPostSelect =
-  'id, slug, category, author, date_label, read_time, bg_key, bg_color, title, title_html, subtitle, body_html, hero_image_path, card_title, card_image_path, hero_image_alt, is_published, sort_order, created_at, catalog_category_id, blog_post_tags(tag, sort_order), blog_post_content_blocks(id, block_type, sort_order, heading, body_html, image_path, image_alt, image_caption, is_enabled), blog_post_products(product_id, sort_order)'
+  'id, slug, category, author, date_label, read_time, bg_key, bg_color, title, title_html, subtitle, body_html, hero_image_path, card_title, card_image_path, hero_image_alt, is_published, sort_order, created_at, updated_at, catalog_category_id, blog_post_tags(tag, sort_order), blog_post_content_blocks(id, block_type, sort_order, heading, body_html, image_path, image_alt, image_caption, is_enabled), blog_post_products(product_id, sort_order)'
 
 const legacyBlogPostSelect =
-  'id, slug, category, author, date_label, read_time, bg_key, bg_color, title, title_html, subtitle, body_html, hero_image_path, is_published, sort_order, created_at, catalog_category_id, blog_post_tags(tag, sort_order), blog_post_content_blocks(id, block_type, sort_order, heading, body_html, image_path, image_alt, image_caption, is_enabled), blog_post_products(product_id, sort_order)'
+  'id, slug, category, author, date_label, read_time, bg_key, bg_color, title, title_html, subtitle, body_html, hero_image_path, is_published, sort_order, created_at, updated_at, catalog_category_id, blog_post_tags(tag, sort_order), blog_post_content_blocks(id, block_type, sort_order, heading, body_html, image_path, image_alt, image_caption, is_enabled), blog_post_products(product_id, sort_order)'
 
 function isMissingHeroAltColumn(error: { code?: string; message?: string } | null) {
   if (!error) return false
@@ -121,6 +122,7 @@ function mapRows(rows: BlogPostRow[] | null): BlogPost[] {
         .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
       sort_order: row.sort_order ?? undefined,
       created_at: row.created_at ?? undefined,
+      updated_at: row.updated_at ?? undefined,
       catalog_category_id: row.catalog_category_id,
       catalog_category: row.catalog_category,
       tags: (row.blog_post_tags ?? [])

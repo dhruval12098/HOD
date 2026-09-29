@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { cinzelFont } from '@/app/fonts';
 import type { HomeCollectionItem } from '@/lib/home-data';
+import { resolveLegacyHipHopHref } from '@/lib/legacy-hiphop';
 
 interface CollectionProps {
   onEnquire?: (name: string) => void;
@@ -63,7 +64,7 @@ const PANELS: PanelData[] = [
     label: 'Collection 04',
     desc: 'Iced chains, grillz & statement pieces',
     cta: 'Shop Now',
-    ctaHref: '/hiphop',
+    ctaHref: '/shop',
     bgClass: 'bg-[linear-gradient(145deg,#F2F5FA,#D6E0F0)]',
   },
 ];
@@ -80,7 +81,7 @@ function mapPanels(items: CollectionApiItem[]): PanelData[] {
     label: item.label || `Collection ${String(index + 1).padStart(2, '0')}`,
     desc: item.description,
     cta: 'Shop Now',
-    ctaHref: item.link,
+    ctaHref: resolveLegacyHipHopHref(item.link),
     imageSrc: item.image_path ? `${COLLECTION_BUCKET_URL}/${item.image_path}` : null,
     bgClass: index % 2 === 0 ? 'bg-[linear-gradient(145deg,#F5F7FC,#D8E2F2)]' : 'bg-[linear-gradient(145deg,#EEF3FA,#D2DEEF)]',
   }));

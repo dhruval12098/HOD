@@ -8,6 +8,7 @@ import ReactCountryFlag from 'react-country-flag';
 import { useCurrency } from '@/context/CurrencyContext';
 import { supabase } from '@/lib/supabase';
 import type { NavbarRenderItem } from '@/lib/navbar';
+import { getSafeContactHref } from '@/lib/contact-links';
 
 const PAYMENT_METHODS = [
   { name: 'Visa', src: '/payment svgs/visa 1.svg' },
@@ -67,12 +68,6 @@ function ColLink({ href, children }: { href: string; children: React.ReactNode }
       {children}
     </a>
   );
-}
-
-function isLinkHref(value?: string | null) {
-  const trimmed = value?.trim();
-  if (!trimmed) return false;
-  return /^(https?:\/\/|mailto:|tel:|\/)/i.test(trimmed);
 }
 
 function ColTitle({ children }: { children: React.ReactNode }) {
@@ -318,10 +313,10 @@ export default function Footer({ navItems = [] }: { navItems?: NavbarRenderItem[
               {footerContactRows.map((row, index) => {
                 const value = row.value?.trim();
                 if (!value) return null;
-                const href = row.href?.trim();
+                const href = getSafeContactHref(row.href);
                 const key = row.id ?? `${row.label}-${index}`;
-                const content = <span>{value}{row.note?.trim() ? <span className="block text-white/55">{row.note.trim()}</span> : null}{href && !isLinkHref(href) ? <span className="block text-white/55">{href}</span> : null}</span>;
-                return href && isLinkHref(href) ? (
+                const content = <span>{value}{row.note?.trim() ? <span className="block text-white/55">{row.note.trim()}</span> : null}</span>;
+                return href ? (
                   <a key={key} href={href} className="block py-1.5 text-[13px] leading-relaxed text-white/75 no-underline transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white">{content}</a>
                 ) : (
                   <p key={key} className="m-0 py-1.5 text-[13px] leading-relaxed text-white/75">{content}</p>
@@ -355,4 +350,3 @@ export default function Footer({ navItems = [] }: { navItems?: NavbarRenderItem[
     </footer>
   );
 }
-

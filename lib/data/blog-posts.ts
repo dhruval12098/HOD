@@ -21,6 +21,7 @@ export interface BlogPost {
   isPublished?: boolean;
   sortOrder?: number;
   createdAt?: string;
+  updatedAt?: string;
   catalogCategoryId?: string;
   catalogCategory?: { id: string; name: string; slug: string };
 }
@@ -180,6 +181,7 @@ export function mapBlogPostRecord(record: {
   sort_order?: number
   tags?: string[]
   created_at?: string
+  updated_at?: string
   catalog_category_id?: string | null
   catalog_category?: { id: string; name: string; slug: string } | Array<{ id: string; name: string; slug: string }> | null
 }): BlogPost {
@@ -214,6 +216,7 @@ export function mapBlogPostRecord(record: {
     isPublished: record.is_published ?? true,
     sortOrder: record.sort_order ?? 0,
     createdAt: record.created_at,
+    updatedAt: record.updated_at,
     catalogCategoryId: record.catalog_category_id ?? undefined,
     catalogCategory: catalogCategory ? { id: catalogCategory.id, name: catalogCategory.name, slug: catalogCategory.slug } : undefined,
   }

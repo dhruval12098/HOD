@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import type { HipHopHeroContent, HipHopHeroSlide } from '@/lib/hiphop-hero'
+import { resolveLegacyHipHopHref } from '@/lib/legacy-hiphop'
 
 const fallbackContent: HipHopHeroContent = {
   eyebrow: 'Hip Hop',
@@ -82,7 +83,7 @@ export default function HipHopHero({
               image_path: legacySection.image_path,
               mobile_image_path: legacySection.image_path,
               button_text: legacySection.cta_label ?? 'Explore',
-              button_link: legacySection.cta_link ?? '/hiphop',
+              button_link: resolveLegacyHipHopHref(legacySection.cta_link),
             },
           ])
           return
@@ -201,7 +202,7 @@ export default function HipHopHero({
                 ) : null}
               </div>
               <div className="flex min-h-[48px] items-end justify-end">
-                <Link href={currentSlide.button_link || '/hiphop'} className="inline-flex items-center justify-center gap-2.5 bg-[#0A1628] px-[24px] py-3 text-[9px] uppercase tracking-[0.22em] text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#20304a] sm:px-[28px] sm:py-4 sm:text-[10px] sm:tracking-[0.28em]">
+                <Link href={resolveLegacyHipHopHref(currentSlide.button_link)} className="inline-flex items-center justify-center gap-2.5 bg-[#0A1628] px-[24px] py-3 text-[9px] uppercase tracking-[0.22em] text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#20304a] sm:px-[28px] sm:py-4 sm:text-[10px] sm:tracking-[0.28em]">
                   {currentSlide.button_text || 'Explore'}
                 </Link>
               </div>

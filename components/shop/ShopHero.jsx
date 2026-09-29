@@ -216,7 +216,7 @@ export default function ShopHero({
             id="shop-collection-heading"
             className="section-title text-left text-[clamp(1.35rem,2.2vw,2rem)] font-medium uppercase leading-none tracking-[0.025em] text-[var(--color-brand-primary,#000)]"
           >
-            Explore {title} Collection
+            Explore {title}
           </h1>
         </div>
 

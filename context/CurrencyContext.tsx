@@ -52,7 +52,9 @@ export function CurrencyProvider({
   children: React.ReactNode
   initialDetectedCurrency?: string
 }) {
-  const [selected, setSelected] = useState<CurrencyOption>(() => getCurrencyOption(initialDetectedCurrency || 'USD'))
+  // Catalogue prices are USD. Rendering USD until an exchange rate is available
+  // prevents a locale symbol from being paired with an unconverted base amount.
+  const [selected, setSelected] = useState<CurrencyOption>(() => getCurrencyOption('USD'))
   const [rates, setRates] = useState<CurrencyRates>({ USD: 1 })
   const [isLoadingRate, setIsLoadingRate] = useState(true)
 
@@ -60,13 +62,7 @@ export function CurrencyProvider({
     let ignore = false
     const storedCurrency = window.localStorage.getItem(STORAGE_KEY)
     const startupCurrency = storedCurrency || initialDetectedCurrency || readDetectedCurrencyCookie()
-    if (startupCurrency) {
-      window.queueMicrotask(() => {
-        if (!ignore) {
-          setSelected(getCurrencyOption(startupCurrency))
-        }
-      })
-    }
+    const requestedCurrency = getCurrencyOption(startupCurrency || 'USD')
 
     void (async () => {
       try {
@@ -80,6 +76,7 @@ export function CurrencyProvider({
             USD: 1,
             ...results,
           })
+          setSelected(requestedCurrency)
         }
       } catch {
         if (!ignore) setRates({ ...FALLBACK_USD_RATES })
@@ -95,9 +92,11 @@ export function CurrencyProvider({
 
   const changeCurrency = useCallback((code: SupportedCurrency | string) => {
     const nextCurrency = getCurrencyOption(code)
-    setSelected(nextCurrency)
     window.localStorage.setItem(STORAGE_KEY, nextCurrency.code)
-  }, [])
+    // Until the initial rate request completes, retain the canonical USD display.
+    // The requested choice is persisted and applied by the initialization effect.
+    if (!isLoadingRate) setSelected(nextCurrency)
+  }, [isLoadingRate])
 
   const convert = useCallback(
     (amountUsd: number | null | undefined) => Number((Number(amountUsd || 0) * (rates[selected.code] ?? 1)).toFixed(2)),

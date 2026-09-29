@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Select } from '@/components/ui/select';
 import { cinzelFont } from '@/app/fonts';
+import { getSafeContactHref } from '@/lib/contact-links';
 
 function RevealDiv({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -90,7 +91,7 @@ export default function ContactBody({ onSuccess }: ContactBodyProps) {
             <div>
               <div className="text-[9px] font-normal tracking-[0.28em] text-[var(--theme-ink)] uppercase mb-1">{row.label}</div>
               <div className={`text-[18px] font-normal text-[var(--theme-ink)] mb-0.5 ${row.label === 'Phone & WhatsApp' ? 'font-numeric' : 'font-serif'}`}>
-                {row.href ? <a href={row.href} className="text-[var(--theme-ink)] no-underline hover:text-[var(--theme-ink)] transition-colors duration-300">{row.value}</a> : row.value}
+                {getSafeContactHref(row.href) ? <a href={getSafeContactHref(row.href)!} className="text-[var(--theme-ink)] no-underline hover:text-[var(--theme-ink)] transition-colors duration-300">{row.value}</a> : row.value}
               </div>
               <div className="text-[10px] text-black/60 tracking-[0.04em]">{row.note}</div>
             </div>

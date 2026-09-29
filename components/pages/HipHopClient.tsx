@@ -65,7 +65,7 @@ export default function HipHopClient({
         <Overlay isVisible={drawerOpen} onClick={() => setDrawerOpen(false)} />
         <MobileDrawer
           isOpen={drawerOpen}
-          activeHref="/hiphop"
+          activeHref="/shop"
           onEnquire={() => {
             setDrawerOpen(false);
             openEnquire('Hip Hop Enquiry');

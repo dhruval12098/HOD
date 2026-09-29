@@ -22,6 +22,8 @@ type EducationPostRow = {
   hero_image_alt: string | null
   is_published: boolean
   sort_order: number
+  created_at?: string | null
+  updated_at?: string | null
   education_post_tags: Array<{ tag: string; sort_order: number }> | null
   education_post_content_blocks: Array<{
     id: number
@@ -38,7 +40,7 @@ type EducationPostRow = {
 }
 
 const educationSelect =
-  'id, slug, category, author, date_label, read_time, bg_key, bg_color, title, title_html, card_title, subtitle, body_html, hero_image_path, card_image_path, hero_image_alt, is_published, sort_order, education_post_tags(tag, sort_order), education_post_content_blocks(id, block_type, sort_order, heading, body_html, image_path, image_alt, image_caption, is_enabled), education_post_products(product_id, sort_order)'
+  'id, slug, category, author, date_label, read_time, bg_key, bg_color, title, title_html, card_title, subtitle, body_html, hero_image_path, card_image_path, hero_image_alt, is_published, sort_order, created_at, updated_at, education_post_tags(tag, sort_order), education_post_content_blocks(id, block_type, sort_order, heading, body_html, image_path, image_alt, image_caption, is_enabled), education_post_products(product_id, sort_order)'
 
 export async function getPublishedEducationPosts(): Promise<BlogPost[]> {
   const supabase = createSupabaseServerClient()
@@ -78,6 +80,8 @@ export async function getPublishedEducationPosts(): Promise<BlogPost[]> {
       tags: (row.education_post_tags ?? [])
         .sort((a, b) => a.sort_order - b.sort_order)
         .map((tag) => tag.tag),
+      created_at: row.created_at ?? undefined,
+      updated_at: row.updated_at ?? undefined,
     })
     const featuredProducts = (row.education_post_products ?? [])
       .sort((a, b) => a.sort_order - b.sort_order)

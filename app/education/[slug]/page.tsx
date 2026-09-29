@@ -32,7 +32,7 @@ export default async function EducationPostRoute({ params }: EducationRouteProps
   const relatedPosts = posts.filter((entry) => entry.id !== post.id).slice(0, 3)
   return (
     <>
-      <JsonLd data={createBlogPostingSchema(post, getStorageImageUrl(post.heroImagePath))} />
+      <JsonLd data={createBlogPostingSchema(post, getStorageImageUrl(post.heroImagePath), `/education/${post.slug}`)} />
       <EducationPostPage post={post} relatedPosts={relatedPosts} />
     </>
   )

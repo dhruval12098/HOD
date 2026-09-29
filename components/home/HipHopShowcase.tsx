@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { cinzelFont } from "@/app/fonts";
 import type { HomeHipHopSection } from "@/lib/home-data";
+import { resolveLegacyHipHopHref } from "@/lib/legacy-hiphop";
 
 type HipHopSection = {
   eyebrow: string;
@@ -22,7 +23,7 @@ const defaultSection: HipHopSection = {
   heading_line_2: "Speaks",
   heading_emphasis: "Louder.",
   cta_label: "Shop Iced Pieces",
-  cta_link: "/hiphop",
+  cta_link: "/shop",
   image_path: "",
   image_alt: "House of Diams Hip Hop Collection",
 };
@@ -65,7 +66,7 @@ export default function HipHopShowcase({ initialSection }: { initialSection?: Ho
           </h2>
 
           <Link
-            href={section.cta_link || "/hiphop"}
+            href={resolveLegacyHipHopHref(section.cta_link)}
             className="mx-auto mt-8 inline-flex items-center gap-3 rounded-full border border-white/18 bg-white/14 px-7 py-3.5 font-[family-name:var(--font-family-button)] text-[10px] uppercase tracking-[0.28em] text-white backdrop-blur-sm transition hover:bg-white hover:text-[#0A1628] md:mx-0"
           >
             {section.cta_label || "Shop Iced Pieces"}

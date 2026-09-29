@@ -45,6 +45,8 @@ export default function ProductGrid({ products, sourceProducts = products, initi
   }, [categoryLoadMore, products]);
 
   const pageSize = 24;
+  const loadedStart = (Math.max(1, page) - 1) * pageSize;
+  const nextLoadPage = page + Math.ceil(loadedProducts.length / pageSize);
 
   const pageHref = (nextPage) => {
     const params = new URLSearchParams(searchParams?.toString());
@@ -66,7 +68,7 @@ export default function ProductGrid({ products, sourceProducts = products, initi
   };
 
   const loadMoreProducts = async () => {
-    if (isLoadingMore || loadedProducts.length >= Number(totalCount || 0)) return;
+    if (isLoadingMore || loadedStart + loadedProducts.length >= Number(totalCount || 0)) return;
 
     setIsLoadingMore(true);
     setLoadMoreError("");
@@ -78,7 +80,7 @@ export default function ProductGrid({ products, sourceProducts = products, initi
         if (value) params.set(key, value);
         else params.delete(key);
       });
-      params.set("page", String(Math.floor(loadedProducts.length / pageSize) + 1));
+      params.set("page", String(nextLoadPage));
       const response = await fetch(`/api/public/products/category?${params.toString()}`, { cache: "no-store" });
       const payload = await response.json().catch(() => null);
       if (!response.ok || !Array.isArray(payload?.products)) {
@@ -262,7 +264,7 @@ export default function ProductGrid({ products, sourceProducts = products, initi
   const totalPages = Math.max(1, Math.ceil(resolvedTotalCount / pageSize));
   const resolvedPage = Math.min(page, totalPages);
   const paginatedProducts = serverPaginated ? filtered : filtered.slice((resolvedPage - 1) * pageSize, resolvedPage * pageSize);
-  const remainingProductCount = Math.max(0, resolvedTotalCount - loadedProducts.length);
+  const remainingProductCount = Math.max(0, resolvedTotalCount - loadedStart - loadedProducts.length);
 
   const metalOptions = filterGroups.find((group) => group.id === "metal")?.options.map((option) => {
     const metal = sourceProducts.flatMap((product) => product.metalsFull || []).find((entry) => entry.slug === option.value);
@@ -486,13 +488,17 @@ export default function ProductGrid({ products, sourceProducts = products, initi
             </div>
           )}
 
-          {categoryLoadMore && loadedProducts.length < resolvedTotalCount ? (
+          {categoryLoadMore && remainingProductCount > 0 ? (
             <div style={{ display: "grid", justifyItems: "center", gap: "12px", padding: "0 0 24px" }}>
-              <button
-                type="button"
-                onClick={loadMoreProducts}
-                disabled={isLoadingMore}
+              <Link
+                href={pageHref(nextLoadPage)}
+                onClick={(event) => {
+                  event.preventDefault();
+                  void loadMoreProducts();
+                }}
+                aria-disabled={isLoadingMore}
                 style={{
+                  display: "inline-flex",
                   border: "1px solid #000",
                   borderRadius: 0,
                   padding: "14px 28px",
@@ -503,10 +509,11 @@ export default function ProductGrid({ products, sourceProducts = products, initi
                   fontWeight: 600,
                   letterSpacing: ".08em",
                   opacity: isLoadingMore ? .7 : 1,
+                  textDecoration: "none",
                 }}
               >
                 {isLoadingMore ? "Loading products…" : `Load more (${remainingProductCount}) products`}
-              </button>
+              </Link>
               {loadMoreError ? <p role="alert" style={{ color: "#a11", fontSize: "12px", margin: 0 }}>{loadMoreError}</p> : null}
             </div>
           ) : !categoryLoadMore && resolvedTotalCount > pageSize ? (

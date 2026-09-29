@@ -5,6 +5,7 @@ import { getStorefrontProductDiscoveryRows } from '@/lib/catalog-products'
 import { createSupabaseServerClient } from '@/lib/server-supabase'
 import { getCanonicalUrl } from '@/lib/site-url'
 import { buildCategoryPath, buildOptionPath, buildSubcategoryPath } from '@/lib/catalog-paths'
+import { isPublicCatalogTaxonomy } from '@/lib/catalog-publication'
 
 export const dynamic = 'force-dynamic'
 
@@ -53,8 +54,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }))
 
   const categoryEntries = categories
-    .filter((category) => category.slug)
-    .filter((category) => category.seo_indexable !== false)
+    .filter(isPublicCatalogTaxonomy)
+    .filter((category) => category.slug && category.slug !== 'hiphop')
     .filter((category) => !staticRoutes.includes(buildCategoryPath(category)))
     .map((category) => ({
       url: getCanonicalUrl(buildCategoryPath(category)).toString(),
@@ -63,7 +64,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }))
 
   const subcategoryEntries = subcategories
-    .filter((subcategory) => subcategory.slug && subcategory.seo_indexable === true)
+    .filter(isPublicCatalogTaxonomy)
+    .filter((subcategory) => subcategory.slug)
     .flatMap((subcategory) => {
       const category = categories.find((entry) => entry.id === subcategory.category_id)
       if (!category) return []
@@ -75,7 +77,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })
 
   const optionEntries = options
-    .filter((option) => option.slug && option.seo_indexable === true)
+    .filter(isPublicCatalogTaxonomy)
+    .filter((option) => option.slug)
     .flatMap((option) => {
       const subcategory = subcategories.find((entry) => entry.id === option.subcategory_id)
       if (!subcategory) return []

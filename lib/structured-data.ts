@@ -104,15 +104,28 @@ export function createFaqSchema(items: FaqSchemaItem[]) {
   }
 }
 
-export function createBlogPostingSchema(post: BlogPost, imageUrl?: string | null) {
+function toIsoDate(value: string | undefined) {
+  if (!value) return undefined
+  const parsed = new Date(value)
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed.toISOString()
+}
+
+export function createBlogPostingSchema(
+  post: BlogPost,
+  imageUrl?: string | null,
+  canonicalPath = `/blog/${post.slug ?? ''}`
+) {
+  const datePublished = toIsoDate(post.createdAt)
+  const dateModified = toIsoDate(post.updatedAt) ?? datePublished
+
   return {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
     headline: post.titleRaw || post.title,
     description: post.subtitle,
     image: imageUrl ? [imageUrl] : undefined,
-    datePublished: post.date,
-    dateModified: post.date,
+    datePublished,
+    dateModified,
     author: {
       '@type': 'Person',
       name: post.author,
@@ -127,7 +140,7 @@ export function createBlogPostingSchema(post: BlogPost, imageUrl?: string | null
     },
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': getCanonicalUrl(`/blog/${post.slug ?? ''}`).toString(),
+      '@id': getCanonicalUrl(canonicalPath).toString(),
     },
   }
 }

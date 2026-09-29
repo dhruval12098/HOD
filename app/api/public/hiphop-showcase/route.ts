@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { resolveLegacyHipHopHref } from '@/lib/legacy-hiphop'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -29,7 +30,7 @@ export async function GET() {
       heading_line_2: data?.heading_line_2 ?? 'Speaks',
       heading_emphasis: data?.heading_emphasis ?? 'Louder.',
       cta_label: data?.cta_label ?? 'Shop Iced Pieces',
-      cta_link: data?.cta_link ?? '/hiphop',
+      cta_link: resolveLegacyHipHopHref(data?.cta_link),
       image_path: data?.image_path ?? '',
       image_alt: data?.image_alt ?? 'House of Diams Hip Hop Collection',
     },
