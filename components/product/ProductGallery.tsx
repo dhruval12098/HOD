@@ -121,14 +121,13 @@ export default function ProductGallery({
     [assets],
   );
 
-  // Keep mobile ordering unchanged, while placing the video after the first image row on desktop.
+  // A product video is the primary gallery asset wherever the gallery is shown.
+  // Keep the remaining image and 3D assets in their supplied order.
   const desktopGridAssets = useMemo(() => {
     const video = assets.find((asset) => asset.type === 'video');
     if (!video) return assets;
 
-    const images = assets.filter((asset) => asset.type === 'image');
-    const models = assets.filter((asset) => asset.type === 'model');
-    return [...images.slice(0, 2), video, ...images.slice(2), ...models];
+    return [video, ...assets.filter((asset) => asset.type !== 'video')];
   }, [assets]);
 
   // On mobile, surface the video first so shoppers see it before scrolling through images.

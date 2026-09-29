@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowLeft, Check, ChevronRight, X } from 'lucide-react';
 
@@ -130,7 +130,13 @@ function buildShopHref(productId: ProductId, results: SavedState['results']) {
   return `/shop?${query}`;
 }
 
-export function FindYourMatchQuiz() {
+type FindYourMatchQuizProps = {
+  /** Lets another surface use this exact quiz dialog with its own approved entry point. */
+  renderTrigger?: (props: { openQuiz: () => void; triggerId: string }) => ReactNode;
+  triggerId?: string;
+};
+
+export function FindYourMatchQuiz({ renderTrigger, triggerId = 'find-your-match-trigger' }: FindYourMatchQuizProps) {
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const hasHydrated = useRef(false);
@@ -165,8 +171,8 @@ export function FindYourMatchQuiz() {
   const close = useCallback((abandoned = false) => {
     if (abandoned && hasProgress && screen !== 'hub') emitQuizEvent('abandon', { product: state.productId, track: activeTrack, screen });
     setOpen(false);
-    requestAnimationFrame(() => document.getElementById('find-your-match-trigger')?.focus());
-  }, [activeTrack, hasProgress, screen, state.productId]);
+    requestAnimationFrame(() => document.getElementById(triggerId)?.focus());
+  }, [activeTrack, hasProgress, screen, state.productId, triggerId]);
 
   useEffect(() => {
     if (!open) return;
@@ -218,9 +224,11 @@ export function FindYourMatchQuiz() {
   const shopHref = useMemo(() => state.productId ? buildShopHref(state.productId, state.results) : '/shop', [state.productId, state.results]);
 
   return <>
-    <BrandButton id="find-your-match-trigger" onClick={openQuiz} className="banner-light-button mt-[var(--space-8)] gap-[var(--space-3)]">
-      TAKE THE QUIZ <span aria-hidden="true">&rarr;</span>
-    </BrandButton>
+    {renderTrigger ? renderTrigger({ openQuiz, triggerId }) : (
+      <BrandButton id={triggerId} onClick={openQuiz} className="banner-light-button mt-[var(--space-8)] gap-[var(--space-3)]">
+        TAKE THE QUIZ <span aria-hidden="true">&rarr;</span>
+      </BrandButton>
+    )}
 
     {open && typeof document !== 'undefined' ? createPortal(<div className="fixed inset-0 z-[2147483000] flex items-end justify-center bg-black/55 p-3 backdrop-blur-[2px] sm:items-center sm:p-5" onMouseDown={(event) => { if (event.target === event.currentTarget) close(true); }}>
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby={titleId} className="relative flex max-h-[88dvh] w-full max-w-[48rem] flex-col overflow-hidden bg-[var(--color-brand-accent,#fff)] text-[var(--color-brand-primary,#000)] shadow-[0_24px_80px_rgba(0,0,0,.24)]">

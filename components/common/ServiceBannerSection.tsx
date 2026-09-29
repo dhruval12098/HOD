@@ -54,7 +54,7 @@ export default function ServiceBannerSection({ data }: { data: ServiceBannerData
           </div>
         </div>
 
-        <div className="relative min-h-[360px] overflow-hidden bg-[var(--color-brand-secondary,#f9f9f9)] sm:min-h-[480px] lg:min-h-[620px]">
+        <div className="order-first relative min-h-[360px] overflow-hidden bg-[var(--color-brand-secondary,#f9f9f9)] sm:min-h-[480px] lg:order-none lg:min-h-[620px]">
           <Image src={data.imageUrl} alt={data.imageAlt} fill sizes="(min-width: 1024px) 50vw, 100vw" className="object-cover object-center" />
         </div>
       </div>

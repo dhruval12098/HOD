@@ -207,7 +207,7 @@ export default function ShopHero({
     <section className="border-b border-black/10 bg-white pb-7 pt-[var(--space-7)] sm:pb-9 sm:pt-[var(--space-8)] lg:pt-[calc(146px+var(--space-8))]" aria-labelledby="shop-collection-heading">
       <div className={`flex flex-col gap-5 px-4 sm:px-7 lg:flex-row lg:items-end lg:justify-between ${wideGutter ? 'lg:px-[50px]' : 'lg:px-[52px]'}`}>
         <div>
-          <nav aria-label="Breadcrumb" className="mb-6 flex items-center gap-3 text-[12px] font-normal tracking-[0.01em] text-[#526071] md:hidden">
+          <nav aria-label="Breadcrumb" className="my-3 flex items-center gap-3 text-[12px] font-normal tracking-[0.01em] text-black md:hidden">
             <Link href="/" className="no-underline hover:text-[#0A1628]">Home</Link>
             <span aria-hidden="true">/</span>
             <span>{title}</span>

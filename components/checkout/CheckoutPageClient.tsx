@@ -9,6 +9,8 @@ import CheckoutConfirmationStep from '@/components/checkout/CheckoutConfirmation
 import CheckoutSummary from '@/components/checkout/CheckoutSummary';
 import CheckoutDeliveryPreview from '@/components/checkout/CheckoutDeliveryPreview';
 import AdditionalSummaryDetails from '@/components/common/AdditionalSummaryDetails';
+import { GiftOfferBanner } from '@/components/commerce/GiftOfferBanner';
+import type { StorefrontPromotion } from '@/components/commerce/PromotionBanner';
 import type { CheckoutChargeQuote, CheckoutDisplayItem, CheckoutPostalAreaOption, CheckoutPostalLookupState, CheckoutProfileForm } from '@/components/checkout/types';
 import { useCurrency } from '@/context/CurrencyContext';
 import { getCollectionHref } from '@/lib/browse-context';
@@ -19,6 +21,7 @@ import type { StorefrontProduct } from '@/lib/catalog-products';
 import { clearLoveLetterDraft, readLoveLetterDraft, type LoveLetterDraft } from '@/lib/love-letter';
 
 const APPLIED_COUPON_KEY = 'hod_applied_coupon'
+const REQUESTED_COUPON_KEY = 'hod_requested_coupon'
 const GUEST_CHECKOUT_TOKEN_KEY = 'hod_guest_checkout_token'
 
 type RazorpayCheckoutSuccess = {
@@ -162,6 +165,10 @@ function parseCurrency(value: string | null) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function isExplicitMinimumOrderCouponError(error: unknown) {
+  return typeof error === 'string' && /^Add \$[\d,.]+ more to use this coupon\.$/i.test(error.trim())
+}
+
 const CHECKOUT_STEPS = [
   { id: 'shipping', label: 'Shipping' },
   { id: 'payment', label: 'Payment' },
@@ -215,7 +222,9 @@ export default function CheckoutPageClient() {
     bannerImageUrl?: string
   } | null>(null);
   const [couponLoading, setCouponLoading] = useState(false);
-  const [giftPromotion, setGiftPromotion] = useState<{ code: string; minimumOrderAmount: number; rewardType: string; gift?: { name: string; imageUrl?: string } | null } | null>(null)
+  const [giftPromotion, setGiftPromotion] = useState<StorefrontPromotion | null>(null)
+  const [requestedCouponCode, setRequestedCouponCode] = useState('')
+  const [requestedPromotion, setRequestedPromotion] = useState<StorefrontPromotion | null>(null)
   const [pendingPaymentSession, setPendingPaymentSession] = useState<PendingPaymentSession | null>(null)
   const [chargeQuote, setChargeQuote] = useState<CheckoutChargeQuote | null>(null)
   const [quoteStatus, setQuoteStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle')
@@ -245,21 +254,41 @@ export default function CheckoutPageClient() {
   const paymentAccessTokenRef = useRef<string | null>(null)
   const paymentGuestTokenRef = useRef<string | null>(null)
   const lastPostalLookupKeyRef = useRef<string>('')
+  const requestedCouponAttemptRef = useRef<string | null>(null)
+  const restoredAppliedCouponCodeRef = useRef<string | null>(null)
   const cartMode = searchParams.get('mode') === 'cart';
+  const directGiftCouponCode = cartMode ? '' : searchParams.get('gift_coupon')?.trim().toUpperCase() || ''
 
   useEffect(() => {
     if (!cartMode) {
       setAppliedCoupon(null)
       setCouponCodeInput('')
+      setRequestedCouponCode('')
+      setRequestedPromotion(null)
       return
     }
-    try { const stored = localStorage.getItem(APPLIED_COUPON_KEY); if (stored) { const parsed = JSON.parse(stored); setAppliedCoupon(parsed); setCouponCodeInput(parsed.code || '') } } catch {}
+    try {
+      const stored = localStorage.getItem(APPLIED_COUPON_KEY)
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        setAppliedCoupon(parsed)
+        setCouponCodeInput(parsed.code || '')
+        restoredAppliedCouponCodeRef.current = parsed.code || null
+      }
+      const requested = localStorage.getItem(REQUESTED_COUPON_KEY)?.trim().toUpperCase()
+      if (requested) setRequestedCouponCode(requested)
+    } catch {}
   }, [cartMode])
 
   useEffect(() => {
     void fetch('/api/public/promotions').then((response) => response.json()).then((payload) => {
-      const promotion = Array.isArray(payload?.items) ? payload.items.find((item: { rewardType?: string }) => item.rewardType === 'free_gift') : null
+      const items = Array.isArray(payload?.items) ? payload.items : []
+      const promotion = items.find((item: { rewardType?: string }) => item.rewardType === 'free_gift') ?? null
       if (promotion) setGiftPromotion(promotion)
+      const requested = items.find((item: { code?: string }) => item.code === localStorage.getItem(REQUESTED_COUPON_KEY)?.trim().toUpperCase()) ?? null
+      if (requested) {
+        setRequestedPromotion(requested)
+      }
     }).catch(() => {})
   }, [])
 
@@ -392,6 +421,33 @@ export default function CheckoutPageClient() {
     () => Boolean(authoritativePricing?.lines.some((line, index) => Math.abs(line.unitPrice - Number(checkoutItems[index]?.priceFrom || 0)) >= 0.01)),
     [authoritativePricing?.lines, checkoutItems]
   )
+  const checkoutGiftPromotion = useMemo<StorefrontPromotion | null>(() => {
+    if (appliedCoupon?.rewardType === 'free_gift' && appliedCoupon.gift) {
+      return {
+        id: appliedCoupon.id,
+        code: appliedCoupon.code,
+        title: appliedCoupon.title,
+        rewardType: 'free_gift',
+        discountValue: appliedCoupon.discountValue,
+        minimumOrderAmount: Number(appliedCoupon.minimumOrderAmount ?? 0),
+        bannerTitle: appliedCoupon.bannerTitle,
+        bannerDescription: appliedCoupon.bannerDescription,
+        bannerImageUrl: appliedCoupon.bannerImageUrl,
+        gift: {
+          name: appliedCoupon.gift.name,
+          slug: appliedCoupon.gift.slug,
+          sku: appliedCoupon.gift.sku,
+          imageUrl: appliedCoupon.gift.imageUrl,
+        },
+      }
+    }
+    if (cartMode && requestedCouponCode && requestedPromotion?.rewardType === 'free_gift') return requestedPromotion
+    return giftPromotion?.rewardType === 'free_gift' ? giftPromotion : null
+  }, [appliedCoupon, cartMode, giftPromotion, requestedCouponCode, requestedPromotion])
+
+  const hasAppliedGift = Boolean(
+    appliedCoupon?.rewardType === 'free_gift' && (authoritativePricing?.gift || appliedCoupon.gift),
+  )
 
   const paymentSessionSignature = useMemo(
     () =>
@@ -467,10 +523,24 @@ export default function CheckoutPageClient() {
           setQuoteStatus('error')
           setQuoteError(response.status >= 500 ? 'We could not confirm pricing right now. Please try again shortly.' : payload?.error || 'One or more products need your attention before checkout.')
           if (appliedCoupon && response.status < 500) {
+            const minimumOrderAmount = Number(appliedCoupon.minimumOrderAmount ?? 0)
             setAppliedCoupon(null)
-            setCouponCodeInput('')
-            if (cartMode) localStorage.removeItem(APPLIED_COUPON_KEY)
-            setErrorMessage(payload?.error || 'This coupon is not valid for the current checkout.')
+            if (cartMode && minimumOrderAmount > 0 && isExplicitMinimumOrderCouponError(payload?.error)) {
+              setRequestedCouponCode(appliedCoupon.code)
+              localStorage.setItem(REQUESTED_COUPON_KEY, appliedCoupon.code)
+              localStorage.removeItem(APPLIED_COUPON_KEY)
+              setCouponCodeInput('')
+              setErrorMessage('')
+            } else {
+              setCouponCodeInput('')
+              if (cartMode) {
+                localStorage.removeItem(APPLIED_COUPON_KEY)
+                localStorage.removeItem(REQUESTED_COUPON_KEY)
+                setRequestedCouponCode('')
+                setRequestedPromotion(null)
+              }
+              setErrorMessage(payload?.error || 'This coupon is not valid for the current checkout.')
+            }
           }
         }
       } catch {
@@ -1110,9 +1180,15 @@ export default function CheckoutPageClient() {
       }
     };
 
-  const handleApplyCoupon = async (requestedCode?: string) => {
+  const handleApplyCoupon = async (requestedCode?: string, options: { allowGiftOffer?: boolean } = {}) => {
     const normalizedCode = (requestedCode ?? couponCodeInput).trim().toUpperCase()
     if (!normalizedCode) return
+
+    const isKnownGiftOffer = normalizedCode === giftPromotion?.code || normalizedCode === requestedPromotion?.code
+    if (isKnownGiftOffer && !options.allowGiftOffer) {
+      setErrorMessage('Gift offers are selected from the cart or product page before checkout.')
+      return
+    }
 
     setCouponLoading(true)
     try {
@@ -1134,14 +1210,37 @@ export default function CheckoutPageClient() {
 
       const payload = await response.json().catch(() => null)
       if (!response.ok || !payload?.coupon) {
+        const minimumOrderAmount = Number(appliedCoupon?.minimumOrderAmount ?? 0)
+        if (cartMode && normalizedCode === appliedCoupon?.code && minimumOrderAmount > 0 && isExplicitMinimumOrderCouponError(payload?.error)) {
+          setRequestedCouponCode(normalizedCode)
+          localStorage.setItem(REQUESTED_COUPON_KEY, normalizedCode)
+          localStorage.removeItem(APPLIED_COUPON_KEY)
+          setCouponCodeInput('')
+          setErrorMessage('')
+          return
+        }
         setAppliedCoupon(null)
+        if (cartMode) {
+          localStorage.removeItem(APPLIED_COUPON_KEY)
+          localStorage.removeItem(REQUESTED_COUPON_KEY)
+          setRequestedCouponCode('')
+          setRequestedPromotion(null)
+        }
         setErrorMessage(response.status >= 500 ? 'We could not validate that coupon right now. Please try again shortly.' : payload?.error ?? 'Unable to apply coupon.')
         return
       }
 
       setAppliedCoupon(payload.coupon)
+      restoredAppliedCouponCodeRef.current = null
       setCouponCodeInput(payload.coupon.code)
-      if (cartMode) localStorage.setItem(APPLIED_COUPON_KEY, JSON.stringify(payload.coupon))
+      if (cartMode) {
+        localStorage.setItem(APPLIED_COUPON_KEY, JSON.stringify(payload.coupon))
+        if (requestedCouponCode === payload.coupon.code) {
+          localStorage.removeItem(REQUESTED_COUPON_KEY)
+          setRequestedCouponCode('')
+          setRequestedPromotion(null)
+        }
+      }
       setErrorMessage('')
     } catch {
       setErrorMessage('We could not validate that coupon. Check your connection and try again.')
@@ -1153,8 +1252,35 @@ export default function CheckoutPageClient() {
   const handleRemoveCoupon = () => {
     setAppliedCoupon(null)
     setCouponCodeInput('')
-    if (cartMode) localStorage.removeItem(APPLIED_COUPON_KEY)
+    if (cartMode) {
+      localStorage.removeItem(APPLIED_COUPON_KEY)
+      localStorage.removeItem(REQUESTED_COUPON_KEY)
+      setRequestedCouponCode('')
+      setRequestedPromotion(null)
+    }
   }
+
+  useEffect(() => {
+    if (!cartMode || !appliedCoupon || !checkoutItems.length || restoredAppliedCouponCodeRef.current !== appliedCoupon.code || couponLoading) return
+    restoredAppliedCouponCodeRef.current = null
+    void handleApplyCoupon(appliedCoupon.code, { allowGiftOffer: true })
+  }, [appliedCoupon, cartMode, checkoutItems, couponLoading])
+
+  useEffect(() => {
+    if (
+      cartMode ||
+      appliedCoupon ||
+      !directGiftCouponCode ||
+      !giftPromotion ||
+      directGiftCouponCode !== giftPromotion.code ||
+      !checkoutItems.length ||
+      couponLoading
+    ) return
+    const attemptKey = `${directGiftCouponCode}:${JSON.stringify(checkoutItems.map((item) => [item.slug, item.metalVariantId, item.quantity]))}`
+    if (requestedCouponAttemptRef.current === attemptKey) return
+    requestedCouponAttemptRef.current = attemptKey
+    void handleApplyCoupon(directGiftCouponCode, { allowGiftOffer: true })
+  }, [appliedCoupon, cartMode, checkoutItems, couponLoading, directGiftCouponCode, giftPromotion])
 
   if (sessionLoading) {
     return (
@@ -1280,6 +1406,15 @@ export default function CheckoutPageClient() {
 
           <div className="lg:sticky lg:top-[140px] lg:self-start">
             <div className="space-y-4">
+              {checkoutGiftPromotion ? <GiftOfferBanner
+                promotion={checkoutGiftPromotion}
+                amount={subtotal}
+                checked={hasAppliedGift || Boolean(requestedCouponCode)}
+                included={hasAppliedGift}
+                borderless
+                displayOnly
+                confirmationTone="blue"
+              /> : null}
               <CheckoutSummary
                 summary={{
                   items: authoritativeCheckoutItems,
@@ -1294,39 +1429,7 @@ export default function CheckoutPageClient() {
                 onCouponAction={() => { if (appliedCoupon) handleRemoveCoupon(); else void handleApplyCoupon() }}
                 couponApplied={Boolean(appliedCoupon)}
                 couponLoading={couponLoading}
-                giftOffer={appliedCoupon
-                  ? appliedCoupon.rewardType === 'free_gift' && (authoritativePricing?.gift || appliedCoupon.gift)
-                    ? {
-                        name: (authoritativePricing?.gift || appliedCoupon.gift)!.name,
-                        imageUrl: (authoritativePricing?.gift || appliedCoupon.gift)!.imageUrl,
-                        minimumOrderAmount: Number(appliedCoupon.minimumOrderAmount ?? 0),
-                        remainingAmount: 0,
-                        unlocked: true,
-                        added: true,
-                        appliedCouponCode: appliedCoupon.code,
-                      }
-                    : {
-                        name: 'Discount applied',
-                        minimumOrderAmount: Number(appliedCoupon.minimumOrderAmount ?? 0),
-                        remainingAmount: 0,
-                        unlocked: true,
-                        isDiscount: true,
-                        appliedCouponCode: appliedCoupon.code,
-                        appliedDiscountAmount: couponDiscount,
-                      }
-                  : giftPromotion?.rewardType === 'free_gift' && giftPromotion.gift ? {
-                      name: giftPromotion.gift.name,
-                      imageUrl: giftPromotion.gift.imageUrl,
-                      minimumOrderAmount: giftPromotion.minimumOrderAmount,
-                      remainingAmount: Math.max(0, giftPromotion.minimumOrderAmount - subtotal),
-                      unlocked: subtotal >= giftPromotion.minimumOrderAmount,
-                      onAction: () => {
-                        if (subtotal >= giftPromotion.minimumOrderAmount) {
-                          setCouponCodeInput(giftPromotion.code)
-                          void handleApplyCoupon(giftPromotion.code)
-                        }
-                      },
-                    } : null}
+                couponMessage={errorMessage}
               />
               <AdditionalSummaryDetails />
             </div>

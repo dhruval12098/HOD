@@ -69,6 +69,7 @@ export default function ProductClient({ product, relatedProducts, serviceBanner,
   const [toastMessage, setToastMessage] = useState('');
   const [toastVisible, setToastVisible] = useState(false);
   const [showStickyCartBar, setShowStickyCartBar] = useState(false);
+  const [stickyImageUnavailableUrl, setStickyImageUnavailableUrl] = useState<string | null>(null);
   const [selectedGiftPromotionId, setSelectedGiftPromotionId] = useState<number | null>(null);
   const ctaAnchorRef = useRef<HTMLDivElement | null>(null);
   const pageTopRef = useRef<HTMLDivElement | null>(null);
@@ -156,6 +157,7 @@ export default function ProductClient({ product, relatedProducts, serviceBanner,
     }),
     [activeImageAlts, activeImageUrls, activePrice, activeVideoUrl, storefrontProduct]
   );
+
   const configuredProduct = useMemo(
     () => ({
       ...activeProduct,
@@ -230,6 +232,14 @@ export default function ProductClient({ product, relatedProducts, serviceBanner,
     [storefrontProduct.mainCategorySlug]
   );
   const collectionLabel = storefrontProduct.mainCategoryName || 'Collection';
+  const subcategoryLabel = storefrontProduct.subcategoryName || null;
+  const subcategoryHref = useMemo(() => {
+    const { mainCategorySlug, subcategorySlug } = storefrontProduct;
+
+    return mainCategorySlug && subcategorySlug
+      ? `/${mainCategorySlug}/${subcategorySlug}`
+      : null;
+  }, [storefrontProduct]);
   const stickySummary = [
     selectedCombinedVariant?.label || selectedMetalMeta?.name,
   ]
@@ -253,6 +263,7 @@ export default function ProductClient({ product, relatedProducts, serviceBanner,
     if (selectedRingSize) params.set('ring_size', selectedRingSize);
     if (selectedGemstoneValue) params.set('gemstone', selectedGemstoneValue);
     if (selectedShapeSlug) params.set('shape', selectedShapeSlug);
+    if (isGiftSelected && giftPromotion?.code) params.set('gift_coupon', giftPromotion.code);
     const custom = Object.entries(customSelections).map(([dropdownId, optionId]) => { const group = storefrontProduct.customDropdowns.find((entry) => entry.id === dropdownId); const option = group?.options.find((entry) => entry.id === optionId); return { dropdownId, optionId, label: group?.label, optionLabel: option?.label }; }).sort((a, b) => a.dropdownId.localeCompare(b.dropdownId));
     if (custom.length) params.set('custom', encodeURIComponent(JSON.stringify(custom)));
 
@@ -260,7 +271,7 @@ export default function ProductClient({ product, relatedProducts, serviceBanner,
     if (preserveCategory) params.set('category', preserveCategory);
 
     return `/checkout?${params.toString()}`;
-  }, [activePrice, activeProduct.imageUrl, customSelections, product.name, product.slug, searchParams, selectedCombinedVariant?.label, selectedGemstoneValue, selectedHiphopCarat, selectedMetalMeta?.name, selectedRingSize, selectedShapeSlug, selectedVariantId, sizeOrFit]);
+  }, [activePrice, activeProduct.imageUrl, customSelections, giftPromotion?.code, isGiftSelected, product.name, product.slug, searchParams, selectedCombinedVariant?.label, selectedGemstoneValue, selectedHiphopCarat, selectedMetalMeta?.name, selectedRingSize, selectedShapeSlug, selectedVariantId, sizeOrFit]);
 
   const validateCustomSelections = () => {
     const missing = storefrontProduct.customDropdowns.find((group) => group.isRequired && !customSelections[group.id]);
@@ -381,13 +392,25 @@ export default function ProductClient({ product, relatedProducts, serviceBanner,
         } max-[700px]:top-auto max-[700px]:bottom-0 max-[700px]:border-b-0 max-[700px]:border-t`}
       >
         <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-[52px] py-3 max-[1100px]:px-7 max-[700px]:flex-col max-[700px]:items-stretch max-[700px]:gap-3 max-[700px]:px-5">
-          <div className="min-w-0">
-            <div className="truncate font-display-title text-[24px] leading-[1.05] text-[var(--color-brand-primary,#000000)] max-[700px]:text-[18px]">
-              {product.name}
-            </div>
-            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] uppercase tracking-[0.14em] text-[var(--theme-muted,#6a6a6a)]">
-              {stickySummary ? <span>{stickySummary}</span> : null}
-              <span className="font-medium text-[var(--color-brand-primary,#000000)]">{format(activePrice)}</span>
+          <div className="flex min-w-0 items-center gap-3 max-[700px]:gap-2.5">
+            {activeProduct.imageUrl && stickyImageUnavailableUrl !== activeProduct.imageUrl ? (
+              <div className="h-14 w-14 shrink-0 overflow-hidden border border-[color:var(--theme-border,rgba(0,0,0,0.09))] bg-[#f7f7f7] max-[700px]:h-[52px] max-[700px]:w-[52px]">
+                <img
+                  src={activeProduct.imageUrl}
+                  alt={activeImageAlts[0] || `${product.name} preview`}
+                  className="h-full w-full object-cover object-center"
+                  onError={() => setStickyImageUnavailableUrl(activeProduct.imageUrl ?? null)}
+                />
+              </div>
+            ) : null}
+            <div className="min-w-0">
+              <div className="truncate font-display-title text-[24px] leading-[1.05] text-[var(--color-brand-primary,#000000)] max-[700px]:text-[18px]">
+                {product.name}
+              </div>
+              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] uppercase tracking-[0.14em] text-[var(--theme-muted,#6a6a6a)]">
+                {stickySummary ? <span>{stickySummary}</span> : null}
+                <span className="font-medium text-[var(--color-brand-primary,#000000)]">{format(activePrice)}</span>
+              </div>
             </div>
           </div>
           <button
@@ -405,9 +428,10 @@ export default function ProductClient({ product, relatedProducts, serviceBanner,
           gallery={(
             <div className="relative z-[1] min-w-0">
               <ProductBreadcrumb
-                productName={product.name}
                 collectionHref={collectionHref}
                 collectionLabel={collectionLabel}
+                subcategoryHref={subcategoryHref}
+                subcategoryLabel={subcategoryLabel}
               />
               <ProductGallery
                 gemStyle={storefrontProduct.gemStyle}
@@ -497,22 +521,43 @@ export default function ProductClient({ product, relatedProducts, serviceBanner,
                 <h2 className="mb-5 font-display-title text-[28px] font-normal leading-[1.1] tracking-[0.01em] text-[var(--color-brand-primary,#000000)]">
                   Know Your Setting
                 </h2>
-                <ProductTabs
-                  description={description}
-                  specifications={product.specificationRows}
-                  productDetails={product.productDetailRows}
-                  detailSections={product.detailSections}
-                  shippingContent={product.shippingContent}
-                  careWarrantyContent={product.careWarrantyContent}
-                  detailsAccordion
-                />
+                <div className="sm:hidden">
+                  <ProductTabs
+                    shippingContent={product.shippingContent}
+                    careWarrantyContent={product.careWarrantyContent}
+                    showSections={false}
+                    detailsAccordion
+                  />
+                  <ServiceBannerSection data={serviceBanner} />
+                  <ProductTabs
+                    description={description}
+                    specifications={product.specificationRows}
+                    productDetails={product.productDetailRows}
+                    detailSections={product.detailSections}
+                    showPolicies={false}
+                    detailsAccordion
+                  />
+                </div>
+                <div className="hidden sm:block">
+                  <ProductTabs
+                    description={description}
+                    specifications={product.specificationRows}
+                    productDetails={product.productDetailRows}
+                    detailSections={product.detailSections}
+                    shippingContent={product.shippingContent}
+                    careWarrantyContent={product.careWarrantyContent}
+                    detailsAccordion
+                  />
+                </div>
               </div>
             </div>
           )}
         />
       </section>
 
-      <ServiceBannerSection data={serviceBanner} />
+      <div className="hidden sm:block">
+        <ServiceBannerSection data={serviceBanner} />
+      </div>
 
       <ProductFaqSection items={product.faqItems} />
 

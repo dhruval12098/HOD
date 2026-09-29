@@ -29,6 +29,18 @@ type SearchItem = {
   priceFrom: number
 };
 
+const STATIC_SEARCH_SUGGESTIONS = [
+  'Stackable rings',
+  'Stackable diamond bands',
+  'Solitaire diamond pendant',
+  'Classic solitaire engagement rings',
+  'Diamond engagement rings',
+  'Lab grown diamond rings',
+  'Wedding bands',
+  'Diamond earrings',
+  'Diamond bracelets',
+];
+
 async function loadSearchItems(query: string, signal?: AbortSignal): Promise<SearchItem[]> {
   const response = await fetch(`/api/public/products/search?q=${encodeURIComponent(query.trim())}`, {
     cache: query.trim() ? 'no-store' : 'force-cache',
@@ -159,8 +171,10 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
   const [navHidden, setNavHidden] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [submittedSearchQuery, setSubmittedSearchQuery] = useState('');
   const [activeSearchIndex, setActiveSearchIndex] = useState(-1);
   const [searchItems, setSearchItems] = useState<SearchItem[]>([]);
+  const [defaultSearchItems, setDefaultSearchItems] = useState<SearchItem[]>([]);
   const [searchLoadState, setSearchLoadState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [announcementItems, setAnnouncementItems] = useState<Array<{
     message: string;
@@ -179,9 +193,10 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
   const lastScrollY = useRef(0);
   const searchRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const searchOptionRefs = useRef<Array<HTMLAnchorElement | null>>([]);
+  const searchOptionRefs = useRef<Array<HTMLElement | null>>([]);
   const defaultSearchItemsRef = useRef<SearchItem[] | null>(null);
   const megaCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mobileMenuCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prefetchedNavRoutesRef = useRef(new Set<string>());
 
 
@@ -242,42 +257,44 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
   useEffect(() => {
     if (!searchOpen) return;
     const controller = new AbortController();
-    const query = searchQuery.trim();
+    const query = submittedSearchQuery.trim();
+
     if (!query && defaultSearchItemsRef.current) {
       setSearchItems(defaultSearchItemsRef.current);
       setSearchLoadState('ready');
       return () => controller.abort();
     }
-    const delay = query ? 225 : 0;
-    const timer = window.setTimeout(() => {
-      setSearchLoadState('loading');
-      void loadSearchItems(query, controller.signal)
-        .then((items) => {
-          if (controller.signal.aborted) return;
-          if (!query) defaultSearchItemsRef.current = items;
-          setSearchItems(items);
-          setSearchLoadState('ready');
-          setActiveSearchIndex(-1);
-        })
-        .catch((error) => {
-          if (error instanceof DOMException && error.name === 'AbortError') return;
-          setSearchItems([]);
-          setSearchLoadState('error');
-        });
-    }, delay);
 
-    return () => {
-      window.clearTimeout(timer);
-      controller.abort();
-    };
-  }, [searchOpen, searchQuery]);
+    setSearchLoadState('loading');
+    void loadSearchItems(query, controller.signal)
+      .then((items) => {
+        if (controller.signal.aborted) return;
+        if (!query) {
+          defaultSearchItemsRef.current = items;
+          setDefaultSearchItems(items);
+        }
+        setSearchItems(items);
+        setSearchLoadState('ready');
+        setActiveSearchIndex(-1);
+      })
+      .catch((error) => {
+        if (error instanceof DOMException && error.name === 'AbortError') return;
+        setSearchItems([]);
+        setSearchLoadState('error');
+      });
+
+    return () => controller.abort();
+  }, [searchOpen, submittedSearchQuery]);
 
   useEffect(() => {
     const controller = new AbortController();
     const timer = window.setTimeout(() => {
       void loadSearchItems('', controller.signal)
         .then((items) => {
-          if (!controller.signal.aborted) defaultSearchItemsRef.current = items;
+        if (!controller.signal.aborted) {
+          defaultSearchItemsRef.current = items;
+          setDefaultSearchItems(items);
+        }
         })
         .catch(() => {});
     }, 800);
@@ -318,6 +335,9 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
     return () => {
       if (megaCloseTimeoutRef.current) {
         clearTimeout(megaCloseTimeoutRef.current);
+      }
+      if (mobileMenuCloseTimeoutRef.current) {
+        clearTimeout(mobileMenuCloseTimeoutRef.current);
       }
     };
   }, []);
@@ -399,7 +419,27 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
 
   const closeMenu = () => {
     setMenuOpen(false);
+    // Keep the nested drawer in place while the outer sheet exits upward. Resetting
+    // it immediately also starts the horizontal transition, which makes the close
+    // animation appear to move diagonally when a category link is selected.
+    if (mobileMenuCloseTimeoutRef.current) {
+      clearTimeout(mobileMenuCloseTimeoutRef.current);
+    }
+    mobileMenuCloseTimeoutRef.current = setTimeout(() => {
+      setMobileOpenItem(null);
+      setMobileOpenSection(null);
+      mobileMenuCloseTimeoutRef.current = null;
+    }, 700);
+  };
+
+  const openMobileMenu = () => {
+    if (mobileMenuCloseTimeoutRef.current) {
+      clearTimeout(mobileMenuCloseTimeoutRef.current);
+      mobileMenuCloseTimeoutRef.current = null;
+    }
     setMobileOpenItem(null);
+    setMobileOpenSection(null);
+    setMenuOpen(true);
   };
 
   const openMegaMenu = (label: string) => {
@@ -451,7 +491,25 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
     router.refresh();
   };
 
-  const filteredSearchItems = useMemo(() => searchItems.slice(0, searchQuery.trim() ? 12 : 16), [searchItems, searchQuery]);
+  const isShowingTextSuggestions = Boolean(searchQuery.trim()) && !submittedSearchQuery.trim();
+  const filteredSearchItems = useMemo(
+    () => searchItems.slice(0, submittedSearchQuery.trim() ? 12 : 16),
+    [searchItems, submittedSearchQuery]
+  );
+  const textSearchSuggestions = useMemo(() => {
+    const query = searchQuery.trim().toLocaleLowerCase();
+    if (!query) return [];
+
+    // Static suggestions render immediately; cached product names are merged in as soon as they arrive.
+    const productSuggestions = defaultSearchItems.map((item) => item.name);
+    return [...STATIC_SEARCH_SUGGESTIONS, ...productSuggestions]
+      .filter((suggestion, index, all) => {
+        const normalized = suggestion.trim();
+        return normalized.toLocaleLowerCase().includes(query)
+          && all.findIndex((candidate) => candidate.trim().toLocaleLowerCase() === normalized.toLocaleLowerCase()) === index;
+      })
+      .slice(0, 6);
+  }, [defaultSearchItems, searchQuery]);
 
   useEffect(() => {
     if (activeSearchIndex < 0) return;
@@ -461,11 +519,23 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
   const closeSearch = () => {
     setSearchOpen(false);
     setSearchQuery('');
+    setSubmittedSearchQuery('');
     setActiveSearchIndex(-1);
   };
 
   const openSearch = () => {
+    setSearchQuery('');
+    setSubmittedSearchQuery('');
+    setActiveSearchIndex(-1);
     setSearchOpen(true);
+  };
+
+  const submitSearch = (query: string) => {
+    const nextQuery = query.trim();
+    if (!nextQuery) return;
+    setSearchQuery(nextQuery);
+    setSubmittedSearchQuery(nextQuery);
+    setActiveSearchIndex(-1);
   };
 
   const handleSearchKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
@@ -475,26 +545,28 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
       return;
     }
 
-    if (!filteredSearchItems.length) return;
+    const keyboardItems = isShowingTextSuggestions ? textSearchSuggestions : filteredSearchItems;
+    if (!keyboardItems.length && event.key !== 'Enter') return;
 
     if (event.key === 'ArrowDown') {
       event.preventDefault();
-      setActiveSearchIndex((current) => (current + 1) % filteredSearchItems.length);
+      setActiveSearchIndex((current) => (current + 1) % keyboardItems.length);
       return;
     }
 
     if (event.key === 'ArrowUp') {
       event.preventDefault();
-      setActiveSearchIndex((current) => (current <= 0 ? filteredSearchItems.length - 1 : current - 1));
+      setActiveSearchIndex((current) => (current <= 0 ? keyboardItems.length - 1 : current - 1));
       return;
     }
 
     if (event.key === 'Enter') {
-      const selectedItem = filteredSearchItems[activeSearchIndex >= 0 ? activeSearchIndex : 0];
-      if (!selectedItem) return;
       event.preventDefault();
-      closeSearch();
-      router.push(`/shop/${selectedItem.slug}`);
+      if (isShowingTextSuggestions && activeSearchIndex >= 0) {
+        submitSearch(textSearchSuggestions[activeSearchIndex]);
+        return;
+      }
+      submitSearch(searchQuery);
     }
   };
 
@@ -652,7 +724,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
             <button
               onClick={() => {
                 if (menuOpen) closeMenu();
-                else setMenuOpen(true);
+                else openMobileMenu();
               }}
               aria-label="Menu"
               aria-expanded={menuOpen}
@@ -858,7 +930,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
             id="navbar-search-panel"
             data-navbar-search-root
             aria-label="Product search"
-            className="fixed inset-x-0 top-0 z-[1400] h-[82dvh] overflow-y-auto bg-white"
+            className="fixed inset-x-0 top-0 z-[1400] h-dvh min-h-[100svh] overflow-y-auto bg-white sm:h-[60dvh] sm:min-h-0"
             style={{ backgroundColor: 'var(--color-brand-accent, #ffffff)', fontFamily: 'var(--font-family-secondary, Inter, sans-serif)' }}
           >
             <div className="mx-auto h-full min-h-0 max-w-[1800px] px-5 pb-10 pt-8 sm:px-8 lg:px-14 lg:pt-10">
@@ -869,18 +941,18 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
                     ref={searchInputRef}
                     autoFocus
                     value={searchQuery}
-                    onChange={(event) => { setSearchQuery(event.target.value); setActiveSearchIndex(-1); }}
+                    onChange={(event) => { setSearchQuery(event.target.value); setSubmittedSearchQuery(''); setActiveSearchIndex(-1); }}
                     onKeyDown={handleSearchKeyDown}
                     role="combobox"
                     aria-label="Search products"
                     aria-autocomplete="list"
-                    aria-expanded={searchLoadState === 'ready' && filteredSearchItems.length > 0}
-                    aria-controls={searchLoadState === 'ready' ? 'navbar-search-results' : undefined}
-                    aria-activedescendant={filteredSearchItems[activeSearchIndex] ? `navbar-search-option-${activeSearchIndex}` : undefined}
+                    aria-expanded={isShowingTextSuggestions ? textSearchSuggestions.length > 0 : searchLoadState === 'ready' && filteredSearchItems.length > 0}
+                    aria-controls={isShowingTextSuggestions ? 'navbar-search-suggestions' : searchLoadState === 'ready' ? 'navbar-search-results' : undefined}
+                    aria-activedescendant={isShowingTextSuggestions && textSearchSuggestions[activeSearchIndex] ? `navbar-search-suggestion-${activeSearchIndex}` : filteredSearchItems[activeSearchIndex] ? `navbar-search-option-${activeSearchIndex}` : undefined}
                     placeholder="Search jewellery, settings, diamonds..."
-                    className="h-12 min-w-0 flex-1 border-0 bg-transparent text-[13px] text-[var(--color-brand-primary)] outline-none placeholder:text-black/55 sm:h-14 sm:text-[15px]"
+                    className="h-12 min-w-0 flex-1 border-0 bg-transparent text-[16px] text-[var(--color-brand-primary)] outline-none placeholder:text-black/55 sm:h-14"
                   />
-                  {searchQuery ? <button type="button" onClick={() => { setSearchQuery(''); setActiveSearchIndex(-1); searchInputRef.current?.focus(); }} aria-label="Clear search" className="shrink-0 text-xl text-black/55 hover:text-black">×</button> : null}
+                  {searchQuery ? <button type="button" onClick={() => { setSearchQuery(''); setSubmittedSearchQuery(''); setActiveSearchIndex(-1); searchInputRef.current?.focus(); }} aria-label="Clear search" className="shrink-0 text-xl text-black/55 hover:text-black">×</button> : null}
                 </div>
                 <button
                   type="button"
@@ -896,12 +968,32 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
                 <button type="button" onClick={closeSearch} className="hidden shrink-0 text-[13px] text-[var(--color-brand-primary)] underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 lg:inline-flex">Cancel</button>
               </div>
               <div className="mt-[var(--space-4)] flex items-center justify-between border-b border-black/10 pb-[var(--space-3)] text-[10px] font-semibold uppercase tracking-[0.18em] text-black/70 sm:text-[11px]">
-                <span>{searchQuery.trim() ? 'Products' : 'Explore jewellery'}</span>
-                {searchLoadState === 'ready' && filteredSearchItems.length ? <span>{filteredSearchItems.length} {searchQuery.trim() ? 'results' : 'suggestions'}</span> : null}
+                <span>{isShowingTextSuggestions ? 'Top suggestions' : submittedSearchQuery.trim() ? 'Products' : 'Explore jewellery'}</span>
+                {isShowingTextSuggestions ? <span>{textSearchSuggestions.length} suggestions</span> : searchLoadState === 'ready' && filteredSearchItems.length ? <span>{filteredSearchItems.length} {submittedSearchQuery.trim() ? 'results' : 'suggestions'}</span> : null}
               </div>
-              <span className="sr-only" aria-live="polite">{searchLoadState === 'loading' ? 'Loading products.' : searchLoadState === 'error' ? 'Unable to load products.' : `${filteredSearchItems.length} products shown.`}</span>
-              {searchLoadState === 'loading' ? null : searchLoadState === 'error' ? (
-                <div className="py-[var(--space-6)] text-sm text-black/70">Product suggestions are unavailable. <button type="button" onClick={() => setSearchLoadState('loading')} className="underline underline-offset-4">Try again</button></div>
+              <span className="sr-only" aria-live="polite">{isShowingTextSuggestions ? `${textSearchSuggestions.length} search suggestions available.` : searchLoadState === 'loading' ? 'Loading products.' : searchLoadState === 'error' ? 'Unable to load products.' : `${filteredSearchItems.length} products shown.`}</span>
+              {isShowingTextSuggestions ? (
+                textSearchSuggestions.length ? (
+                  <div id="navbar-search-suggestions" role="listbox" aria-label="Top search suggestions" className="py-5 sm:py-6">
+                    {textSearchSuggestions.map((suggestion, index) => (
+                      <button
+                        key={suggestion}
+                        ref={(node) => { searchOptionRefs.current[index] = node; }}
+                        id={`navbar-search-suggestion-${index}`}
+                        type="button"
+                        role="option"
+                        aria-selected={activeSearchIndex === index}
+                        onMouseEnter={() => setActiveSearchIndex(index)}
+                        onClick={() => submitSearch(suggestion)}
+                        className="block w-full py-2.5 text-left text-[15px] font-medium leading-6 text-[#383846] outline-none transition-colors hover:text-[#8b6a3d] focus-visible:text-[#8b6a3d] sm:py-3 sm:text-[16px]"
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                ) : <div className="py-[var(--space-6)] text-sm text-black/70">Press Enter to search for “{searchQuery.trim()}”.</div>
+              ) : searchLoadState === 'loading' ? null : searchLoadState === 'error' ? (
+                <div className="py-[var(--space-6)] text-sm text-black/70">Product results are unavailable. Please try your search again.</div>
               ) : filteredSearchItems.length ? (
                 <div id="navbar-search-results" role="listbox" aria-label="Product search results" className="grid grid-cols-3 gap-x-3 gap-y-[var(--space-5)] py-[var(--space-5)] sm:grid-cols-4 sm:gap-x-5 lg:grid-cols-8">
                   {filteredSearchItems.map((item, index) => (
@@ -912,7 +1004,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
                   ))}
                 </div>
               ) : searchLoadState === 'ready' ? (
-                <div id="navbar-search-results" role="listbox" aria-label="Product search results" className="py-[var(--space-6)] text-sm text-black/70">{searchQuery.trim() ? 'No products match your search. Try another term.' : 'No products are available yet.'}</div>
+                <div id="navbar-search-results" role="listbox" aria-label="Product search results" className="py-[var(--space-6)] text-sm text-black/70">{submittedSearchQuery.trim() ? 'No products match your search. Try another term.' : 'No products are available yet.'}</div>
               ) : null}
             </div>
             </section>
