@@ -38,8 +38,8 @@ export default function ConfiguratorPillGroup({
               key={opt}
               onClick={() => onChange(opt)}
               className={`
-                rounded-none px-[18px] py-[10px]
-                font-sans text-[10px] font-light tracking-[0.16em] uppercase
+                rounded-none px-[14px] py-[8px]
+                font-sans text-[11px] font-medium tracking-[0.02em] normal-case
                 border transition-all duration-300 whitespace-nowrap
                 ${isActive
                   ? activeClass
@@ -55,5 +55,4 @@ export default function ConfiguratorPillGroup({
     </div>
   );
 }
-
 

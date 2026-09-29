@@ -1694,15 +1694,15 @@ async function getStorefrontProductSearchItemsUncached(query: string, limit = 12
 }
 
 const getCachedDefaultProductSearchItems = unstable_cache(
-  () => getStorefrontProductSearchItemsUncached('', 20),
-  ['storefront-default-product-search-items-v1'],
+  () => getStorefrontProductSearchItemsUncached('', 16),
+  ['storefront-default-product-search-items-v2'],
   { revalidate: 300, tags: ['storefront-products'] }
 )
 
 export async function getStorefrontProductSearchItems(query: string, limit = 12) {
   const safeQuery = query.trim()
   const safeLimit = Math.max(1, Math.min(24, Math.floor(limit)))
-  return !safeQuery && safeLimit === 20
+  return !safeQuery && safeLimit === 16
     ? getCachedDefaultProductSearchItems()
     : getStorefrontProductSearchItemsUncached(safeQuery, safeLimit)
 }

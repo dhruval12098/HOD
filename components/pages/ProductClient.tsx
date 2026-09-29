@@ -28,6 +28,8 @@ import { useCurrency } from '@/context/CurrencyContext';
 import { GiftOfferBanner } from '@/components/commerce/GiftOfferBanner';
 import type { StorefrontPromotion } from '@/components/commerce/PromotionBanner';
 
+const REQUESTED_COUPON_KEY = 'hod_requested_coupon'
+
 interface ProductClientProps {
   product: StorefrontProduct;
   relatedProducts: StorefrontProduct[];
@@ -309,6 +311,9 @@ export default function ProductClient({ product, relatedProducts, serviceBanner,
     addItem(product, {
       ...buildCartSelection(loveLetterDraft),
     });
+    if (isGiftSelected && giftPromotion?.code) {
+      localStorage.setItem(REQUESTED_COUPON_KEY, giftPromotion.code)
+    }
     showToast('Added to cart');
   }
 

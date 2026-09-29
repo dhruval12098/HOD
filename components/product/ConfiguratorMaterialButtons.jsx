@@ -57,7 +57,7 @@ export function MaterialIcon({ label, color, id }) {
       </defs>
       <circle cx="18.5" cy="18" r="14.75" stroke={`url(#${gradOne})`} strokeWidth="1.5" />
       <circle cx="18.5" cy="18" r="13.25" stroke={`url(#${gradTwo})`} strokeWidth="1.5" />
-      <text x="18.5" y="18.5" textAnchor="middle" dominantBaseline="central" fill={colors[5]} fontFamily="inherit" fontSize="8.5" fontWeight="600" letterSpacing="-0.2">
+      <text x="18.5" y="18.5" textAnchor="middle" dominantBaseline="central" fill={colors[5]} fontFamily="inherit" fontSize="9.5" fontWeight="600" letterSpacing="-0.2">
         {purity}
       </text>
     </svg>
@@ -93,10 +93,10 @@ export default function ConfiguratorMaterialButtons({ label = 'Metal', options, 
               aria-pressed={isActive}
               aria-label={optionLabel}
             >
-              <span className="block h-7 w-7 shrink-0">
+              <span className="block h-8 w-8 shrink-0">
                 <MaterialIcon label={optionLabel} color={option.color} id={`${index}-${option.value}`.replace(/[^a-zA-Z0-9_-]/g, '')} />
               </span>
-              <span className="text-left text-[11px] font-medium leading-[1.2] sm:text-[12px]">
+              <span className="text-left text-[12px] font-medium leading-[1.2] sm:text-[13px]">
                 {baseName}
               </span>
             </button>
@@ -117,6 +117,5 @@ export function buildMetalButtonOptions(metals, metalOptions = []) {
     };
   });
 }
-
 
 

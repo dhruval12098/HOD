@@ -451,7 +451,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
     router.refresh();
   };
 
-  const filteredSearchItems = useMemo(() => searchItems.slice(0, searchQuery.trim() ? 12 : 20), [searchItems, searchQuery]);
+  const filteredSearchItems = useMemo(() => searchItems.slice(0, searchQuery.trim() ? 12 : 16), [searchItems, searchQuery]);
 
   useEffect(() => {
     if (activeSearchIndex < 0) return;
@@ -848,14 +848,20 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
           </div>
         </div>
         {searchOpen ? createPortal((
-          <section
+          <>
+            <div
+              aria-hidden="true"
+              className="fixed inset-0 z-[1399] bg-black/20"
+              onClick={closeSearch}
+            />
+            <section
             id="navbar-search-panel"
             data-navbar-search-root
             aria-label="Product search"
-            className="fixed inset-0 z-[1400] overflow-y-auto bg-white shadow-[0_24px_80px_rgba(0,0,0,0.18)]"
+            className="fixed inset-x-0 top-0 z-[1400] h-[82dvh] overflow-y-auto bg-white"
             style={{ backgroundColor: 'var(--color-brand-accent, #ffffff)', fontFamily: 'var(--font-family-secondary, Inter, sans-serif)' }}
           >
-            <div className="mx-auto min-h-screen max-w-[1800px] px-5 pb-10 pt-8 sm:px-8 lg:px-14 lg:pt-10">
+            <div className="mx-auto h-full min-h-0 max-w-[1800px] px-5 pb-10 pt-8 sm:px-8 lg:px-14 lg:pt-10">
               <div className="flex items-center gap-3 sm:gap-5">
                 <div className="flex min-w-0 flex-1 items-center gap-3 rounded-none border border-black/35 bg-white px-5 focus-within:ring-1 focus-within:ring-black/45 sm:px-6" style={{ backgroundColor: 'var(--color-brand-secondary, #F9F9F9)' }}>
                   <img src="/Navbar svgs/search-01-stroke-rounded (1).svg" alt="" aria-hidden="true" className="h-[22px] w-[22px] shrink-0 object-contain opacity-80" />
@@ -909,7 +915,8 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
                 <div id="navbar-search-results" role="listbox" aria-label="Product search results" className="py-[var(--space-6)] text-sm text-black/70">{searchQuery.trim() ? 'No products match your search. Try another term.' : 'No products are available yet.'}</div>
               ) : null}
             </div>
-          </section>
+            </section>
+          </>
         ), document.body) : null}
         </div>
       </header>
@@ -1095,7 +1102,3 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
     </>
   );
 }
-
-
-
-

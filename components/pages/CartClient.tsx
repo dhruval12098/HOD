@@ -1,6 +1,6 @@
 ﻿'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { Minus, Plus } from 'lucide-react'
@@ -12,6 +12,7 @@ import { GiftOfferBanner } from '@/components/commerce/GiftOfferBanner'
 import CheckoutSummary from '@/components/checkout/CheckoutSummary'
 
 const APPLIED_COUPON_KEY = 'hod_applied_coupon'
+const REQUESTED_COUPON_KEY = 'hod_requested_coupon'
 
 type SearchProduct = CartProductSnapshot & { mainCategorySlug?: string; mainCategoryName?: string }
 
@@ -51,6 +52,8 @@ export default function CartClient({ summaryInfo }: { summaryInfo?: ReactNode })
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null)
   const [couponMessage, setCouponMessage] = useState('')
   const [couponLoading, setCouponLoading] = useState(false)
+  const [requestedCouponCode, setRequestedCouponCode] = useState('')
+  const [requestedCouponMinimumOrderAmount, setRequestedCouponMinimumOrderAmount] = useState<number | null>(null)
   const [requestedGiftPromotionId, setRequestedGiftPromotionId] = useState<number | null>(null)
   const legacyLookupKey = useMemo(
     () => JSON.stringify(items.filter((item) => !item.snapshot).map((item) => [item.productKey, item.productSlug]).sort()),
@@ -93,9 +96,21 @@ export default function CartClient({ summaryInfo }: { summaryInfo?: ReactNode })
     return () => { ignore = true }
   }, [isHydrated, items])
 
+  useLayoutEffect(() => {
+    try {
+      const stored = localStorage.getItem(APPLIED_COUPON_KEY)
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        setAppliedCoupon(parsed)
+        setCouponCode(parsed.code || '')
+      }
+      const requested = localStorage.getItem(REQUESTED_COUPON_KEY)?.trim().toUpperCase()
+      if (requested) setRequestedCouponCode(requested)
+    } catch {}
+  }, [])
+
   useEffect(() => {
     void fetch('/api/public/promotions').then((response) => response.json()).then((payload) => setPromotions(Array.isArray(payload?.items) ? payload.items : [])).catch(() => {})
-    try { const stored = localStorage.getItem(APPLIED_COUPON_KEY); if (stored) { const parsed = JSON.parse(stored); setAppliedCoupon(parsed); setCouponCode(parsed.code || '') } } catch {}
   }, [])
 
   const resolvedItems = useMemo(
@@ -108,12 +123,17 @@ export default function CartClient({ summaryInfo }: { summaryInfo?: ReactNode })
   const featuredPromotion = promotions[0] || null
 
   useEffect(() => {
+    if (!isHydrated || (items.length > 0 && resolvedItems.length < items.length)) return
     if (!appliedCoupon || total >= Number(appliedCoupon.minimumOrderAmount ?? 0)) return
+    const minimumOrderAmount = Number(appliedCoupon.minimumOrderAmount ?? 0)
+    setRequestedCouponCode(appliedCoupon.code)
+    setRequestedCouponMinimumOrderAmount(minimumOrderAmount)
+    localStorage.setItem(REQUESTED_COUPON_KEY, appliedCoupon.code)
     setAppliedCoupon(null)
     setCouponCode('')
-    setCouponMessage(`Add ${format(Number(appliedCoupon.minimumOrderAmount) - total)} more to claim this offer.`)
+    setCouponMessage(`Add ${format(minimumOrderAmount - total)} more to claim this offer.`)
     localStorage.removeItem(APPLIED_COUPON_KEY)
-  }, [appliedCoupon, format, total])
+  }, [appliedCoupon, format, isHydrated, items.length, resolvedItems.length, total])
 
   const applyCoupon = async (requestedCode?: string) => {
     const code = (requestedCode || couponCode).trim().toUpperCase()
@@ -126,6 +146,15 @@ export default function CartClient({ summaryInfo }: { summaryInfo?: ReactNode })
       setAppliedCoupon(payload.coupon); setCouponCode(payload.coupon.code); localStorage.setItem(APPLIED_COUPON_KEY, JSON.stringify(payload.coupon)); setCouponMessage(payload.coupon.rewardType === 'free_gift' ? `${payload.coupon.gift?.name || 'Free gift'} unlocked.` : `Coupon applied. You saved ${format(payload.coupon.discountAmount)}.`)
     } catch { setCouponMessage('Unable to validate the coupon right now.') } finally { setCouponLoading(false) }
   }
+
+  useEffect(() => {
+    if (!requestedCouponCode || !resolvedItems.length || couponLoading || appliedCoupon) return
+    if (requestedCouponMinimumOrderAmount !== null && total < requestedCouponMinimumOrderAmount) return
+    localStorage.removeItem(REQUESTED_COUPON_KEY)
+    setRequestedCouponCode('')
+    setRequestedCouponMinimumOrderAmount(null)
+    void applyCoupon(requestedCouponCode)
+  }, [appliedCoupon, applyCoupon, couponLoading, requestedCouponCode, requestedCouponMinimumOrderAmount, resolvedItems, total])
 
   return (
     <main className="min-h-screen bg-white px-5 pb-20 pt-10 text-[var(--color-brand-primary,#000000)] sm:px-8 sm:pt-14 lg:px-[10vw] 2xl:px-[200px]">
@@ -185,10 +214,9 @@ export default function CartClient({ summaryInfo }: { summaryInfo?: ReactNode })
               })}
 
               {isLoading && items.filter((item) => !item.snapshot).map((item) => <div key={`legacy-${item.key}`} className="grid grid-cols-[124px_1fr] gap-5 py-6" aria-label="Refreshing saved cart item"><div className="aspect-[4/5] animate-pulse bg-[var(--color-brand-secondary,#f9f9f9)]"/><div className="space-y-3 py-2"><div className="h-3 w-24 animate-pulse bg-black/5"/><div className="h-5 w-1/2 animate-pulse bg-black/5"/><div className="h-4 w-28 animate-pulse bg-black/5"/></div></div>)}
-              {appliedCoupon?.rewardType === 'free_gift' && appliedCoupon.gift && total >= Number(appliedCoupon.minimumOrderAmount ?? 0) ? <article className="grid grid-cols-[96px_minmax(0,1fr)] gap-4 rounded-b-sm bg-white px-4 py-6 sm:grid-cols-[124px_minmax(0,1fr)_auto] sm:gap-6 lg:grid-cols-[142px_minmax(0,1fr)_auto] lg:py-7">
+              {appliedCoupon?.rewardType === 'free_gift' && appliedCoupon.gift && total >= Number(appliedCoupon.minimumOrderAmount ?? 0) ? <article className="grid grid-cols-[96px_minmax(0,1fr)] gap-4 rounded-b-sm bg-white px-4 py-6 sm:grid-cols-[124px_minmax(0,1fr)] sm:gap-6 lg:grid-cols-[142px_minmax(0,1fr)] lg:py-7">
                 <div className="row-span-2 sm:row-span-1 relative aspect-[4/5] w-[96px] overflow-hidden rounded-sm border border-black/10 bg-white sm:w-full">{appliedCoupon.gift.imageUrl ? <img src={appliedCoupon.gift.imageUrl} alt={appliedCoupon.gift.name} className="h-full w-full object-cover" /> : null}</div>
-                <div><span className="inline-flex border border-[#b7ddc5] bg-[#eaf7ee] px-2 py-1 font-[family-name:var(--font-family-secondary)] text-[10px] font-medium uppercase tracking-[0.08em] text-[#16804b]">Gift</span><p className="mt-2 font-[family-name:var(--font-family-primary)] text-[16px] font-semibold leading-[1.4] text-black sm:text-[18px]">{appliedCoupon.gift.name}</p><p className="mt-1 font-[family-name:var(--font-family-secondary)] text-[12px] text-black/70">Gift with your order</p></div>
-                <span className="flex items-center gap-2 sm:order-2 sm:justify-self-end font-[family-name:var(--font-family-secondary)] text-[13px] font-semibold text-black sm:text-[14px]"><span>{format(0)}</span>{Number(appliedCoupon.gift.originalUnitPrice ?? 0) > 0 ? <span className="text-black/55 line-through">{format(Number(appliedCoupon.gift.originalUnitPrice))}</span> : null}</span>
+                <div><span className="inline-flex border border-[#b7ddc5] bg-[#eaf7ee] px-2 py-1 font-[family-name:var(--font-family-secondary)] text-[10px] font-medium uppercase tracking-[0.08em] text-[#16804b]">Gift</span><div className="mt-2 flex items-start justify-between gap-3"><div className="min-w-0"><p className="font-[family-name:var(--font-family-primary)] text-[16px] font-semibold leading-[1.4] text-black sm:text-[18px]">{appliedCoupon.gift.name}</p><p className="mt-1 font-[family-name:var(--font-family-secondary)] text-[12px] text-black/70">Gift with your order</p></div><span className="flex shrink-0 items-center gap-2 font-[family-name:var(--font-family-secondary)] text-[13px] font-semibold text-black sm:text-[14px]">{Number(appliedCoupon.gift.originalUnitPrice ?? 0) > 0 ? <span className="text-black/55 line-through">{format(Number(appliedCoupon.gift.originalUnitPrice))}</span> : null}<span>{format(0)}</span></span></div></div>
               </article> : null}
               </div>
               {recommendations[0] ? <article className="mt-4 grid grid-cols-[120px_minmax(0,1fr)] w-full gap-4 rounded-xl border border-black/10 bg-[#f8f8fa] p-4 sm:grid-cols-[220px_minmax(0,1fr)] sm:gap-6 sm:p-6"><Link href={`/shop/${recommendations[0].slug}`} className="row-span-2 sm:row-span-1 aspect-square overflow-hidden rounded-lg border border-black/10 bg-white p-2 sm:p-3">{recommendations[0].imageUrl ? <img src={recommendations[0].imageUrl} alt={recommendations[0].name} className="h-full w-full object-contain" /> : null}</Link><div className="flex min-w-0 flex-col justify-center py-1"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="font-[family-name:var(--font-family-inter)] text-[12px] text-black/60 sm:text-[14px]">{recommendations[0].mainCategoryName || recommendations[0].shortMeta}</p><Link href={`/shop/${recommendations[0].slug}`} className="mt-1 block max-w-2xl font-[family-name:var(--font-family-inter)] text-[16px] font-semibold leading-6 text-black no-underline sm:text-[21px] sm:leading-7">{recommendations[0].name}</Link></div><p className="shrink-0 pt-1 font-[family-name:var(--font-family-inter)] text-[13px] font-semibold text-black sm:text-[16px]">{format(recommendations[0].priceFrom)}</p></div><button type="button" onClick={() => addItem(recommendations[0], {})} className="mt-4 min-h-10 w-full max-w-[180px] self-start border border-black bg-black px-4 font-[family-name:var(--font-family-button)] text-[10px] font-semibold uppercase tracking-[0.1em] text-white transition hover:bg-white hover:text-black sm:mt-5 sm:min-h-12 sm:px-6 sm:text-[12px]">Add to cart</button></div></article> : null}
