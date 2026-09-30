@@ -70,22 +70,22 @@ export default function DiscoverShapes({ initialItems = [] }: { initialItems?: I
           {items.map((item) => {
             const content = (
               <>
-                <span className="relative flex h-16 w-16 items-center justify-center sm:h-[4.5rem] sm:w-[4.5rem] lg:h-20 lg:w-20">
+                <span className="relative flex h-[3.75rem] w-[3.75rem] items-center justify-center sm:h-[4.25rem] sm:w-[4.25rem] lg:h-[4.75rem] lg:w-[4.75rem]">
                   <Image
                     src={item.imageSrc}
                     alt={item.imageAlt}
                     fill
-                    sizes="(max-width: 639px) 64px, (max-width: 1023px) 72px, 80px"
+                    sizes="(max-width: 639px) 60px, (max-width: 1023px) 68px, 76px"
                     className="object-contain"
                   />
                 </span>
-                <span className="mt-[var(--space-2)] max-w-full text-center font-[family-name:var(--font-family-secondary)] text-[0.7rem] font-medium leading-[1.25] tracking-[0.01em] text-[var(--color-brand-primary,#000)] sm:text-xs">
+                <span className="mt-[var(--space-2)] max-w-full text-center font-[family-name:var(--font-family-secondary)] text-xs font-medium leading-[1.25] tracking-[0.01em] text-[var(--color-brand-primary,#000)] sm:text-[0.8125rem]">
                   {item.name}
                 </span>
               </>
             );
 
-            const className = "group flex min-w-0 flex-col items-center rounded-sm px-[var(--space-2)] py-[var(--space-3)] outline-none shadow-none hover:bg-transparent hover:shadow-none focus-visible:bg-transparent focus-visible:shadow-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary,#000)]";
+            const className = "group flex min-w-0 flex-col items-center rounded-sm px-[var(--space-2)] py-[var(--space-2)] outline-none shadow-none transition-colors duration-200 ease-out hover:bg-[#E7E9EB] hover:shadow-none focus-visible:bg-[#E7E9EB] focus-visible:shadow-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-primary,#000)] motion-reduce:transition-none";
 
             return item.href ? (
               <Link key={item.id} href={item.href} className={className} aria-label={`Browse ${item.name}`}>
