@@ -370,6 +370,23 @@ button, [role="button"], input[type="button"], input[type="submit"], input[type=
   color: #000000;
 }
 
+.love-letter-modal .font-display-title {
+  font-family: var(--font-family-primary) !important;
+}
+
+.love-letter-modal .font-serif {
+  font-family: var(--font-family-secondary) !important;
+}
+
+.love-letter-modal [class*="text-[#A67C22]"],
+.love-letter-modal [class*="text-[#0A1628]"] {
+  color: var(--color-brand-primary, #000000) !important;
+}
+
+.love-letter-modal [class*="text-[#5F6C7B]"] {
+  color: rgb(0 0 0 / 0.6) !important;
+}
+
 .site-footer::selection,
 .site-footer *::selection {
   background: rgba(255, 255, 255, 0.28);

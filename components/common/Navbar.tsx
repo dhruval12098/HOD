@@ -940,7 +940,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
             id="navbar-search-panel"
             data-navbar-search-root
             aria-label="Product search"
-            className="fixed inset-x-0 top-0 z-[1400] h-dvh min-h-[100svh] overflow-y-auto bg-white sm:h-[60dvh] sm:min-h-0"
+            className="fixed inset-x-0 top-0 z-[1400] h-dvh min-h-[100svh] overflow-y-auto bg-white sm:h-[60dvh] sm:min-h-0 lg:h-[65dvh]"
             style={{ backgroundColor: 'var(--color-brand-accent, #ffffff)', fontFamily: 'var(--font-family-secondary, Inter, sans-serif)' }}
           >
             <div className="mx-auto h-full min-h-0 max-w-[1800px] px-5 pb-10 pt-8 sm:px-8 lg:px-14 lg:pt-10">

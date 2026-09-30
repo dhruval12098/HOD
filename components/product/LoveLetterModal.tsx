@@ -169,7 +169,7 @@ export default function LoveLetterModal({ onClose, onContinue }: LoveLetterModal
 
   return (
     <div
-      className="fixed inset-0 z-[1400] flex items-start justify-center overflow-y-auto overscroll-none bg-black/25 px-2 py-2 sm:items-center sm:px-4 sm:py-6"
+      className="love-letter-modal fixed inset-0 z-[1400] flex items-start justify-center overflow-y-auto overscroll-none bg-black/25 px-2 py-2 sm:items-center sm:px-4 sm:py-6"
       onClick={closeIfBackdrop}
     >
       <div className="relative my-auto max-h-[calc(100dvh-16px)] w-full max-w-[780px] touch-pan-y overflow-y-auto overscroll-contain rounded-none border border-black/15 bg-white shadow-[0_24px_64px_rgba(0,0,0,0.16)] sm:max-h-[90vh] sm:rounded-none">

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowLeft, Check, ChevronRight, X } from 'lucide-react';
+import { ArrowLeft, ChevronRight, X } from 'lucide-react';
 
 import quizConfigJson from '@/lib/find-your-match-config.json';
 import { BrandButton } from '@/components/ui/BrandButton';
@@ -255,7 +255,7 @@ export function FindYourMatchQuiz({ renderTrigger, triggerId = 'find-your-match-
             </div>
             <div className="mt-6 grid gap-px bg-black/15 sm:grid-cols-2">
               {config.trackOrder.map((id, index) => { const item = getTrack(product,id); const result = state.results[id]; return <button key={id} type="button" onClick={() => startTrack(id)} className="group min-h-32 bg-white p-5 text-left transition hover:bg-[var(--color-brand-secondary,#F9F9F9)] focus-visible:relative focus-visible:z-10 focus-visible:outline-2">
-                <span className="flex items-center justify-between"><span className="font-[family-name:var(--font-family-secondary)] text-[10px] uppercase tracking-[.18em] text-black/45">0{index+1} · {item.questions.length} question{item.questions.length === 1 ? '' : 's'}</span>{result ? <span className="grid size-6 place-items-center bg-black text-white"><Check size={14}/></span>:<ChevronRight size={18}/>}</span>
+                <span className="flex items-center justify-between"><span className="font-[family-name:var(--font-family-secondary)] text-[10px] uppercase tracking-[.18em] text-black/45">0{index+1} · {item.questions.length} question{item.questions.length === 1 ? '' : 's'}</span><ChevronRight size={18}/></span>
                 <strong className="mt-4 block font-[family-name:var(--font-family-primary)] text-xl font-medium">{item.name}</strong><span className="mt-1.5 block font-[family-name:var(--font-family-secondary)] text-[13px] text-black/60">{result ? `Your match · ${result.name}` : item.blurb}</span>
               </button>; })}
             </div>
