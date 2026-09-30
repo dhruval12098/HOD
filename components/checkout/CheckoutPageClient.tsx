@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
+import { ArrowLeft } from 'lucide-react';
 import CheckoutInformationStep from '@/components/checkout/CheckoutInformationStep';
 import CheckoutConfirmationStep from '@/components/checkout/CheckoutConfirmationStep';
 import CheckoutSummary from '@/components/checkout/CheckoutSummary';
@@ -228,6 +229,7 @@ export default function CheckoutPageClient() {
   const [pendingPaymentSession, setPendingPaymentSession] = useState<PendingPaymentSession | null>(null)
   const [chargeQuote, setChargeQuote] = useState<CheckoutChargeQuote | null>(null)
   const [quoteStatus, setQuoteStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle')
+  const [quoteLoadingNotice, setQuoteLoadingNotice] = useState(false)
   const [quoteError, setQuoteError] = useState('')
   const [authoritativePricing, setAuthoritativePricing] = useState<{
     subtotalAmount: number
@@ -237,6 +239,7 @@ export default function CheckoutPageClient() {
     lines: Array<{ slug: string; unitPrice: number; quantity: number }>
     gift?: { productId: string; name: string; slug: string; sku: string | null; imageUrl: string; originalUnitPrice: number; variantData: Record<string, unknown> } | null
   } | null>(null)
+  const quoteCacheRef = useRef(new Map<string, { expiresAt: number; quote: CheckoutChargeQuote; pricing: typeof authoritativePricing }>())
   const [postalLookup, setPostalLookup] = useState<CheckoutPostalLookupState | null>(null)
   const [postalAreaOptions, setPostalAreaOptions] = useState<CheckoutPostalAreaOption[]>([])
   const [cartProducts, setCartProducts] = useState<CartProductSnapshot[]>([]);
@@ -481,42 +484,67 @@ export default function CheckoutPageClient() {
 
   useEffect(() => {
     let ignore = false
+    const controller = new AbortController()
     if (!checkoutItems.length) return
     if (!currencyCode && !customerForm.country.trim()) {
       setChargeQuote(null)
       setAuthoritativePricing(null)
       setQuoteStatus('idle')
+      setQuoteLoadingNotice(false)
       setQuoteError('')
       return
     }
 
+    const requestBody = {
+      country: customerForm.country,
+      currencyCode,
+      coupon: appliedCoupon ? { id: appliedCoupon.id, code: appliedCoupon.code } : null,
+      items: checkoutItems.map((item) => ({
+        slug: item.slug,
+        name: item.name,
+        metalVariantId: item.metalVariantId,
+        metal: item.metal,
+        purity: item.purity,
+        quantity: item.quantity,
+      })),
+    }
+    const requestKey = JSON.stringify(requestBody)
+    const cachedQuote = quoteCacheRef.current.get(requestKey)
+    if (cachedQuote && cachedQuote.expiresAt > Date.now()) {
+      setChargeQuote(cachedQuote.quote)
+      setAuthoritativePricing(cachedQuote.pricing)
+      setQuoteStatus('ready')
+      setQuoteLoadingNotice(false)
+      setQuoteError('')
+      return () => controller.abort()
+    }
+
     setQuoteStatus('loading')
-    setQuoteError('')
-    void (async () => {
+    setQuoteLoadingNotice(false)
+    const loadingNoticeTimer = window.setTimeout(() => {
+      if (!ignore) setQuoteLoadingNotice(true)
+    }, 450)
+    const requestTimer = window.setTimeout(() => {
+      setQuoteError('')
+      void (async () => {
       try {
         const response = await fetch('/api/checkout/quote', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            country: customerForm.country,
-            currencyCode,
-            coupon: appliedCoupon ? { id: appliedCoupon.id, code: appliedCoupon.code } : null,
-            items: checkoutItems.map((item) => ({
-              slug: item.slug,
-              name: item.name,
-              metalVariantId: item.metalVariantId,
-              metal: item.metal,
-              purity: item.purity,
-              quantity: item.quantity,
-            })),
-          }),
+          body: JSON.stringify(requestBody),
+          signal: controller.signal,
         })
         const payload = await response.json().catch(() => null)
+        window.clearTimeout(loadingNoticeTimer)
+        setQuoteLoadingNotice(false)
         if (!ignore && response.ok) {
           setChargeQuote(payload?.quote ?? null)
           setAuthoritativePricing(payload?.pricing ?? null)
           setQuoteStatus(payload?.quote && payload?.pricing ? 'ready' : 'error')
           setQuoteError(payload?.quote && payload?.pricing ? '' : 'We could not confirm the latest checkout total.')
+          if (payload?.quote && payload?.pricing) {
+            quoteCacheRef.current.set(requestKey, { expiresAt: Date.now() + 15_000, quote: payload.quote, pricing: payload.pricing })
+          }
         } else if (!ignore) {
           setChargeQuote(null)
           setAuthoritativePricing(null)
@@ -544,6 +572,9 @@ export default function CheckoutPageClient() {
           }
         }
       } catch {
+        if (controller.signal.aborted) return
+        window.clearTimeout(loadingNoticeTimer)
+        setQuoteLoadingNotice(false)
         if (!ignore) {
           setChargeQuote(null)
           setAuthoritativePricing(null)
@@ -551,10 +582,14 @@ export default function CheckoutPageClient() {
           setQuoteError('We could not confirm pricing right now. Check your connection and try again.')
         }
       }
-    })()
+      })()
+    }, 180)
 
     return () => {
       ignore = true
+      window.clearTimeout(loadingNoticeTimer)
+      window.clearTimeout(requestTimer)
+      controller.abort()
     }
   }, [appliedCoupon, cartMode, checkoutItems, currencyCode, customerForm.country])
 
@@ -1319,7 +1354,7 @@ export default function CheckoutPageClient() {
   }
 
   return (
-    <section className="min-h-[calc(100vh-111px)] bg-white px-4 py-8 sm:px-6 lg:px-0">
+    <section className="min-h-[calc(100vh-111px)] bg-white px-4 py-8 sm:px-6 lg:px-10">
       {paymentUiStage === 'confirming' ? (
         <div className="fixed inset-0 z-[140] flex items-center justify-center bg-[rgba(247,248,250,0.82)] px-4 backdrop-blur-sm">
           <div className="w-full max-w-[420px] rounded-[28px] border border-[#e7ebf0] bg-white px-6 py-8 text-center shadow-[0_24px_80px_rgba(15,23,42,0.12)] sm:px-8">
@@ -1333,24 +1368,17 @@ export default function CheckoutPageClient() {
           </div>
         </div>
       ) : null}
-      <div className="mx-auto max-w-[1520px] lg:px-20 xl:px-24">
+      <div className="mx-auto max-w-[1520px]">
         <div className="mb-6">
-          <div className="text-[11px] font-medium uppercase tracking-[0.24em] text-[#98a2b3]">Checkout</div>
-          <div className="flex items-end justify-between gap-5"><h1 className="font-[family-name:var(--font-family-primary)] text-[28px] font-semibold uppercase text-black">Checkout</h1><div className="font-[family-name:var(--font-family-secondary)] text-[12px] text-black/45"><span className={currentStep === 0 ? 'font-semibold text-black' : ''}>Shipping</span><span className="px-2">›</span><span className={currentStep === 1 ? 'font-semibold text-black' : ''}>Payment</span></div></div>
+          <div className="flex items-end justify-between gap-5"><div><button type="button" onClick={() => router.back()} className="mb-3 inline-flex items-center gap-1.5 border-0 bg-transparent p-0 font-[family-name:var(--font-family-secondary)] text-[12px] text-black/60 transition hover:text-black"><ArrowLeft size={15} strokeWidth={1.7} />Back</button><h1 className="font-[family-name:var(--font-family-primary)] text-[28px] font-semibold uppercase text-black">Checkout</h1></div><div className="font-[family-name:var(--font-family-secondary)] text-[12px] text-black/45"><span className={currentStep === 0 ? 'font-semibold text-black' : ''}>Shipping</span><span className="px-2">›</span><span className={currentStep === 1 ? 'font-semibold text-black' : ''}>Payment</span></div></div>
           <p className="mt-2 text-sm text-[#292727]">{cartMode ? 'Checkout synced to the products currently saved in your cart.' : 'Checkout preview for your selected product.'}</p>
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(350px,420px)] lg:gap-14">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(350px,420px)] lg:gap-8">
           <div className="space-y-5">
             {errorMessage ? (
               <div className="rounded-[24px] border border-[rgba(220,38,38,0.18)] bg-[rgba(254,242,242,0.9)] px-5 py-4 text-sm text-red-700">
                 {errorMessage}
-              </div>
-            ) : null}
-
-            {quoteStatus === 'loading' ? (
-              <div className="rounded-[24px] border border-[#d0d5dd] bg-white px-5 py-4 text-sm text-[#292727]">
-                Confirming the latest price, tax, stock, and availability…
               </div>
             ) : null}
 
@@ -1385,7 +1413,7 @@ export default function CheckoutPageClient() {
             ) : null}
             <div className="animate-[fadeUp_0.35s_ease]">
               {currentStep === 0 ? <><CheckoutInformationStep form={customerForm} onChange={updateCustomerForm} errors={fieldErrors} postalLookup={postalLookup} onPostalBlur={handlePostalCodeBlur} postalAreaOptions={postalAreaOptions} onPostalAreaSelect={handlePostalAreaSelect} isGuest={guestCheckout} /><CheckoutDeliveryPreview items={checkoutItems} /></> : null}
-              {currentStep === 1 ? <CheckoutConfirmationStep form={customerForm} itemCount={checkoutItems.reduce((sum, item) => sum + item.quantity, 0)} onEdit={() => setCurrentStep(0)} onPay={handlePayNow} processing={processingPayment} disabled={quoteStatus !== 'ready' || unavailableCartItemCount > 0} message={unavailableCartItemCount > 0 ? 'Resolve unavailable cart items before payment.' : quoteStatus === 'loading' ? 'Confirming the latest price and availability...' : quoteStatus === 'error' ? quoteError : undefined} /> : null}
+              {currentStep === 1 ? <CheckoutConfirmationStep form={customerForm} itemCount={checkoutItems.reduce((sum, item) => sum + item.quantity, 0)} onEdit={() => setCurrentStep(0)} onPay={handlePayNow} processing={processingPayment} disabled={quoteStatus !== 'ready' || unavailableCartItemCount > 0} message={unavailableCartItemCount > 0 ? 'Resolve unavailable cart items before payment.' : quoteStatus === 'loading' && quoteLoadingNotice ? 'Checking your order…' : quoteStatus === 'error' ? quoteError : undefined} /> : null}
             </div>
             {!isLastStep ? (
               <div className="flex justify-end">
@@ -1405,17 +1433,16 @@ export default function CheckoutPageClient() {
           </div>
 
           <div className="lg:sticky lg:top-[140px] lg:self-start">
-            <div className="space-y-4">
-              {checkoutGiftPromotion ? <GiftOfferBanner
-                promotion={checkoutGiftPromotion}
-                amount={subtotal}
-                checked={hasAppliedGift || Boolean(requestedCouponCode)}
-                included={hasAppliedGift}
-                borderless
-                displayOnly
-                confirmationTone="blue"
-              /> : null}
+            <div className="space-y-0">
               <CheckoutSummary
+                topOffer={checkoutGiftPromotion ? <GiftOfferBanner
+                  promotion={checkoutGiftPromotion}
+                  amount={subtotal}
+                  checked={hasAppliedGift || Boolean(requestedCouponCode)}
+                  included={hasAppliedGift}
+                  displayOnly
+                  confirmationTone="green"
+                /> : null}
                 summary={{
                   items: authoritativeCheckoutItems,
                   couponCode: appliedCoupon?.code,

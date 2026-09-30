@@ -207,9 +207,9 @@ export default function ShopHero({
     <section className="border-b border-black/10 bg-white pb-7 pt-[var(--space-7)] sm:pb-9 sm:pt-[var(--space-8)] lg:pt-[calc(146px+var(--space-8))]" aria-labelledby="shop-collection-heading">
       <div className={`flex flex-col gap-5 px-4 sm:px-7 lg:flex-row lg:items-end lg:justify-between ${wideGutter ? 'lg:px-[50px]' : 'lg:px-[52px]'}`}>
         <div>
-          <nav aria-label="Breadcrumb" className="my-3 flex items-center gap-3 text-[12px] font-normal tracking-[0.01em] text-black md:hidden">
-            <Link href="/" className="no-underline hover:text-[#0A1628]">Home</Link>
-            <span aria-hidden="true">/</span>
+          <nav aria-label="Breadcrumb" className="my-3 flex items-center gap-3 text-[12px] font-normal tracking-[0.01em] text-gray-700">
+            <Link href="/" className="text-gray-700 no-underline hover:text-gray-900">Home</Link>
+            <span aria-hidden="true" className="text-gray-700">/</span>
             <span>{title}</span>
           </nav>
           <h1
@@ -251,7 +251,7 @@ export default function ShopHero({
         >
         <Link
           href={bannerHref}
-          className="group relative aspect-[2/3] h-auto w-[36vw] min-w-[140px] max-w-[256px] shrink-0 snap-start overflow-hidden bg-[#F2F1EE] text-white no-underline lg:h-[320px] lg:w-[378px] lg:max-w-none lg:aspect-auto"
+          className="group relative aspect-[2/3] h-auto w-[36vw] min-w-[140px] max-w-[256px] shrink-0 snap-start overflow-hidden bg-[#F2F1EE] text-white no-underline lg:h-[320px] lg:w-[516px] lg:max-w-none lg:aspect-auto"
         >
           {bannerImage ? (
             <picture>
@@ -262,8 +262,8 @@ export default function ShopHero({
             <div className="h-full w-full bg-[linear-gradient(145deg,#172238,#0A1628)]" aria-hidden="true" />
           )}
           <span className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/5 to-transparent" aria-hidden="true" />
-          <span className="absolute inset-x-0 bottom-0 p-5 text-left font-[family-name:var(--font-family-primary)] text-[15px] font-semibold uppercase tracking-[0.08em] [text-shadow:0_1px_4px_rgba(0,0,0,0.8)] lg:text-[12px] lg:font-medium">
-            {bannerLabel}
+          <span className="absolute inset-x-0 bottom-0 flex min-h-[52px] items-end p-4 text-left font-[family-name:var(--font-family-primary)] text-[12px] font-medium uppercase leading-[1.3] tracking-[0.07em] [text-shadow:0_1px_4px_rgba(0,0,0,0.8)]">
+            <span className="shop-hero-label-underline">{bannerLabel}</span>
           </span>
         </Link>
 
@@ -292,8 +292,8 @@ export default function ShopHero({
                 )}
               </span>
               <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-black/5 to-transparent" aria-hidden="true" />
-              <span className="absolute inset-x-0 bottom-0 px-4 py-4 text-left font-[family-name:var(--font-family-primary)] text-[12px] font-medium uppercase leading-[1.3] tracking-[0.07em] text-white [text-shadow:0_1px_4px_rgba(0,0,0,0.8)]">
-                {option.label}{isPending ? '…' : ''}
+              <span className="absolute inset-x-0 bottom-0 flex min-h-[52px] items-end px-4 py-4 text-left font-[family-name:var(--font-family-primary)] text-[12px] font-medium uppercase leading-[1.3] tracking-[0.07em] text-white [text-shadow:0_1px_4px_rgba(0,0,0,0.8)]">
+                <span className="shop-hero-label-underline">{option.label}{isPending ? '…' : ''}</span>
               </span>
             </Link>
           );

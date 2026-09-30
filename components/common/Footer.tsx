@@ -59,12 +59,15 @@ const FALLBACK_CONTACT_ROWS: ContactInfoRow[] = [
 ];
 
 function ColLink({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <a
-      href={href}
-      className="group block py-[8px] text-[14px] font-normal leading-relaxed text-white/80 no-underline transition-colors duration-200 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-      style={{ fontFamily: 'var(--font-family-secondary)' }}
-    >
+  const className = "group block py-[8px] text-[14px] font-normal leading-relaxed text-white/80 no-underline transition-colors duration-200 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white";
+  const style = { fontFamily: 'var(--font-family-secondary)' };
+
+  return href.startsWith('/') ? (
+    <Link href={href} prefetch className={className} style={style}>
+      {children}
+    </Link>
+  ) : (
+    <a href={href} className={className} style={style}>
       {children}
     </a>
   );
@@ -246,7 +249,6 @@ export default function Footer({ navItems = [] }: { navItems?: NavbarRenderItem[
     () => serviceCategories.filter((item) => item.slug && item.name && visibleNavbarHrefs?.has(`/${item.slug}`)),
     [serviceCategories, visibleNavbarHrefs]
   );
-  const showBespokeLink = Boolean(visibleNavbarHrefs?.has('/bespoke'));
   const showCollectionLink = Boolean(collectionConfig?.page_enabled && collectionConfig?.show_in_footer);
   const collectionHref = collectionConfig?.showcase_cta_href || '/collection';
   const collectionLabel = collectionConfig?.showcase_cta_label || 'Collection';
@@ -257,7 +259,7 @@ export default function Footer({ navItems = [] }: { navItems?: NavbarRenderItem[
 
   return (
     <footer
-      className="w-full border-t border-white/15 px-[var(--space-4)] pt-[var(--space-10)] text-white sm:px-[var(--space-6)] lg:px-[var(--space-8)]"
+      className="site-footer w-full border-t border-white/15 px-[var(--space-4)] pt-[var(--space-10)] text-white sm:px-[var(--space-6)] lg:px-[var(--space-8)]"
       style={{ backgroundColor: 'var(--color-brand-primary)', fontFamily: 'var(--font-family-secondary)' }}
     >
       <div className="mx-auto grid max-w-[1600px] grid-cols-1 gap-y-[var(--space-10)] pb-[var(--space-10)] lg:grid-cols-[minmax(0,3fr)_minmax(170px,0.8fr)_minmax(260px,1.2fr)] lg:gap-x-[var(--space-10)]">
@@ -266,7 +268,7 @@ export default function Footer({ navItems = [] }: { navItems?: NavbarRenderItem[
             <ColLink href="/">Home</ColLink>
             {showCollectionLink ? <ColLink href={collectionHref}>{collectionLabel}</ColLink> : null}
             <ColLink href="/about">About Us</ColLink>
-            {showBespokeLink ? <ColLink href="/bespoke">Bespoke</ColLink> : null}
+            <ColLink href="/bespoke">Bespoke</ColLink>
             <ColLink href="/blog">Blog</ColLink>
             <ColLink href="/education">Education</ColLink>
             <ColLink href="/contact">Contact</ColLink>

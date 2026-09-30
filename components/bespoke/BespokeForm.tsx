@@ -116,7 +116,7 @@ const fallbackConfig: FormConfigState = {
 };
 
 const selectClasses =
-  'h-[64px] rounded-none border-[#858585] bg-white px-[22px] font-[family-name:var(--font-family-montserrat)] text-[18px] font-normal text-[#111111] data-[placeholder]:text-[#707070] focus:ring-0';
+  'h-12 min-w-0 rounded-none border-[#858585] bg-white px-4 font-[family-name:var(--font-family-montserrat)] text-[16px] font-normal text-[#111111] data-[placeholder]:font-[family-name:var(--font-family-inter)] data-[placeholder]:text-[14px] data-[placeholder]:font-normal data-[placeholder]:text-[#707070] focus:ring-0';
 
 interface BespokeFormProps {
   onSuccess?: () => void;
@@ -125,6 +125,7 @@ interface BespokeFormProps {
 export default function BespokeForm({ onSuccess, initialConfig }: BespokeFormProps & { initialConfig?: FormConfigState }) {
   const [config, setConfig] = useState<FormConfigState>(initialConfig ?? fallbackConfig);
   const [submitting, setSubmitting] = useState(false);
+  const [submissionError, setSubmissionError] = useState('');
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -174,6 +175,7 @@ export default function BespokeForm({ onSuccess, initialConfig }: BespokeFormPro
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmissionError('');
     setSubmitting(true);
     try {
       const response = await fetch('/api/public/bespoke/submit', {
@@ -196,23 +198,11 @@ export default function BespokeForm({ onSuccess, initialConfig }: BespokeFormPro
         throw new Error((await response.json().catch(() => null))?.error ?? 'Unable to submit enquiry.');
       }
 
-      const text = [
-        'Hi, new bespoke enquiry from the website:',
-        '',
-        `Name: ${form.name}`,
-        `Email: ${form.email}`,
-        `Phone: ${form.phone}`,
-        `Country: ${form.country}`,
-        `Piece Type: ${form.piece}`,
-        `Stone: ${form.stone}`,
-        `Approx. Carat: ${form.carat}`,
-        `Metal: ${form.metal}`,
-        `Vision: ${form.message}`,
-      ].join('\n');
-
-      window.open(`https://wa.me/919328536178?text=${encodeURIComponent(text)}`, '_blank');
       onSuccess?.();
       setForm({ name: '', email: '', phone: '', country: '', piece: '', stone: '', carat: '', metal: '', message: '' });
+    } catch (error) {
+      console.error('Bespoke enquiry submission failed:', error);
+      setSubmissionError(error instanceof Error ? error.message : 'Unable to submit your enquiry right now.');
     } finally {
       setSubmitting(false);
     }
@@ -223,30 +213,37 @@ export default function BespokeForm({ onSuccess, initialConfig }: BespokeFormPro
       id="bespoke-form"
       className="section-rhythm border-t border-black/10 bg-white px-4 sm:px-7 lg:px-[50px]"
     >
-      <div className="mx-auto grid max-w-6xl grid-cols-[0.7fr_1.3fr] items-start gap-10 lg:gap-16 max-lg:grid-cols-1">
-        <RevealDiv className="border border-black/10 bg-white p-5 sm:p-6">
+      <div className="mx-auto grid max-w-6xl min-w-0 grid-cols-[0.85fr_1.15fr] items-start gap-8 lg:gap-12 max-lg:grid-cols-1">
+        <RevealDiv className="min-w-0 border border-black/10 bg-white p-5 sm:p-6">
           <div className="mb-3 font-[family-name:var(--font-family-primary)] text-[11px] font-medium uppercase tracking-[0.1em] text-black/60">
             Start Your Piece
           </div>
           <h2 className="section-title mb-5 text-left text-[clamp(1.35rem,2.2vw,2rem)] font-medium uppercase leading-none tracking-[0.025em] text-[var(--color-brand-primary,#000)]">
             {config.settings.intro_heading || 'Configure Your Bespoke Order'}
           </h2>
-          <p className="mb-8 font-[family-name:var(--font-family-secondary)] text-[13px] leading-[1.75] text-black/60">
-            {config.settings.intro_subtitle}
-          </p>
-
-          <div className="flex flex-col gap-3.5">
-            {config.guarantees.map((item, i) => (
-              <div key={item.id ?? i} className="flex items-start gap-3.5 font-[family-name:var(--font-family-secondary)] text-[12px] leading-[1.6] text-black/60">
-                <span className="mt-[7px] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-black" />
-                {item.label}
+          <details className="group mt-2 border-t border-black/10 pt-1">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-3 font-[family-name:var(--font-family-secondary)] text-[11px] font-medium uppercase tracking-[0.12em] text-black [&::-webkit-details-marker]:hidden">
+              More about the process
+              <span aria-hidden="true" className="text-lg font-light leading-none transition-transform duration-200 group-open:rotate-180">⌄</span>
+            </summary>
+            <div className="pb-2">
+              <p className="mb-6 font-[family-name:var(--font-family-secondary)] text-[13px] leading-[1.7] text-black/60">
+                {config.settings.intro_subtitle}
+              </p>
+              <div className="flex flex-col gap-3">
+                {config.guarantees.map((item, i) => (
+                  <div key={item.id ?? i} className="flex items-start gap-3 font-[family-name:var(--font-family-secondary)] text-[12px] leading-[1.6] text-black/60">
+                    <span className="mt-[7px] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-black" />
+                    {item.label}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          </details>
         </RevealDiv>
 
-        <RevealDiv delay={100}>
-          <div className="border border-black/10 bg-white p-5 sm:p-6">
+        <RevealDiv delay={100} className="min-w-0 w-full">
+          <div className="min-w-0 border border-black/10 bg-white p-4 sm:p-5">
             <form onSubmit={handleSubmit}>
               <div className="grid grid-cols-2 gap-3 max-md:grid-cols-1">
                 <CheckoutField label="Full Name" required value={form.name} onChange={set('name')} />
@@ -332,11 +329,15 @@ export default function BespokeForm({ onSuccess, initialConfig }: BespokeFormPro
                     id="b-message"
                     rows={4}
                     required
+                    minLength={10}
+                    maxLength={5000}
                     value={form.message}
                     onChange={setTextArea('message')}
                     placeholder="Describe Your Vision *"
-                    className="min-h-[128px] w-full resize-y border border-[#858585] bg-white px-[22px] py-5 font-[family-name:var(--font-family-montserrat)] text-[18px] font-normal text-[#111111] outline-none placeholder:font-medium placeholder:text-[#707070] focus:border-black"
+                    className="min-h-24 w-full resize-y border border-[#858585] bg-white px-4 py-3 font-[family-name:var(--font-family-montserrat)] text-[16px] font-normal text-[#111111] outline-none placeholder:font-[family-name:var(--font-family-inter)] placeholder:text-[14px] placeholder:font-normal placeholder:text-[#707070] focus:border-[#858585]"
                   />
+                  <p className="mt-1 text-[11px] text-black/55">Please enter 10–5,000 characters.</p>
+                  {submissionError ? <p role="alert" className="mt-1 text-[12px] text-red-600">{submissionError}</p> : null}
                 </div>
               </div>
 

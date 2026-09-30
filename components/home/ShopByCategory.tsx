@@ -23,7 +23,7 @@ export default function ShopByCategory({ data }: { data: ShopByCategoryData | nu
       onTouchEnd={pauseAutoplay}
       onWheel={pauseAutoplay}
       onKeyDown={pauseAutoplay}
-      className="-mx-[var(--space-2)] flex snap-x snap-mandatory gap-2 overflow-x-auto px-[var(--space-2)] pb-2 [scrollbar-width:none] sm:hidden [&::-webkit-scrollbar]:hidden"
+      className="flex snap-x snap-mandatory gap-2 overflow-x-auto px-[var(--space-2)] pb-2 [scrollbar-width:none] sm:hidden [&::-webkit-scrollbar]:hidden"
       aria-label={data.heading + ' carousel'}
     >
       {data.cards.map((card) => <Link key={card.id} href={card.href} className="group relative aspect-[4/5] w-[72vw] max-w-[300px] shrink-0 snap-start overflow-hidden bg-[var(--color-brand-secondary,#F9F9F9)] focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black">

@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { createClient } from '@supabase/supabase-js'
 import { CirclePlay, Gift, PackageCheck, RefreshCcw, X } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
 
 type SummaryPointer = {
   id: string
@@ -55,21 +55,16 @@ export default function AdditionalSummaryDetails() {
   const [summary, setSummary] = useState<{ heading: string; pointers: SummaryPointer[] } | null>(null)
   const [activeVideo, setActiveVideo] = useState<VideoSource | null>(null)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
   useEffect(() => {
-    if (!url || !anonKey) return
     let cancelled = false
-    const client = createClient(url, anonKey, { auth: { persistSession: false, autoRefreshToken: false } })
     void (async () => {
-      const { data: section, error } = await client.from('cms_summary_sections').select('id, heading').eq('section_key', 'additional_summary_details').eq('is_enabled', true).maybeSingle()
+      const { data: section, error } = await supabase.from('cms_summary_sections').select('id, heading').eq('section_key', 'additional_summary_details').eq('is_enabled', true).maybeSingle()
       if (cancelled || error || !section) return
-      const { data, error: pointerError } = await client.from('cms_summary_pointers').select('id, icon_url, pointer_text, video_url, video_link_text').eq('section_id', section.id).order('sort_order').order('created_at')
+      const { data, error: pointerError } = await supabase.from('cms_summary_pointers').select('id, icon_url, pointer_text, video_url, video_link_text').eq('section_id', section.id).order('sort_order').order('created_at')
       if (!cancelled && !pointerError && data?.length) setSummary({ heading: section.heading, pointers: data as SummaryPointer[] })
     })()
     return () => { cancelled = true }
-  }, [url, anonKey])
+  }, [])
 
   useEffect(() => {
     if (!activeVideo) return

@@ -728,10 +728,20 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
               }}
               aria-label="Menu"
               aria-expanded={menuOpen}
-              className="flex h-9 w-9 cursor-pointer flex-col items-center justify-center gap-[5px] border-none bg-transparent p-1"
+              className="relative flex h-9 w-9 cursor-pointer items-center justify-center border-none bg-transparent p-1"
             >
-              <span className="block h-[2px] w-[18px] bg-[#0A1628]" />
-              <span className="block h-[2px] w-[18px] bg-[#0A1628]" />
+              <img
+                src="/menu-09-stroke-rounded.svg"
+                alt=""
+                aria-hidden="true"
+                className={`absolute h-[22px] w-[22px] object-contain transition-all duration-300 ease-out ${menuOpen ? 'rotate-90 scale-75 opacity-0' : 'rotate-0 scale-100 opacity-100'}`}
+              />
+              <img
+                src="/cancel-01-stroke-rounded.svg"
+                alt=""
+                aria-hidden="true"
+                className={`absolute h-[22px] w-[22px] object-contain transition-all duration-300 ease-out ${menuOpen ? 'rotate-0 scale-100 opacity-100' : '-rotate-90 scale-75 opacity-0'}`}
+              />
             </button>
           </div>
           <Link

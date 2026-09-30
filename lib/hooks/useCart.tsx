@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { buildCartItemKey, getProductKey, type CartItemSelection, type StoredCartItem } from '@/lib/product-keys'
+import { buildCartItemKey, getProductKey, type CartItemSelection, type CartProductSnapshot, type StoredCartItem } from '@/lib/product-keys'
 
 const STORAGE_KEY = 'hod_cart'
 
@@ -9,7 +9,7 @@ type CartContextValue = {
   items: StoredCartItem[]
   count: number
   isOpen: boolean
-  addItem: (product: { dbId?: string | null; id?: string | number | null; slug?: string | null; name?: string | null; shortMeta?: string | null; imageUrl?: string | null; priceFrom?: number | null }, selection: CartItemSelection) => void
+  addItem: (product: { dbId?: string | null; id?: string | number | null; slug?: string | null; name?: string | null; shortMeta?: string | null; imageUrl?: string | null; priceFrom?: number | null }, selection: CartItemSelection, options?: { openCart?: boolean; recommendation?: CartProductSnapshot }) => void
   isHydrated: boolean
   removeItem: (key: string) => void
   clearCart: () => void
@@ -88,10 +88,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     isHydrated,
     isOpen,
     count: items.reduce((sum, item) => sum + item.quantity, 0),
-    addItem: (product, selection) => {
+    addItem: (product, selection, options) => {
       const key = buildCartItemKey(product, selection)
       const productKey = getProductKey(product)
-      setIsOpen(true)
+      if (options?.openCart !== false) setIsOpen(true)
       setItems((currentItems) => {
         const existing = currentItems.find((item) => item.key === key)
         const snapshot = {
@@ -102,6 +102,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           shortMeta: product.shortMeta || '',
           imageUrl: selection.resolvedImageUrl || product.imageUrl || '',
           priceFrom: Number(selection.resolvedPrice ?? product.priceFrom ?? 0),
+          recommendation: options?.recommendation,
         }
         if (existing) {
           return currentItems.map((item) => (item.key === key ? { ...item, quantity: item.quantity + 1, snapshot } : item))

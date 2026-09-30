@@ -1717,17 +1717,16 @@ export async function getStorefrontCartRecommendations({
   limit?: number
 }) {
   const safeLimit = Math.max(1, Math.min(12, Math.floor(limit)))
-  const cartProducts = await getStorefrontProductsByIdentifiers({ slugs, ids, limit: 50 })
-  const cartProductIds = cartProducts.map((product) => product.dbId)
-  const categoryIds = [...new Set(cartProducts.map((product) => product.mainCategoryId).filter(Boolean))]
+  const cartSlugs = new Set(uniqueNonEmptyValues(slugs, 50))
+  const cartIds = new Set(uniqueNonEmptyValues(ids, 50))
+  const productCards = await getStorefrontProductCards()
+  const cartProducts = productCards.filter((product) => cartSlugs.has(product.slug) || cartIds.has(product.dbId))
+  const categorySlugs = new Set(cartProducts.map((product) => product.mainCategorySlug).filter(Boolean))
 
-  const products = await fetchStorefrontProducts(undefined, {
-    ...(categoryIds.length > 0 ? { mainCategoryIds: categoryIds } : {}),
-    ...(cartProductIds.length > 0 ? { excludeProductIds: cartProductIds } : {}),
-    limit: safeLimit,
-  })
-
-  return products.map(toStorefrontProductCard)
+  return productCards
+    .filter((product) => !cartSlugs.has(product.slug) && !cartIds.has(product.dbId))
+    .sort((left, right) => Number(categorySlugs.has(right.mainCategorySlug)) - Number(categorySlugs.has(left.mainCategorySlug)))
+    .slice(0, safeLimit)
 }
 
 export function filterStorefrontProducts<T extends StorefrontProductCard>(

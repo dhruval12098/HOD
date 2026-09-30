@@ -12,7 +12,19 @@ function buildWhatsappHref(number: string) {
 export default function FloatingWidgets() {
   const [showBackTop, setShowBackTop] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
+  const [isFooterVisible, setIsFooterVisible] = useState(false);
   const [whatsappHref, setWhatsappHref] = useState(buildWhatsappHref(fallbackWhatsappNumber));
+
+  useEffect(() => {
+    const footer = document.querySelector('.site-footer');
+    if (!footer) return;
+
+    const observer = new IntersectionObserver(([entry]) => {
+      setIsFooterVisible(entry.isIntersecting);
+    }, { threshold: 0.05 });
+    observer.observe(footer);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     let scrollEndTimer: ReturnType<typeof setTimeout> | undefined;
@@ -68,7 +80,7 @@ export default function FloatingWidgets() {
         style={{
           position: 'fixed',
           right: '24px',
-          bottom: 'calc(148px + env(safe-area-inset-bottom))',
+          bottom: 'calc(90px + env(safe-area-inset-bottom))',
           width: '52px',
           height: '52px',
           borderRadius: 999,
@@ -117,7 +129,7 @@ export default function FloatingWidgets() {
         aria-label="Chat with us"
         style={{
           position: 'fixed',
-          bottom: 'calc(72px + env(safe-area-inset-bottom))',
+          bottom: 'calc(24px + env(safe-area-inset-bottom))',
           right: '24px',
           width: '70px',
           height: '50px',
@@ -130,9 +142,9 @@ export default function FloatingWidgets() {
           cursor: 'pointer',
           zIndex: 100,
           textDecoration: 'none',
-          opacity: isScrolling ? 0 : 1,
-          visibility: isScrolling ? 'hidden' : 'visible',
-          pointerEvents: isScrolling ? 'none' : 'auto',
+          opacity: isScrolling || isFooterVisible ? 0 : 1,
+          visibility: isScrolling || isFooterVisible ? 'hidden' : 'visible',
+          pointerEvents: isScrolling || isFooterVisible ? 'none' : 'auto',
           boxShadow: '0 12px 30px rgba(0,0,0,0.28)',
           transition: 'all 0.3s',
         }}

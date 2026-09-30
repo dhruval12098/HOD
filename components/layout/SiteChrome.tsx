@@ -65,12 +65,12 @@ export default function SiteChrome({ children, initialNavItems }: { children: Re
           <CartDrawer />
           <ContactDrawer />
           <main className="flex-1" style={{ paddingTop: 'var(--hod-site-header-height, 118px)' }}>{children}</main>
+          <ViewportDeferred minHeight={520}>
+            <AtYourService />
+            <SelectedCouponOffer />
+          </ViewportDeferred>
           <div id="site-footer-shell">
-            <ViewportDeferred minHeight={520}>
-              <AtYourService />
-              <SelectedCouponOffer />
-              <Footer navItems={navItems} />
-            </ViewportDeferred>
+            <Footer navItems={navItems} />
           </div>
           <PromotionPopup />
           {showNonCriticalChrome ? (

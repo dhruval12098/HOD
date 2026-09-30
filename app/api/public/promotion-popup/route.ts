@@ -16,7 +16,7 @@ export async function GET() {
 
   const { data: questions, error: questionsError } = await supabase
     .from('promotion_popup_questions')
-    .select('id, field_key, question, input_type, validation_pattern, validation_message, is_required, options, sort_order')
+    .select('id, field_key, question, input_type, validation_pattern, validation_message, is_required, options, allow_multiple, sort_order')
     .eq('promotion_id', data.id)
     .eq('is_active', true)
     .order('sort_order', { ascending: true })

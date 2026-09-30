@@ -166,7 +166,7 @@ export default function BestSellers({
           onTouchEnd={pauseAutoplay}
           onWheel={pauseAutoplay}
           onKeyDown={pauseAutoplay}
-          className="-mx-[var(--space-2)] flex snap-x snap-mandatory gap-[var(--space-2)] overflow-x-auto px-[var(--space-2)] pb-2 [scrollbar-width:none] sm:hidden [&::-webkit-scrollbar]:hidden"
+          className="flex snap-x snap-mandatory gap-[var(--space-2)] overflow-x-auto px-[var(--space-2)] pb-2 [scrollbar-width:none] sm:hidden [&::-webkit-scrollbar]:hidden"
           aria-label={section.heading + ' carousel'}
         >
           {products.map((product) => (

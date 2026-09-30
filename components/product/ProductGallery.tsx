@@ -150,6 +150,8 @@ export default function ProductGallery({
   const isLightboxOpen = visibleLightboxIndex !== null;
   const activeAsset = mobileAssets[visibleActiveIndex] ?? null;
   const activeLightboxAsset = visibleLightboxIndex === null ? null : slideAssets[visibleLightboxIndex] ?? null;
+  const firstMobileImageIndex = mobileAssets.findIndex((asset) => asset.type === 'image');
+  const firstMobileImage = firstMobileImageIndex >= 0 ? mobileAssets[firstMobileImageIndex] : null;
 
   const thumbnailSlots = useMemo<ThumbnailSlot[]>(() => {
     const minSlots = 5;
@@ -518,6 +520,16 @@ export default function ProductGallery({
       </div>
 
       <div className="lg:hidden">
+        {firstMobileImage?.type === 'image' ? (
+          <img
+            src={firstMobileImage.url}
+            alt=""
+            aria-hidden="true"
+            className="pointer-events-none absolute h-px w-px opacity-0"
+            loading="eager"
+            fetchPriority="high"
+          />
+        ) : null}
         <div
           ref={mainGalleryRef}
           className={`relative mb-3 flex aspect-square w-full touch-pan-y items-center justify-center overflow-hidden rounded-none border ${bgMain} group`}
@@ -545,7 +557,13 @@ export default function ProductGallery({
                 className="absolute inset-0 cursor-zoom-in overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#0A1628]"
                 aria-label={`Open ${activeAsset.alt || 'product image'} in image viewer`}
               >
-                <img src={activeAsset.url} alt={activeAsset.alt || 'Jewellery product media'} className={mainMediaClass} loading="lazy" />
+                <img
+                  src={activeAsset.url}
+                  alt={activeAsset.alt || 'Jewellery product media'}
+                  className={mainMediaClass}
+                  loading={visibleActiveIndex === firstMobileImageIndex ? 'eager' : 'lazy'}
+                  fetchPriority={visibleActiveIndex === firstMobileImageIndex ? 'high' : 'auto'}
+                />
               </button>
             ) : (
               <div className="flex h-full w-full items-center justify-center transition-transform duration-700 ease-[cubic-bezier(.2,.7,.3,1)] group-hover:scale-105">
@@ -615,4 +633,3 @@ export default function ProductGallery({
     </div>
   );
 }
-

@@ -69,6 +69,7 @@ export default function ProductClient({ product, relatedProducts, serviceBanner,
   const [toastMessage, setToastMessage] = useState('');
   const [toastVisible, setToastVisible] = useState(false);
   const [showStickyCartBar, setShowStickyCartBar] = useState(false);
+  const [isFooterVisible, setIsFooterVisible] = useState(false);
   const [stickyImageUnavailableUrl, setStickyImageUnavailableUrl] = useState<string | null>(null);
   const [selectedGiftPromotionId, setSelectedGiftPromotionId] = useState<number | null>(null);
   const ctaAnchorRef = useRef<HTMLDivElement | null>(null);
@@ -223,6 +224,37 @@ export default function ProductClient({ product, relatedProducts, serviceBanner,
     };
   }, []);
 
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof MutationObserver === 'undefined' || typeof IntersectionObserver === 'undefined') return;
+
+    let footerObserver: IntersectionObserver | null = null;
+    let domObserver: MutationObserver | null = null;
+
+    const observeFooter = () => {
+      const footerShell = document.getElementById('site-footer-shell');
+      if (!footerShell) return false;
+
+      footerObserver = new IntersectionObserver(
+        ([entry]) => setIsFooterVisible(Boolean(entry?.isIntersecting)),
+        { threshold: 0 },
+      );
+      footerObserver.observe(footerShell);
+      return true;
+    };
+
+    if (!observeFooter()) {
+      domObserver = new MutationObserver(() => {
+        if (observeFooter()) domObserver?.disconnect();
+      });
+      domObserver.observe(document.body, { childList: true, subtree: true });
+    }
+
+    return () => {
+      footerObserver?.disconnect();
+      domObserver?.disconnect();
+    };
+  }, []);
+
   const description = useMemo(
     () => product.descriptionText,
     [product]
@@ -321,6 +353,18 @@ export default function ProductClient({ product, relatedProducts, serviceBanner,
   const addConfiguredProductToCart = (loveLetterDraft: LoveLetterDraft | null = null) => {
     addItem(product, {
       ...buildCartSelection(loveLetterDraft),
+    }, {
+      recommendation: relatedProducts[0]
+        ? {
+            id: String(relatedProducts[0].id ?? relatedProducts[0].dbId ?? relatedProducts[0].slug),
+            dbId: relatedProducts[0].dbId,
+            slug: relatedProducts[0].slug,
+            name: relatedProducts[0].name,
+            shortMeta: relatedProducts[0].shortMeta,
+            imageUrl: relatedProducts[0].imageUrl,
+            priceFrom: relatedProducts[0].priceFrom,
+          }
+        : undefined,
     });
     if (isGiftSelected && giftPromotion?.code) {
       localStorage.setItem(REQUESTED_COUPON_KEY, giftPromotion.code)
@@ -383,12 +427,15 @@ export default function ProductClient({ product, relatedProducts, serviceBanner,
             padding-top: 44px;
           }
         }
+
       `}</style>
       <div
-        className={`fixed left-0 right-0 top-[calc(var(--hod-announcement-current-height,35px)+var(--hod-navbar-visible-height,96px))] z-[45] border-b border-[color:var(--theme-border,rgba(0,0,0,0.09))] bg-white/95 backdrop-blur-md transition-[top,transform] duration-300 ${
+        className={`fixed left-0 right-0 top-[calc(var(--hod-announcement-current-height,35px)+var(--hod-navbar-visible-height,96px))] z-[45] border-b border-[color:var(--theme-border,rgba(0,0,0,0.09))] bg-white/95 backdrop-blur-md transition-[top,transform,opacity] duration-300 ${
           showStickyCartBar
-            ? 'translate-y-0'
-            : '-translate-y-[120%] max-[700px]:translate-y-[120%]'
+            ? isFooterVisible
+              ? 'translate-y-0 opacity-0 pointer-events-none'
+              : 'translate-y-0 opacity-100 pointer-events-auto'
+            : '-translate-y-[120%] opacity-0 pointer-events-none max-[700px]:translate-y-[120%]'
         } max-[700px]:top-auto max-[700px]:bottom-0 max-[700px]:border-b-0 max-[700px]:border-t`}
       >
         <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-[52px] py-3 max-[1100px]:px-7 max-[700px]:flex-col max-[700px]:items-stretch max-[700px]:gap-3 max-[700px]:px-5">
@@ -523,20 +570,15 @@ export default function ProductClient({ product, relatedProducts, serviceBanner,
                 </h2>
                 <div className="sm:hidden">
                   <ProductTabs
-                    shippingContent={product.shippingContent}
-                    careWarrantyContent={product.careWarrantyContent}
-                    showSections={false}
-                    detailsAccordion
-                  />
-                  <ServiceBannerSection data={serviceBanner} />
-                  <ProductTabs
                     description={description}
                     specifications={product.specificationRows}
                     productDetails={product.productDetailRows}
                     detailSections={product.detailSections}
-                    showPolicies={false}
+                    shippingContent={product.shippingContent}
+                    careWarrantyContent={product.careWarrantyContent}
                     detailsAccordion
                   />
+                  <ServiceBannerSection data={serviceBanner} />
                 </div>
                 <div className="hidden sm:block">
                   <ProductTabs

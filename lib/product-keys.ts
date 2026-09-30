@@ -42,6 +42,7 @@ export type CartProductSnapshot = {
   shortMeta: string
   imageUrl: string
   priceFrom: number
+  recommendation?: CartProductSnapshot
 }
 
 export function buildCartItemKey(product: { dbId?: string | null; id?: string | number | null; slug?: string | null }, selection: CartItemSelection) {

@@ -9,15 +9,17 @@ const asStringArray = (value: unknown) =>
 export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => ({}))
+    const requestedLimit = Number(body?.limit)
+    const limit = Number.isFinite(requestedLimit) ? Math.min(4, Math.max(1, Math.floor(requestedLimit))) : 4
     const items = await getStorefrontCartRecommendations({
       slugs: asStringArray(body?.slugs),
       ids: asStringArray(body?.ids),
-      limit: 4,
+      limit,
     })
 
     return NextResponse.json(
       { items },
-      { headers: { 'Cache-Control': 'private, no-store' } }
+      { headers: { 'Cache-Control': 'private, max-age=60' } }
     )
   } catch (error) {
     return NextResponse.json(

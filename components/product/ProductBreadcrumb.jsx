@@ -19,34 +19,34 @@ export default function ProductBreadcrumb({
   return (
     <div className="mb-3 flex min-h-8 items-center justify-between gap-4 bg-white">
       <nav
-        className="flex min-w-0 flex-wrap items-center font-sans text-[12px] font-normal tracking-[0.01em] text-black max-[700px]:text-[10px]"
+        className="flex min-w-0 flex-wrap items-center font-sans text-[12px] font-normal tracking-[0.01em] text-gray-700 max-[700px]:text-[10px]"
         aria-label="Breadcrumb"
       >
         <Link
           href="/"
-          className="text-black no-underline hover:text-[#0A1628] transition-colors duration-300"
+          className="text-gray-700 no-underline transition-colors duration-300 hover:text-gray-900"
         >
           Home
         </Link>
-        <span className="mx-[10px] text-black max-[700px]:mx-[6px]">/</span>
+        <span className="mx-[10px] text-gray-700 max-[700px]:mx-[6px]">/</span>
         <Link
           href={collectionHref}
-          className="text-black no-underline hover:text-[#0A1628] transition-colors duration-300"
+          className="text-gray-700 no-underline transition-colors duration-300 hover:text-gray-900"
         >
           {collectionLabel}
         </Link>
         {subcategoryLabel ? (
           <>
-            <span className="mx-[10px] text-black max-[700px]:mx-[6px]">/</span>
+            <span className="mx-[10px] text-gray-700 max-[700px]:mx-[6px]">/</span>
             {subcategoryHref ? (
               <Link
                 href={subcategoryHref}
-                className="text-black no-underline hover:text-[#0A1628] transition-colors duration-300"
+                className="text-gray-700 no-underline transition-colors duration-300 hover:text-gray-900"
               >
                 {subcategoryLabel}
               </Link>
             ) : (
-              <span className="text-black">{subcategoryLabel}</span>
+              <span className="text-gray-700">{subcategoryLabel}</span>
             )}
           </>
         ) : null}

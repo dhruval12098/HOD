@@ -370,8 +370,8 @@ button, [role="button"], input[type="button"], input[type="submit"], input[type=
   color: #000000;
 }
 
-footer::selection,
-footer *::selection {
+.site-footer::selection,
+.site-footer *::selection {
   background: rgba(255, 255, 255, 0.28);
   color: #ffffff;
 }
@@ -389,13 +389,37 @@ footer *::selection {
   color: #ffffff !important;
 }
 
+@media (min-width: 1024px) {
+  .shop-hero-label-underline {
+    width: fit-content;
+    max-width: calc(100% - 2rem);
+  }
+
+  .group:hover .shop-hero-label-underline::after,
+  .group:focus-visible .shop-hero-label-underline::after {
+    transform: scaleX(1);
+  }
+
+  .shop-hero-label-underline::after {
+    display: block;
+    width: 100%;
+    height: 2px;
+    margin-top: 0.35rem;
+    background: currentColor;
+    content: '';
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 220ms ease;
+  }
+}
+
 /* Keep every homepage section heading aligned with the same 30px inset. */
 .home-page .section-title {
   padding-inline: 30px;
 }
 
-footer::-moz-selection,
-footer *::-moz-selection {
+.site-footer::-moz-selection,
+.site-footer *::-moz-selection {
   background: rgba(255, 255, 255, 0.28);
   color: #ffffff;
 }
