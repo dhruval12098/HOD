@@ -72,6 +72,7 @@ export default function ProductClient({ product, relatedProducts, serviceBanner,
   const [isFooterVisible, setIsFooterVisible] = useState(false);
   const [stickyImageUnavailableUrl, setStickyImageUnavailableUrl] = useState<string | null>(null);
   const [selectedGiftPromotionId, setSelectedGiftPromotionId] = useState<number | null>(null);
+  const [giftOfferAttempted, setGiftOfferAttempted] = useState(false);
   const ctaAnchorRef = useRef<HTMLDivElement | null>(null);
   const pageTopRef = useRef<HTMLDivElement | null>(null);
 
@@ -500,7 +501,7 @@ export default function ProductClient({ product, relatedProducts, serviceBanner,
 
               <ProductPriceBlock priceFrom={activePrice} compact />
 
-              {giftPromotion ? <GiftOfferBanner promotion={giftPromotion} amount={activePrice} checked={selectedGiftPromotionId === giftPromotion.id} included={isGiftSelected} onToggle={() => setSelectedGiftPromotionId(giftPromotion.id)} /> : null}
+              {giftPromotion ? <GiftOfferBanner promotion={giftPromotion} amount={activePrice} checked={selectedGiftPromotionId === giftPromotion.id} included={isGiftSelected} attempted={giftOfferAttempted} onToggle={() => { setGiftOfferAttempted(true); setSelectedGiftPromotionId(giftPromotion.id) }} /> : null}
 
               <ProductConfigurator
                 product={configuredProduct}
