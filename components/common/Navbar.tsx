@@ -728,7 +728,7 @@ export default function Navbar({ navItems = [] }: { navItems?: NavbarRenderItem[
               }}
               aria-label="Menu"
               aria-expanded={menuOpen}
-              className="relative flex h-9 w-9 cursor-pointer items-center justify-center border-none bg-transparent p-1"
+              className="relative flex h-11 w-11 cursor-pointer items-center justify-center border-none bg-transparent p-1"
             >
               <img
                 src="/menu-09-stroke-rounded.svg"
