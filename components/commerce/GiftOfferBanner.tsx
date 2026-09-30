@@ -38,7 +38,19 @@ export function GiftOfferBanner({ promotion, amount, checked = false, included =
   }
 
   return (
-    <aside className={`${borderless ? '' : 'mt-4'} bg-[#fff7f8] p-3 font-[family-name:var(--font-family-secondary)] ${borderless ? '' : 'border border-[#df3350]'}`} aria-label="Gift offer">
+    <aside
+      className={`${borderless ? '' : 'mt-4'} cursor-pointer bg-[#fff7f8] p-3 font-[family-name:var(--font-family-secondary)] ${borderless ? '' : 'border border-[#df3350]'}`}
+      aria-label="Gift offer"
+      role={displayOnly ? undefined : 'button'}
+      tabIndex={displayOnly ? undefined : 0}
+      onClick={displayOnly ? undefined : onToggle}
+      onKeyDown={displayOnly ? undefined : (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onToggle?.()
+        }
+      }}
+    >
       {unlocked || !displayOnly ? (
         <button type="button" onClick={onToggle} disabled={displayOnly} aria-disabled={displayOnly} className={`flex w-full items-center gap-2.5 border-0 bg-transparent p-0 text-left text-[#cf2943] ${displayOnly ? 'cursor-default' : ''}`}>
           {unlocked ? <span aria-hidden="true" className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-[3px] border-2 ${checked ? 'gift-check-pop border-[#cf2943] bg-[#cf2943] text-white' : 'border-[#cf2943] bg-white text-transparent'}`}><Check className="h-3 w-3" strokeWidth={3} /></span> : null}
