@@ -361,7 +361,7 @@ export default function ProductClient({ product, relatedProducts, serviceBanner,
             slug: relatedProducts[0].slug,
             name: relatedProducts[0].name,
             shortMeta: relatedProducts[0].shortMeta,
-            imageUrl: relatedProducts[0].imageUrl,
+            imageUrl: relatedProducts[0].imageUrl || '',
             priceFrom: relatedProducts[0].priceFrom,
           }
         : undefined,
