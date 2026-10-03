@@ -26,7 +26,7 @@
 
 :root {
   /* Primitive design tokens. */
-  --space-section-block: 16px;
+  --space-section-block: 20px;
   --color-black: #000000;
   --color-off-white: #f9f9f9;
   --color-section-soft: #fbfbfb;
@@ -57,6 +57,7 @@
   --color-brand-accent: var(--color-white);
   --font-family-primary: var(--font-family-montserrat);
   --font-weight-primary: 500;
+  --font-weight-heading: 600;
   --font-family-logo1: var(--font-family-cinzel);
   --font-family-secondary: var(--font-family-inter);
   --font-family-tertiary: var(--font-family-montserrat);
@@ -103,12 +104,17 @@
   padding-block: var(--space-section-block);
 }
 
+/* Adjacent sections share one rhythm gap instead of stacking both paddings. */
+.section-rhythm:has(+ .section-rhythm) {
+  padding-bottom: 0;
+}
+
 @media (min-width: 640px) {
-  :root { --space-section-block: 24px; }
+  :root { --space-section-block: 28px; }
 }
 
 @media (min-width: 1280px) {
-  :root { --space-section-block: 32px; }
+  :root { --space-section-block: 36px; }
 }
 
 .brand-button {
@@ -237,14 +243,14 @@ body.page-loader-active {
 /* Ensure headings use the requested display font site-wide without touching body copy. */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--serif) !important;
-  font-weight: var(--font-weight-primary) !important;
+  font-weight: var(--font-weight-heading) !important;
 }
 
 /* Explicit section-heading token; do not replace brand or article headings. */
 html body .section-title {
   font-family: var(--font-family-section-title) !important;
   font-size: clamp(1rem, 1.35vw, 1.375rem) !important;
-  font-weight: 600 !important;
+  font-weight: var(--font-weight-heading) !important;
   line-height: 1.25 !important;
   letter-spacing: 0.1em !important;
   text-transform: uppercase;
@@ -258,18 +264,19 @@ button, [role="button"], input[type="button"], input[type="submit"], input[type=
 /* The homepage hero is intentionally branded with the primary Cinzel face. */
 .hero-slide-heading {
   font-family: var(--font-family-primary) !important;
-  font-weight: var(--font-weight-primary) !important;
+  font-weight: var(--font-weight-heading) !important;
 }
 
 /* Homepage collection campaign follows the primary Cinzel brand face. */
 .collection-showcase-heading {
   font-family: var(--font-family-primary) !important;
-  font-weight: var(--font-weight-primary) !important;
+  font-weight: var(--font-weight-heading) !important;
 }
 
 /* Blog card titles use the storefront Montserrat face. */
 .blog-title-font {
   font-family: var(--font-family-montserrat) !important;
+  font-weight: var(--font-weight-heading) !important;
 }
 
 /* Scoped override for promotion banner titles only. */
@@ -290,7 +297,7 @@ button, [role="button"], input[type="button"], input[type="submit"], input[type=
 
 .font-display-title {
   font-family: var(--display-title) !important;
-  font-weight: var(--font-weight-primary) !important;
+  font-weight: var(--font-weight-heading) !important;
 }
 
 /* Homepage font comparison: these intentionally override the global heading face. */
@@ -300,13 +307,17 @@ button, [role="button"], input[type="button"], input[type="submit"], input[type=
 
 .font-primary-display {
   font-family: var(--font-family-primary) !important;
-  font-weight: var(--font-weight-primary) !important;
+  font-weight: var(--font-weight-heading) !important;
 }
 
 /* Rich blog content headings use the canonical primary Cinzel face. */
 .blog-article-content :is(h1, h2, h3, h4, h5, h6) {
   font-family: var(--font-family-primary) !important;
-  font-weight: var(--font-weight-primary) !important;
+  font-weight: var(--font-weight-heading) !important;
+}
+
+.font-serif:is(h1, h2, h3, h4, h5, h6) {
+  font-weight: var(--font-weight-heading) !important;
 }
 
 .font-test-veneza {
@@ -354,7 +365,7 @@ button, [role="button"], input[type="button"], input[type="submit"], input[type=
   .home-page .banner-light-button { margin-inline: auto !important; }
   .home-page .blog-title-font { font-size: 1rem !important; }
   .home-page section { scroll-margin-top: 80px; }
-  .shop-grid-layout { margin-top: 0 !important; padding-bottom: 2rem !important; }
+  .shop-grid-layout { margin-top: 0 !important; padding-bottom: var(--space-section-block) !important; }
   .shop-grid-layout + * { margin-top: 0 !important; }
   .shop-product-card-info { padding-bottom: 12px !important; }
   .shop-category-grid { row-gap: 1rem !important; }

@@ -24,11 +24,12 @@ type SummaryProps = {
   shippingLabel?: string
   belowSummary?: ReactNode
   compact?: boolean
+  whiteBackground?: boolean
 }
 
-export default function CheckoutSummary({ summary, topOffer, couponValue = '', onCouponChange, onCouponAction, couponApplied = false, couponLoading = false, couponMessage = '', giftOffer = null, shippingLabel = 'Complimentary', belowSummary, compact = false }: SummaryProps) {
+export default function CheckoutSummary({ summary, topOffer, couponValue = '', onCouponChange, onCouponAction, couponApplied = false, couponLoading = false, couponMessage = '', giftOffer = null, shippingLabel = 'Complimentary', belowSummary, compact = false, whiteBackground = false }: SummaryProps) {
   const { format } = useCurrency()
-  const [itemsOpen, setItemsOpen] = useState(true)
+  const [itemsOpen, setItemsOpen] = useState(false)
   const [promoOpen, setPromoOpen] = useState(true)
   const [estimatedDeliveryText, setEstimatedDeliveryText] = useState('Approximately 3 to 4 weeks')
   useEffect(() => {
@@ -54,8 +55,8 @@ export default function CheckoutSummary({ summary, topOffer, couponValue = '', o
   const total = taxableSubtotal + gstAmount
 
   return (
-    <aside className="border border-black/10 bg-[#fbfbfb] p-3">
-      {topOffer ? <div className="mb-5 [&>aside]:mt-0">{topOffer}</div> : null}
+    <aside className={`border border-black/10 ${whiteBackground ? 'bg-white' : 'bg-[#fbfbfb]'} p-3`}>
+      {topOffer ? <div className={`mb-5 [&>aside]:mt-0 ${compact ? 'hidden sm:block' : ''}`}>{topOffer}</div> : null}
       {giftOffer ? <div className="mb-4 border-b border-black/10 pb-4">
         {giftOffer.isDiscount ? (
           <>

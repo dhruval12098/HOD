@@ -13,7 +13,7 @@ export default function AtYourService() {
   return (
     <section aria-labelledby="at-your-service-heading" className="w-full border-y border-black/[0.06] bg-white px-[var(--space-4)] py-[var(--space-8)] sm:px-[var(--space-6)] sm:py-[var(--space-10)] lg:px-[var(--space-8)]">
       <h2 id="at-your-service-heading" className="text-center font-[family-name:var(--font-family-primary)] text-[clamp(1rem,4.2vw,1.3rem)] font-medium leading-tight text-black sm:text-[clamp(1.3rem,2.1vw,1.65rem)]">
-        The HOD Experience
+        THE HOD EXPERIENCE
       </h2>
       <div className="mx-auto mt-[var(--space-8)] grid max-w-[1400px] grid-cols-3 gap-x-3 gap-y-7 sm:grid-cols-3 sm:gap-x-8 lg:mt-[var(--space-10)] lg:grid-cols-6 lg:gap-x-6">
         {SERVICE_ITEMS.map((item) => (

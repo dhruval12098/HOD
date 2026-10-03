@@ -316,7 +316,7 @@ export default function BespokePortfolio({
     <>
       <section id="bespoke-portfolio" className="section-rhythm border-t border-black/10 bg-white">
         <div className="px-4 sm:px-7 lg:px-[50px]">
-        {visibleItems.length ? <div className="mt-6 grid grid-cols-2 gap-[13px] md:grid-cols-3 lg:grid-cols-4">
+        {visibleItems.length ? <div className="mt-[var(--space-section-block)] grid grid-cols-2 gap-[13px] md:grid-cols-3 lg:grid-cols-4">
           {visibleItems.map((item, i) => (
             <RevealDiv key={item.id} delay={i * 60}>
               <div

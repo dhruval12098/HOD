@@ -9,7 +9,7 @@ export default function FreeGiftOfferBanner({ promotion }: { promotion: Storefro
   if (!promotion?.gift) return null
 
   return (
-    <section aria-label="Complimentary gift offer" className="bg-black px-5 py-4 text-white sm:px-8 sm:py-8 lg:px-[52px]">
+    <section aria-label="Complimentary gift offer" className="bg-black px-5 py-[var(--space-section-block)] text-white sm:px-8 lg:px-[52px]">
       <div className="relative mx-auto max-w-[1200px]">
         <Link href={`/shop/${promotion.gift.slug}`} className="absolute right-0 top-0 border-b border-white/65 pb-0.5 font-[family-name:var(--font-family-secondary)] text-[10px] font-medium uppercase tracking-[0.12em] text-white no-underline hover:border-white sm:text-[11px]">View gift</Link>
         <div className="flex min-h-[72px] flex-row items-center justify-start gap-3 pr-16 text-left sm:min-h-[104px] sm:gap-7 sm:pr-24">

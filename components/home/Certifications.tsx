@@ -151,7 +151,7 @@ const certificationItems = [
 export default function Certifications() {
   return (
     <section className="mx-auto max-w-[1400px] px-[52px] py-[110px] max-lg:px-7 max-md:px-4 max-md:py-[56px]">
-      <RevealDiv className="mb-16 flex flex-col items-center text-center">
+      <RevealDiv className="mb-[var(--space-section-block)] flex flex-col items-center text-center">
           <h2
             className={`${cinzelFont.variable} font-primary-display section-title font-light leading-[1.08] tracking-[0.01em] text-[#0A0A0A] max-md:text-[28px]`}
             style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}

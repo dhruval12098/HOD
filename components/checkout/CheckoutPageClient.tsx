@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ChevronDown } from 'lucide-react';
 import CheckoutInformationStep from '@/components/checkout/CheckoutInformationStep';
 import CheckoutConfirmationStep from '@/components/checkout/CheckoutConfirmationStep';
 import CheckoutSummary from '@/components/checkout/CheckoutSummary';
@@ -1370,8 +1370,13 @@ export default function CheckoutPageClient() {
       ) : null}
       <div className="mx-auto max-w-[1520px]">
         <div className="mb-6">
-          <div className="flex items-end justify-between gap-5"><div><button type="button" onClick={() => router.back()} className="mb-3 inline-flex items-center gap-1.5 border-0 bg-transparent p-0 font-[family-name:var(--font-family-secondary)] text-[12px] text-black/60 transition hover:text-black"><ArrowLeft size={15} strokeWidth={1.7} />Back</button><h1 className="font-[family-name:var(--font-family-primary)] text-[28px] font-semibold uppercase text-black">Checkout</h1></div><div className="font-[family-name:var(--font-family-secondary)] text-[12px] text-black/45"><span className={currentStep === 0 ? 'font-semibold text-black' : ''}>Shipping</span><span className="px-2">›</span><span className={currentStep === 1 ? 'font-semibold text-black' : ''}>Payment</span></div></div>
+          <div className="flex items-end justify-between gap-5"><div><button type="button" onClick={() => router.back()} className="mb-3 inline-flex items-center gap-1.5 border-0 bg-transparent p-0 font-[family-name:var(--font-family-secondary)] text-[12px] text-black/60 transition hover:text-black"><ArrowLeft size={15} strokeWidth={1.7} />Back</button><h1 className="font-[family-name:var(--font-family-primary)] text-[22px] font-semibold uppercase text-black sm:text-[28px]">Checkout</h1></div><div className="font-[family-name:var(--font-family-secondary)] text-[12px] text-black/45"><span className={currentStep === 0 ? 'font-semibold text-black' : ''}>Shipping</span><span className="px-2">›</span><span className={currentStep === 1 ? 'font-semibold text-black' : ''}>Payment</span></div></div>
           <p className="mt-2 text-sm text-[#292727]">{cartMode ? 'Checkout synced to the products currently saved in your cart.' : 'Checkout preview for your selected product.'}</p>
+        </div>
+
+        <div className="sticky top-0 z-30 -mx-4 mb-5 flex min-h-12 w-[calc(100%+2rem)] items-center justify-between border-y border-black/10 bg-[#fbfbfb] px-4 font-[family-name:var(--font-family-secondary)] text-[13px] text-black shadow-[0_2px_8px_rgba(0,0,0,0.04)] sm:hidden">
+          <span>{checkoutItems.reduce((sum, item) => sum + item.quantity, 0)} {checkoutItems.reduce((sum, item) => sum + item.quantity, 0) === 1 ? 'item' : 'items'}</span>
+          <span className="flex items-center gap-3 font-semibold"><ChevronDown size={14} aria-hidden="true" />{format(subtotal)}</span>
         </div>
 
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(350px,420px)] lg:gap-8">

@@ -11,8 +11,8 @@ import { getProductKey } from '@/lib/product-keys';
  */
 export default function RelatedProducts({ products, wishlist = [], onWishlist, onEnquire }) {
   return (
-    <section className="mx-auto max-w-[1400px] px-[52px] py-[60px] max-[1100px]:px-7 max-[1100px]:py-[40px] max-[700px]:px-[10px] max-[700px]:py-[28px]">
-      <h2 className="mb-12 text-center font-serif text-[clamp(40px,5.5vw,72px)] font-light leading-[1.05] tracking-[0.02em] text-[#0A1628]">
+    <section className="mx-auto max-w-[1400px] px-[52px] py-[var(--space-section-block)] max-[1100px]:px-7 max-[700px]:px-[10px]">
+      <h2 className="mb-[var(--space-section-block)] text-center font-serif text-[clamp(40px,5.5vw,72px)] font-light leading-[1.05] tracking-[0.02em] text-[#0A1628]">
         You May Also <em className="font-normal italic text-[#0A1628]">Love</em>
       </h2>
 

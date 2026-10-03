@@ -66,7 +66,7 @@ export default function DiscoverShapes({ initialItems = [] }: { initialItems?: I
           </p>
         </div>
 
-        <div className="mt-[var(--space-8)] grid grid-cols-3 gap-x-[var(--space-3)] gap-y-[var(--space-6)] sm:grid-cols-4 md:grid-cols-5 md:gap-x-[var(--space-4)] lg:grid-cols-[repeat(auto-fit,minmax(4.75rem,1fr))] lg:gap-x-[var(--space-5)] lg:gap-y-0">
+        <div className="mt-[var(--space-section-block)] grid grid-cols-3 gap-x-[var(--space-3)] gap-y-[var(--space-6)] sm:grid-cols-4 md:grid-cols-5 md:gap-x-[var(--space-4)] lg:grid-cols-[repeat(auto-fit,minmax(4.75rem,1fr))] lg:gap-x-[var(--space-5)] lg:gap-y-0">
           {items.map((item) => {
             const content = (
               <>

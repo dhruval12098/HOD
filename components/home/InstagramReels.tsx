@@ -72,7 +72,7 @@ export default function InstagramReels({ data }: { data: HomeInstagramReelsData 
 
   return (
     <section aria-labelledby="instagram-reels-heading" className="section-rhythm overflow-hidden bg-white px-[var(--space-2)] text-[#111b2b] sm:px-[var(--space-3)] lg:px-[var(--space-4)]">
-      <div className="mb-3 flex items-end justify-between gap-4 max-md:justify-center">
+      <div className="mb-[var(--space-section-block)] flex items-end justify-between gap-4 max-md:justify-center">
         <h2 id="instagram-reels-heading" className="section-title font-primary-display font-light leading-[1.08] tracking-[0.01em] text-[#0A1628] max-md:text-[28px]" style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}>
           {data.heading || 'Instagram'}
         </h2>
@@ -88,7 +88,7 @@ export default function InstagramReels({ data }: { data: HomeInstagramReelsData 
         ) : null}
       </div>
 
-      <div ref={scrollerRef} onScroll={updateControls} className="-mx-[var(--space-2)] flex gap-4 overflow-x-auto scroll-smooth px-[var(--space-2)] py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:-mx-[var(--space-3)] sm:gap-5 sm:px-[var(--space-3)] lg:-mx-[var(--space-4)] lg:px-[var(--space-4)]">
+      <div ref={scrollerRef} onScroll={updateControls} className="-mx-[var(--space-2)] flex gap-4 overflow-x-auto scroll-smooth px-[var(--space-2)] py-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:-mx-[var(--space-3)] sm:gap-5 sm:px-[var(--space-3)] lg:-mx-[var(--space-4)] lg:px-[var(--space-4)]">
         {data.items.map((item) => <ReelCard key={item.id} item={item} />)}
       </div>
 

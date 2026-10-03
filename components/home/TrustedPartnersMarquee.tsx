@@ -28,12 +28,12 @@ export default function TrustedPartnersMarquee({ data }: { data?: HomeTrustedPar
   const heading = data?.heading || 'Trusted Partners';
 
   return (
-    <section className="relative overflow-hidden border-y border-[rgba(10,22,40,0.08)] bg-white py-14 sm:py-16">
+    <section className="relative overflow-hidden border-y border-[rgba(10,22,40,0.08)] bg-white py-[var(--space-section-block)]">
       <div className="pointer-events-none absolute inset-y-0 left-0 z-[2] w-[90px] bg-gradient-to-r from-white to-transparent sm:w-[150px]" />
       <div className="pointer-events-none absolute inset-y-0 right-0 z-[2] w-[90px] bg-gradient-to-l from-white to-transparent sm:w-[150px]" />
 
       <h2
-        className={`${cinzelFont.variable} font-primary-display section-title mb-9 text-center font-light leading-[1.08] tracking-[0.01em] text-[#0A1628] max-md:text-[28px]`}
+        className={`${cinzelFont.variable} font-primary-display section-title mb-[var(--space-section-block)] text-center font-light leading-[1.08] tracking-[0.01em] text-[#0A1628] max-md:text-[28px]`}
         style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}
       >
         {heading}

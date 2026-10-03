@@ -13,6 +13,18 @@ const bucket = process.env.SUPABASE_COLLECTION_BUCKET ?? 'hod'
 
 type ResultState = 'success' | 'pending' | 'failed' | 'error'
 
+type CheckoutTotalsSnapshot = {
+  chargedSubtotal?: unknown
+  chargedGst?: unknown
+  shippingCharged?: unknown
+  exchangeRate?: unknown
+}
+
+function finiteAmount(value: unknown, fallback: number) {
+  const amount = Number(value)
+  return Number.isFinite(amount) ? amount : fallback
+}
+
 function resultState(paymentStatus: unknown): ResultState {
   const value = String(paymentStatus ?? '').toLowerCase()
   if (value === 'paid' || value === 'captured' || value === 'success') return 'success'
@@ -47,7 +59,7 @@ export async function GET(request: Request) {
   if (!orderNumber || orderNumber.length > 100) return NextResponse.json({ error: 'Order confirmation not found.' }, { status: 404 })
 
   const adminClient = createClient(supabaseUrl, supabaseServiceRoleKey)
-  let query = adminClient.from('orders').select('id, order_number, created_at, customer_email, customer_first_name, customer_last_name, customer_phone, customer_birth_date, customer_anniversary_date, shipping_country, shipping_state, shipping_district, shipping_city, shipping_postal_code, shipping_address_line_1, shipping_address_line_2, subtotal_amount, gst_amount, shipping_amount, total_amount, status, payment_status, payment_gateway, payment_currency, payment_amount, razorpay_order_id, razorpay_payment_id, razorpay_payment_method, gateway_order_status, gateway_payment_status').eq('order_number', orderNumber)
+  let query = adminClient.from('orders').select('id, order_number, created_at, customer_email, customer_first_name, customer_last_name, customer_phone, customer_birth_date, customer_anniversary_date, shipping_country, shipping_state, shipping_district, shipping_city, shipping_postal_code, shipping_address_line_1, shipping_address_line_2, subtotal_amount, gst_amount, shipping_amount, total_amount, status, payment_status, payment_gateway, payment_currency, payment_amount, razorpay_order_id, razorpay_payment_id, razorpay_payment_method, gateway_order_status, gateway_payment_status, gateway_payload').eq('order_number', orderNumber)
   query = userId ? query.eq('user_id', userId) : query.eq('guest_token_hash', guestTokenHash!)
   const { data: order, error: orderError } = await query.maybeSingle()
   if (orderError) {
@@ -115,10 +127,24 @@ export async function GET(request: Request) {
   if (categoriesResult.error) console.warn('Checkout result categories unavailable:', categoriesResult.error.message)
   if (statusHistoryResult.error) console.warn('Order status history unavailable:', statusHistoryResult.error.message)
 
+  // Catalog prices can change or products can be removed after checkout. Use the
+  // immutable, currency-converted totals captured with this order instead.
+  const totals = (order.gateway_payload as { totals?: CheckoutTotalsSnapshot } | null)?.totals
+  const exchangeRate = finiteAmount(totals?.exchangeRate, 1)
+  const displayOrder = {
+    ...order,
+    subtotal_amount: finiteAmount(totals?.chargedSubtotal, Number(order.subtotal_amount || 0)),
+    gst_amount: finiteAmount(totals?.chargedGst, Number(order.gst_amount || 0)),
+    shipping_amount: finiteAmount(totals?.shippingCharged, Number(order.shipping_amount || 0)),
+    items: (itemsResult.data ?? []).map((item) => ({
+      ...item,
+      line_total: Number((Number(item.line_total || 0) * exchangeRate).toFixed(2)),
+    })),
+  }
   const cmsPage = pageResult.data
   return NextResponse.json({
     state,
-    order: { ...order, items: itemsResult.data ?? [] },
+    order: displayOrder,
     statusEvents: statusHistoryResult.data ?? [],
     cms: {
       page: cmsPage ? { ...cmsPage, main_banner_image_url: publicImageUrl(adminClient, cmsPage.main_banner_image_path), secondary_banner_image_url: publicImageUrl(adminClient, cmsPage.secondary_banner_image_path) } : null,

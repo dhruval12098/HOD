@@ -58,7 +58,7 @@ export default function BespokeShowcase({
           <div className="pointer-events-none absolute inset-0 z-10 flex items-end justify-start px-[var(--space-4)] pb-[var(--space-10)] text-left sm:items-end sm:justify-start sm:px-[var(--space-8)] sm:pb-[var(--space-10)] lg:px-[var(--space-12)] xl:px-[var(--space-16)]">
             <div className="relative mx-auto w-full max-w-[calc(100vw-2rem)] py-[var(--space-6)] text-[var(--color-brand-accent,#fff)] sm:mx-0 sm:max-w-[42rem] sm:py-[var(--space-10)]">
               <h2
-                className="hero-slide-heading text-[clamp(1.75rem,7vw,2.25rem)] font-medium leading-[1.12] tracking-[-0.02em] text-white sm:text-[clamp(2.25rem,3.4vw,3.25rem)]"
+                className="text-[clamp(1.75rem,7vw,2.25rem)] font-medium leading-[1.12] tracking-[-0.02em] text-white sm:text-[clamp(2.25rem,3.4vw,3.25rem)]"
               >
                 <span className="block whitespace-pre-line break-words">
                   {(section.heading || 'Create Something One of One').trim()}

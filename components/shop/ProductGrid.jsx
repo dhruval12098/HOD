@@ -282,7 +282,7 @@ export default function ProductGrid({ products, sourceProducts = products, initi
       <style>{`
         .shop-grid-layout {
           width: 100%;
-          padding: 0 50px 100px;
+          padding: 0 50px var(--space-section-block);
           display: block;
           background: var(--theme-surface);
         }
@@ -311,7 +311,7 @@ export default function ProductGrid({ products, sourceProducts = products, initi
           gap: 13px;
           align-items: stretch;
           overflow: visible;
-          padding-bottom: 96px;
+          padding-bottom: var(--space-section-block);
         }
         .shop-product-card-primary-image,
         .shop-product-card-hover-image {
@@ -365,7 +365,7 @@ export default function ProductGrid({ products, sourceProducts = products, initi
         }
         @media (max-width: 1024px) {
           .shop-grid-layout {
-            padding: 40px 20px 70px;
+            padding: 40px 20px var(--space-section-block);
           }
           .shop-grid-toolbar {
             top: var(--hod-site-header-height, 83px);
@@ -377,7 +377,7 @@ export default function ProductGrid({ products, sourceProducts = products, initi
         }
         @media (max-width: 768px) {
           .shop-grid-layout {
-            padding: 28px 10px 56px;
+            padding: 28px 10px var(--space-section-block);
           }
           .shop-grid-toolbar {
             padding: 0 7px 2px;
@@ -385,7 +385,7 @@ export default function ProductGrid({ products, sourceProducts = products, initi
           .product-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 13px;
-            padding-bottom: 24px;
+            padding-bottom: var(--space-section-block);
           }
           .shop-product-card-info {
             padding: 9px 7px 15px !important;
@@ -489,7 +489,7 @@ export default function ProductGrid({ products, sourceProducts = products, initi
           )}
 
           {categoryLoadMore && remainingProductCount > 0 ? (
-            <div style={{ display: "grid", justifyItems: "center", gap: "12px", padding: "0 0 24px" }}>
+            <div style={{ display: "grid", justifyItems: "center", gap: "12px", padding: 0 }}>
               <Link
                 href={pageHref(nextLoadPage)}
                 onClick={(event) => {
@@ -517,7 +517,7 @@ export default function ProductGrid({ products, sourceProducts = products, initi
               {loadMoreError ? <p role="alert" style={{ color: "#a11", fontSize: "12px", margin: 0 }}>{loadMoreError}</p> : null}
             </div>
           ) : !categoryLoadMore && resolvedTotalCount > pageSize ? (
-            <nav aria-label="Product pagination" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", padding: "0 0 24px" }}>
+            <nav aria-label="Product pagination" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", padding: 0 }}>
               {resolvedPage > 1 ? (
                 <Link
                   href={pageHref(resolvedPage - 1)}

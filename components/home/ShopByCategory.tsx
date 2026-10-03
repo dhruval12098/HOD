@@ -12,7 +12,7 @@ export default function ShopByCategory({ data }: { data: ShopByCategoryData | nu
   if (!data) return null
   const style = { '--shop-cols-mobile': data.mobileColumns, '--shop-cols-tablet': data.tabletColumns, '--shop-cols-desktop': data.desktopColumns } as CSSProperties
   return <section className="section-rhythm bg-[var(--color-brand-tertiary,#fff)] px-[var(--space-2)] sm:px-[var(--space-3)]" aria-labelledby="shop-by-category-heading">
-    <div className="mb-[var(--space-6)] flex items-end justify-between gap-4 px-1 max-md:justify-center sm:mb-[var(--space-8)] xl:mb-[var(--space-12)]">
+    <div className="mb-[var(--space-section-block)] flex items-end justify-between gap-4 px-1 max-md:justify-center">
       <h2 id="shop-by-category-heading" className="shop-category-heading section-title text-[clamp(1.35rem,2.2vw,2rem)] font-medium uppercase leading-none tracking-[0.025em] text-[var(--color-brand-primary,#000)]">{data.heading}</h2>
       {data.shopAllLabel && data.shopAllLink ? <Link href={data.shopAllLink} className="hidden shrink-0 items-center gap-3 border-b border-[var(--theme-ink)] pb-1 font-[family-name:var(--font-family-primary)] text-[clamp(0.7rem,0.85vw,0.9rem)] font-semibold uppercase tracking-[0.08em] text-[var(--theme-ink)] no-underline transition-[gap] duration-300 hover:gap-5 focus-visible:outline-2 focus-visible:outline-offset-4 md:flex">{data.shopAllLabel} →</Link> : null}
     </div>

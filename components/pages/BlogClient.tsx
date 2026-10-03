@@ -58,7 +58,7 @@ export default function BlogClient({ blogPosts = posts, hero, categories: liveCa
           </div>
 
           {visiblePosts.length ? (
-            <div className="mt-7 grid grid-cols-1 gap-x-5 gap-y-12 sm:grid-cols-2 lg:grid-cols-3 lg:gap-x-7 lg:gap-y-14">
+            <div className="mt-[var(--space-section-block)] grid grid-cols-1 gap-x-5 gap-y-12 sm:grid-cols-2 lg:grid-cols-3 lg:gap-x-7 lg:gap-y-14">
               {visiblePosts.map((post) => <BlogListCard key={post.id} post={post} />)}
             </div>
           ) : <p className="py-20 text-center font-secondary text-sm text-[#666]">No articles are available in this category yet.</p>}

@@ -135,7 +135,7 @@ export default function BestSellers({
 
   return (
     <section className="section-rhythm w-full bg-white px-[var(--space-2)] sm:px-[var(--space-3)] lg:px-[var(--space-4)]">
-      <RevealDiv className="mb-[var(--space-6)] flex flex-wrap items-end justify-between gap-[var(--space-4)] px-[var(--space-1)] max-md:justify-center sm:mb-[var(--space-8)] lg:mb-[var(--space-12)]">
+      <RevealDiv className="mb-[var(--space-section-block)] flex flex-wrap items-end justify-between gap-[var(--space-4)] px-[var(--space-1)] max-md:justify-center">
         <div>
           <h2
             className={`${cinzelFont.variable} font-primary-display section-title font-light leading-[1.08] tracking-[0.01em] text-[var(--theme-heading)] max-md:text-[28px]`}

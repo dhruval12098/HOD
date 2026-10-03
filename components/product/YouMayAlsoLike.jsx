@@ -25,7 +25,7 @@ export default function YouMayAlsoLike({ products, wishlist = [], onWishlist, on
 
   return (
     <section aria-labelledby="you-may-also-like-heading" className="section-rhythm bg-[var(--color-brand-tertiary,#fff)] px-[var(--space-2)] sm:px-[var(--space-3)]">
-      <div className="mb-[var(--space-6)] flex items-end justify-between gap-4 px-1 sm:mb-[var(--space-8)] xl:mb-[var(--space-12)]">
+      <div className="mb-[var(--space-section-block)] flex items-end justify-between gap-4 px-1">
         <h2 id="you-may-also-like-heading" className="section-title text-[clamp(1.35rem,2.2vw,2rem)] font-medium uppercase leading-none tracking-[0.025em] text-[var(--color-brand-primary,#000)]">You May Also Like</h2>
         <div className="flex shrink-0 items-center gap-2">
           <button type="button" onClick={() => scroll(-1)} className="inline-flex h-10 w-10 items-center justify-center border border-black/20 bg-white text-black transition hover:border-black" aria-label="Previous products"><ChevronLeft size={19} strokeWidth={1.5} /></button>

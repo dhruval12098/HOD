@@ -107,7 +107,7 @@ export default function TimelineSection({ initialItems = [] }) {
       `}</style>
 
       <div className="mx-auto max-w-[1400px]">
-        <div className="mb-8 text-left sm:mb-10">
+        <div className="mb-[var(--space-section-block)] text-left">
           <h2 className="section-title font-[family-name:var(--font-family-primary)] text-[clamp(1.35rem,2.2vw,2rem)] font-medium uppercase leading-none tracking-[0.025em] text-black">
             Milestones
           </h2>

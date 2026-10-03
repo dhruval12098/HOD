@@ -192,10 +192,10 @@ export default function CouplesSection({
   const showCarouselControls = pages.length > 1;
 
   return (
-    <section className="relative px-13 py-30 overflow-hidden max-md:px-5 max-md:py-20" style={{ background: 'linear-gradient(180deg,#F5F7FC,#fff)' }}>
+    <section className="relative overflow-hidden px-13 py-[var(--space-section-block)] max-md:px-5" style={{ background: 'linear-gradient(180deg,#F5F7FC,#fff)' }}>
       <div className="absolute top-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg,transparent,rgba(10,22,40,0.3),transparent)' }} />
       <div className="max-w-350 mx-auto">
-        <div className="text-center mb-16">
+        <div className="mb-[var(--space-section-block)] text-center">
           <h2 className={`${cinzelFont.variable} font-primary-display section-title font-light text-[#0A1628] leading-[1.08] tracking-[0.01em] mb-3.5 max-md:text-[28px]`} style={{ fontSize: 'clamp(24px, 4.5vw, 54px)', fontWeight: 400 }}>
             {heading}
           </h2>

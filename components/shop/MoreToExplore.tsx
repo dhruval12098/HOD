@@ -24,7 +24,7 @@ export default function MoreToExplore({ categories }: { categories: MoreToExplor
   return (
     <section aria-labelledby="more-to-explore-heading" className="section-rhythm border-t border-[#e4e4e4] bg-(--color-white) px-4 sm:px-7">
       <div className="mx-auto max-w-6xl">
-        <div className="mb-8 flex items-end justify-between gap-4">
+        <div className="mb-[var(--space-section-block)] flex items-end justify-between gap-4">
           <h2
             id="more-to-explore-heading"
             className="font-[family-name:var(--font-family-primary)] text-[16px] font-bold uppercase leading-[1.4] tracking-[0.06em] text-[#222222]"
@@ -54,7 +54,7 @@ export default function MoreToExplore({ categories }: { categories: MoreToExplor
         <div
           ref={scrollerRef}
           aria-label="More to explore category carousel"
-          className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:-mx-7 sm:px-7"
+          className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:-mx-7 sm:px-7"
         >
           {categories.map((category) => (
             <Link

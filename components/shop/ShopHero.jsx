@@ -243,7 +243,7 @@ export default function ShopHero({
         ) : null}
       </div>
 
-      <div className="relative mt-6 px-1.5 sm:px-5 lg:px-[60px]">
+      <div className="relative mt-[var(--space-section-block)] px-1.5 sm:px-5 lg:px-[60px]">
         <div
           ref={railRef}
           className="flex snap-x snap-mandatory gap-2 overflow-x-auto py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"

@@ -231,7 +231,7 @@ export default function BespokeEnquiryModal({ open, onClose }: BespokeEnquiryMod
       role="dialog"
       aria-modal="true"
       aria-label="Bespoke enquiry"
-      className="fixed inset-0 z-[10002] flex items-center justify-center overflow-hidden overscroll-none bg-[rgba(10,22,40,0.6)] p-3 backdrop-blur-md sm:p-5"
+      className="fixed inset-0 z-[10002] flex items-center justify-center overflow-hidden overscroll-none bg-[rgba(10,16,24,0.68)] p-3 backdrop-blur-md sm:p-5"
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
@@ -239,27 +239,27 @@ export default function BespokeEnquiryModal({ open, onClose }: BespokeEnquiryMod
       <div
         data-lenis-prevent
         onWheel={(event) => event.stopPropagation()}
-        className="relative max-h-[calc(100dvh-24px)] w-full max-w-[760px] touch-pan-y overflow-x-hidden overflow-y-auto overscroll-contain border border-[rgba(10,22,40,0.12)] bg-white px-6 py-8 shadow-[0_24px_80px_rgba(10,22,40,0.2)] [scrollbar-color:rgba(10,22,40,0.28)_transparent] [scrollbar-width:thin] sm:max-h-[90dvh] md:px-10 md:py-10 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[rgba(10,22,40,0.28)] [&::-webkit-scrollbar-track]:bg-transparent"
+        className="relative max-h-[calc(100dvh-24px)] w-full max-w-[578px] touch-pan-y overflow-x-hidden overflow-y-auto overscroll-contain border border-[#e5e3df] bg-[#f7f6f3] px-5 py-6 shadow-[0_24px_80px_rgba(10,22,40,0.28)] [scrollbar-color:rgba(10,22,40,0.28)_transparent] [scrollbar-width:thin] sm:max-h-[90dvh] sm:px-8 sm:py-7 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[rgba(10,22,40,0.28)] [&::-webkit-scrollbar-track]:bg-transparent"
       >
         <button
           type="button"
           onClick={onClose}
           aria-label="Close"
-          className="absolute right-5 top-5 flex h-10 w-10 items-center justify-center border border-black/20 bg-white text-black transition hover:bg-black hover:text-white"
+          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center border border-black/25 bg-transparent text-black transition hover:bg-black hover:text-white sm:right-5 sm:top-5"
         >
           <X size={18} strokeWidth={1.5} />
         </button>
 
-        <div className="text-[10px] font-normal uppercase tracking-[0.3em] text-[#8B7B5C]">Bespoke Atelier</div>
-        <h3 className="mt-3 font-display-title text-[34px] font-light leading-[1.08] tracking-[0.01em] text-[#0A1628]">
+        <div className="flex items-center gap-3 pr-10 font-[family-name:var(--font-family-montserrat)] text-[9px] font-semibold uppercase tracking-[0.25em] text-[#818181]"><span>Bespoke Atelier</span><span aria-hidden="true" className="h-px w-14 bg-black/20" /></div>
+        <h3 className="mt-3 max-w-[460px] font-[family-name:var(--font-family-montserrat)] text-[clamp(21px,4vw,25px)] !font-bold uppercase leading-[1.12] tracking-[0.025em] !text-black">
           {config.settings.intro_heading || 'Configure Your Bespoke Order'}
         </h3>
-        <p className="mt-3 max-w-[500px] text-[13px] font-light leading-[1.8] tracking-[0.03em] text-[#292727]">
+        <p className="mt-3 max-w-[490px] font-[family-name:var(--font-family-montserrat)] text-[12px] font-normal leading-[1.65] tracking-[0.005em] text-[#66676a]">
           {config.settings.intro_subtitle}
         </p>
 
-        <form onSubmit={handleSubmit} className="mt-8 grid gap-5">
-          <div className="grid gap-5 md:grid-cols-2">
+        <form onSubmit={handleSubmit} className="mt-5 grid gap-3">
+          <div className="grid gap-2.5 sm:grid-cols-2">
             <FormField label="Full Name" htmlFor="bespoke-name">
               <input id="bespoke-name" name="name" type="text" required value={form.name} onChange={handleChange} placeholder="Full Name *" className={inputClassName} />
             </FormField>
@@ -274,7 +274,7 @@ export default function BespokeEnquiryModal({ open, onClose }: BespokeEnquiryMod
             </FormField>
           </div>
 
-          <div className="grid gap-5 md:grid-cols-2">
+          <div className="grid gap-2.5 sm:grid-cols-2">
             <FormField label="Piece Type" htmlFor="bespoke-piece">
               <input tabIndex={-1} readOnly required aria-label="Piece type" value={form.piece} className="pointer-events-none absolute h-px w-px opacity-0" />
               <Select
@@ -351,22 +351,22 @@ export default function BespokeEnquiryModal({ open, onClose }: BespokeEnquiryMod
               id="bespoke-message"
               name="message"
               required
-              rows={4}
+              rows={3}
               value={form.message}
               onChange={handleChange}
               placeholder="Design ideas, stone preference, metal, budget range, timeline..."
-              className={`${inputClassName} min-h-[110px] resize-y`}
+              className={`${inputClassName} h-[72px] min-h-[72px] resize-y py-3`}
             />
           </FormField>
 
           <BrandButton
             type="submit"
             disabled={submitting}
-            className="w-full disabled:cursor-wait"
+            className="!h-[42px] w-full !bg-[#101214] !px-5 !font-[family-name:var(--font-family-montserrat)] !text-[10px] !font-semibold !uppercase !tracking-[0.12em] !text-white disabled:cursor-wait"
           >
             {submitting ? 'Submitting...' : 'Submit Bespoke Enquiry'}
           </BrandButton>
-          <p className="text-center text-[10px] tracking-[0.04em] text-[#292727]">{config.settings.footer_note}</p>
+          <p className="text-center font-[family-name:var(--font-family-montserrat)] text-[9px] tracking-[0.02em] text-[#77787a]">{config.settings.footer_note}</p>
         </form>
       </div>
     </div>
@@ -374,10 +374,10 @@ export default function BespokeEnquiryModal({ open, onClose }: BespokeEnquiryMod
 }
 
 const inputClassName =
-  'h-[64px] w-full border border-[#858585] bg-white px-[22px] font-[family-name:var(--font-family-montserrat)] text-[18px] font-normal tracking-normal text-[#111111] outline-none placeholder:text-[#707070] placeholder:font-medium placeholder:opacity-100 focus:border-[#858585]';
+  'h-[42px] w-full rounded-none border border-[#d7d6d3] bg-transparent px-[14px] font-[family-name:var(--font-family-montserrat)] text-[12px] font-normal tracking-normal text-[#202226] outline-none placeholder:text-[#747579] placeholder:font-normal placeholder:opacity-100 focus:border-[#92918d]';
 
 const selectClassName =
-  'h-[64px] rounded-none border-[#858585] bg-white px-[22px] font-[family-name:var(--font-family-montserrat)] text-[18px] font-normal tracking-normal text-[#111111] data-[placeholder]:text-[#707070] data-[placeholder]:font-medium';
+  'h-[42px] rounded-none border-[#d7d6d3] bg-transparent px-[14px] font-[family-name:var(--font-family-montserrat)] text-[12px] font-normal tracking-normal text-[#202226] data-[placeholder]:text-[#747579] data-[placeholder]:font-normal';
 
 function FormField({ label, htmlFor, children }: { label: string; htmlFor: string; children: React.ReactNode }) {
   return (

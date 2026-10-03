@@ -144,7 +144,7 @@ export default function FAQ() {
   const toggle = (index: number) => setOpenIdx((prev) => (prev === index ? null : index));
 
   return (
-    <section className={`${plusJakartaSans.className} mx-auto max-w-[980px] px-[52px] py-[110px] max-lg:px-7 max-md:px-5 max-md:py-[70px]`}>
+    <section className={`${plusJakartaSans.className} mx-auto max-w-[980px] px-[52px] py-[var(--space-section-block)] max-lg:px-7 max-md:px-5`}>
       <div className="mb-0 flex flex-col items-center text-center">
         <RevealDiv className="flex justify-center">
           <div className="inline-flex items-center gap-3 text-[10px] font-medium uppercase tracking-[0.32em] text-[#0A1628] before:h-px before:w-6 before:bg-[#0A1628] before:content-['']">
@@ -161,7 +161,7 @@ export default function FAQ() {
         </RevealDiv>
       </div>
 
-      <div className="mt-12 overflow-hidden rounded-[28px] border border-[rgba(10,22,40,0.10)] bg-white">
+      <div className="mt-[var(--space-section-block)] overflow-hidden rounded-[28px] border border-[rgba(10,22,40,0.10)] bg-white">
         {visibleItems.map((faq, index) => {
           const isOpen = openIdx === index;
 

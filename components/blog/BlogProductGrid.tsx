@@ -7,8 +7,8 @@ export default function BlogProductGrid({ products }: { products: StorefrontProd
   if (products.length === 0) return null
 
   return (
-    <section aria-labelledby="shop-the-edit-title" className="bg-white px-[var(--space-2)] py-[var(--space-6)] sm:px-[var(--space-3)] sm:py-[var(--space-8)] xl:py-[var(--space-10)]">
-      <div className="mb-[var(--space-6)] flex items-end justify-between gap-4 px-1 sm:mb-[var(--space-8)] xl:mb-[var(--space-10)]">
+    <section aria-labelledby="shop-the-edit-title" className="bg-white px-[var(--space-2)] py-[var(--space-section-block)] sm:px-[var(--space-3)]">
+      <div className="mb-[var(--space-section-block)] flex items-end justify-between gap-4 px-1">
         <h2 id="shop-the-edit-title" className="section-title text-[clamp(1.35rem,2.2vw,2rem)] font-medium uppercase leading-none tracking-[0.025em] text-black">
           Shop the Edit
         </h2>

@@ -218,7 +218,7 @@ export default function BespokeForm({ onSuccess, initialConfig }: BespokeFormPro
           <div className="mb-3 font-[family-name:var(--font-family-primary)] text-[11px] font-medium uppercase tracking-[0.1em] text-black/60">
             Start Your Piece
           </div>
-          <h2 className="section-title mb-5 text-left text-[clamp(1.35rem,2.2vw,2rem)] font-medium uppercase leading-none tracking-[0.025em] text-[var(--color-brand-primary,#000)]">
+          <h2 className="section-title mb-[var(--space-section-block)] text-left text-[clamp(1.35rem,2.2vw,2rem)] font-medium uppercase leading-none tracking-[0.025em] text-[var(--color-brand-primary,#000)]">
             {config.settings.intro_heading || 'Configure Your Bespoke Order'}
           </h2>
           <details className="group mt-2 border-t border-black/10 pt-1">

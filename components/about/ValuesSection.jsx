@@ -57,7 +57,7 @@ export default function ValuesSection({ initialItems = [] }) {
 
   return <section className="section-rhythm bg-white px-5 sm:px-7 lg:px-[52px]" aria-labelledby="about-values-heading">
     <div className="mx-auto max-w-[1400px]">
-      <div className="mb-8 text-left sm:mb-10">
+      <div className="mb-[var(--space-section-block)] text-left">
         <h2 id="about-values-heading" className="section-title font-[family-name:var(--font-family-primary)] text-[clamp(1.35rem,2.2vw,2rem)] font-medium uppercase leading-none tracking-[0.025em] text-black">Our Values</h2>
       </div>
       <div ref={scrollerRef} {...dragHandlers} onTouchStart={pauseAutoplay} onTouchEnd={pauseAutoplay} onWheel={pauseAutoplay} onKeyDown={pauseAutoplay} className="flex snap-x snap-mandatory gap-2 overflow-x-auto px-5 pb-2 [scrollbar-width:none] sm:hidden [&::-webkit-scrollbar]:hidden" aria-label="Our Values carousel">

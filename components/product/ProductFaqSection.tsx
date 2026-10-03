@@ -28,7 +28,7 @@ export default function ProductFaqSection({ items = [] }: ProductFaqSectionProps
       className="section-rhythm border-y border-[color:var(--theme-border,rgba(0,0,0,0.09))] bg-white px-5 sm:px-7 lg:px-[52px]"
     >
       <div className="mx-auto max-w-[920px]">
-        <header className="mx-auto mb-10 max-w-[680px] text-center sm:mb-12">
+        <header className="mx-auto mb-[var(--space-section-block)] max-w-[680px] text-center">
           <p className="mb-4 font-[family-name:var(--font-family-secondary)] text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--theme-muted,#6a6a6a)]">
             Piece by piece
           </p>

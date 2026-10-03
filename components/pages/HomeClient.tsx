@@ -164,7 +164,7 @@ export default function HomeClient({
           {showDeferredSections ? (
             <section aria-labelledby="home-blogs-heading" className="section-rhythm bg-[var(--color-brand-accent,#fff)] px-[var(--space-2)] sm:px-[var(--space-3)] lg:px-[var(--space-4)]">
               <div className="w-full">
-                <div className="mb-[var(--space-6)] flex flex-wrap items-end justify-between gap-[var(--space-4)] max-md:justify-center">
+                <div className="mb-[var(--space-section-block)] flex flex-wrap items-end justify-between gap-[var(--space-4)] max-md:justify-center">
                   <h2 id="home-blogs-heading" className="section-title text-[clamp(1.7rem,2.4vw,2.4rem)] leading-[1.12] text-[var(--theme-heading)]">Blogs</h2>
                   <Link href="/blog" className="hidden items-center gap-3 border-b border-[var(--theme-ink)] pb-1 font-[family-name:var(--font-family-primary)] text-[clamp(0.7rem,0.85vw,0.9rem)] font-semibold uppercase tracking-[0.08em] text-[var(--theme-ink)] no-underline transition-[gap] duration-300 hover:gap-5 md:flex">View All Blogs →</Link>
                 </div>

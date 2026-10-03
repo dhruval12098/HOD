@@ -15,10 +15,11 @@ type GiftOfferBannerProps = {
   /** Renders the checkout status card without allowing a gift to be changed there. */
   displayOnly?: boolean
   confirmationTone?: 'green' | 'blue'
+  squareImage?: boolean
   onToggle?: () => void
 }
 
-export function GiftOfferBanner({ promotion, amount, checked = false, included = false, attempted = false, borderless = false, displayOnly = false, confirmationTone = 'green', onToggle }: GiftOfferBannerProps) {
+export function GiftOfferBanner({ promotion, amount, checked = false, included = false, attempted = false, borderless = false, displayOnly = false, confirmationTone = 'green', squareImage = false, onToggle }: GiftOfferBannerProps) {
   const { format } = useCurrency()
   const gift = promotion.gift
   const remaining = Math.max(0, promotion.minimumOrderAmount - amount)
@@ -60,7 +61,7 @@ export function GiftOfferBanner({ promotion, amount, checked = false, included =
         <p className="text-[14px] font-medium leading-5 text-[#cf2943] sm:text-[16px]">Apply {promotion.title || promotion.bannerTitle || 'this offer'}</p>
       )}
       <div className="mt-3 grid w-full grid-cols-[46px_minmax(0,1fr)_auto] items-center gap-2.5 text-left">
-        {gift.imageUrl ? <img src={gift.imageUrl} alt="" className="h-[46px] w-[46px] rounded-full border border-[#f0dfe2] bg-white object-cover" /> : <span className="flex h-[46px] w-[46px] items-center justify-center rounded-full border border-[#f0dfe2] bg-white"><Gift aria-hidden="true" className="h-4 w-4 text-[#cf2943]" /></span>}
+        {gift.imageUrl ? <img src={gift.imageUrl} alt="" className={`h-[46px] w-[46px] border border-[#f0dfe2] bg-white object-cover ${squareImage ? 'rounded-none' : 'rounded-full'}`} /> : <span className={`flex h-[46px] w-[46px] items-center justify-center border border-[#f0dfe2] bg-white ${squareImage ? 'rounded-none' : 'rounded-full'}`}><Gift aria-hidden="true" className="h-4 w-4 text-[#cf2943]" /></span>}
         <span className="min-w-0"><span className="block font-[family-name:var(--font-family-inter)] text-[14px] font-semibold leading-5 text-[#2b3444] sm:text-[16px]">{gift.name}</span><span className="block text-[12px] leading-4 text-[#737987]">On orders {format(promotion.minimumOrderAmount)}+</span></span>
         <span className="text-right text-[13px] font-medium text-[#cf2943]">{promotion.discountValue > 0 ? <><s className="mr-1 text-[#2b3444]">{format(promotion.discountValue)}</s>FREE</> : 'FREE'}</span>
       </div>

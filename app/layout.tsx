@@ -55,7 +55,7 @@ export const metadata: Metadata = {
   },
   description: "Luxury diamond jewellery, crafted in Surat, India.",
   icons: {
-    icon: "/house-of-diams-favicon.ico",
+    icon: "/favicon.ico",
   },
   verification: {
     other: {

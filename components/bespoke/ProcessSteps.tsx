@@ -61,7 +61,7 @@ export default function ProcessSteps({ initialItems = [] }: { initialItems?: { i
 
   return (
     <section className="section-rhythm border-t border-black/10 bg-white">
-      <div className="mb-6 px-4 sm:px-7 lg:px-[50px]">
+      <div className="mb-[var(--space-section-block)] px-4 sm:px-7 lg:px-[50px]">
         <p className="mb-3 font-[family-name:var(--font-family-primary)] text-[11px] font-medium uppercase tracking-[0.1em] text-black/60">The Atelier</p>
         <h2 className="section-title text-left text-[clamp(1.35rem,2.2vw,2rem)] font-medium uppercase leading-none tracking-[0.025em] text-[var(--color-brand-primary,#000)]">How Bespoke Works</h2>
       </div>
