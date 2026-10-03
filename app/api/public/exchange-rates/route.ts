@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { FALLBACK_USD_RATES, normalizeCurrency, type SupportedCurrency } from '@/lib/currency'
+import { CURRENCIES, normalizeCurrency, type SupportedCurrency } from '@/lib/currency'
 import { getUsdExchangeRates } from '@/lib/exchange-rates'
 
 export const dynamic = 'force-static'
@@ -7,26 +7,31 @@ export const revalidate = 300
 
 export async function GET() {
   try {
-    const supportedCurrencies = Object.keys(FALLBACK_USD_RATES).map((currencyCode) => normalizeCurrency(currencyCode)) as SupportedCurrency[]
+    const supportedCurrencies = CURRENCIES.map((currency) => normalizeCurrency(currency.code)) as SupportedCurrency[]
     const exchanges = await getUsdExchangeRates(supportedCurrencies)
     const sources = Object.fromEntries(
       supportedCurrencies.map((currencyCode) => [currencyCode, exchanges[currencyCode]?.source || 'fallback'])
     )
+    const conversionAvailable = supportedCurrencies
+      .filter((currencyCode) => currencyCode !== 'USD')
+      .every((currencyCode) => exchanges[currencyCode]?.source === 'fixer')
 
     return NextResponse.json({
-      rates: Object.fromEntries(
-        supportedCurrencies.map((currencyCode) => [currencyCode, exchanges[currencyCode]?.rate || FALLBACK_USD_RATES[currencyCode]])
-      ),
+      rates: conversionAvailable
+        ? Object.fromEntries(supportedCurrencies.map((currencyCode) => [currencyCode, exchanges[currencyCode]?.rate || 1]))
+        : { USD: 1 },
       sources,
+      conversionAvailable,
       fetchedAt: new Date().toISOString(),
     })
   } catch (error) {
     console.error('Public exchange rates lookup failed:', error)
     return NextResponse.json(
       {
-        rates: FALLBACK_USD_RATES,
+        rates: { USD: 1 },
         fetchedAt: new Date().toISOString(),
-        source: 'fallback',
+        sources: { USD: 'fallback' },
+        conversionAvailable: false,
       },
       { status: 200 }
     )

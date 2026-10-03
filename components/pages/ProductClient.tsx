@@ -27,6 +27,7 @@ import { saveLoveLetterDraft, type LoveLetterDraft } from '@/lib/love-letter';
 import { useCurrency } from '@/context/CurrencyContext';
 import { GiftOfferBanner } from '@/components/commerce/GiftOfferBanner';
 import type { StorefrontPromotion } from '@/components/commerce/PromotionBanner';
+import { useGiftPromotionStatus } from '@/lib/hooks/useGiftPromotionStatus';
 
 const REQUESTED_COUPON_KEY = 'hod_requested_coupon'
 
@@ -71,7 +72,6 @@ export default function ProductClient({ product, relatedProducts, serviceBanner,
   const [showStickyCartBar, setShowStickyCartBar] = useState(false);
   const [isFooterVisible, setIsFooterVisible] = useState(false);
   const [stickyImageUnavailableUrl, setStickyImageUnavailableUrl] = useState<string | null>(null);
-  const [selectedGiftPromotionId, setSelectedGiftPromotionId] = useState<number | null>(null);
   const [giftOfferAttempted, setGiftOfferAttempted] = useState(false);
   const ctaAnchorRef = useRef<HTMLDivElement | null>(null);
   const pageTopRef = useRef<HTMLDivElement | null>(null);
@@ -146,7 +146,7 @@ export default function ProductClient({ product, relatedProducts, serviceBanner,
     selectedMetalMedia?.video_path ||
     storefrontProduct.videoUrl;
   const activePrice = Number(selectedCombinedVariant?.price ?? defaultPurityPriceRow?.price ?? storefrontProduct.priceFrom ?? 0);
-  const isGiftSelected = Boolean(giftPromotion && selectedGiftPromotionId === giftPromotion.id && activePrice >= giftPromotion.minimumOrderAmount);
+  const { cartSubtotal, isValidated: isGiftSelected, validate: validateGift } = useGiftPromotionStatus(giftPromotion);
   const activeProduct = useMemo(
     () => ({
       ...storefrontProduct,
@@ -188,10 +188,6 @@ export default function ProductClient({ product, relatedProducts, serviceBanner,
       setSelectedRingSize(nextDefaultRingSize);
     }
   }, [activeRingCategory, selectedRingSize, storefrontProduct.ringSizeNames]);
-
-  useEffect(() => {
-    if (giftPromotion && activePrice < giftPromotion.minimumOrderAmount) setSelectedGiftPromotionId(null);
-  }, [activePrice, giftPromotion]);
 
   useEffect(() => {
     const ctaNode = ctaAnchorRef.current;
@@ -501,7 +497,7 @@ export default function ProductClient({ product, relatedProducts, serviceBanner,
 
               <ProductPriceBlock priceFrom={activePrice} compact />
 
-              {giftPromotion ? <GiftOfferBanner promotion={giftPromotion} amount={activePrice} checked={selectedGiftPromotionId === giftPromotion.id} included={isGiftSelected} attempted={giftOfferAttempted} onToggle={() => { setGiftOfferAttempted(true); setSelectedGiftPromotionId(giftPromotion.id) }} /> : null}
+              {giftPromotion ? <GiftOfferBanner promotion={giftPromotion} amount={cartSubtotal} checked={isGiftSelected} included={isGiftSelected} attempted={giftOfferAttempted} onToggle={() => { setGiftOfferAttempted(true); void validateGift() }} /> : null}
 
               <ProductConfigurator
                 product={configuredProduct}

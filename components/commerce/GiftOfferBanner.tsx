@@ -53,7 +53,7 @@ export function GiftOfferBanner({ promotion, amount, checked = false, included =
       }}
     >
       {unlocked || !displayOnly ? (
-        <button type="button" onClick={onToggle} disabled={displayOnly} aria-disabled={displayOnly} className={`flex w-full items-center gap-2.5 border-0 bg-transparent p-0 text-left text-[#cf2943] ${displayOnly ? 'cursor-default' : ''}`}>
+        <button type="button" onClick={(event) => { event.stopPropagation(); onToggle?.() }} disabled={displayOnly} aria-disabled={displayOnly} className={`flex w-full items-center gap-2.5 border-0 bg-transparent p-0 text-left text-[#cf2943] ${displayOnly ? 'cursor-default' : ''}`}>
           {unlocked ? <span aria-hidden="true" className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-[3px] border-2 ${checked ? 'gift-check-pop border-[#cf2943] bg-[#cf2943] text-white' : 'border-[#cf2943] bg-white text-transparent'}`}><Check className="h-3 w-3" strokeWidth={3} /></span> : null}
           <span className="text-[14px] font-medium leading-5 sm:text-[16px]">Apply {promotion.title || promotion.bannerTitle || 'this offer'}</span>
         </button>

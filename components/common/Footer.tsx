@@ -110,14 +110,14 @@ function FooterAccordion({ title, children }: { title: string; children: React.R
 }
 
 function CurrencySelector() {
-  const { currencies, selected, changeCurrency, isLoadingRate } = useCurrency();
+  const { currencies, selected, changeCurrency, isLoadingRate, isConversionAvailable } = useCurrency();
 
   return (
     <div className="flex flex-wrap items-center gap-2 text-white" style={{ fontFamily: 'var(--font-family-secondary)' }}>
-      <SelectPrimitive.Root value={selected.code} onValueChange={changeCurrency}>
+      <SelectPrimitive.Root value={selected.code} onValueChange={changeCurrency} disabled={isLoadingRate || !isConversionAvailable}>
         <SelectPrimitive.Trigger
           aria-label="Select country and currency"
-          className="group inline-flex h-10 min-w-[230px] items-center justify-between gap-3 rounded-[4px] border border-white/10 bg-white/[0.14] px-3 text-left outline-none transition-colors duration-200 hover:bg-white/[0.2] focus-visible:ring-2 focus-visible:ring-white max-sm:min-w-full"
+          className="group inline-flex h-10 min-w-[230px] items-center justify-between gap-3 rounded-[4px] border border-white/10 bg-white/[0.14] px-3 text-left outline-none transition-colors duration-200 hover:bg-white/[0.2] focus-visible:ring-2 focus-visible:ring-white disabled:cursor-not-allowed disabled:opacity-55 max-sm:min-w-full"
         >
           <span className="flex min-w-0 items-center gap-3">
             <span className="flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full">
@@ -193,7 +193,7 @@ function CurrencySelector() {
           </SelectPrimitive.Content>
         </SelectPrimitive.Portal>
       </SelectPrimitive.Root>
-      {isLoadingRate ? <span className="text-[10px] uppercase tracking-[0.16em] text-white/45">Updating</span> : null}
+      {isLoadingRate ? <span className="text-[10px] uppercase tracking-[0.16em] text-white/45">Updating</span> : !isConversionAvailable ? <span className="text-[10px] uppercase tracking-[0.16em] text-white/45">USD only</span> : null}
     </div>
   );
 }

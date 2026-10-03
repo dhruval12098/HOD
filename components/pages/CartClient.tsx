@@ -13,6 +13,7 @@ import CheckoutSummary from '@/components/checkout/CheckoutSummary'
 
 const APPLIED_COUPON_KEY = 'hod_applied_coupon'
 const REQUESTED_COUPON_KEY = 'hod_requested_coupon'
+const COUPON_STATE_EVENT = 'hod:coupon-state'
 const recommendationCache = new Map<string, SearchProduct[]>()
 
 type SearchProduct = CartProductSnapshot & { mainCategorySlug?: string; mainCategoryName?: string }
@@ -178,8 +179,8 @@ export default function CartClient({ summaryInfo }: { summaryInfo?: ReactNode })
     try {
       const response = await fetch('/api/checkout/coupon', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code, items: resolvedItems.map(({ item, product }) => ({ slug: product.slug, name: product.name, metalVariantId: item.selection.metalVariantId, metal: item.selection.metal, purity: item.selection.purity, quantity: item.quantity })) }) })
       const payload = await response.json().catch(() => null)
-      if (!response.ok || !payload?.coupon) { setAppliedCoupon(null); localStorage.removeItem(APPLIED_COUPON_KEY); setCouponMessage(payload?.error || 'Unable to apply coupon.'); return }
-      setAppliedCoupon(payload.coupon); setCouponCode(payload.coupon.code); localStorage.setItem(APPLIED_COUPON_KEY, JSON.stringify(payload.coupon)); setCouponMessage(payload.coupon.rewardType === 'free_gift' ? `${payload.coupon.gift?.name || 'Free gift'} unlocked.` : `Coupon applied. You saved ${format(payload.coupon.discountAmount)}.`)
+      if (!response.ok || !payload?.coupon) { setAppliedCoupon(null); localStorage.removeItem(APPLIED_COUPON_KEY); window.dispatchEvent(new Event(COUPON_STATE_EVENT)); setCouponMessage(payload?.error || 'Unable to apply coupon.'); return }
+      setAppliedCoupon(payload.coupon); setCouponCode(payload.coupon.code); localStorage.setItem(APPLIED_COUPON_KEY, JSON.stringify(payload.coupon)); window.dispatchEvent(new Event(COUPON_STATE_EVENT)); setCouponMessage(payload.coupon.rewardType === 'free_gift' ? `${payload.coupon.gift?.name || 'Free gift'} unlocked.` : `Coupon applied. You saved ${format(payload.coupon.discountAmount)}.`)
     } catch { setCouponMessage('Unable to validate the coupon right now.') } finally { setCouponLoading(false) }
   }
 
@@ -192,7 +193,7 @@ export default function CartClient({ summaryInfo }: { summaryInfo?: ReactNode })
     void applyCoupon(requestedCouponCode)
   }, [appliedCoupon, applyCoupon, couponLoading, requestedCouponCode, requestedCouponMinimumOrderAmount, resolvedItems, total])
 
-  const cartGiftOffer = featuredPromotion?.rewardType === 'free_gift' && featuredPromotion.gift ? <GiftOfferBanner promotion={featuredPromotion} amount={total} squareImage attempted={requestedGiftPromotionId === featuredPromotion.id} checked={requestedGiftPromotionId === featuredPromotion.id || (appliedCoupon?.rewardType === 'free_gift' && appliedCoupon.code === featuredPromotion.code)} included={(requestedGiftPromotionId === featuredPromotion.id && total >= featuredPromotion.minimumOrderAmount) || (appliedCoupon?.rewardType === 'free_gift' && appliedCoupon.code === featuredPromotion.code)} onToggle={() => { setRequestedGiftPromotionId(featuredPromotion.id); if (total >= featuredPromotion.minimumOrderAmount) { setCouponCode(featuredPromotion.code); void applyCoupon(featuredPromotion.code) } }} /> : null
+  const cartGiftOffer = featuredPromotion?.rewardType === 'free_gift' && featuredPromotion.gift ? <GiftOfferBanner promotion={featuredPromotion} amount={total} squareImage attempted={requestedGiftPromotionId === featuredPromotion.id} checked={appliedCoupon?.rewardType === 'free_gift' && appliedCoupon.code === featuredPromotion.code} included={appliedCoupon?.rewardType === 'free_gift' && appliedCoupon.code === featuredPromotion.code} onToggle={() => { setRequestedGiftPromotionId(featuredPromotion.id); if (total >= featuredPromotion.minimumOrderAmount) { setCouponCode(featuredPromotion.code); void applyCoupon(featuredPromotion.code) } }} /> : null
 
   return (
     <main className="min-h-screen bg-white px-5 pb-20 pt-10 text-[var(--color-brand-primary,#000000)] sm:px-8 sm:pt-14 lg:px-[10vw] 2xl:px-[200px]">

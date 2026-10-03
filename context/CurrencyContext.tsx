@@ -3,7 +3,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import {
   CURRENCIES,
-  FALLBACK_USD_RATES,
   formatMoney,
   getCurrencyOption,
   type CurrencyOption,
@@ -20,6 +19,7 @@ type CurrencyContextValue = {
   rates: CurrencyRates
   exchangeRate: number
   isLoadingRate: boolean
+  isConversionAvailable: boolean
   changeCurrency: (code: SupportedCurrency | string) => void
   setCurrencyCode: (code: SupportedCurrency | string) => void
   convert: (amountUsd: number | null | undefined) => number
@@ -57,6 +57,7 @@ export function CurrencyProvider({
   const [selected, setSelected] = useState<CurrencyOption>(() => getCurrencyOption('USD'))
   const [rates, setRates] = useState<CurrencyRates>({ USD: 1 })
   const [isLoadingRate, setIsLoadingRate] = useState(true)
+  const [isConversionAvailable, setIsConversionAvailable] = useState(false)
 
   useEffect(() => {
     let ignore = false
@@ -69,17 +70,31 @@ export function CurrencyProvider({
         const response = await fetch('/api/public/exchange-rates', { cache: 'no-store' })
         const data = await response.json().catch(() => null)
         const results = data?.rates || {}
+        const sources = data?.sources || {}
+        const hasLiveRates = response.ok
+          && data?.conversionAvailable === true
+          && CURRENCIES.filter((currency) => currency.code !== 'USD').every((currency) =>
+            sources[currency.code] === 'fixer' && Number.isFinite(Number(results[currency.code])) && Number(results[currency.code]) > 0
+          )
 
-        if (!ignore && response.ok && results && typeof results === 'object') {
+        if (!ignore && hasLiveRates) {
           setRates({
-            ...FALLBACK_USD_RATES,
             USD: 1,
             ...results,
           })
           setSelected(requestedCurrency)
+          setIsConversionAvailable(true)
+        } else if (!ignore) {
+          setRates({ USD: 1 })
+          setSelected(getCurrencyOption('USD'))
+          setIsConversionAvailable(false)
         }
       } catch {
-        if (!ignore) setRates({ ...FALLBACK_USD_RATES })
+        if (!ignore) {
+          setRates({ USD: 1 })
+          setSelected(getCurrencyOption('USD'))
+          setIsConversionAvailable(false)
+        }
       } finally {
         if (!ignore) setIsLoadingRate(false)
       }
@@ -92,11 +107,10 @@ export function CurrencyProvider({
 
   const changeCurrency = useCallback((code: SupportedCurrency | string) => {
     const nextCurrency = getCurrencyOption(code)
+    if (isLoadingRate || (!isConversionAvailable && nextCurrency.code !== 'USD')) return
     window.localStorage.setItem(STORAGE_KEY, nextCurrency.code)
-    // Until the initial rate request completes, retain the canonical USD display.
-    // The requested choice is persisted and applied by the initialization effect.
-    if (!isLoadingRate) setSelected(nextCurrency)
-  }, [isLoadingRate])
+    setSelected(nextCurrency)
+  }, [isConversionAvailable, isLoadingRate])
 
   const convert = useCallback(
     (amountUsd: number | null | undefined) => Number((Number(amountUsd || 0) * (rates[selected.code] ?? 1)).toFixed(2)),
@@ -118,12 +132,13 @@ export function CurrencyProvider({
       rates,
       exchangeRate: rates[selected.code] ?? 1,
       isLoadingRate,
+      isConversionAvailable,
       changeCurrency,
       setCurrencyCode: changeCurrency,
       convert,
       format,
     }),
-    [changeCurrency, convert, format, isLoadingRate, rates, selected]
+    [changeCurrency, convert, format, isConversionAvailable, isLoadingRate, rates, selected]
   )
 
   return <CurrencyContext.Provider value={value}>{children}</CurrencyContext.Provider>
